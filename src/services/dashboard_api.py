@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import inspect
 from functools import lru_cache
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, ForwardRef
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +12,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from main import build_scanner, demo_tokens
 from src.core.pipeline import ScanResult, TokenConfig
 from src.services.news import NewsItem
+
+# ---------------------------------------------------------------------------
+# Compatibility patches
+# ---------------------------------------------------------------------------
+_forward_ref_evaluate = getattr(ForwardRef, "_evaluate", None)
+if _forward_ref_evaluate is not None:
+    _signature = inspect.signature(_forward_ref_evaluate)
+    needs_patch = "recursive_guard" in _signature.parameters and _signature.parameters["recursive_guard"].default is inspect._empty
+    if needs_patch:
+        def _forward_ref_eval_compat(self, globalns, localns, type_params=None, *, recursive_guard=None):
+            if recursive_guard is None:
+                recursive_guard = set()
+            return _forward_ref_evaluate(self, globalns, localns, type_params, recursive_guard=recursive_guard)
+
+        ForwardRef._evaluate = _forward_ref_eval_compat  # type: ignore[attr-defined]
 
 app = FastAPI(
     title="VoidBloom Dashboard API",

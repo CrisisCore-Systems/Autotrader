@@ -13,6 +13,10 @@ def pytest_configure() -> None:
     root = Path(__file__).resolve().parents[1]
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
+    try:
+        import sitecustomize  # noqa: F401 - ensure compatibility patches load
+    except Exception:
+        pass
 
     warnings.filterwarnings(
         "ignore",

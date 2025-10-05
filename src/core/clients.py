@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence
 
 import httpx
 
@@ -136,3 +136,81 @@ class NewsFeedClient(BaseClient):
             raise RuntimeError("feedparser is required for NewsFeedClient") from exc
 
         return feedparser.parse(response.content)
+
+
+class SocialFeedClient(BaseClient):
+    """Client for retrieving social feed JSON payloads."""
+
+    def __init__(
+        self,
+        *,
+        timeout: float = 15.0,
+        client: Optional[httpx.Client] = None,
+    ) -> None:
+        session = client or httpx.Client(timeout=timeout)
+        super().__init__(session)
+
+    def fetch_posts(self, url: str, *, limit: int = 50) -> Sequence[Dict[str, Any]]:
+        response = self.client.get(url, params={"limit": limit})
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict):
+            for key in ("data", "posts", "items"):
+                if key in payload:
+                    data = payload[key]
+                    if isinstance(data, list):
+                        return data
+            return []
+        if isinstance(payload, list):
+            return payload
+        return []
+
+
+class GitHubClient(BaseClient):
+    """Client for fetching GitHub repository activity."""
+
+    def __init__(
+        self,
+        *,
+        base_url: str = "https://api.github.com",
+        timeout: float = 15.0,
+        token: str | None = None,
+        client: Optional[httpx.Client] = None,
+    ) -> None:
+        headers = {}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        session = client or httpx.Client(base_url=base_url, timeout=timeout, headers=headers)
+        super().__init__(session)
+
+    def fetch_repo_events(self, owner: str, repo: str, *, per_page: int = 30) -> Sequence[Dict[str, Any]]:
+        response = self.client.get(
+            f"/repos/{owner}/{repo}/events",
+            params={"per_page": per_page},
+        )
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, list):
+            return data
+        return []
+
+
+class TokenomicsClient(BaseClient):
+    """Client for retrieving tokenomics metrics from generic APIs."""
+
+    def __init__(
+        self,
+        *,
+        timeout: float = 15.0,
+        client: Optional[httpx.Client] = None,
+    ) -> None:
+        session = client or httpx.Client(timeout=timeout)
+        super().__init__(session)
+
+    def fetch_token_metrics(self, url: str) -> Dict[str, Any]:
+        response = self.client.get(url)
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict):
+            return payload
+        raise RuntimeError("Tokenomics endpoint must return a JSON object")

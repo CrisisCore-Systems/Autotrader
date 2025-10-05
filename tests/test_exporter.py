@@ -34,6 +34,15 @@ def test_render_markdown_artifact_generates_dashboard_sections() -> None:
         "narratives": ["Theme A", "Theme B"],
         "data_snapshot": ["Point 1", "Point 2"],
         "actions": ["Monitor exchange listings"],
+        "news_items": [
+            {
+                "title": "Story",
+                "summary": "A concise description of developments.",
+                "link": "https://example.com/story",
+                "source": "Feed",
+                "published_at": "2024-01-01T00:00:00Z",
+            }
+        ],
     }
 
     markdown = render_markdown_artifact(payload)
@@ -44,6 +53,9 @@ def test_render_markdown_artifact_generates_dashboard_sections() -> None:
     assert "Momentum" in markdown  # feature table entry
     assert "## Diagnostics" in markdown
     assert "Theme A" in markdown
+    assert "## News Highlights" in markdown
+    assert "**Feed** — Story" in markdown
+    assert "https://example.com/story" in markdown
     assert "# Data Snapshot" in markdown
     assert "Monitor exchange listings" in markdown
 

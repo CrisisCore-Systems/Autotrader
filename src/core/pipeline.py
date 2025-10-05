@@ -16,6 +16,7 @@ from src.core.safety import SafetyReport, apply_penalties, evaluate_contract, li
 from src.core.scoring import GemScoreResult, compute_gem_score, should_flag_asset
 from src.core.tree import NodeOutcome, TreeNode
 from src.services.exporter import render_markdown_artifact
+from src.services.news import NewsAggregator, NewsItem
 
 
 @dataclass
@@ -33,6 +34,8 @@ class TokenConfig:
     narratives: Sequence[str] = field(default_factory=list)
     glyph: str = "⧗⟡"
     unlocks: Sequence[UnlockEvent] = field(default_factory=list)
+    news_feeds: Sequence[str] = field(default_factory=list)
+    keywords: Sequence[str] = field(default_factory=list)
 
 
 @dataclass
@@ -48,6 +51,7 @@ class ScanResult:
     debug: Dict[str, float]
     artifact_payload: Dict[str, object]
     artifact_markdown: str
+    news_items: Sequence[NewsItem] = field(default_factory=list)
 
 
 @dataclass
@@ -75,6 +79,7 @@ class ScanContext:
     safety_report: SafetyReport | None = None
     liquidity_ok: bool = False
     result: ScanResult | None = None
+    news_items: list[NewsItem] = field(default_factory=list)
 
 
 class HiddenGemScanner:
@@ -87,12 +92,14 @@ class HiddenGemScanner:
         defi_client: DefiLlamaClient,
         etherscan_client: EtherscanClient,
         narrative_analyzer: NarrativeAnalyzer | None = None,
+        news_aggregator: NewsAggregator | None = None,
         liquidity_threshold: float = 50_000.0,
     ) -> None:
         self.coin_client = coin_client
         self.defi_client = defi_client
         self.etherscan_client = etherscan_client
         self.narrative_analyzer = narrative_analyzer or NarrativeAnalyzer()
+        self.news_aggregator = news_aggregator
         self.liquidity_threshold = liquidity_threshold
 
     def scan(self, config: TokenConfig) -> ScanResult:
@@ -147,6 +154,14 @@ class HiddenGemScanner:
                 title="On-chain Metrics",
                 description="Fetch DefiLlama protocol metrics",
                 action=self._action_fetch_onchain_metrics,
+            )
+        )
+        branch_a.add_child(
+            TreeNode(
+                key="A3",
+                title="News & Narrative Signals",
+                description="Aggregate news feeds for sentiment context",
+                action=self._action_fetch_news,
             )
         )
         branch_a.add_child(
@@ -317,6 +332,44 @@ class HiddenGemScanner:
                 proceed=False,
             )
 
+    def _action_fetch_news(self, context: ScanContext) -> NodeOutcome:
+        if self.news_aggregator is None:
+            return NodeOutcome(
+                status="skipped",
+                summary="News aggregator not configured",
+                data={},
+            )
+
+        feeds = list(context.config.news_feeds)
+        keywords = list(context.config.keywords) or [context.config.symbol]
+        try:
+            items = self.news_aggregator.collect(
+                feeds=feeds if feeds else None,
+                keywords=keywords,
+                limit=20,
+            )
+        except Exception as exc:  # pragma: no cover - aggregation should not halt pipeline
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to aggregate news: {exc}",
+                data={"error": str(exc)},
+                proceed=True,
+            )
+
+        context.news_items = items
+        if not items:
+            return NodeOutcome(
+                status="success",
+                summary="No recent matching news",
+                data={"articles": 0},
+            )
+
+        return NodeOutcome(
+            status="success",
+            summary=f"Collected {len(items)} news items",
+            data={"articles": len(items)},
+        )
+
     def _action_fetch_contract_metadata(self, context: ScanContext) -> NodeOutcome:
         try:
             context.contract_metadata = self.etherscan_client.fetch_contract_source(context.config.contract_address)
@@ -377,6 +430,9 @@ class HiddenGemScanner:
                 proceed=False,
             )
         context.holders = self._extract_holder_count(context.contract_metadata or {}, context.protocol_metrics)
+        combined_narratives = list(context.config.narratives)
+        combined_narratives.extend(item.title for item in context.news_items[:3])
+
         snapshot = MarketSnapshot(
             symbol=context.config.symbol,
             timestamp=context.price_series.index[-1]
@@ -387,7 +443,7 @@ class HiddenGemScanner:
             liquidity_usd=context.onchain_metrics.get("current_tvl", 0.0),
             holders=context.holders,
             onchain_metrics=context.onchain_metrics,
-            narratives=list(context.config.narratives),
+            narratives=combined_narratives,
         )
         context.snapshot = snapshot
         return NodeOutcome(
@@ -397,7 +453,16 @@ class HiddenGemScanner:
         )
 
     def _action_narrative_analysis(self, context: ScanContext) -> NodeOutcome:
-        context.narrative = self.narrative_analyzer.analyze(context.config.narratives)
+        base_narratives = list(context.config.narratives)
+        if context.news_items:
+            news_texts = [
+                f"{item.source}: {item.title}. {item.summary}"
+                if item.summary
+                else f"{item.source}: {item.title}"
+                for item in context.news_items
+            ]
+            base_narratives.extend(news_texts)
+        context.narrative = self.narrative_analyzer.analyze(base_narratives)
         sentiment_label = self._sentiment_label(context.narrative.sentiment_score)
         return NodeOutcome(
             status="success",
@@ -534,6 +599,7 @@ class HiddenGemScanner:
             context.safety_report,
             context.liquidity_ok,
             context.debug,
+            context.news_items,
         )
         markdown = render_markdown_artifact(payload)
         context.artifact_payload = payload
@@ -550,6 +616,7 @@ class HiddenGemScanner:
             debug=context.debug,
             artifact_payload=payload,
             artifact_markdown=markdown,
+            news_items=context.news_items,
         )
         return NodeOutcome(
             status="success",
@@ -660,6 +727,7 @@ class HiddenGemScanner:
         safety_report: SafetyReport,
         liquidity_ok: bool,
         debug: Dict[str, float],
+        news_items: Sequence[NewsItem],
     ) -> Dict[str, object]:
         flags = []
         if config.glyph:
@@ -672,6 +740,17 @@ class HiddenGemScanner:
             flags.append("LowLiquidity")
         if safety_report.findings:
             flags.extend(sorted(safety_report.findings))
+        news_payload = [
+            {
+                "title": item.title,
+                "summary": item.summary,
+                "link": item.link,
+                "source": item.source,
+                "published_at": item.published_at.isoformat() if item.published_at else None,
+            }
+            for item in news_items[:5]
+        ]
+
         payload = {
             "glyph": glyph,
             "title": f"{config.symbol} — Memorywear Entry",
@@ -689,6 +768,7 @@ class HiddenGemScanner:
             "debug": debug,
             "hash": self._artifact_hash(config, snapshot, gem_score),
             "narratives": narrative.themes,
+            "news_items": news_payload,
         }
         return payload
 

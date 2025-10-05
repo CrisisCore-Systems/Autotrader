@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import re
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Iterable, List, Optional, Sequence
 
 import numpy as np
 
+from src.services.llm_guardrails import BudgetExceeded, LLMBudgetGuardrail, PromptCache
 
 @dataclass
 class NarrativeInsight:
@@ -25,6 +28,49 @@ _SYSTEM_PROMPT = (
     "'fake_or_buzz_warning', and 'rationale'."
 )
 
+_POSITIVE_WORDS = {
+    "bullish",
+    "growth",
+    "surge",
+    "pump",
+    "partnership",
+    "upgrade",
+    "launch",
+    "mainnet",
+    "win",
+    "support",
+}
+_NEGATIVE_WORDS = {
+    "bearish",
+    "dump",
+    "hack",
+    "exploit",
+    "delay",
+    "rug",
+    "lawsuit",
+    "selloff",
+    "liquidation",
+    "risk",
+}
+_RISK_WORDS = {"hack", "exploit", "rug", "scam", "phishing", "breach"}
+_STOPWORDS = {
+    "the",
+    "with",
+    "from",
+    "into",
+    "that",
+    "this",
+    "have",
+    "about",
+    "into",
+    "over",
+    "their",
+    "there",
+    "https",
+    "http",
+    "www",
+}
+
 
 class NarrativeAnalyzer:
     """Narrative analyzer powered by GPT-4 style sentiment synthesis."""
@@ -35,10 +81,16 @@ class NarrativeAnalyzer:
         client: Optional[Any] = None,
         model: str = "gpt-4o-mini",
         temperature: float = 0.2,
+        prompt_cache: PromptCache | None = None,
+        cost_guardrail: LLMBudgetGuardrail | None = None,
+        cache_ttl_seconds: float = 86400.0,
     ) -> None:
         self._client = client
         self._model = model
         self._temperature = temperature
+        self._prompt_cache = prompt_cache if prompt_cache is not None else PromptCache(ttl_seconds=cache_ttl_seconds)
+        self._cache_ttl = cache_ttl_seconds
+        self._cost_guardrail = cost_guardrail
 
     def analyze(self, narratives: Iterable[str]) -> NarrativeInsight:
         texts = [text.strip() for text in narratives if text and text.strip()]
@@ -51,7 +103,8 @@ class NarrativeAnalyzer:
                 meme_momentum=0.0,
             )
 
-        payload = self._request_analysis(texts)
+        prompt = self._build_user_prompt(texts)
+        payload = self._request_analysis(prompt, texts)
         sentiment_score = float(np.clip(_as_float(payload.get("sentiment_score"), default=0.5), 0.0, 1.0))
         themes = _as_str_list(payload.get("emergent_themes"))
         meme_hooks = _as_str_list(payload.get("memetic_hooks"))
@@ -86,11 +139,22 @@ class NarrativeAnalyzer:
             meme_momentum=meme_momentum,
         )
 
-    def _request_analysis(self, texts: Sequence[str]) -> dict[str, Any]:
+    def _request_analysis(self, prompt: str, texts: Sequence[str]) -> dict[str, Any]:
         """Invoke the LLM and parse the JSON payload it returns."""
 
+        cache_key = self._prompt_cache.hash_prompt(prompt, model=self._model) if self._prompt_cache else None
+        if cache_key and self._prompt_cache:
+            cached = self._prompt_cache.get(cache_key)
+            if cached is not None:
+                return dict(cached)
+
         try:
-            response_content = self._invoke_completion(texts)
+            response_content = self._invoke_completion(prompt)
+        except BudgetExceeded:
+            payload = self._fallback_payload(texts)
+            if cache_key and self._prompt_cache:
+                self._prompt_cache.set(cache_key, payload, ttl=self._cache_ttl)
+            return payload
         except Exception:
             return {}
 
@@ -100,13 +164,16 @@ class NarrativeAnalyzer:
             return {}
         if not isinstance(data, dict):
             return {}
+        if cache_key and self._prompt_cache:
+            self._prompt_cache.set(cache_key, data, ttl=self._cache_ttl)
         return data
 
-    def _invoke_completion(self, texts: Sequence[str]) -> str:
+    def _invoke_completion(self, prompt: str) -> str:
         """Call the OpenAI client to score the provided narratives."""
 
         client = self._client or _create_default_openai_client()
-        prompt = self._build_user_prompt(texts)
+        if self._cost_guardrail is not None:
+            self._cost_guardrail.reserve(prompt)
         completion = client.chat.completions.create(
             model=self._model,
             temperature=self._temperature,
@@ -126,6 +193,34 @@ class NarrativeAnalyzer:
             "Return the JSON object described by the system instructions with fields populated from your analysis.\n"
             f"Narratives:\n{joined}"
         )
+
+    @staticmethod
+    def _fallback_payload(texts: Sequence[str]) -> dict[str, Any]:
+        combined = " ".join(texts)
+        tokens = [token.lower() for token in re.findall(r"[#@]?[A-Za-z0-9_]{3,}", combined)]
+        counts = Counter(tokens)
+        positive_hits = sum(counts[token] for token in _POSITIVE_WORDS if token in counts)
+        negative_hits = sum(counts[token] for token in _NEGATIVE_WORDS if token in counts)
+        total = positive_hits + negative_hits
+        if total == 0:
+            score = 0.5
+        else:
+            score = 0.5 + 0.4 * (positive_hits - negative_hits) / max(total, 1)
+        score = float(np.clip(score, 0.0, 1.0))
+
+        hooks = [token for token in tokens if token.startswith("#")][:3]
+        themes = [token for token, _ in counts.most_common() if token not in _STOPWORDS and not token.startswith("#")]
+        themes = [theme for theme in themes if len(theme) > 3][:5]
+        warning = any(token in _RISK_WORDS for token in tokens)
+
+        return {
+            "sentiment": "positive" if score > 0.55 else "negative" if score < 0.45 else "neutral",
+            "sentiment_score": score,
+            "emergent_themes": themes,
+            "memetic_hooks": hooks,
+            "fake_or_buzz_warning": warning,
+            "rationale": "Heuristic fallback generated when GPT budget guardrail is hit.",
+        }
 
 
 def _create_default_openai_client() -> Any:

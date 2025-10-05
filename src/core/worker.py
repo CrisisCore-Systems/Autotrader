@@ -11,6 +11,7 @@ import yaml
 
 from src.core.clients import GitHubClient, NewsFeedClient, SocialFeedClient, TokenomicsClient
 from src.services.github import GitHubActivityAggregator, RepositorySpec
+from src.services.job_queue import PersistentJobQueue
 from src.services.news import NewsAggregator
 from src.services.social import SocialAggregator, SocialStream
 from src.services.storage import IngestionStore
@@ -90,6 +91,7 @@ class IngestionWorker:
         social_aggregator: SocialAggregator | None = None,
         github_aggregator: GitHubActivityAggregator | None = None,
         tokenomics_aggregator: TokenomicsAggregator | None = None,
+        job_queue: PersistentJobQueue | None = None,
     ) -> None:
         self.store = store
         self.config = config
@@ -97,6 +99,7 @@ class IngestionWorker:
         self.social_aggregator = social_aggregator
         self.github_aggregator = github_aggregator
         self.tokenomics_aggregator = tokenomics_aggregator
+        self.job_queue = job_queue
 
     def run_once(self) -> None:
         """Collect feeds once and persist into SQLite."""
@@ -122,6 +125,11 @@ class IngestionWorker:
             self.run_once()
             time.sleep(self.config.poll_interval)
 
+    def close(self) -> None:
+        if self.job_queue:
+            self.job_queue.close()
+        self.store.close()
+
 
 def load_config(path: Path | None = None) -> WorkerConfig:
     config_path = path or DEFAULT_CONFIG_PATH
@@ -135,15 +143,33 @@ def load_config(path: Path | None = None) -> WorkerConfig:
 def build_worker(config: WorkerConfig, *, db_path: Path = DEFAULT_DB_PATH) -> IngestionWorker:
     store = IngestionStore(db_path)
 
+    job_queue = PersistentJobQueue(db_path.with_suffix(".jobs"))
+
     news_client = NewsFeedClient()
     social_client = SocialFeedClient()
     github_client = GitHubClient()
     tokenomics_client = TokenomicsClient()
 
-    news_aggregator = NewsAggregator(news_client, default_feeds=config.news_feeds)
-    social_aggregator = SocialAggregator(social_client, streams=config.social_streams)
-    github_aggregator = GitHubActivityAggregator(github_client, repositories=config.github_repos)
-    tokenomics_aggregator = TokenomicsAggregator(tokenomics_client, tokens=config.token_endpoints)
+    news_aggregator = NewsAggregator(
+        news_client,
+        default_feeds=config.news_feeds,
+        job_queue=job_queue,
+    )
+    social_aggregator = SocialAggregator(
+        social_client,
+        streams=config.social_streams,
+        job_queue=job_queue,
+    )
+    github_aggregator = GitHubActivityAggregator(
+        github_client,
+        repositories=config.github_repos,
+        job_queue=job_queue,
+    )
+    tokenomics_aggregator = TokenomicsAggregator(
+        tokenomics_client,
+        tokens=config.token_endpoints,
+        job_queue=job_queue,
+    )
 
     return IngestionWorker(
         store=store,
@@ -152,6 +178,7 @@ def build_worker(config: WorkerConfig, *, db_path: Path = DEFAULT_DB_PATH) -> In
         social_aggregator=social_aggregator,
         github_aggregator=github_aggregator,
         tokenomics_aggregator=tokenomics_aggregator,
+        job_queue=job_queue,
     )
 
 
@@ -161,7 +188,7 @@ def main() -> None:  # pragma: no cover - CLI helper
     try:
         worker.run_forever()
     finally:
-        worker.store.close()
+        worker.close()
 
 
 if __name__ == "__main__":  # pragma: no cover - script entry point

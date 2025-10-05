@@ -83,9 +83,27 @@ Incorporate additional signals—GitHub activity, social sentiment, and tokenomi
 - Validate schema changes when external APIs evolve.
 - Add synthetic tests that compare new signals against baseline expectations (e.g., zero/negative values).
 
+## Operational Risks & Mitigation Plan
+
+| Risk | Impact | Mitigation Actions |
+| --- | --- | --- |
+| **API rate limits across 10+ external sources** | Throttled ingests lead to stale signals and gaps in downstream analytics. | Centralise HTTP access behind a rate-aware client with in-memory + Redis caching, adaptive backoff, and persistent job queues so collectors can smooth burst loads without dropping events. |
+| **GPT-4 inference costs for large-scale sentiment analysis** | Budget overruns make continuous monitoring unsustainable. | Cache prompts/responses, batch low-priority analyses during off-peak windows, fine-tune or host lighter open models for daily refreshes, and reserve GPT-4 for high-value escalations. |
+| **Noisy social/news payloads degrading data quality** | Poor signal-to-noise ratio erodes GemScore accuracy and trust. | Introduce schema validation, source-specific spam filters, ensemble sentiment scoring, and human-in-the-loop labelling for newly onboarded feeds. |
+| **Backtesting automation still incomplete in Phase 3** | Unable to quantify precision@K or weight changes before production rollout. | Prioritise the scheduler plus results-store workstream, add CI smoke tests for representative configs, and block strategy promotions until a backtest report is generated. |
+| **Production deployment readiness (configs/secrets)** | Environment drift and leaked credentials during rollout. | Define twelve-factor environment manifests, adopt secret managers (AWS Secrets Manager or Vault), and codify infrastructure-as-code templates that parameterise all environment-specific settings. |
+
+### Mitigation Implementation Status
+
+- **Shared ingestion client**: Implemented `RateAwareRequester` with per-host budgets, adaptive retries, and Redis-ready caching. Persistent SQLite job queues now stage each feed before execution to smooth bursts and retain retry telemetry.
+- **LLM cost guardrails**: Added prompt-level caching and a configurable monthly budget tracker to the `NarrativeAnalyzer` so GPT-4 usage is gated and falls back to heuristics when limits are reached.
+- **Provider budgets**: Documented default rate plans and queue backoff windows in [`docs/provider_rate_limits.md`](provider_rate_limits.md) for operational review and tuning.
+
 ## Next Steps
 1. Validate priorities with stakeholders and phase the roadmap (e.g., start with alerting + scheduling).
-2. Create issues/tasks in the project tracker for each workstream.
-3. Prototype minimal alerting and scheduler modules in a feature branch to test assumptions.
-4. Iterate based on feedback from initial deployments.
+2. Instrument and monitor the shared ingestion client metrics (hit/miss rates, queue backoffs) and tune provider budgets from [`docs/provider_rate_limits.md`](provider_rate_limits.md).
+3. Wire GPT usage guardrails into finance alerts—export guardrail telemetry for monthly spend reports and calibrate fallback heuristics against labelled sentiment samples.
+4. Create issues for the data quality playbook (schema validation, spam filters, labelling loop) and tie them to ingestion readiness gates.
+5. Finish the scheduler/backtest automation workstream, including CI smoke tests and promotion gating based on backtest reports.
+6. Capture production deployment requirements as infra-as-code templates with parameterised secrets management and environment manifests.
 

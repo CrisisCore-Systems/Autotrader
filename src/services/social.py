@@ -6,9 +6,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import hashlib
 import re
-from typing import Iterable, List, Mapping, MutableMapping, Sequence
+from typing import Any, Iterable, List, Mapping, MutableMapping, Sequence
 
 from src.core.clients import SocialFeedClient
+from src.services.job_queue import PersistentJobQueue
 
 
 @dataclass(frozen=True)
@@ -42,17 +43,30 @@ class SocialAggregator:
         *,
         streams: Sequence[SocialStream] | None = None,
         max_per_stream: int = 50,
+        job_queue: PersistentJobQueue | None = None,
     ) -> None:
         self._client = client
         self._streams = list(streams or [])
         self._max_per_stream = max(1, int(max_per_stream))
+        self._queue = job_queue
 
     def collect(self, *, limit: int = 100) -> List[SocialPost]:
         posts: List[SocialPost] = []
         for stream in self._streams:
-            try:
-                payload = self._client.fetch_posts(stream.url, limit=self._max_per_stream)
-            except Exception:
+            payload = None
+            if self._queue:
+                with self._queue.process(
+                    "social-stream",
+                    stream.url,
+                    payload={"platform": stream.platform, "url": stream.url},
+                    backoff_seconds=120.0,
+                ) as job:
+                    if not job.leased:
+                        continue
+                    payload = self._safe_fetch(stream.url)
+            else:
+                payload = self._safe_fetch(stream.url)
+            if payload is None:
                 continue
             for item in payload[: self._max_per_stream]:
                 normalized = _normalize_post(item, stream)
@@ -70,6 +84,12 @@ class SocialAggregator:
             if len(deduped) >= limit:
                 break
         return deduped
+
+    def _safe_fetch(self, url: str) -> Sequence[Mapping[str, Any]] | None:
+        try:
+            return self._client.fetch_posts(url, limit=self._max_per_stream)
+        except Exception:
+            return None
 
 
 def _normalize_post(payload: Mapping[str, object], stream: SocialStream) -> SocialPost | None:

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Iterable, List, Mapping, MutableMapping, Sequence
 
 from src.core.clients import GitHubClient
+from src.services.job_queue import PersistentJobQueue
 
 
 @dataclass(frozen=True)
@@ -46,17 +47,30 @@ class GitHubActivityAggregator:
         *,
         repositories: Sequence[RepositorySpec] | None = None,
         per_repo: int = 30,
+        job_queue: PersistentJobQueue | None = None,
     ) -> None:
         self._client = client
         self._repositories = list(repositories or [])
         self._per_repo = max(1, int(per_repo))
+        self._queue = job_queue
 
     def collect(self, *, limit: int = 100) -> List[GitHubEvent]:
         events: List[GitHubEvent] = []
         for repo in self._repositories:
-            try:
-                payload = self._client.fetch_repo_events(repo.owner, repo.name, per_page=self._per_repo)
-            except Exception:
+            payload = None
+            if self._queue:
+                with self._queue.process(
+                    "github-repo",
+                    f"{repo.owner}/{repo.name}",
+                    payload={"owner": repo.owner, "repo": repo.name},
+                    backoff_seconds=180.0,
+                ) as job:
+                    if not job.leased:
+                        continue
+                    payload = self._safe_fetch(repo)
+            else:
+                payload = self._safe_fetch(repo)
+            if payload is None:
                 continue
             for item in payload[: self._per_repo]:
                 normalized = _normalize_event(item, repo)
@@ -74,6 +88,12 @@ class GitHubActivityAggregator:
             if len(deduped) >= limit:
                 break
         return deduped
+
+    def _safe_fetch(self, repo: RepositorySpec) -> Sequence[Mapping[str, object]] | None:
+        try:
+            return self._client.fetch_repo_events(repo.owner, repo.name, per_page=self._per_repo)
+        except Exception:
+            return None
 
 
 def _normalize_event(payload: Mapping[str, object], spec: RepositorySpec) -> GitHubEvent | None:

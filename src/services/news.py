@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from typing import Iterable, List, Sequence
 
 from src.core.clients import NewsFeedClient
+from src.services.job_queue import PersistentJobQueue
 
 
 @dataclass
@@ -30,10 +31,12 @@ class NewsAggregator:
         *,
         default_feeds: Sequence[str] | None = None,
         max_per_feed: int = 25,
+        job_queue: PersistentJobQueue | None = None,
     ) -> None:
         self._client = client
         self._default_feeds = list(default_feeds or [])
         self._max_per_feed = max(1, int(max_per_feed))
+        self._queue = job_queue
 
     def collect(
         self,
@@ -65,11 +68,19 @@ class NewsAggregator:
         results: List[NewsItem] = []
 
         for url in feed_urls:
-            try:
-                parsed = self._client.fetch_feed(url)
-            except Exception:
-                # Network hiccups should not fail the entire pipeline; we
-                # simply skip the problematic source.
+            if self._queue:
+                with self._queue.process(
+                    "news-feed",
+                    url,
+                    payload={"url": url},
+                    backoff_seconds=300.0,
+                ) as job:
+                    if not job.leased:
+                        continue
+                    parsed = self._safe_fetch(url)
+            else:
+                parsed = self._safe_fetch(url)
+            if parsed is None:
                 continue
 
             entries = list(getattr(parsed, "entries", []) or [])
@@ -97,6 +108,12 @@ class NewsAggregator:
                 break
 
         return deduped
+
+    def _safe_fetch(self, url: str) -> object | None:
+        try:
+            return self._client.fetch_feed(url)
+        except Exception:
+            return None
 
 
 def _matches(item: NewsItem, keywords: Iterable[str]) -> bool:

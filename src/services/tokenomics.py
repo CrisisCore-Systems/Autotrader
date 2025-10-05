@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Iterable, List, Mapping, MutableMapping, Sequence
 
 from src.core.clients import TokenomicsClient
+from src.services.job_queue import PersistentJobQueue
 
 
 @dataclass(frozen=True)
@@ -39,20 +40,39 @@ class TokenomicsAggregator:
         client: TokenomicsClient,
         *,
         tokens: Sequence[TokenSpec] | None = None,
+        job_queue: PersistentJobQueue | None = None,
     ) -> None:
         self._client = client
         self._tokens = list(tokens or [])
+        self._queue = job_queue
 
     def collect(self) -> List[TokenomicsSnapshot]:
         snapshots: List[TokenomicsSnapshot] = []
         for token in self._tokens:
-            try:
-                payload = self._client.fetch_token_metrics(token.url)
-            except Exception:
+            payload = None
+            if self._queue:
+                with self._queue.process(
+                    "tokenomics",
+                    token.url,
+                    payload={"symbol": token.symbol},
+                    backoff_seconds=300.0,
+                ) as job:
+                    if not job.leased:
+                        continue
+                    payload = self._safe_fetch(token.url)
+            else:
+                payload = self._safe_fetch(token.url)
+            if payload is None:
                 continue
             for snapshot in _flatten_payload(token, payload):
                 snapshots.append(snapshot)
         return snapshots
+
+    def _safe_fetch(self, url: str) -> Mapping[str, object] | None:
+        try:
+            return self._client.fetch_token_metrics(url)
+        except Exception:
+            return None
 
 
 def _flatten_payload(token: TokenSpec, payload: Mapping[str, object]) -> Iterable[TokenomicsSnapshot]:

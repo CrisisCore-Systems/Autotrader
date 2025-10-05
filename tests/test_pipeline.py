@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from src.core.pipeline import HiddenGemScanner, TokenConfig, UnlockEvent
 from src.core.narrative import NarrativeAnalyzer
+from tests.stubs import StubOpenAIClient
 
 
 class StubCoinGeckoClient:
@@ -45,11 +46,22 @@ class StubEtherscanClient:
 
 
 def test_hidden_gem_scanner_produces_artifact() -> None:
+    narrative_stub = StubOpenAIClient(
+        payload={
+            "sentiment": "positive",
+            "sentiment_score": 0.74,
+            "emergent_themes": ["growth", "integration"],
+            "memetic_hooks": ["launch hype"],
+            "fake_or_buzz_warning": False,
+            "rationale": "Community momentum with real progress.",
+        }
+    )
+
     scanner = HiddenGemScanner(
         coin_client=StubCoinGeckoClient(),
         defi_client=StubDefiLlamaClient(),
         etherscan_client=StubEtherscanClient(),
-        narrative_analyzer=NarrativeAnalyzer(),
+        narrative_analyzer=NarrativeAnalyzer(client=narrative_stub),
         liquidity_threshold=50_000,
     )
     token = TokenConfig(

@@ -185,6 +185,25 @@ The development server proxies `/api/*` requests to the FastAPI backend. In
 production you can set `VITE_API_BASE_URL` to point the UI at a different API
 host.
 
+### Operational Shortcuts & Automation
+
+- Copy `.env.template` to `.env` and fill in alert transport credentials, Redis/
+  RabbitMQ endpoints, and LLM budget caps before running workers or dispatchers.
+- `make backtest` re-runs the walk-forward harness defined in
+  [`src/pipeline/backtest.py`](src/pipeline/backtest.py) and writes dated JSON/CSV
+  artifacts under `reports/backtests/`.
+- `make coverage` executes `pytest --cov` with the thresholds defined in
+  [`pyproject.toml`](pyproject.toml), while `make security` chains pip-audit,
+  Semgrep (via `ci/semgrep.yml`), and Bandit scans.
+- The alert rules and LLM routing defaults live in
+  [`configs/alert_rules.yaml`](configs/alert_rules.yaml) and
+  [`configs/llm.yaml`](configs/llm.yaml); update these to onboard new channels or
+  tweak budget guardrails.
+- Day-to-day procedures are documented in runbooks under
+  [`docs/runbooks/`](docs/runbooks/) such as
+  [alerting operations](docs/runbooks/alerting.md) and
+  [backtesting cadence](docs/runbooks/backtesting.md).
+
 ## 📊 Key Metrics & Scores
 
 ### Sentiment Metrics
@@ -324,3 +343,25 @@ For questions or contributions, please open an issue or submit a pull request.
 ---
 
 **Status**: ✅ Phase 1-2 skeleton complete and ready for PR review
+
+## 🔔 Alerting Outbox
+
+The `src/alerts` package implements an outbox pattern for GemScore notifications. Rules loaded from [`configs/alert_rules.yaml`](configs/alert_rules.yaml) produce deterministic idempotency keys so each token triggers at most one alert per window and rule version. The evaluation engine enqueues matching payloads with audit-friendly metadata ready for Celery or worker delivery.
+
+## 📈 Backtesting CLI
+
+Use the walk-forward harness to regenerate metrics and weight suggestions in a single command:
+
+```bash
+make backtest
+```
+
+Artifacts are written under `reports/backtests/<run-date>/` including a `summary.json`, `windows.csv`, and `weights_suggestion.json` for downstream automation.
+
+## 🛡️ Security & Quality Gates
+
+Continuous security scanning and coverage enforcement ship with the repo:
+
+- `tests-and-coverage` workflow blocks merges below 75% coverage and publishes the XML artifact.
+- `security-scan` workflow runs Semgrep, Bandit, and pip-audit on every push and each morning UTC.
+- The new `Makefile` recipes (`security`, `coverage`, `sbom`) provide local mirrors of the CI guardrails.

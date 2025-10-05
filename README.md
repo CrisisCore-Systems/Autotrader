@@ -199,6 +199,10 @@ host.
   [`configs/alert_rules.yaml`](configs/alert_rules.yaml) and
   [`configs/llm.yaml`](configs/llm.yaml); update these to onboard new channels or
   tweak budget guardrails.
+- Day-to-day procedures are documented in runbooks under
+  [`docs/runbooks/`](docs/runbooks/) such as
+  [alerting operations](docs/runbooks/alerting.md) and
+  [backtesting cadence](docs/runbooks/backtesting.md).
 
 ## 📊 Key Metrics & Scores
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import inspect
 import logging
 import os
@@ -54,6 +55,7 @@ class _DashboardState:
     results: Dict[str, ScanResult] = field(default_factory=dict)
     trees: Dict[str, Dict[str, Any] | None] = field(default_factory=dict)
     cleanups: List[Callable[[], None]] = field(default_factory=list)
+    using_demo: bool = False
 
 
 def _resolve_config_path() -> Path:
@@ -104,6 +106,7 @@ async def _initialize_state() -> None:
     _clear_results()
     _state.token_map = {}
     _state.scanner = None
+    _state.using_demo = False
 
     config = _load_config(_state.config_path)
     _state.config = config
@@ -111,15 +114,14 @@ async def _initialize_state() -> None:
     token_map = _build_token_map(config)
     if not token_map:
         logger.info("Falling back to demo token set for dashboard API")
-        _state.token_map = {token_config.symbol.upper(): token_config for token_config in demo_tokens()}
-        _state.scanner, cleanups = _create_demo_scanner()
-        _state.cleanups.extend(cleanups)
+        _activate_demo_mode()
         return
 
     _state.token_map = token_map
     scanner, cleanups = _create_scanner(config or {}, token_map)
     _state.scanner = scanner
     _state.cleanups.extend(cleanups)
+    _state.using_demo = False
 
 
 def _load_config(path: Path) -> Dict[str, Any] | None:
@@ -191,6 +193,15 @@ def _create_demo_scanner() -> tuple[HiddenGemScanner, List[Callable[[], None]]]:
     return build_scanner(), []
 
 
+def _activate_demo_mode() -> None:
+    _close_clients()
+    _clear_results()
+    _state.token_map = {token_config.symbol.upper(): token_config for token_config in demo_tokens()}
+    _state.scanner, cleanups = _create_demo_scanner()
+    _state.cleanups.extend(cleanups)
+    _state.using_demo = True
+
+
 def _close_clients() -> None:
     while _state.cleanups:
         cleanup = _state.cleanups.pop()
@@ -213,15 +224,16 @@ async def _run_scan(*, force: bool) -> None:
             return
 
         loop = asyncio.get_running_loop()
-        scanner = _state.scanner
-        token_map = dict(_state.token_map)
 
-        def _execute() -> tuple[Dict[str, ScanResult], Dict[str, Dict[str, Any] | None]]:
+        def _execute(
+            current_scanner: HiddenGemScanner,
+            current_map: Dict[str, TokenConfig],
+        ) -> tuple[Dict[str, ScanResult], Dict[str, Dict[str, Any] | None]]:
             results: Dict[str, ScanResult] = {}
             trees: Dict[str, Dict[str, Any] | None] = {}
-            for symbol, config in token_map.items():
+            for symbol, config in current_map.items():
                 try:
-                    result, tree = scanner.scan_with_tree(config)
+                    result, tree = current_scanner.scan_with_tree(config)
                 except Exception as exc:  # pragma: no cover - network/runtime failure handling
                     logger.warning("Scan failed for %s: %s", symbol, exc)
                     continue
@@ -229,13 +241,34 @@ async def _run_scan(*, force: bool) -> None:
                 trees[symbol] = tree.to_dict() if tree else None
             return results, trees
 
-        results, trees = await loop.run_in_executor(None, _execute)
+        async def _run_once() -> tuple[Dict[str, ScanResult], Dict[str, Dict[str, Any] | None]]:
+            scanner = _state.scanner
+            token_map = dict(_state.token_map)
+            if scanner is None or not token_map:
+                return {}, {}
+            return await loop.run_in_executor(
+                None,
+                functools.partial(_execute, scanner, token_map),
+            )
+
+        results, trees = await _run_once()
         if results:
             _state.results = results
             _state.trees = trees
+            return
+
+        if not _state.using_demo:
+            logger.warning("Primary scanner produced no results; switching to demo dataset")
+            _activate_demo_mode()
+            results, trees = await _run_once()
+            if results:
+                _state.results = results
+                _state.trees = trees
 
 
 async def _ensure_results() -> None:
+    if _state.scanner is None:
+        await _initialize_state()
     await _run_scan(force=False)
     if not _state.results:
         raise HTTPException(status_code=503, detail="Scan results not ready")

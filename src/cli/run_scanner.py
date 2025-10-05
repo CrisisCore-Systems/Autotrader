@@ -25,7 +25,12 @@ def load_config(path: Path) -> dict:
 def build_unlocks(raw_unlocks: Iterable[dict]) -> list[UnlockEvent]:
     unlocks = []
     for item in raw_unlocks or []:
-        date = datetime.fromisoformat(item["date"]).replace(tzinfo=timezone.utc)
+        raw_date = item["date"]
+        if isinstance(raw_date, datetime):
+            date_value = raw_date
+        else:
+            date_value = datetime.fromisoformat(str(raw_date))
+        date = date_value.replace(tzinfo=timezone.utc)
         unlocks.append(UnlockEvent(date=date, percent_supply=float(item["percent_supply"])))
     return unlocks
 

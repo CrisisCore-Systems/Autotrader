@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from src.core.pipeline import HiddenGemScanner, TokenConfig, UnlockEvent
 from src.core.narrative import NarrativeAnalyzer
-from tests.stubs import StubOpenAIClient
+from tests.stubs import StubGroqClient
 
 
 class StubCoinGeckoClient:
@@ -46,7 +46,7 @@ class StubEtherscanClient:
 
 
 def test_hidden_gem_scanner_produces_artifact() -> None:
-    narrative_stub = StubOpenAIClient(
+    narrative_stub = StubGroqClient(
         payload={
             "sentiment": "positive",
             "sentiment_score": 0.74,

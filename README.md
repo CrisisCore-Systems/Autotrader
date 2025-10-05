@@ -286,6 +286,24 @@ python3 -m py_compile main.py
 tsc --noEmit
 ```
 
+### Groq LLM Setup
+
+Narrative analysis now uses Groq's high-speed LPU inference API by default. To enable it locally:
+
+1. Create a free account at [console.groq.com](https://console.groq.com) and generate an API key (`gsk_...`).
+2. Install the Python dependency (already listed in `requirements.txt`):
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Export the key or store it in a local `.env` file:
+   ```bash
+   export GROQ_API_KEY="gsk_your_key_here"
+   # or
+   echo "GROQ_API_KEY=gsk_your_key_here" >> .env
+   ```
+
+If the key is missing or the API is unavailable, the analyzer gracefully falls back to deterministic keyword heuristics so tests remain reproducible.
+
 ## 📄 License
 
 This project is part of the CrisisCore-Systems Autotrader initiative.

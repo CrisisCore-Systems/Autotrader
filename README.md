@@ -4,6 +4,115 @@
 
 This repository contains the foundational skeleton for the VoidBloom Data Oracle, a sophisticated cryptocurrency analysis system that combines multi-source data ingestion, sentiment synthesis, technical intelligence, and contract security analysis.
 
+## 🌌 Vision & Mission
+
+### Mission in One Line
+
+Build a reliable, safety-gated, AI-assisted system that discovers early, high-potential crypto tokens before retail hype, then translates those signals into ranked dashboards, actionable alerts, and mythic “Collapse Artifact” reports you can publish, sell, or archive as lore.
+
+### The Problem It Solves (Bluntly)
+
+- Noise > Signal. Thousands of tokens, shallow reporting, coordinated shilling.
+- Fragmented data. On-chain, order books, GitHub, social—never in one place.
+- Security blind spots. Great narratives can hide unsafe contracts and toxic tokenomics.
+- Creative moat missing. Pure quant tools don’t build brand, community, or artifacts.
+
+This project fuses quant + narrative + security into a single pipeline with a human-in-the-loop, and aestheticizes the output so it becomes both research and product.
+
+### Concrete Objectives
+
+1. Surface hidden gems early by ranking tokens with a multi-signal **GemScore** blending on-chain accumulation, technicals, sentiment/narrative momentum, liquidity depth, tokenomics, and contract safety.
+2. Block obvious rugs/exploits via a contract safety gate that checks owner privileges, mintability, upgradeability, and exploit patterns.
+3. Make the signal usable with a dashboard (ranked list + charts), alerts (Telegram/Slack), and Obsidian exports for daily operations.
+4. Create monetizable artifacts: high-score tokens become “Lore Capsules” rendered as collectible reports with codex glyphs and poetic captioning.
+5. Continuously learn by backtesting, measuring precision@K, and re-weighting features in a recursive improvement loop.
+6. Stay human-controlled—no auto-trading, no custody; the system suggests, you decide.
+
+### Scope (What It Will Do)
+
+- Ingest multi-source data: price/volume, TVL, whale flows, contract metadata, tokenomics, headlines/social snippets, GitHub commits.
+- Normalize then feature-ize: technical indicators (RSI/MACD/MAs), accumulation metrics, liquidity depth, unlock schedules, narrative embeddings.
+- Score & rank tokens with GemScore (0–100) and a Confidence metric, gating everything through safety checks.
+- Output top candidates with charts, risk notes, and “Collapse Artifact” PDFs while logging feedback for iterative improvement.
+
+### Non-Goals (What It Won’t Do)
+
+- Hold keys, place trades, promise returns, or provide financial advice.
+- Replace diligence; it accelerates and augments it.
+
+## 🧠 System at a Glance
+
+**Inputs → Transforms → Outputs**
+
+**Inputs**: On-chain (Etherscan/The Graph/DefiLlama), market data (CoinGecko/exchange APIs), social/news snippets (X, Reddit, headlines), GitHub activity, tokenomics (supply, unlocks, vesting).
+
+**Transforms**: Feature extraction (technicals, accumulation, liquidity), narrative embeddings and clustering (NVI), contract safety analysis (privileges, proxies, mintability), ensemble scoring with time decay.
+
+**Outputs**: Web dashboard (ranked tokens + drilldowns), alerts (score jumps, safety changes), Collapse Artifact reports (Obsidian/PDF zines), API for ecosystem reuse.
+
+## 🧮 Core Scoring Model
+
+Features (normalized 0–1): Sentiment/Narrative (S, NVI), Accumulation (A), On-chain activity (O), Liquidity depth (L), Tokenomics risk (T), Contract safety (C), Meme momentum (M), Community growth (G).
+
+Example weighting (MVP): S:0.15, A:0.20, O:0.15, L:0.10, T:0.12, C:0.12, M:0.08, G:0.08 → Σ=1.0.
+
+**GemScore** = Σ (wᵢ·featureᵢ) reported 0–100 with a separate Confidence score. A safety gate penalizes or blocks assets with severe contract flags or ultra-thin liquidity.
+
+## 👥 Who Uses It and How
+
+- **Researcher-Architect**: Reviews the top list daily, opens token drilldowns, interprets risk notes, and determines watchlists or tranche sizes.
+- **Community/Collectors**: Consume stylized Lore Capsules, purchase memorywear PDFs, and follow dashboard updates.
+- **Collaborators/Analysts**: Extend data sources, refine heuristics, or craft add-on playbooks.
+
+### User Stories
+
+- “Alert me when a token hits GemScore ≥ 70 with Confidence ≥ 0.75 and no upcoming unlock cliffs.”
+- “Export the top 5 weekly as Artifact PDFs with glyphs + a 120-word poetic caption.”
+
+## 📏 Success Metrics
+
+- **Signal quality**: precision@10 (7/30/90-day windows), median forward return vs. baseline, max drawdown on flagged list.
+- **Timeliness**: median lead time between flag and mainstream coverage.
+- **Safety**: % of blocked assets later flagged as risky by third parties.
+- **Adoption**: dashboard DAUs, alert subscriptions, artifact downloads/sales.
+- **Learning speed**: improvement in precision after each re-weighting cycle.
+
+## 🛡️ Risks & Mitigations
+
+- **Data bias / survivorship** → Use broad historical datasets, time-split backtests, and log false positives/negatives.
+- **Overfitting** → Keep weights simple and interpretable; validate out-of-sample; favor orthogonal features.
+- **Security theater** → Gate on objective contract checks, link to evidence, retain human sign-off.
+- **Ethical drift** → Publish safety findings, include disclaimers, avoid auto-execution, maintain provenance logs.
+- **API fragility / rate limits** → Cache, queue, degrade gracefully, and rotate sources.
+
+## 📦 Deliverables
+
+- Next.js (or Streamlit) dashboard with ranked tokens, mini-charts, and risk badges.
+- Telegram/Slack alerts with GemScore, Confidence, and key flags.
+- Obsidian export + printable PDF “Lore Capsule” template with glyphs, charts, and prose.
+- Python ETL + scoring notebook for reproducible runs and audits.
+- Backtest harness and report (precision@K, forward returns, ablation study).
+- README + architecture diagram for collaborators.
+
+## 📅 Operating Cadence
+
+- **Every 4 hours**: ingest → score → update dashboard → push alerts.
+- **Daily**: human review of top 10; publish 1–3 Lore Capsules.
+- **Weekly**: backtest + weight tuning; publish a “Mythic Market Brief.”
+- **Monthly**: feature ablation + safety rules refresh; roadmap iteration.
+
+## 🗺️ Roadmap (Compressed)
+
+1. **Phase 1**: Ingest (price/on-chain/contract), compute GemScore, CLI/notebook output.
+2. **Phase 2**: Dashboard + safety gate + alerts.
+3. **Phase 3**: Narrative embeddings (NVI) + Obsidian/PDF artifact pipeline.
+4. **Phase 4**: Backtests, auto-tuning, community publishing flow.
+5. **Phase 5**: Enrichment (wallet clustering, DEX depth models), partner feeds.
+
+## 🧭 Why It Matters
+
+Edge arises from curated data, risk gating, and a recursive workflow—not just the model. The system transforms signals into mythic evidence, minting market intelligence as ritualized culture.
+
 ## 📁 Repository Structure
 
 ```
@@ -147,6 +256,9 @@ Final Score = (0.4 × APS) + (0.3 × NVI) + (0.2 × ERR⁻¹) + (0.1 × RRR)
 
 ### Testing
 ```bash
+# Python unit tests
+pytest
+
 # Python syntax check
 python3 -m py_compile main.py
 

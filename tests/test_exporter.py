@@ -26,6 +26,7 @@ def test_render_markdown_artifact_generates_dashboard_sections() -> None:
         "glyph": "◇",
         "gem_score": 82.3456,
         "confidence": 0.91234,
+        "final_score": 88.123,
         "flags": ["LiquidityFloorPass", "NoAnomalies"],
         "narrative_sentiment": "positive",
         "narrative_momentum": 0.4567,
@@ -35,6 +36,9 @@ def test_render_markdown_artifact_generates_dashboard_sections() -> None:
         "holders": 1200,
         "features": {"Momentum": 0.9, "Risk": -0.3},
         "debug": {"threshold": 0.42},
+        "sentiment_metrics": {"NVI": 0.42, "MMS": 0.73},
+        "technical_metrics": {"APS": 0.61, "RRR": 0.58},
+        "security_metrics": {"ERR": 0.2, "ACI": 0.8},
         "narratives": ["Theme A", "Theme B"],
         "data_snapshot": ["Point 1", "Point 2"],
         "actions": ["Monitor exchange listings"],
@@ -57,6 +61,9 @@ def test_render_markdown_artifact_generates_dashboard_sections() -> None:
     assert "Momentum" in markdown  # feature table entry
     assert "## Diagnostics" in markdown
     assert "Theme A" in markdown
+    assert "## Sentiment Metrics" in markdown
+    assert "## Technical Metrics" in markdown
+    assert "## Security Metrics" in markdown
     assert "## News Highlights" in markdown
     assert "**Feed** — Story" in markdown
     assert "https://example.com/story" in markdown
@@ -93,7 +100,8 @@ def test_render_markdown_artifact_limits_feature_table() -> None:
     markdown = render_markdown_artifact(payload)
 
     assert "…" in markdown  # ellipsis row indicates trimming
-    assert markdown.count("Metric") <= 13  # 12 entries + ellipsis row
+    feature_section = markdown.split("## Feature Vector Highlights", 1)[1].split("## Diagnostics", 1)[0]
+    assert feature_section.count("Metric") <= 13  # 12 entries + ellipsis row
 
 
 def test_render_html_artifact_contains_key_sections() -> None:
@@ -103,6 +111,7 @@ def test_render_html_artifact_contains_key_sections() -> None:
         "glyph": "◇",
         "gem_score": 82.3456,
         "confidence": 0.91234,
+        "final_score": 88.123,
         "flags": ["LiquidityFloorPass", "NoAnomalies"],
         "narrative_sentiment": "positive",
         "narrative_momentum": 0.4567,
@@ -112,6 +121,9 @@ def test_render_html_artifact_contains_key_sections() -> None:
         "holders": 1200,
         "features": {"Momentum": 0.9, "Risk": -0.3},
         "debug": {"threshold": 0.42},
+        "sentiment_metrics": {"NVI": 0.42, "MMS": 0.73},
+        "technical_metrics": {"APS": 0.61, "RRR": 0.58},
+        "security_metrics": {"ERR": 0.2, "ACI": 0.8},
         "narratives": ["Theme A", "Theme B"],
         "data_snapshot": ["Point 1", "Point 2"],
         "actions": ["Monitor exchange listings"],
@@ -133,6 +145,9 @@ def test_render_html_artifact_contains_key_sections() -> None:
     assert "Executive Summary" in html
     assert "Market Snapshot" in html
     assert "Narrative Signals" in html
+    assert "Sentiment Metrics" in html
+    assert "Technical Metrics" in html
+    assert "Security Metrics" in html
     assert "News Highlights" in html
     assert "Lore" in html
     assert "https://example.com/story" in html

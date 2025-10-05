@@ -314,6 +314,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
     glyph = payload.get("glyph", "⧗⟡")
     gem_score = _format_number(payload.get("gem_score", "N/A"), precision=2)
     confidence = _format_number(payload.get("confidence", "N/A"), precision=2)
+    final_score = _format_number(payload.get("final_score", "N/A"), precision=2)
     nvi = _format_number(payload.get("nvi", 0.0), precision=2)
     flags = _coerce_lines(payload.get("flags", []))
     lore = payload.get("lore", "")
@@ -322,6 +323,9 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
     narratives = _coerce_lines(payload.get("narratives", []))
     hash_value = payload.get("hash")
     news_section_lines = _format_news_section(payload.get("news_items", []))
+    sentiment_metric_lines = _format_mapping_section(payload.get("sentiment_metrics"), precision=3)
+    technical_metric_lines = _format_mapping_section(payload.get("technical_metrics"), precision=3)
+    security_metric_lines = _format_mapping_section(payload.get("security_metrics"), precision=3)
 
     header_lines = [
         "---",
@@ -330,6 +334,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         f'glyph: "{glyph}"',
         f"GemScore: {gem_score}",
         f"Confidence: {confidence}",
+        f"FinalScore: {final_score}",
         f"NVI: {nvi}",
         "Flags:",
     ]
@@ -343,6 +348,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
     summary_lines = _make_bullet_list(
         [
             f"**GemScore:** {gem_score} (confidence {confidence})",
+            f"**Final Score:** {final_score}",
             f"**Flags:** {', '.join(flags) if flags else 'None'}",
             f"**Narrative Sentiment:** {payload.get('narrative_sentiment', 'unknown')}",
         ]
@@ -395,6 +401,9 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         Section("Executive Summary", summary_lines, level=1).render(),
         Section("Market Snapshot", market_section_lines, level=2).render(),
         Section("Narrative Signals", narrative_section_lines, level=2).render(),
+        Section("Sentiment Metrics", sentiment_metric_lines, level=2).render(),
+        Section("Technical Metrics", technical_metric_lines, level=2).render(),
+        Section("Security Metrics", security_metric_lines, level=2).render(),
         Section("News Highlights", news_section_lines, level=2).render(),
         Section("Feature Vector Highlights", feature_lines, level=2).render(),
         Section("Diagnostics", debug_lines, level=2).render(),
@@ -424,6 +433,7 @@ def render_html_artifact(payload: Dict[str, object]) -> str:
     glyph = str(payload.get("glyph", "⧗⟡"))
     gem_score = _format_number(payload.get("gem_score", "N/A"), precision=2)
     confidence = _format_number(payload.get("confidence", "N/A"), precision=2)
+    final_score = _format_number(payload.get("final_score", "N/A"), precision=2)
     nvi = _format_number(payload.get("nvi", 0.0), precision=2)
     sentiment = str(payload.get("narrative_sentiment", "unknown"))
     momentum = payload.get("narrative_momentum")
@@ -449,9 +459,13 @@ def render_html_artifact(payload: Dict[str, object]) -> str:
 
     feature_rows = _mapping_rows(payload.get("features"), precision=3, limit=12)
     debug_rows = _mapping_rows(payload.get("debug"), precision=3, limit=12)
+    sentiment_rows = _mapping_rows(payload.get("sentiment_metrics"), precision=3, limit=12)
+    technical_rows = _mapping_rows(payload.get("technical_metrics"), precision=3, limit=12)
+    security_rows = _mapping_rows(payload.get("security_metrics"), precision=3, limit=12)
 
     summary_items = [
         f"GemScore: {gem_score} (confidence {confidence})",
+        f"Final Score: {final_score}",
         f"Flags: {', '.join(flags) if flags else 'None'}",
         f"Narrative Sentiment: {sentiment}",
     ]
@@ -502,6 +516,7 @@ pre { white-space: pre-wrap; }
                     "<div class=\"summary-grid\">",
                     f"  <p><strong>GemScore:</strong> {escape(gem_score)}</p>",
                     f"  <p><strong>Confidence:</strong> {escape(confidence)}</p>",
+                    f"  <p><strong>Final Score:</strong> {escape(final_score)}</p>",
                     f"  <p><strong>NVI:</strong> {escape(nvi)}</p>",
                     f"  <p><strong>Flags:</strong> {flag_badges}</p>",
                     f"  <p><strong>Sentiment:</strong> {escape(sentiment)}</p>",
@@ -528,6 +543,9 @@ pre { white-space: pre-wrap; }
                 ]
             ),
         ),
+        ("Sentiment Metrics", _render_table_html(sentiment_rows)),
+        ("Technical Metrics", _render_table_html(technical_rows)),
+        ("Security Metrics", _render_table_html(security_rows)),
         ("News Highlights", news_html),
         ("Feature Vector Highlights", _render_table_html(feature_rows)),
         ("Diagnostics", _render_table_html(debug_rows)),

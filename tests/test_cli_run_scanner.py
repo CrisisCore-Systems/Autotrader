@@ -99,6 +99,8 @@ def test_run_saves_artifact(tmp_path: Path) -> None:
     assert "Memorywear Entry" in content
     assert result.news_items
     assert "## News Highlights" in content
+    assert "Final Score" in content
+    assert result.final_score >= 0
 
     html_path = tmp_path / expected_name.replace(".md", ".html")
     assert html_path.exists()

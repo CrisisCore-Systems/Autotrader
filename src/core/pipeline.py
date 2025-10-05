@@ -53,6 +53,10 @@ class ScanResult:
     artifact_markdown: str
     artifact_html: str
     news_items: Sequence[NewsItem] = field(default_factory=list)
+    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
+    technical_metrics: Dict[str, float] = field(default_factory=dict)
+    security_metrics: Dict[str, float] = field(default_factory=dict)
+    final_score: float = 0.0
 
 
 @dataclass
@@ -82,6 +86,10 @@ class ScanContext:
     liquidity_ok: bool = False
     result: ScanResult | None = None
     news_items: list[NewsItem] = field(default_factory=list)
+    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
+    technical_metrics: Dict[str, float] = field(default_factory=dict)
+    security_metrics: Dict[str, float] = field(default_factory=dict)
+    final_score: float = 0.0
 
 
 class HiddenGemScanner:
@@ -268,6 +276,14 @@ class HiddenGemScanner:
                 title="GemScore Ensemble",
                 description="Compute weighted GemScore with contributions",
                 action=self._action_compute_gem_score,
+            )
+        )
+        branch_c.add_child(
+            TreeNode(
+                key="C4",
+                title="Composite Metric Deck",
+                description="Synthesize narrative, technical, and safety metrics",
+                action=self._action_compute_composite_metrics,
             )
         )
         branch_c.add_child(
@@ -569,6 +585,39 @@ class HiddenGemScanner:
             data=context.gem_score.contributions,
         )
 
+    def _action_compute_composite_metrics(self, context: ScanContext) -> NodeOutcome:
+        if context.snapshot is None or context.narrative is None or context.safety_report is None:
+            return NodeOutcome(
+                status="failure",
+                summary="Snapshot, narrative, or safety report missing",
+                data={},
+                proceed=False,
+            )
+
+        sentiment_metrics = self._compute_sentiment_metrics(context.narrative)
+        technical_metrics = self._compute_technical_metrics(context.price_series)
+        security_metrics = self._compute_security_metrics(
+            context.safety_report,
+            context.snapshot,
+            context.contract_metadata or {},
+        )
+        final_score = self._compute_final_score(sentiment_metrics, technical_metrics, security_metrics)
+
+        context.sentiment_metrics = sentiment_metrics
+        context.technical_metrics = technical_metrics
+        context.security_metrics = security_metrics
+        context.final_score = final_score
+
+        return NodeOutcome(
+            status="success",
+            summary=f"Composite score {final_score:.2f}",
+            data={
+                "final_score": final_score,
+                "nvi": sentiment_metrics.get("NVI"),
+                "aps": technical_metrics.get("APS"),
+            },
+        )
+
     def _action_flag_asset(self, context: ScanContext) -> NodeOutcome:
         if context.gem_score is None:
             return NodeOutcome(
@@ -602,6 +651,10 @@ class HiddenGemScanner:
             context.liquidity_ok,
             context.debug,
             context.news_items,
+            context.sentiment_metrics,
+            context.technical_metrics,
+            context.security_metrics,
+            context.final_score,
         )
         markdown = render_markdown_artifact(payload)
         html = render_html_artifact(payload)
@@ -622,6 +675,10 @@ class HiddenGemScanner:
             artifact_markdown=markdown,
             artifact_html=html,
             news_items=context.news_items,
+            sentiment_metrics=context.sentiment_metrics,
+            technical_metrics=context.technical_metrics,
+            security_metrics=context.security_metrics,
+            final_score=context.final_score,
         )
         return NodeOutcome(
             status="success",
@@ -711,6 +768,80 @@ class HiddenGemScanner:
         available = sum(1 for key in required_keys if key in features)
         return available / len(required_keys)
 
+    def _compute_sentiment_metrics(self, narrative: NarrativeInsight) -> Dict[str, float]:
+        return {
+            "Sentiment": narrative.sentiment_score,
+            "Momentum": narrative.momentum,
+            "NVI": narrative.volatility,
+            "MMS": narrative.meme_momentum,
+        }
+
+    def _compute_technical_metrics(self, price_series: pd.Series | None) -> Dict[str, float]:
+        if price_series is None or price_series.empty:
+            return {"APS": 0.5, "RSS": 0.5, "RRR": 0.5}
+
+        returns = price_series.pct_change().dropna()
+        if returns.empty:
+            positive_ratio = 0.5
+            cumulative_return = 0.0
+            volatility = 0.0
+            expected_return = 0.0
+        else:
+            positive_ratio = float((returns > 0).sum() / len(returns))
+            cumulative_return = float((1 + returns).prod() - 1)
+            volatility = float(returns.std())
+            expected_return = float(returns.mean())
+
+        aps = float(np.clip(positive_ratio, 0.0, 1.0))
+        rss = float(np.clip(0.5 + 0.5 * np.tanh(cumulative_return), 0.0, 1.0))
+        ratio = expected_return / (volatility + 1e-6)
+        rrr = float(np.clip(0.5 + 0.5 * np.tanh(ratio), 0.0, 1.0))
+
+        return {"APS": aps, "RSS": rss, "RRR": rrr}
+
+    def _compute_security_metrics(
+        self,
+        safety_report: SafetyReport,
+        snapshot: MarketSnapshot,
+        contract_metadata: Dict[str, object],
+    ) -> Dict[str, float]:
+        err = float(np.clip(1.0 - safety_report.score, 0.0, 1.0))
+        ocw = 1.0 if snapshot.holders >= 1_000 or snapshot.liquidity_usd >= 100_000 else 0.0
+
+        audit_hint = str(
+            contract_metadata.get("SecurityAudit")
+            or contract_metadata.get("AuditInfo")
+            or contract_metadata.get("audit")
+            or ""
+        ).lower()
+        verified = not safety_report.flags.get("unverified", False)
+        if audit_hint:
+            aci = 0.9 if verified else 0.75
+        elif verified:
+            aci = 0.6
+        else:
+            aci = 0.25
+
+        severity = safety_report.severity
+        if severity == "high":
+            aci = min(aci, 0.2)
+        elif severity == "medium":
+            aci = min(aci, 0.5)
+
+        return {"ERR": err, "OCW": ocw, "ACI": float(np.clip(aci, 0.0, 1.0))}
+
+    def _compute_final_score(
+        self,
+        sentiment_metrics: Dict[str, float],
+        technical_metrics: Dict[str, float],
+        security_metrics: Dict[str, float],
+    ) -> float:
+        aps = float(np.clip(technical_metrics.get("APS", 0.0), 0.0, 1.0))
+        nvi = float(np.clip(sentiment_metrics.get("NVI", 0.0), 0.0, 1.0))
+        err = float(np.clip(security_metrics.get("ERR", 1.0), 0.0, 1.0))
+        rrr = float(np.clip(technical_metrics.get("RRR", 0.0), 0.0, 1.0))
+        return (0.4 * aps + 0.3 * nvi + 0.2 * (1.0 - err) + 0.1 * rrr) * 100
+
     def _compute_unlock_pressure(self, unlocks: Sequence[UnlockEvent]) -> float:
         now = datetime.now(timezone.utc)
         pressure = 0.0
@@ -733,6 +864,10 @@ class HiddenGemScanner:
         liquidity_ok: bool,
         debug: Dict[str, float],
         news_items: Sequence[NewsItem],
+        sentiment_metrics: Dict[str, float],
+        technical_metrics: Dict[str, float],
+        security_metrics: Dict[str, float],
+        final_score: float,
     ) -> Dict[str, object]:
         flags = []
         if config.glyph:
@@ -762,9 +897,12 @@ class HiddenGemScanner:
             "timestamp": snapshot.timestamp.isoformat(),
             "gem_score": gem_score.score,
             "confidence": gem_score.confidence,
+            "final_score": final_score,
             "flags": flags,
             "narrative_sentiment": self._sentiment_label(narrative.sentiment_score),
             "narrative_momentum": narrative.momentum,
+            "nvi": sentiment_metrics.get("NVI", 0.0),
+            "meme_momentum": sentiment_metrics.get("MMS", 0.0),
             "price": snapshot.price,
             "volume_24h": snapshot.volume_24h,
             "liquidity": snapshot.liquidity_usd,
@@ -774,6 +912,9 @@ class HiddenGemScanner:
             "hash": self._artifact_hash(config, snapshot, gem_score),
             "narratives": narrative.themes,
             "news_items": news_payload,
+            "sentiment_metrics": sentiment_metrics,
+            "technical_metrics": technical_metrics,
+            "security_metrics": security_metrics,
         }
         return payload
 

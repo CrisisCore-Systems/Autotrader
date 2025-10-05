@@ -143,6 +143,7 @@ def run(
             print(
                 f"GemScore: {result.gem_score.score:.2f} (confidence {result.gem_score.confidence:.1f})"
             )
+            print(f"Final Score: {result.final_score:.2f}")
             print(f"Flagged: {'yes' if result.flag else 'no'}")
             print(result.artifact_markdown)
             print()

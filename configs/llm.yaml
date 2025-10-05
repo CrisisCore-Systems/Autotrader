@@ -1,0 +1,16 @@
+llm:
+  providers:
+    cheap: gpt-small
+    mid: gpt-mid
+    premium: gpt-5
+  routes:
+    narrative_summary: mid
+    contract_explainer: mid
+    sentiment_bucket: cheap
+    rare_deep_report: premium
+  budget:
+    daily_usd_cap: 15
+    per_job_usd_cap: 0.75
+  caching:
+    semantic_ttl_hours: 12
+    exact_ttl_hours: 24

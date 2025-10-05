@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.core.narrative import NarrativeAnalyzer
-from src.services.llm_guardrails import LLMBudgetGuardrail, PromptCache
+from src.services.llm_guardrails import LLMBudgetGuardrail, PromptCache, SemanticCache
 from tests.stubs import StubGroqClient
 
 
@@ -55,6 +55,38 @@ def test_narrative_analyzer_caches_prompt_responses() -> None:
     analyzer.analyze(["Layer2 mainnet growth", "TVL pumping across chains"])
 
     assert len(stub.invocations) == 1
+
+
+def test_narrative_analyzer_uses_semantic_cache() -> None:
+    stub = StubGroqClient(
+        payload={
+            "sentiment": "neutral",
+            "sentiment_score": 0.55,
+            "emergent_themes": ["builder"],
+            "memetic_hooks": ["community"],
+            "fake_or_buzz_warning": False,
+            "rationale": "Community builder update.",
+        }
+    )
+    embed_calls: list[str] = []
+
+    def _embed(prompt: str) -> list[float]:
+        embed_calls.append(prompt)
+        return [float(len(prompt)), 0.5]
+
+    semantic_cache = SemanticCache(embedder=_embed, default_ttl_seconds=3600)
+    analyzer = NarrativeAnalyzer(
+        client=stub,
+        prompt_cache=PromptCache(ttl_seconds=0.0),
+        cache_ttl_seconds=0.0,
+        semantic_cache=semantic_cache,
+    )
+
+    analyzer.analyze(["Community builder update"])
+    analyzer.analyze(["Community builder update"])
+
+    assert len(stub.invocations) == 1
+    assert embed_calls, "semantic embedder should be invoked"
 
 
 def test_narrative_analyzer_falls_back_when_budget_hit() -> None:

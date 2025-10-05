@@ -12,7 +12,12 @@ from typing import Any, Iterable, List, Optional, Sequence
 
 import numpy as np
 
-from src.services.llm_guardrails import BudgetExceeded, LLMBudgetGuardrail, PromptCache
+from src.services.llm_guardrails import (
+    BudgetExceeded,
+    LLMBudgetGuardrail,
+    PromptCache,
+    SemanticCache,
+)
 
 try:  # pragma: no cover - optional dependency import
     from groq import Groq
@@ -104,6 +109,9 @@ class NarrativeAnalyzer:
         prompt_cache: PromptCache | None = None,
         cost_guardrail: LLMBudgetGuardrail | None = None,
         cache_ttl_seconds: float = 86400.0,
+        semantic_task_type: str = "narrative_summary",
+        semantic_cache_ttl: float | None = None,
+        semantic_cache: SemanticCache | None = None,
     ) -> None:
         self._provided_client = client
         self._model = model
@@ -112,6 +120,9 @@ class NarrativeAnalyzer:
         self._prompt_cache = prompt_cache if prompt_cache is not None else PromptCache(ttl_seconds=cache_ttl_seconds)
         self._cache_ttl = cache_ttl_seconds
         self._cost_guardrail = cost_guardrail
+        self._semantic_cache = semantic_cache
+        self._semantic_task_type = semantic_task_type
+        self._semantic_cache_ttl = semantic_cache_ttl
         self._prompt_template = self._load_prompt_template()
 
         self._llm_client = self._resolve_client(use_llm)
@@ -167,6 +178,13 @@ class NarrativeAnalyzer:
             return {}
 
         cache_key = self._prompt_cache.hash_prompt(prompt, model=self._model) if self._prompt_cache else None
+
+        semantic_payload = None
+        if self._semantic_cache is not None:
+            semantic_payload = self._semantic_cache.get(prompt, task_type=self._semantic_task_type)
+            if semantic_payload is not None:
+                return dict(semantic_payload)
+
         if cache_key and self._prompt_cache:
             cached = self._prompt_cache.get(cache_key)
             if cached is not None:
@@ -188,6 +206,14 @@ class NarrativeAnalyzer:
             return {}
         if cache_key and self._prompt_cache:
             self._prompt_cache.set(cache_key, data, ttl=self._cache_ttl)
+        if self._semantic_cache is not None:
+            ttl_override = self._semantic_cache_ttl
+            self._semantic_cache.set(
+                prompt,
+                data,
+                task_type=self._semantic_task_type,
+                ttl_seconds=ttl_override,
+            )
         return data
 
     def _invoke_completion(self, prompt: str) -> str:

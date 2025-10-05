@@ -1,0 +1,10 @@
+rules:
+  - id: high_score_gate
+    description: "GemScore ≥ 70 & Confidence ≥ 0.75 & safety_ok"
+    where:
+      gem_score_min: 70
+      confidence_min: 0.75
+      safety_ok: true
+    channels: [telegram, slack]
+    cool_off_minutes: 240
+    version: v1

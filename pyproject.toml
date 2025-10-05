@@ -1,0 +1,15 @@
+[tool.pytest.ini_options]
+addopts = "-q --maxfail=1"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+fail_under = 75
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+show_contexts = true

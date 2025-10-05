@@ -6,7 +6,11 @@ from pathlib import Path
 
 from textwrap import dedent
 
-from src.services.exporter import render_markdown_artifact, save_artifact
+from src.services.exporter import (
+    render_html_artifact,
+    render_markdown_artifact,
+    save_artifact,
+)
 
 
 def test_render_markdown_artifact_handles_missing_fields() -> None:
@@ -90,6 +94,54 @@ def test_render_markdown_artifact_limits_feature_table() -> None:
 
     assert "…" in markdown  # ellipsis row indicates trimming
     assert markdown.count("Metric") <= 13  # 12 entries + ellipsis row
+
+
+def test_render_html_artifact_contains_key_sections() -> None:
+    payload = {
+        "title": "Example",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "glyph": "◇",
+        "gem_score": 82.3456,
+        "confidence": 0.91234,
+        "flags": ["LiquidityFloorPass", "NoAnomalies"],
+        "narrative_sentiment": "positive",
+        "narrative_momentum": 0.4567,
+        "price": 1.2345,
+        "volume_24h": 987654.321,
+        "liquidity": 54321.0,
+        "holders": 1200,
+        "features": {"Momentum": 0.9, "Risk": -0.3},
+        "debug": {"threshold": 0.42},
+        "narratives": ["Theme A", "Theme B"],
+        "data_snapshot": ["Point 1", "Point 2"],
+        "actions": ["Monitor exchange listings"],
+        "lore": "Lore capsule",
+        "news_items": [
+            {
+                "title": "Story",
+                "summary": "A concise description of developments.",
+                "link": "https://example.com/story",
+                "source": "Feed",
+                "published_at": "2024-01-01T00:00:00Z",
+            }
+        ],
+    }
+
+    html = render_html_artifact(payload)
+
+    assert "<!DOCTYPE html>" in html
+    assert "Executive Summary" in html
+    assert "Market Snapshot" in html
+    assert "Narrative Signals" in html
+    assert "News Highlights" in html
+    assert "Lore" in html
+    assert "https://example.com/story" in html
+
+
+def test_render_html_artifact_handles_missing_fields() -> None:
+    html = render_html_artifact({"title": "Test Artifact"})
+    assert "Test Artifact" in html
+    assert "Executive Summary" in html
 
 
 def test_save_artifact_writes_file(tmp_path: Path) -> None:

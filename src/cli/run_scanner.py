@@ -150,7 +150,10 @@ def run(
             if output_dir is not None:
                 filename = _artifact_filename(token_config.symbol, result.market_snapshot.timestamp)
                 path = save_artifact(result.artifact_markdown, output_dir, filename)
+                html_name = filename[:-3] + ".html" if filename.endswith(".md") else f"{filename}.html"
+                html_path = save_artifact(result.artifact_html, output_dir, html_name)
                 print(f"Saved artifact to {path}")
+                print(f"Saved HTML artifact to {html_path}")
                 print()
 
             if tree and tree_obj is not None:

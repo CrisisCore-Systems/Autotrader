@@ -105,6 +105,8 @@ def run_demo() -> List[Tuple[TokenConfig, str, TreeNode]]:
         result, tree = scanner.scan_with_tree(token)
         artifact_path = ARTIFACTS_DIR / f"{token.symbol.lower()}_demo.md"
         artifact_path.write_text(result.artifact_markdown)
+        html_path = ARTIFACTS_DIR / f"{token.symbol.lower()}_demo.html"
+        html_path.write_text(result.artifact_html)
         outputs.append((token, result.artifact_markdown, tree))
     return outputs
 

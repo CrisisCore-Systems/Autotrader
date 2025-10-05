@@ -15,7 +15,7 @@ from src.core.narrative import NarrativeAnalyzer, NarrativeInsight
 from src.core.safety import SafetyReport, apply_penalties, evaluate_contract, liquidity_guardrail
 from src.core.scoring import GemScoreResult, compute_gem_score, should_flag_asset
 from src.core.tree import NodeOutcome, TreeNode
-from src.services.exporter import render_markdown_artifact
+from src.services.exporter import render_html_artifact, render_markdown_artifact
 from src.services.news import NewsAggregator, NewsItem
 
 
@@ -51,6 +51,7 @@ class ScanResult:
     debug: Dict[str, float]
     artifact_payload: Dict[str, object]
     artifact_markdown: str
+    artifact_html: str
     news_items: Sequence[NewsItem] = field(default_factory=list)
 
 
@@ -76,6 +77,7 @@ class ScanContext:
     debug: Dict[str, float] = field(default_factory=dict)
     artifact_payload: Dict[str, object] = field(default_factory=dict)
     artifact_markdown: str | None = None
+    artifact_html: str | None = None
     safety_report: SafetyReport | None = None
     liquidity_ok: bool = False
     result: ScanResult | None = None
@@ -602,8 +604,10 @@ class HiddenGemScanner:
             context.news_items,
         )
         markdown = render_markdown_artifact(payload)
+        html = render_html_artifact(payload)
         context.artifact_payload = payload
         context.artifact_markdown = markdown
+        context.artifact_html = html
         context.result = ScanResult(
             token=context.config.symbol,
             market_snapshot=context.snapshot,
@@ -616,6 +620,7 @@ class HiddenGemScanner:
             debug=context.debug,
             artifact_payload=payload,
             artifact_markdown=markdown,
+            artifact_html=html,
             news_items=context.news_items,
         )
         return NodeOutcome(

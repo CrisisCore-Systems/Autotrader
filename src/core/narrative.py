@@ -1,16 +1,27 @@
-"""LLM-backed narrative analysis utilities for scoring."""
+"""Narrative analysis utilities with optional Groq LLM integration."""
 
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable, List, Optional, Sequence
 
 import numpy as np
 
 from src.services.llm_guardrails import BudgetExceeded, LLMBudgetGuardrail, PromptCache
+
+try:  # pragma: no cover - optional dependency import
+    from groq import Groq
+
+    _GROQ_AVAILABLE = True
+except ImportError:  # pragma: no cover - handled gracefully at runtime
+    Groq = None  # type: ignore[assignment]
+    _GROQ_AVAILABLE = False
+
 
 @dataclass
 class NarrativeInsight:
@@ -21,36 +32,43 @@ class NarrativeInsight:
     meme_momentum: float
 
 
-_SYSTEM_PROMPT = (
-    "You are Narrative GPT, an analyst focused on cryptocurrency discourse. "
-    "Always respond with a single JSON object containing the keys "
-    "'sentiment', 'sentiment_score', 'emergent_themes', 'memetic_hooks', "
-    "'fake_or_buzz_warning', and 'rationale'."
-)
+_SYSTEM_PROMPT = "You are a crypto narrative analyst. Always respond with valid JSON only."
+
+_DEFAULT_PROMPT = """You are Narrative GPT, a crypto narrative analyst.
+
+Respond with JSON only:
+{
+  "sentiment": "positive|neutral|negative",
+  "sentiment_score": 0.0-1.0,
+  "emergent_themes": ["theme1", "theme2"],
+  "memetic_hooks": ["hook1", "hook2"],
+  "fake_or_buzz_warning": false,
+  "rationale": "brief explanation"
+}"""
 
 _POSITIVE_WORDS = {
-    "bullish",
     "growth",
-    "surge",
-    "pump",
     "partnership",
+    "expansion",
+    "bullish",
     "upgrade",
-    "launch",
     "mainnet",
-    "win",
-    "support",
+    "integration",
+    "surge",
+    "milestone",
+    "launch",
 }
 _NEGATIVE_WORDS = {
-    "bearish",
-    "dump",
     "hack",
     "exploit",
-    "delay",
-    "rug",
-    "lawsuit",
+    "down",
     "selloff",
-    "liquidation",
-    "risk",
+    "delay",
+    "halt",
+    "bug",
+    "reorg",
+    "rug",
+    "bankrupt",
 }
 _RISK_WORDS = {"hack", "exploit", "rug", "scam", "phishing", "breach"}
 _STOPWORDS = {
@@ -73,24 +91,31 @@ _STOPWORDS = {
 
 
 class NarrativeAnalyzer:
-    """Narrative analyzer powered by GPT-4 style sentiment synthesis."""
+    """Narrative analyzer powered by Groq's LLM with deterministic fallbacks."""
 
     def __init__(
         self,
         *,
         client: Optional[Any] = None,
-        model: str = "gpt-4o-mini",
-        temperature: float = 0.2,
+        use_llm: bool = True,
+        model: str = "llama-3.1-70b-versatile",
+        temperature: float = 0.3,
+        max_tokens: int = 600,
         prompt_cache: PromptCache | None = None,
         cost_guardrail: LLMBudgetGuardrail | None = None,
         cache_ttl_seconds: float = 86400.0,
     ) -> None:
-        self._client = client
+        self._provided_client = client
         self._model = model
         self._temperature = temperature
+        self._max_tokens = max_tokens
         self._prompt_cache = prompt_cache if prompt_cache is not None else PromptCache(ttl_seconds=cache_ttl_seconds)
         self._cache_ttl = cache_ttl_seconds
         self._cost_guardrail = cost_guardrail
+        self._prompt_template = self._load_prompt_template()
+
+        self._llm_client = self._resolve_client(use_llm)
+        self._use_llm = use_llm and self._llm_client is not None
 
     def analyze(self, narratives: Iterable[str]) -> NarrativeInsight:
         texts = [text.strip() for text in narratives if text and text.strip()]
@@ -104,32 +129,28 @@ class NarrativeAnalyzer:
             )
 
         prompt = self._build_user_prompt(texts)
-        payload = self._request_analysis(prompt, texts)
+        payload: dict[str, Any]
+        if self._use_llm:
+            payload = self._request_analysis(prompt, texts)
+        else:
+            payload = {}
+
+        if not payload:
+            payload = self._fallback_payload(texts)
+
         sentiment_score = float(np.clip(_as_float(payload.get("sentiment_score"), default=0.5), 0.0, 1.0))
         themes = _as_str_list(payload.get("emergent_themes"))
         meme_hooks = _as_str_list(payload.get("memetic_hooks"))
         fake_warning = bool(payload.get("fake_or_buzz_warning", False))
 
-        momentum = float(
-            np.clip(
-                sentiment_score
-                + 0.15 * (1 if meme_hooks else 0)
-                - 0.2 * (1 if fake_warning else 0),
-                0.0,
-                1.0,
-            )
-        )
-        volatility = float(
-            np.clip(
-                0.25
-                + 0.35 * (1 if fake_warning else 0)
-                + 0.1 * min(len(meme_hooks), 3)
-                + 0.2 * (1 - abs(sentiment_score - 0.5) * 2),
-                0.0,
-                1.0,
-            )
-        )
-        meme_momentum = float(np.clip(0.35 + 0.18 * len(meme_hooks), 0.0, 1.0))
+        if sentiment_score > 0.6:
+            momentum = 0.6
+        elif sentiment_score < 0.4:
+            momentum = 0.4
+        else:
+            momentum = 0.5
+        volatility = 0.7 if fake_warning else 0.3
+        meme_momentum = float(np.clip(len(meme_hooks) / 5.0, 0.0, 1.0))
 
         return NarrativeInsight(
             sentiment_score=sentiment_score,
@@ -142,6 +163,9 @@ class NarrativeAnalyzer:
     def _request_analysis(self, prompt: str, texts: Sequence[str]) -> dict[str, Any]:
         """Invoke the LLM and parse the JSON payload it returns."""
 
+        if not self._use_llm or self._llm_client is None:
+            return {}
+
         cache_key = self._prompt_cache.hash_prompt(prompt, model=self._model) if self._prompt_cache else None
         if cache_key and self._prompt_cache:
             cached = self._prompt_cache.get(cache_key)
@@ -151,15 +175,13 @@ class NarrativeAnalyzer:
         try:
             response_content = self._invoke_completion(prompt)
         except BudgetExceeded:
-            payload = self._fallback_payload(texts)
-            if cache_key and self._prompt_cache:
-                self._prompt_cache.set(cache_key, payload, ttl=self._cache_ttl)
-            return payload
+            return self._fallback_payload(texts)
         except Exception:
             return {}
 
+        cleaned = _clean_json_response(response_content)
         try:
-            data = json.loads(response_content)
+            data = json.loads(cleaned)
         except json.JSONDecodeError:
             return {}
         if not isinstance(data, dict):
@@ -169,15 +191,16 @@ class NarrativeAnalyzer:
         return data
 
     def _invoke_completion(self, prompt: str) -> str:
-        """Call the OpenAI client to score the provided narratives."""
+        """Call the Groq client (or injected stub) to score the provided narratives."""
 
-        client = self._client or _create_default_openai_client()
+        if self._llm_client is None:
+            return ""
         if self._cost_guardrail is not None:
             self._cost_guardrail.reserve(prompt)
-        completion = client.chat.completions.create(
+        completion = self._llm_client.chat.completions.create(
             model=self._model,
             temperature=self._temperature,
-            response_format={"type": "json_object"},
+            max_tokens=self._max_tokens,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
@@ -185,13 +208,13 @@ class NarrativeAnalyzer:
         )
         return completion.choices[0].message.content or ""
 
-    @staticmethod
-    def _build_user_prompt(texts: Sequence[str]) -> str:
-        joined = "\n".join(f"- {text}" for text in texts)
+    def _build_user_prompt(self, texts: Sequence[str]) -> str:
+        joined = "\n".join(f"- {text}" for text in texts[:10])
         return (
-            "Evaluate the following crypto narratives. "
-            "Return the JSON object described by the system instructions with fields populated from your analysis.\n"
-            f"Narratives:\n{joined}"
+            f"{self._prompt_template}\n\n"
+            "Narratives to analyze:\n"
+            f"{joined}\n\n"
+            "Respond with ONLY valid JSON, no markdown formatting."
         )
 
     @staticmethod
@@ -208,7 +231,7 @@ class NarrativeAnalyzer:
             score = 0.5 + 0.4 * (positive_hits - negative_hits) / max(total, 1)
         score = float(np.clip(score, 0.0, 1.0))
 
-        hooks = [token for token in tokens if token.startswith("#")][:3]
+        hooks = [token for token in tokens if token.startswith("#")][:5]
         themes = [token for token, _ in counts.most_common() if token not in _STOPWORDS and not token.startswith("#")]
         themes = [theme for theme in themes if len(theme) > 3][:5]
         warning = any(token in _RISK_WORDS for token in tokens)
@@ -219,16 +242,35 @@ class NarrativeAnalyzer:
             "emergent_themes": themes,
             "memetic_hooks": hooks,
             "fake_or_buzz_warning": warning,
-            "rationale": "Heuristic fallback generated when GPT budget guardrail is hit.",
+            "rationale": "Heuristic fallback generated when Groq analysis is unavailable.",
         }
 
+    def _resolve_client(self, use_llm: bool) -> Any | None:
+        if not use_llm:
+            return None
+        if self._provided_client is not None:
+            return self._provided_client
+        if not _GROQ_AVAILABLE:
+            return None
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return None
+        try:
+            client = Groq(api_key=api_key)
+        except Exception:  # pragma: no cover - runtime configuration errors
+            return None
+        else:
+            print("✓ Groq LLM enabled for narrative analysis")
+            return client
 
-def _create_default_openai_client() -> Any:
-    try:
-        from openai import OpenAI
-    except ImportError as exc:  # pragma: no cover - triggered only when dependency missing
-        raise RuntimeError("openai package is required for NarrativeAnalyzer") from exc
-    return OpenAI()
+    def _load_prompt_template(self) -> str:
+        prompt_path = Path("prompts/narrative_analyzer.md")
+        if prompt_path.exists():
+            try:
+                return prompt_path.read_text()
+            except OSError:  # pragma: no cover - filesystem edge case
+                return _DEFAULT_PROMPT
+        return _DEFAULT_PROMPT
 
 
 def _as_float(value: Any, *, default: float) -> float:
@@ -246,3 +288,17 @@ def _as_str_list(value: Any) -> List[str]:
         if isinstance(item, str) and item.strip():
             results.append(item.strip())
     return results
+
+
+def _clean_json_response(content: str) -> str:
+    content = content.strip()
+    if not content:
+        return "{}"
+    if content.startswith("```"):
+        parts = content.split("```")
+        if len(parts) >= 2:
+            candidate = parts[1]
+            if candidate.startswith("json"):
+                candidate = candidate[4:]
+            content = candidate.strip()
+    return content

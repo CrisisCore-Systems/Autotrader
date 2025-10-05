@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from math import isfinite, isnan
 from pathlib import Path
@@ -192,6 +192,38 @@ def _make_bullet_list(items: Iterable[str], indent: int = 0) -> List[str]:
     return [f"{prefix}{item}" for item in items]
 
 
+def _truncate(text: str, *, limit: int = 240) -> str:
+    clean = (text or "").strip()
+    if len(clean) <= limit:
+        return clean
+    return clean[: limit - 1].rstrip() + "…"
+
+
+def _format_news_section(items: Sequence[Mapping[str, object]]) -> List[str]:
+    if not items:
+        return ["- None"]
+
+    lines: List[str] = []
+    for item in items:
+        source = str(item.get("source") or "News")
+        title = str(item.get("title") or "Update")
+        published = item.get("published_at")
+        header = f"**{source}** — {title}"
+        if published:
+            header += f" ({published})"
+        lines.append(f"- {header}")
+
+        summary = item.get("summary")
+        if summary:
+            lines.append(f"  - {_truncate(str(summary))}")
+
+        link = item.get("link")
+        if link:
+            lines.append(f"  - {link}")
+
+    return lines
+
+
 def render_markdown_artifact(payload: Dict[str, object]) -> str:
     """Render Collapse Artifact markdown from payload.
 
@@ -213,6 +245,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
     actions = _coerce_lines(payload.get("actions", []))
     narratives = _coerce_lines(payload.get("narratives", []))
     hash_value = payload.get("hash")
+    news_section_lines = _format_news_section(payload.get("news_items", []))
 
     header_lines = [
         "---",
@@ -286,6 +319,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         Section("Executive Summary", summary_lines, level=1).render(),
         Section("Market Snapshot", market_section_lines, level=2).render(),
         Section("Narrative Signals", narrative_section_lines, level=2).render(),
+        Section("News Highlights", news_section_lines, level=2).render(),
         Section("Feature Vector Highlights", feature_lines, level=2).render(),
         Section("Diagnostics", debug_lines, level=2).render(),
         Section("Lore", lore_lines, level=1).render(),

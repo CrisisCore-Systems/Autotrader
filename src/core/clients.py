@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import httpx
+
+if TYPE_CHECKING:  # pragma: no cover - import for type checkers only
+    from feedparser import FeedParserDict
 
 
 class BaseClient:
@@ -103,3 +106,33 @@ class EtherscanClient(BaseClient):
             raise RuntimeError(f"Etherscan error: {payload.get('message', 'unknown error')}")
         results = payload.get("result", [])
         return results[0] if results else {}
+
+
+class NewsFeedClient(BaseClient):
+    """Client for retrieving RSS/Atom feeds used for narrative signals."""
+
+    def __init__(
+        self,
+        *,
+        timeout: float = 15.0,
+        client: Optional[httpx.Client] = None,
+    ) -> None:
+        session = client or httpx.Client(timeout=timeout)
+        super().__init__(session)
+
+    def fetch_feed(self, url: str) -> "FeedParserDict":
+        """Return the parsed feed for ``url``.
+
+        The client intentionally relies on :mod:`feedparser` to normalise
+        responses into a consistent structure regardless of whether the
+        upstream publishes RSS or Atom documents.
+        """
+
+        response = self.client.get(url)
+        response.raise_for_status()
+        try:
+            import feedparser
+        except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+            raise RuntimeError("feedparser is required for NewsFeedClient") from exc
+
+        return feedparser.parse(response.content)

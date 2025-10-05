@@ -36,12 +36,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the detailed architecture diagram and
 The Python skeleton (`main.py`) provides the core pipeline structure:
 
 ```bash
-# Install dependencies (when ready to implement)
-pip install sqlite3 requests chromadb openai
-
-# Run the pipeline
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 python main.py
 ```
+
+Running the pipeline generates both `artifacts/dashboard.md` and a richer `artifacts/dashboard.html` loreboard containing fused metrics, ascii trend sparklines, and nearest-narrative references. Historical payloads, embeddings, and a fast full-text search index are persisted in `artifacts/voidbloom.db`.
 
 ### TypeScript Implementation
 
@@ -83,46 +83,46 @@ Final Score = (0.4 × APS) + (0.3 × NVI) + (0.2 × ERR⁻¹) + (0.1 × RRR)
 
 ### Phase 1 - Data Ingestion ✅
 - [x] Architecture design
-- [x] Python skeleton
-- [x] TypeScript skeleton
-- [ ] API integrations (placeholder functions)
-- [ ] Database setup
+- [x] Python + TypeScript pipelines
+- [x] News ingestion (CryptoCompare + CoinDesk/Cointelegraph/Decrypt/The Block RSS)
+- [x] Social ingestion (Reddit, StockTwits, Nitter/Twitter mirror)
+- [x] On-chain metrics (CoinGecko fundamentals, Dexscreener liquidity, Ethplorer holder splits)
+- [x] SQLite persistence + full-text search index
 
 ### Phase 2 - Sentiment & Analysis ✅
-- [x] Sentiment synthesis structure
-- [x] Technical analysis framework
-- [x] Contract security framework
-- [ ] GPT chain implementation
-- [ ] Indicator calculations
+- [x] VADER + topical TF-IDF sentiment synthesis
+- [x] Meme momentum scoring with recency weighting
+- [x] Myth vector + narrative extraction heuristics
+- [x] EMA/MACD/RSI + volatility, Bollinger bandwidth, ATR enrichments
 
-### Phase 3 - Signal Fusion 🔄
-- [x] Fusion algorithm structure
-- [ ] Composite scoring implementation
-- [ ] Optimization and tuning
+### Phase 3 - Signal Fusion ✅
+- [x] Composite scoring with contract risk modulation
+- [x] Embedding similarity lookup across historical runs
+- [ ] Hyperparameter optimisation + reinforcement tuning
 
-### Phase 4 - Visualization (Future)
-- [ ] Dashboard development
-- [ ] Lore Capsules
-- [ ] Real-time monitoring
+### Phase 4 - Visualization 🚧
+- [x] Markdown + HTML dashboards with lore capsules and sparklines
+- [ ] Real-time monitoring channel
+- [ ] Interactive front-end controls
 
 ## 🗄️ Data Sources
 
 ### News APIs
+- CryptoCompare
+- CoinDesk
 - Cointelegraph
-- The Block
 - Decrypt
+- The Block
 
 ### Social Platforms
-- Twitter/X
 - Reddit
-- Telegram
-- Discord
+- StockTwits
+- Twitter (via Nitter mirror RSS)
 
 ### On-Chain Data
-- Etherscan
-- DefiLlama
-- Nansen
-- Token Terminal
+- CoinGecko fundamentals + developer telemetry
+- Dexscreener liquidity + volume footprints
+- Ethplorer holder distribution (configurable contract map)
 
 ### Technical Data
 - TradingView API
@@ -130,8 +130,9 @@ Final Score = (0.4 × APS) + (0.3 × NVI) + (0.2 × ERR⁻¹) + (0.1 × RRR)
 
 ## 💾 Storage Solutions
 
-- **SQLite/Supabase**: Structured data persistence
-- **Chroma/Pinecone**: Vector database for embeddings and semantic search
+- **SQLite**: Structured persistence with historical payloads, TF-IDF vectors, and FTS5 search
+- **Supabase (TS path)**: Cloud persistence for multi-language parity
+- **Vector-ready embeddings**: Deterministic TF-IDF encoding + cosine nearest-neighbour lookups
 
 ## 🛠️ Development
 

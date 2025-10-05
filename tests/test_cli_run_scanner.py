@@ -99,3 +99,8 @@ def test_run_saves_artifact(tmp_path: Path) -> None:
     assert "Memorywear Entry" in content
     assert result.news_items
     assert "## News Highlights" in content
+
+    html_path = tmp_path / expected_name.replace(".md", ".html")
+    assert html_path.exists()
+    html_content = html_path.read_text(encoding="utf-8")
+    assert "<!DOCTYPE html>" in html_content

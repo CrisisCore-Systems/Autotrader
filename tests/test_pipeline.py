@@ -68,3 +68,4 @@ def test_hidden_gem_scanner_produces_artifact() -> None:
     assert result.gem_score.score > 0
     assert "Memorywear Entry" in result.artifact_markdown
     assert isinstance(result.artifact_payload["flags"], list)
+    assert "<!DOCTYPE html>" in result.artifact_html

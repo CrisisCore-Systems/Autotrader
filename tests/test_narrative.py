@@ -11,6 +11,8 @@ def test_narrative_analyzer_scores_sentiment() -> None:
     assert 0.0 <= insight.sentiment_score <= 1.0
     assert 0.0 <= insight.momentum <= 1.0
     assert isinstance(insight.themes, list)
+    assert 0.0 <= insight.volatility <= 1.0
+    assert 0.0 <= insight.meme_momentum <= 1.0
 
 
 def test_narrative_analyzer_defaults_without_text() -> None:
@@ -19,3 +21,5 @@ def test_narrative_analyzer_defaults_without_text() -> None:
     assert insight.sentiment_score == 0.5
     assert insight.momentum == 0.5
     assert insight.themes == []
+    assert insight.volatility == 0.0
+    assert insight.meme_momentum == 0.0

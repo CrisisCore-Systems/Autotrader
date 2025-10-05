@@ -66,6 +66,10 @@ def test_hidden_gem_scanner_produces_artifact() -> None:
     result = scanner.scan(token)
 
     assert result.gem_score.score > 0
+    assert result.final_score >= 0
+    assert "NVI" in result.sentiment_metrics
+    assert "APS" in result.technical_metrics
+    assert "ERR" in result.security_metrics
     assert "Memorywear Entry" in result.artifact_markdown
     assert isinstance(result.artifact_payload["flags"], list)
     assert "<!DOCTYPE html>" in result.artifact_html

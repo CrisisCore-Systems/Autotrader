@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
-from functools import lru_cache
-from typing import Dict, Iterable, List, ForwardRef
+import logging
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, ForwardRef
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from main import build_scanner, demo_tokens
-from src.core.pipeline import ScanResult, TokenConfig
-from src.services.news import NewsItem
+from src.cli.run_scanner import build_unlocks, load_config
+from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient, NewsFeedClient
+from src.core.narrative import NarrativeAnalyzer
+from src.core.pipeline import HiddenGemScanner, ScanResult, TokenConfig
+from src.services.news import NewsAggregator, NewsItem
 
 # ---------------------------------------------------------------------------
 # Compatibility patches
@@ -21,6 +28,7 @@ if _forward_ref_evaluate is not None:
     _signature = inspect.signature(_forward_ref_evaluate)
     needs_patch = "recursive_guard" in _signature.parameters and _signature.parameters["recursive_guard"].default is inspect._empty
     if needs_patch:
+
         def _forward_ref_eval_compat(self, globalns, localns, type_params=None, *, recursive_guard=None):
             if recursive_guard is None:
                 recursive_guard = set()
@@ -28,9 +36,40 @@ if _forward_ref_evaluate is not None:
 
         ForwardRef._evaluate = _forward_ref_eval_compat  # type: ignore[attr-defined]
 
+
+logger = logging.getLogger(__name__)
+
+CONFIG_ENV_VAR = "VOIDBLOOM_CONFIG"
+DEFAULT_CONFIG_PATH = Path("configs/example.yaml")
+
+
+@dataclass
+class _DashboardState:
+    """Mutable runtime state for the dashboard API."""
+
+    config_path: Path
+    config: Dict[str, Any] | None = None
+    token_map: Dict[str, TokenConfig] = field(default_factory=dict)
+    scanner: HiddenGemScanner | None = None
+    results: Dict[str, ScanResult] = field(default_factory=dict)
+    trees: Dict[str, Dict[str, Any] | None] = field(default_factory=dict)
+    cleanups: List[Callable[[], None]] = field(default_factory=list)
+
+
+def _resolve_config_path() -> Path:
+    env_value = os.getenv(CONFIG_ENV_VAR)
+    if env_value:
+        return Path(env_value)
+    return DEFAULT_CONFIG_PATH
+
+
+_state = _DashboardState(config_path=_resolve_config_path())
+_scan_lock = asyncio.Lock()
+
+
 app = FastAPI(
     title="VoidBloom Dashboard API",
-    version="0.1.0",
+    version="0.2.0",
     openapi_url="/api/openapi.json",
     docs_url="/api/docs",
     description="REST interface exposing Hidden Gem scanner insights for the web dashboard.",
@@ -46,27 +85,163 @@ app.add_middleware(
 router = APIRouter(prefix="/api")
 
 
-@lru_cache(maxsize=1)
-def _scanner():
-    return build_scanner()
+@app.on_event("startup")
+async def _startup() -> None:
+    await _initialize_state()
+    try:
+        await _run_scan(force=True)
+    except Exception as exc:  # pragma: no cover - best effort startup scan
+        logger.warning("Initial scan failed: %s", exc)
 
 
-@lru_cache(maxsize=1)
-def _token_map() -> Dict[str, TokenConfig]:
-    return {config.symbol.upper(): config for config in demo_tokens()}
+@app.on_event("shutdown")
+async def _shutdown() -> None:
+    _close_clients()
 
 
-@lru_cache(maxsize=32)
-def _scan(symbol: str) -> tuple[ScanResult, Dict[str, object]]:
-    normalized = symbol.upper()
-    token_map = _token_map()
-    if normalized not in token_map:
-        raise KeyError(symbol)
-    result, tree = _scanner().scan_with_tree(token_map[normalized])
-    return result, tree.to_dict()
+async def _initialize_state() -> None:
+    _close_clients()
+    _clear_results()
+    _state.token_map = {}
+    _state.scanner = None
+
+    config = _load_config(_state.config_path)
+    _state.config = config
+
+    token_map = _build_token_map(config)
+    if not token_map:
+        logger.info("Falling back to demo token set for dashboard API")
+        _state.token_map = {token_config.symbol.upper(): token_config for token_config in demo_tokens()}
+        _state.scanner, cleanups = _create_demo_scanner()
+        _state.cleanups.extend(cleanups)
+        return
+
+    _state.token_map = token_map
+    scanner, cleanups = _create_scanner(config or {}, token_map)
+    _state.scanner = scanner
+    _state.cleanups.extend(cleanups)
 
 
-def _serialize_summary(config: TokenConfig, result: ScanResult) -> Dict[str, object]:
+def _load_config(path: Path) -> Dict[str, Any] | None:
+    if not path.exists():
+        logger.info("Dashboard config not found at %s", path)
+        return None
+    try:
+        return load_config(path)
+    except Exception as exc:  # pragma: no cover - config errors surfaced at runtime
+        logger.warning("Failed to load dashboard config: %s", exc)
+        return None
+
+
+def _build_token_map(config: Dict[str, Any] | None) -> Dict[str, TokenConfig]:
+    if not config:
+        return {}
+
+    token_map: Dict[str, TokenConfig] = {}
+    for raw in config.get("tokens", []) or []:
+        try:
+            symbol = str(raw["symbol"]).upper()
+            token_config = TokenConfig(
+                symbol=str(raw["symbol"]),
+                coingecko_id=str(raw["coingecko_id"]),
+                defillama_slug=str(raw["defillama_slug"]),
+                contract_address=str(raw["contract_address"]),
+                narratives=[str(item) for item in raw.get("narratives", []) if item],
+                glyph=str(raw.get("glyph", "⧗⟡")),
+                unlocks=build_unlocks(raw.get("unlocks", [])),
+                news_feeds=[str(url) for url in raw.get("news_feeds", []) if url],
+                keywords=[str(keyword) for keyword in (raw.get("keywords") or [raw["symbol"]]) if keyword],
+            )
+        except KeyError as exc:
+            logger.warning("Skipping token configuration missing key %s", exc)
+            continue
+        token_map[symbol] = token_config
+    return token_map
+
+
+def _create_scanner(config: Dict[str, Any], tokens: Mapping[str, TokenConfig]) -> tuple[HiddenGemScanner, List[Callable[[], None]]]:
+    coin_client = CoinGeckoClient()
+    defi_client = DefiLlamaClient()
+    etherscan_client = EtherscanClient(api_key=config.get("etherscan_api_key"))
+
+    cleanups: List[Callable[[], None]] = [coin_client.close, defi_client.close, etherscan_client.close]
+
+    default_feeds = list(config.get("news_feeds") or config.get("news", {}).get("feeds", []) or [])
+    has_token_feeds = any(token_config.news_feeds for token_config in tokens.values())
+    news_client: Optional[NewsFeedClient] = None
+    news_aggregator: NewsAggregator | None = None
+    if default_feeds or has_token_feeds:
+        news_client = NewsFeedClient()
+        news_aggregator = NewsAggregator(news_client, default_feeds=default_feeds)
+        cleanups.append(news_client.close)
+
+    liquidity_threshold = float(config.get("scanner", {}).get("liquidity_threshold", 50_000))
+    scanner = HiddenGemScanner(
+        coin_client=coin_client,
+        defi_client=defi_client,
+        etherscan_client=etherscan_client,
+        narrative_analyzer=NarrativeAnalyzer(),
+        news_aggregator=news_aggregator,
+        liquidity_threshold=liquidity_threshold,
+    )
+    return scanner, cleanups
+
+
+def _create_demo_scanner() -> tuple[HiddenGemScanner, List[Callable[[], None]]]:
+    return build_scanner(), []
+
+
+def _close_clients() -> None:
+    while _state.cleanups:
+        cleanup = _state.cleanups.pop()
+        try:
+            cleanup()
+        except Exception:  # pragma: no cover - defensive shutdown
+            continue
+
+
+def _clear_results() -> None:
+    _state.results.clear()
+    _state.trees.clear()
+
+
+async def _run_scan(*, force: bool) -> None:
+    if _state.scanner is None:
+        return
+    async with _scan_lock:
+        if not force and _state.results:
+            return
+
+        loop = asyncio.get_running_loop()
+        scanner = _state.scanner
+        token_map = dict(_state.token_map)
+
+        def _execute() -> tuple[Dict[str, ScanResult], Dict[str, Dict[str, Any] | None]]:
+            results: Dict[str, ScanResult] = {}
+            trees: Dict[str, Dict[str, Any] | None] = {}
+            for symbol, config in token_map.items():
+                try:
+                    result, tree = scanner.scan_with_tree(config)
+                except Exception as exc:  # pragma: no cover - network/runtime failure handling
+                    logger.warning("Scan failed for %s: %s", symbol, exc)
+                    continue
+                results[symbol] = result
+                trees[symbol] = tree.to_dict() if tree else None
+            return results, trees
+
+        results, trees = await loop.run_in_executor(None, _execute)
+        if results:
+            _state.results = results
+            _state.trees = trees
+
+
+async def _ensure_results() -> None:
+    await _run_scan(force=False)
+    if not _state.results:
+        raise HTTPException(status_code=503, detail="Scan results not ready")
+
+
+def _serialize_summary(config: TokenConfig, result: ScanResult) -> Dict[str, Any]:
     snapshot = result.market_snapshot
     narrative = result.narrative
     return {
@@ -84,7 +259,7 @@ def _serialize_summary(config: TokenConfig, result: ScanResult) -> Dict[str, obj
     }
 
 
-def _serialize_market_snapshot(result: ScanResult) -> Dict[str, object]:
+def _serialize_market_snapshot(result: ScanResult) -> Dict[str, Any]:
     snapshot = result.market_snapshot
     return {
         "symbol": snapshot.symbol,
@@ -98,7 +273,7 @@ def _serialize_market_snapshot(result: ScanResult) -> Dict[str, object]:
     }
 
 
-def _serialize_narrative(result: ScanResult) -> Dict[str, object]:
+def _serialize_narrative(result: ScanResult) -> Dict[str, Any]:
     insight = result.narrative
     return {
         "sentiment_score": insight.sentiment_score,
@@ -109,7 +284,7 @@ def _serialize_narrative(result: ScanResult) -> Dict[str, object]:
     }
 
 
-def _serialize_safety(result: ScanResult) -> Dict[str, object]:
+def _serialize_safety(result: ScanResult) -> Dict[str, Any]:
     report = result.safety_report
     return {
         "score": report.score,
@@ -119,8 +294,8 @@ def _serialize_safety(result: ScanResult) -> Dict[str, object]:
     }
 
 
-def _serialize_unlocks(config: TokenConfig) -> List[Dict[str, object]]:
-    events = []
+def _serialize_unlocks(config: TokenConfig) -> List[Dict[str, Any]]:
+    events: List[Dict[str, Any]] = []
     for event in config.unlocks:
         events.append(
             {
@@ -131,8 +306,8 @@ def _serialize_unlocks(config: TokenConfig) -> List[Dict[str, object]]:
     return events
 
 
-def _serialize_news(items: Iterable[NewsItem]) -> List[Dict[str, object]]:
-    serialized: List[Dict[str, object]] = []
+def _serialize_news(items: Iterable[NewsItem]) -> List[Dict[str, Any]]:
+    serialized: List[Dict[str, Any]] = []
     for item in items:
         serialized.append(
             {
@@ -146,7 +321,7 @@ def _serialize_news(items: Iterable[NewsItem]) -> List[Dict[str, object]]:
     return serialized
 
 
-def _serialize_detail(config: TokenConfig, result: ScanResult, tree: Dict[str, object]) -> Dict[str, object]:
+def _serialize_detail(config: TokenConfig, result: ScanResult, tree: Dict[str, Any] | None) -> Dict[str, Any]:
     detail = {
         **_serialize_summary(config, result),
         "raw_features": dict(result.raw_features),
@@ -182,32 +357,46 @@ def health() -> Dict[str, str]:
 
 
 @router.get("/tokens")
-def list_tokens() -> List[Dict[str, object]]:
-    summaries: List[Dict[str, object]] = []
-    for symbol, config in _token_map().items():
-        result, _ = _scan(symbol)
+async def list_tokens() -> List[Dict[str, Any]]:
+    await _ensure_results()
+    summaries: List[Dict[str, Any]] = []
+    for symbol, config in _state.token_map.items():
+        result = _state.results.get(symbol)
+        if result is None:
+            continue
         summaries.append(_serialize_summary(config, result))
     summaries.sort(key=lambda item: item["final_score"], reverse=True)
     return summaries
 
 
 @router.get("/tokens/{symbol}")
-def get_token(symbol: str) -> Dict[str, object]:
+async def get_token(symbol: str) -> Dict[str, Any]:
     normalized = symbol.upper()
-    token_map = _token_map()
-    if normalized not in token_map:
+    if normalized not in _state.token_map:
         raise HTTPException(status_code=404, detail="Unknown token")
+
+    await _ensure_results()
+
+    result = _state.results.get(normalized)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Token not available")
+    tree = _state.trees.get(normalized)
+    return _serialize_detail(_state.token_map[normalized], result, tree)
+
+
+@router.post("/scan")
+async def trigger_scan() -> Dict[str, Any]:
     try:
-        result, tree = _scan(normalized)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="Unknown token") from None
-    return _serialize_detail(token_map[normalized], result, tree)
+        await _run_scan(force=True)
+    except Exception as exc:  # pragma: no cover - surfaced to HTTP response
+        logger.exception("Manual scan failed")
+        raise HTTPException(status_code=500, detail="Scan execution failed") from exc
+    return {"status": "success", "tokens_scanned": len(_state.results)}
 
 
 @router.post("/refresh", status_code=202)
-def refresh() -> Dict[str, str]:
-    _scan.cache_clear()
-    _scanner.cache_clear()
+async def refresh() -> Dict[str, str]:
+    _clear_results()
     return {"status": "refreshed"}
 
 

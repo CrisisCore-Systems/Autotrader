@@ -4,3 +4,5 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints/
 artifacts/*.db
+node_modules/
+dashboard/node_modules/

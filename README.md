@@ -118,6 +118,7 @@ Edge arises from curated data, risk gating, and a recursive workflow—not just 
 ```
 .
 ├── ARCHITECTURE.md      # Mermaid architecture diagram and system overview
+├── dashboard/          # React dashboard for interactive visualization
 ├── main.py             # Python pipeline skeleton (Phase 1-2)
 ├── main.ts             # TypeScript pipeline skeleton (Phase 1-2)
 ├── tsconfig.json       # TypeScript configuration
@@ -164,6 +165,25 @@ npm install @supabase/supabase-js axios
 tsc
 node main.js
 ```
+
+### Visualization Dashboard
+
+An interactive dashboard is available in the `dashboard/` directory. It couples a
+FastAPI service that exposes pipeline results with a React/Vite front-end.
+
+```bash
+# Start the API (default: http://localhost:8000)
+uvicorn src.services.dashboard_api:app --reload
+
+# In another shell launch the React app (default: http://localhost:5173)
+cd dashboard
+npm install
+npm run dev
+```
+
+The development server proxies `/api/*` requests to the FastAPI backend. In
+production you can set `VITE_API_BASE_URL` to point the UI at a different API
+host.
 
 ## 📊 Key Metrics & Scores
 

@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  api:
+    build: ../
+    command: uvicorn src.services.exporter:app --host 0.0.0.0 --port 8000
+    env_file:
+      - ../.env
+    depends_on:
+      - postgres
+      - vector
+    volumes:
+      - ..:/app
+
+  worker:
+    build: ../
+    command: poetry run python -m src.core.worker
+    env_file:
+      - ../.env
+    depends_on:
+      - postgres
+      - vector
+    volumes:
+      - ..:/app
+
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_USER: crisiscore
+      POSTGRES_PASSWORD: crisiscore
+      POSTGRES_DB: voidbloom
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  vector:
+    image: milvusdb/milvus:2.3.4
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    environment:
+      ETCD_USE_EMBED: "true"
+      MINIO_USE_EMBED: "true"
+
+volumes:
+  postgres-data:

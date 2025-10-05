@@ -1,0 +1,16 @@
+# Example configuration for running the Hidden-Gem Scanner CLI
+scanner:
+  liquidity_threshold: 75000
+etherscan_api_key: "YOUR_KEY_HERE"
+tokens:
+  - symbol: VOID
+    coingecko_id: void-token
+    defillama_slug: void-protocol
+    contract_address: "0x0000000000000000000000000000000000000000"
+    glyph: "⧗⟡"
+    narratives:
+      - "VOID protocol announces mainnet launch with growth roadmap"
+      - "Integrations with major L2 partners spark bullish chatter"
+    unlocks:
+      - date: 2025-05-15T00:00:00
+        percent_supply: 4.5

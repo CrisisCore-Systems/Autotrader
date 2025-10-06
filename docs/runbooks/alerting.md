@@ -38,9 +38,11 @@ for entry in entries:
     print(entry.key, entry.payload)
 PY
 
-# Start the Celery worker and dispatcher (example supervisord excerpt)
-celery -A src.alerts.worker worker -Q alerts --loglevel=INFO
-python -m src.alerts.worker --dispatch
+# Start the dispatcher loop (example supervisord excerpt)
+python -m src.alerts.worker dispatch --repo src.alerts.repo:InMemoryAlertOutbox --channels slack telegram email
+
+# Run a one-off drain with demo data for smoke testing
+python -m src.alerts.worker dispatch --once --repo src.alerts.worker:build_demo_repo --channels stdout
 ```
 
 ## Dead-letter Queue

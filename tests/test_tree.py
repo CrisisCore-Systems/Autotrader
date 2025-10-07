@@ -77,5 +77,8 @@ def test_scan_with_tree_emits_trace() -> None:
     assert statuses["E1"] == "skipped"
     assert statuses["E3"] == "success"
     assert statuses["E4"] == "skipped"
+    assert statuses["B6"] == "success"
+    assert statuses["C3"] == "success"
+    assert statuses["E3"] == "success"
     assert result.gem_score.score > 0
     assert "Memorywear Entry" in result.artifact_markdown

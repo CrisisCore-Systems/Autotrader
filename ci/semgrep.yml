@@ -1,0 +1,18 @@
+rules:
+  - id: python-no-eval
+    languages: [python]
+    message: "Avoid using eval(); prefer safer parsing alternatives."
+    severity: ERROR
+    pattern: eval(...)
+  - id: requests-timeout
+    languages: [python]
+    message: "httpx/requests calls should define a timeout."
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: requests.$FUNC(...)
+          - pattern: httpx.$FUNC(...)
+      - pattern-not: $OBJ(..., timeout=$TIMEOUT, ...)
+    metavariable-pattern:
+      metavariable: $FUNC
+      pattern: "(get|post|put|delete|patch|head)"

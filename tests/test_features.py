@@ -57,6 +57,7 @@ def test_build_feature_vector_merges_sources() -> None:
             "unlock_pressure": 0.1,
             "upcoming_unlock_risk": 0.0,
         },
+        onchain_metrics={"active_wallets": 450, "net_inflows": 20000.0, "unlock_pressure": 0.1},
         narratives=["growth"],
     )
     vector = build_feature_vector(

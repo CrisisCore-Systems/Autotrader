@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from src.core.pipeline import HiddenGemScanner, TokenConfig, UnlockEvent
 from src.core.narrative import NarrativeAnalyzer
+from tests.stubs import StubGroqClient
 
 
 class StubCoinGeckoClient:
@@ -45,11 +46,23 @@ class StubEtherscanClient:
 
 
 def test_hidden_gem_scanner_produces_artifact() -> None:
+    narrative_stub = StubGroqClient(
+        payload={
+            "sentiment": "positive",
+            "sentiment_score": 0.74,
+            "emergent_themes": ["growth", "integration"],
+            "memetic_hooks": ["launch hype"],
+            "fake_or_buzz_warning": False,
+            "rationale": "Community momentum with real progress.",
+        }
+    )
+
     scanner = HiddenGemScanner(
         coin_client=StubCoinGeckoClient(),
         defi_client=StubDefiLlamaClient(),
         etherscan_client=StubEtherscanClient(),
         narrative_analyzer=NarrativeAnalyzer(),
+        narrative_analyzer=NarrativeAnalyzer(client=narrative_stub),
         liquidity_threshold=50_000,
     )
     token = TokenConfig(
@@ -68,3 +81,10 @@ def test_hidden_gem_scanner_produces_artifact() -> None:
     assert result.gem_score.score > 0
     assert "Memorywear Entry" in result.artifact_markdown
     assert isinstance(result.artifact_payload["flags"], list)
+    assert result.final_score >= 0
+    assert "NVI" in result.sentiment_metrics
+    assert "APS" in result.technical_metrics
+    assert "ERR" in result.security_metrics
+    assert "Memorywear Entry" in result.artifact_markdown
+    assert isinstance(result.artifact_payload["flags"], list)
+    assert "<!DOCTYPE html>" in result.artifact_html

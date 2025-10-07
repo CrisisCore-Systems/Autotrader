@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Iterable, Sequence
+from typing import TYPE_CHECKING, Dict, Iterable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,15 @@ from src.core.safety import SafetyReport, apply_penalties, evaluate_contract, li
 from src.core.scoring import GemScoreResult, compute_gem_score, should_flag_asset
 from src.core.tree import NodeOutcome, TreeNode
 from src.services.exporter import render_markdown_artifact
+from src.services.exporter import render_html_artifact, render_markdown_artifact
+from src.services.news import NewsAggregator, NewsItem
+
+if TYPE_CHECKING:  # pragma: no cover
+    from src.services.alerting import AlertManager, Alert
+    from src.services.feedback import PrecisionTracker
+    from src.services.github import GitHubActivityAggregator, GitHubEvent
+    from src.services.social import SocialAggregator, SocialPost
+    from src.services.tokenomics import TokenomicsAggregator, TokenomicsSnapshot
 
 
 @dataclass
@@ -33,6 +43,8 @@ class TokenConfig:
     narratives: Sequence[str] = field(default_factory=list)
     glyph: str = "⧗⟡"
     unlocks: Sequence[UnlockEvent] = field(default_factory=list)
+    news_feeds: Sequence[str] = field(default_factory=list)
+    keywords: Sequence[str] = field(default_factory=list)
 
 
 @dataclass
@@ -48,6 +60,16 @@ class ScanResult:
     debug: Dict[str, float]
     artifact_payload: Dict[str, object]
     artifact_markdown: str
+    artifact_html: str
+    news_items: Sequence[NewsItem] = field(default_factory=list)
+    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
+    technical_metrics: Dict[str, float] = field(default_factory=dict)
+    security_metrics: Dict[str, float] = field(default_factory=dict)
+    final_score: float = 0.0
+    github_events: Sequence["GitHubEvent"] = field(default_factory=list)
+    social_posts: Sequence["SocialPost"] = field(default_factory=list)
+    tokenomics_metrics: Sequence["TokenomicsSnapshot"] = field(default_factory=list)
+    alerts: Sequence["Alert"] = field(default_factory=list)
 
 
 @dataclass
@@ -75,6 +97,18 @@ class ScanContext:
     safety_report: SafetyReport | None = None
     liquidity_ok: bool = False
     result: ScanResult | None = None
+    artifact_html: str | None = None
+    safety_report: SafetyReport | None = None
+    liquidity_ok: bool = False
+    result: ScanResult | None = None
+    news_items: list[NewsItem] = field(default_factory=list)
+    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
+    technical_metrics: Dict[str, float] = field(default_factory=dict)
+    security_metrics: Dict[str, float] = field(default_factory=dict)
+    final_score: float = 0.0
+    github_events: list["GitHubEvent"] = field(default_factory=list)
+    social_posts: list["SocialPost"] = field(default_factory=list)
+    tokenomics_metrics: list["TokenomicsSnapshot"] = field(default_factory=list)
 
 
 class HiddenGemScanner:
@@ -88,12 +122,26 @@ class HiddenGemScanner:
         etherscan_client: EtherscanClient,
         narrative_analyzer: NarrativeAnalyzer | None = None,
         liquidity_threshold: float = 50_000.0,
+        news_aggregator: NewsAggregator | None = None,
+        liquidity_threshold: float = 50_000.0,
+        alert_manager: "AlertManager" | None = None,
+        precision_tracker: "PrecisionTracker" | None = None,
+        github_aggregator: "GitHubActivityAggregator" | None = None,
+        social_aggregator: "SocialAggregator" | None = None,
+        tokenomics_aggregator: "TokenomicsAggregator" | None = None,
     ) -> None:
         self.coin_client = coin_client
         self.defi_client = defi_client
         self.etherscan_client = etherscan_client
         self.narrative_analyzer = narrative_analyzer or NarrativeAnalyzer()
         self.liquidity_threshold = liquidity_threshold
+        self.news_aggregator = news_aggregator
+        self.liquidity_threshold = liquidity_threshold
+        self.alert_manager = alert_manager
+        self.precision_tracker = precision_tracker
+        self.github_aggregator = github_aggregator
+        self.social_aggregator = social_aggregator
+        self.tokenomics_aggregator = tokenomics_aggregator
 
     def scan(self, config: TokenConfig) -> ScanResult:
         context = ScanContext(config=config)
@@ -101,6 +149,7 @@ class HiddenGemScanner:
         tree.run(context)
         if context.result is None:
             raise RuntimeError("Scan execution did not produce a result")
+        self._post_process(context)
         return context.result
 
     def scan_with_tree(self, config: TokenConfig) -> tuple[ScanResult, TreeNode]:
@@ -109,6 +158,7 @@ class HiddenGemScanner:
         tree.run(context)
         if context.result is None:
             raise RuntimeError("Scan execution did not produce a result")
+        self._post_process(context)
         return context.result, tree
 
     # ------------------------------------------------------------------
@@ -181,6 +231,47 @@ class HiddenGemScanner:
                 action=self._action_social_signal_deferred,
             )
         )
+                key="A3",
+                title="News & Narrative Signals",
+                description="Aggregate news feeds for sentiment context",
+                action=self._action_fetch_news,
+            )
+        )
+        if self.github_aggregator is not None:
+            branch_a.add_child(
+                TreeNode(
+                    key="A4",
+                    title="GitHub Activity",
+                    description="Collect repository development signals",
+                    action=self._action_fetch_github_activity,
+                )
+            )
+        if self.social_aggregator is not None:
+            branch_a.add_child(
+                TreeNode(
+                    key="A4b",
+                    title="Social Sentiment",
+                    description="Pull high-signal social posts",
+                    action=self._action_fetch_social_sentiment,
+                )
+            )
+        branch_a.add_child(
+            TreeNode(
+                key="A5",
+                title="Contract Source & Verification",
+                description="Fetch Etherscan contract metadata",
+                action=self._action_fetch_contract_metadata,
+            )
+        )
+        if self.tokenomics_aggregator is not None:
+            branch_a.add_child(
+                TreeNode(
+                    key="A6",
+                    title="Tokenomics Intelligence",
+                    description="Normalize circulating supply & unlock data",
+                    action=self._action_fetch_tokenomics,
+                )
+            )
 
         branch_b = root.add_child(
             TreeNode(
@@ -293,6 +384,12 @@ class HiddenGemScanner:
                 action=self._action_record_safety_heuristics,
             )
         )
+                key="D1",
+                title="Penalty Application",
+                description="Apply safety penalties to the feature vector",
+                action=self._action_apply_penalties,
+            )
+        )
 
         branch_c = root.add_child(
             TreeNode(
@@ -307,6 +404,10 @@ class HiddenGemScanner:
                 title="Narrative Momentum",
                 description="Record narrative velocity prior to scoring",
                 action=self._action_record_narrative_momentum,
+                key="C3",
+                title="GemScore Ensemble",
+                description="Compute weighted GemScore with contributions",
+                action=self._action_compute_gem_score,
             )
         )
         branch_c.add_child(
@@ -331,6 +432,9 @@ class HiddenGemScanner:
                 title="GemScore Ensemble",
                 description="Compute weighted GemScore with contributions",
                 action=self._action_compute_gem_score,
+                title="Composite Metric Deck",
+                description="Synthesize narrative, technical, and safety metrics",
+                action=self._action_compute_composite_metrics,
             )
         )
         branch_c.add_child(
@@ -467,6 +571,118 @@ class HiddenGemScanner:
             data={"features": feature_keys},
         )
 
+    def _action_fetch_news(self, context: ScanContext) -> NodeOutcome:
+        if self.news_aggregator is None:
+            return NodeOutcome(
+                status="skipped",
+                summary="News aggregator not configured",
+                data={},
+            )
+
+        feeds = list(context.config.news_feeds)
+        keywords = list(context.config.keywords) or [context.config.symbol]
+        try:
+            items = self.news_aggregator.collect(
+                feeds=feeds if feeds else None,
+                keywords=keywords,
+                limit=20,
+            )
+        except Exception as exc:  # pragma: no cover - aggregation should not halt pipeline
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to aggregate news: {exc}",
+                data={"error": str(exc)},
+                proceed=True,
+            )
+
+        context.news_items = items
+        if not items:
+            return NodeOutcome(
+                status="success",
+                summary="No recent matching news",
+                data={"articles": 0},
+            )
+
+        return NodeOutcome(
+            status="success",
+            summary=f"Collected {len(items)} news items",
+            data={"articles": len(items)},
+        )
+
+    def _action_fetch_github_activity(self, context: ScanContext) -> NodeOutcome:
+        if self.github_aggregator is None:
+            return NodeOutcome(status="skipped", summary="GitHub aggregator disabled", data={}, proceed=True)
+        try:
+            events = self.github_aggregator.collect(limit=40)
+        except Exception as exc:
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to fetch GitHub activity: {exc}",
+                data={"error": str(exc)},
+                proceed=True,
+            )
+        context.github_events = list(events)
+        return NodeOutcome(
+            status="success",
+            summary=f"Collected {len(context.github_events)} GitHub events",
+            data={"events": len(context.github_events)},
+        )
+
+    def _action_fetch_social_sentiment(self, context: ScanContext) -> NodeOutcome:
+        if self.social_aggregator is None:
+            return NodeOutcome(status="skipped", summary="Social aggregator disabled", data={}, proceed=True)
+        try:
+            posts = self.social_aggregator.collect(limit=40)
+        except Exception as exc:
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to fetch social sentiment: {exc}",
+                data={"error": str(exc)},
+                proceed=True,
+            )
+        context.social_posts = list(posts)
+        return NodeOutcome(
+            status="success",
+            summary=f"Collected {len(context.social_posts)} social posts",
+            data={"posts": len(context.social_posts)},
+        )
+
+    def _action_fetch_tokenomics(self, context: ScanContext) -> NodeOutcome:
+        if self.tokenomics_aggregator is None:
+            return NodeOutcome(status="skipped", summary="Tokenomics aggregator disabled", data={}, proceed=True)
+        try:
+            snapshots = self.tokenomics_aggregator.collect()
+        except Exception as exc:
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to fetch tokenomics: {exc}",
+                data={"error": str(exc)},
+                proceed=True,
+            )
+        context.tokenomics_metrics = list(snapshots)
+        return NodeOutcome(
+            status="success",
+            summary=f"Collected {len(context.tokenomics_metrics)} tokenomics datapoints",
+            data={"snapshots": len(context.tokenomics_metrics)},
+        )
+
+    def _action_fetch_contract_metadata(self, context: ScanContext) -> NodeOutcome:
+        try:
+            context.contract_metadata = self.etherscan_client.fetch_contract_source(context.config.contract_address)
+            verified = str((context.contract_metadata or {}).get("IsVerified", "false")).lower() == "true"
+            return NodeOutcome(
+                status="success",
+                summary="Fetched contract metadata",
+                data={"verified": verified},
+            )
+        except Exception as exc:  # pragma: no cover - network failures handled at runtime
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to fetch contract metadata: {exc}",
+                data={"error": str(exc)},
+                proceed=False,
+            )
+
     def _action_build_price_series(self, context: ScanContext) -> NodeOutcome:
         if context.market_chart is None:
             return NodeOutcome(
@@ -510,6 +726,9 @@ class HiddenGemScanner:
                 proceed=False,
             )
         context.holders = self._extract_holder_count(context.contract_metadata or {}, context.protocol_metrics)
+        combined_narratives = list(context.config.narratives)
+        combined_narratives.extend(item.title for item in context.news_items[:3])
+
         snapshot = MarketSnapshot(
             symbol=context.config.symbol,
             timestamp=context.price_series.index[-1]
@@ -521,6 +740,7 @@ class HiddenGemScanner:
             holders=context.holders,
             onchain_metrics=context.onchain_metrics,
             narratives=list(context.config.narratives),
+            narratives=combined_narratives,
         )
         context.snapshot = snapshot
         return NodeOutcome(
@@ -531,6 +751,16 @@ class HiddenGemScanner:
 
     def _action_narrative_analysis(self, context: ScanContext) -> NodeOutcome:
         context.narrative = self.narrative_analyzer.analyze(context.config.narratives)
+        base_narratives = list(context.config.narratives)
+        if context.news_items:
+            news_texts = [
+                f"{item.source}: {item.title}. {item.summary}"
+                if item.summary
+                else f"{item.source}: {item.title}"
+                for item in context.news_items
+            ]
+            base_narratives.extend(news_texts)
+        context.narrative = self.narrative_analyzer.analyze(base_narratives)
         sentiment_label = self._sentiment_label(context.narrative.sentiment_score)
         return NodeOutcome(
             status="success",
@@ -733,6 +963,52 @@ class HiddenGemScanner:
             status="success",
             summary="Tokenomics adjustments catalogued",
             data={"penalties": penalties},
+    def _action_compute_composite_metrics(self, context: ScanContext) -> NodeOutcome:
+        if context.snapshot is None or context.narrative is None or context.safety_report is None:
+            return NodeOutcome(
+                status="failure",
+                summary="Snapshot, narrative, or safety report missing",
+                data={},
+                proceed=False,
+            )
+
+        sentiment_metrics = self._compute_sentiment_metrics(context.narrative)
+        technical_metrics = self._compute_technical_metrics(context.price_series)
+        security_metrics = self._compute_security_metrics(
+            context.safety_report,
+            context.snapshot,
+            context.contract_metadata or {},
+        )
+        final_score = self._compute_final_score(sentiment_metrics, technical_metrics, security_metrics)
+
+        context.sentiment_metrics = sentiment_metrics
+        context.technical_metrics = technical_metrics
+        context.security_metrics = security_metrics
+        context.final_score = final_score
+
+        return NodeOutcome(
+            status="success",
+            summary=f"Composite score {final_score:.2f}",
+            data={
+                "final_score": final_score,
+                "nvi": sentiment_metrics.get("NVI"),
+                "aps": technical_metrics.get("APS"),
+            },
+        )
+
+    def _action_flag_asset(self, context: ScanContext) -> NodeOutcome:
+        if context.gem_score is None:
+            return NodeOutcome(
+                status="failure",
+                summary="GemScore missing",
+                data={},
+                proceed=False,
+            )
+        context.flag, context.debug = should_flag_asset(context.gem_score, context.adjusted_features)
+        return NodeOutcome(
+            status="success",
+            summary="Flagged for review" if context.flag else "Below flag threshold",
+            data=context.debug,
         )
 
     def _action_build_artifact(self, context: ScanContext) -> NodeOutcome:
@@ -756,6 +1032,55 @@ class HiddenGemScanner:
         markdown = render_markdown_artifact(payload)
         context.artifact_payload = payload
         context.artifact_markdown = markdown
+            context.news_items,
+            context.sentiment_metrics,
+            context.technical_metrics,
+            context.security_metrics,
+            context.final_score,
+        )
+        if context.github_events:
+            payload["github_activity"] = [
+                {
+                    "id": event.id,
+                    "repo": event.repo,
+                    "type": event.type,
+                    "title": event.title,
+                    "url": event.url,
+                    "event_at": event.event_at.isoformat() if event.event_at else None,
+                }
+                for event in context.github_events[:10]
+            ]
+        if context.social_posts:
+            payload["social_posts"] = [
+                {
+                    "id": post.id,
+                    "platform": post.platform,
+                    "author": post.author,
+                    "content": post.content,
+                    "url": post.url,
+                    "posted_at": post.posted_at.isoformat() if post.posted_at else None,
+                    "metrics": dict(post.metrics),
+                }
+                for post in context.social_posts[:10]
+            ]
+        if context.tokenomics_metrics:
+            payload["tokenomics_metrics"] = [
+                {
+                    "token": snapshot.token,
+                    "metric": snapshot.metric,
+                    "value": snapshot.value,
+                    "unit": snapshot.unit,
+                    "source": snapshot.source,
+                    "recorded_at": snapshot.recorded_at.isoformat() if snapshot.recorded_at else None,
+                    "metadata": dict(snapshot.metadata),
+                }
+                for snapshot in context.tokenomics_metrics[:20]
+            ]
+        markdown = render_markdown_artifact(payload)
+        html = render_html_artifact(payload)
+        context.artifact_payload = payload
+        context.artifact_markdown = markdown
+        context.artifact_html = html
         context.result = ScanResult(
             token=context.config.symbol,
             market_snapshot=context.snapshot,
@@ -768,6 +1093,15 @@ class HiddenGemScanner:
             debug=context.debug,
             artifact_payload=payload,
             artifact_markdown=markdown,
+            artifact_html=html,
+            news_items=context.news_items,
+            sentiment_metrics=context.sentiment_metrics,
+            technical_metrics=context.technical_metrics,
+            security_metrics=context.security_metrics,
+            final_score=context.final_score,
+            github_events=context.github_events,
+            social_posts=context.social_posts,
+            tokenomics_metrics=context.tokenomics_metrics,
         )
         return NodeOutcome(
             status="success",
@@ -799,6 +1133,40 @@ class HiddenGemScanner:
     # ------------------------------------------------------------------
     # Legacy helper methods shared by actions
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Legacy helper methods shared by actions
+    # ------------------------------------------------------------------
+    def _post_process(self, context: ScanContext) -> None:
+        if context.result is None:
+            return
+
+        result = context.result
+        if self.alert_manager is not None:
+            alerts = self.alert_manager.ingest_scan(result)
+            if alerts:
+                result.alerts = list(alerts)
+                if context.artifact_payload is not None:
+                    context.artifact_payload["alerts"] = [
+                        {
+                            "rule": alert.rule,
+                            "severity": alert.severity,
+                            "message": alert.message,
+                            "triggered_at": alert.triggered_at.isoformat(),
+                        }
+                        for alert in alerts
+                    ]
+                    result.artifact_payload = context.artifact_payload
+
+        if self.precision_tracker is not None:
+            timestamp = context.snapshot.timestamp if context.snapshot else datetime.now(timezone.utc)
+            run_id = f"scan:{result.token}:{int(timestamp.timestamp())}"
+            self.precision_tracker.log_scan(
+                run_id,
+                result,
+                executed=result.flag,
+                timestamp=timestamp,
+            )
+
     def _build_price_series(self, market_chart: Dict[str, Iterable[Iterable[float]]]) -> pd.Series:
         prices = market_chart.get("prices", [])
         if not prices:
@@ -821,6 +1189,7 @@ class HiddenGemScanner:
         metrics = protocol_metrics.get("metrics", {}) or {}
         active_wallets = float(metrics.get("activeUsers") or metrics.get("uniqueWallets") or 0.0)
         unlock_pressure, unlock_meta = self._compute_unlock_pressure(unlocks)
+        unlock_pressure = self._compute_unlock_pressure(unlocks)
 
         return {
             "active_wallets": active_wallets,
@@ -883,6 +1252,83 @@ class HiddenGemScanner:
         now = datetime.now(timezone.utc)
         pressure = 0.0
         soonest: UnlockEvent | None = None
+    def _compute_sentiment_metrics(self, narrative: NarrativeInsight) -> Dict[str, float]:
+        return {
+            "Sentiment": narrative.sentiment_score,
+            "Momentum": narrative.momentum,
+            "NVI": narrative.volatility,
+            "MMS": narrative.meme_momentum,
+        }
+
+    def _compute_technical_metrics(self, price_series: pd.Series | None) -> Dict[str, float]:
+        if price_series is None or price_series.empty:
+            return {"APS": 0.5, "RSS": 0.5, "RRR": 0.5}
+
+        returns = price_series.pct_change().dropna()
+        if returns.empty:
+            positive_ratio = 0.5
+            cumulative_return = 0.0
+            volatility = 0.0
+            expected_return = 0.0
+        else:
+            positive_ratio = float((returns > 0).sum() / len(returns))
+            cumulative_return = float((1 + returns).prod() - 1)
+            volatility = float(returns.std())
+            expected_return = float(returns.mean())
+
+        aps = float(np.clip(positive_ratio, 0.0, 1.0))
+        rss = float(np.clip(0.5 + 0.5 * np.tanh(cumulative_return), 0.0, 1.0))
+        ratio = expected_return / (volatility + 1e-6)
+        rrr = float(np.clip(0.5 + 0.5 * np.tanh(ratio), 0.0, 1.0))
+
+        return {"APS": aps, "RSS": rss, "RRR": rrr}
+
+    def _compute_security_metrics(
+        self,
+        safety_report: SafetyReport,
+        snapshot: MarketSnapshot,
+        contract_metadata: Dict[str, object],
+    ) -> Dict[str, float]:
+        err = float(np.clip(1.0 - safety_report.score, 0.0, 1.0))
+        ocw = 1.0 if snapshot.holders >= 1_000 or snapshot.liquidity_usd >= 100_000 else 0.0
+
+        audit_hint = str(
+            contract_metadata.get("SecurityAudit")
+            or contract_metadata.get("AuditInfo")
+            or contract_metadata.get("audit")
+            or ""
+        ).lower()
+        verified = not safety_report.flags.get("unverified", False)
+        if audit_hint:
+            aci = 0.9 if verified else 0.75
+        elif verified:
+            aci = 0.6
+        else:
+            aci = 0.25
+
+        severity = safety_report.severity
+        if severity == "high":
+            aci = min(aci, 0.2)
+        elif severity == "medium":
+            aci = min(aci, 0.5)
+
+        return {"ERR": err, "OCW": ocw, "ACI": float(np.clip(aci, 0.0, 1.0))}
+
+    def _compute_final_score(
+        self,
+        sentiment_metrics: Dict[str, float],
+        technical_metrics: Dict[str, float],
+        security_metrics: Dict[str, float],
+    ) -> float:
+        aps = float(np.clip(technical_metrics.get("APS", 0.0), 0.0, 1.0))
+        nvi = float(np.clip(sentiment_metrics.get("NVI", 0.0), 0.0, 1.0))
+        err = float(np.clip(security_metrics.get("ERR", 1.0), 0.0, 1.0))
+        rrr = float(np.clip(technical_metrics.get("RRR", 0.0), 0.0, 1.0))
+        return (0.4 * aps + 0.3 * nvi + 0.2 * (1.0 - err) + 0.1 * rrr) * 100
+
+    def _compute_unlock_pressure(self, unlocks: Sequence[UnlockEvent]) -> float:
+        now = datetime.now(timezone.utc)
+        pressure = 0.0
         for unlock in unlocks:
             days = (unlock.date - now).days
             if days < 0:
@@ -905,6 +1351,9 @@ class HiddenGemScanner:
             "next_unlock_days": next_unlock_days if next_unlock_days is not None else -1,
             "next_unlock_percent": next_unlock_percent if next_unlock_percent is not None else 0.0,
         }
+            decay = np.exp(-days / 30)
+            pressure += unlock.percent_supply * decay
+        return float(np.clip(pressure / 100, 0.0, 1.0))
 
     def _build_artifact_payload(
         self,
@@ -916,6 +1365,11 @@ class HiddenGemScanner:
         safety_report: SafetyReport,
         liquidity_ok: bool,
         debug: Dict[str, float],
+        news_items: Sequence[NewsItem],
+        sentiment_metrics: Dict[str, float],
+        technical_metrics: Dict[str, float],
+        security_metrics: Dict[str, float],
+        final_score: float,
     ) -> Dict[str, object]:
         flags = []
         if config.glyph:
@@ -928,6 +1382,17 @@ class HiddenGemScanner:
             flags.append("LowLiquidity")
         if safety_report.findings:
             flags.extend(sorted(safety_report.findings))
+        news_payload = [
+            {
+                "title": item.title,
+                "summary": item.summary,
+                "link": item.link,
+                "source": item.source,
+                "published_at": item.published_at.isoformat() if item.published_at else None,
+            }
+            for item in news_items[:5]
+        ]
+
         payload = {
             "glyph": glyph,
             "title": f"{config.symbol} — Memorywear Entry",
@@ -937,6 +1402,12 @@ class HiddenGemScanner:
             "flags": flags,
             "narrative_sentiment": self._sentiment_label(narrative.sentiment_score),
             "narrative_momentum": narrative.momentum,
+            "final_score": final_score,
+            "flags": flags,
+            "narrative_sentiment": self._sentiment_label(narrative.sentiment_score),
+            "narrative_momentum": narrative.momentum,
+            "nvi": sentiment_metrics.get("NVI", 0.0),
+            "meme_momentum": sentiment_metrics.get("MMS", 0.0),
             "price": snapshot.price,
             "volume_24h": snapshot.volume_24h,
             "liquidity": snapshot.liquidity_usd,
@@ -948,6 +1419,10 @@ class HiddenGemScanner:
             "upcoming_unlock_risk": features.get("UpcomingUnlockRisk"),
             "next_unlock_days": snapshot.onchain_metrics.get("next_unlock_days"),
             "next_unlock_percent": snapshot.onchain_metrics.get("next_unlock_percent"),
+            "news_items": news_payload,
+            "sentiment_metrics": sentiment_metrics,
+            "technical_metrics": technical_metrics,
+            "security_metrics": security_metrics,
         }
         return payload
 

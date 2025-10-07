@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Collapse Artifact</title>
+  <style>
+    :root {
+      --bg: #050608;
+      --fg: #f5f3f0;
+      --accent: #7f5af0;
+      --warning: #ff5470;
+      --muted: #6b7280;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    body {
+      background: radial-gradient(circle at top, #111322 0%, #050608 65%);
+      color: var(--fg);
+      padding: 3rem;
+      line-height: 1.6;
+    }
+    .frame {
+      border: 1px solid rgba(127, 90, 240, 0.4);
+      padding: 2rem;
+      box-shadow: 0 0 40px rgba(127, 90, 240, 0.35);
+      position: relative;
+    }
+    .glyph {
+      position: absolute;
+      top: -1.5rem;
+      right: 2rem;
+      font-size: 2.75rem;
+      color: var(--accent);
+    }
+    h1 {
+      font-size: 2.2rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .meta span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .meta strong {
+      font-size: 1.2rem;
+      color: var(--fg);
+    }
+    section {
+      margin-bottom: 2rem;
+    }
+    section h2 {
+      font-size: 1rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 0.5rem;
+    }
+    .flags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .flag {
+      border: 1px solid var(--accent);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .footer {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="glyph">⧗⟡</div>
+    <h1 id="token-title">[TOKEN] — Memorywear Entry</h1>
+    <div class="meta">
+      <div>
+        <span>Date</span>
+        <strong id="artifact-date">2025-10-01T12:00:00Z</strong>
+      </div>
+      <div>
+        <span>GemScore</span>
+        <strong id="artifact-score">72.5</strong>
+      </div>
+      <div>
+        <span>Confidence</span>
+        <strong id="artifact-confidence">85%</strong>
+      </div>
+      <div>
+        <span>Narrative Volatility Index</span>
+        <strong id="artifact-nvi">0.68</strong>
+      </div>
+      <div>
+        <span>Flags</span>
+        <div class="flags" id="artifact-flags">
+          <span class="flag">Accumulation</span>
+          <span class="flag">VerifiedContract</span>
+          <span class="flag">MediumLiquidity</span>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>Lore</h2>
+      <p id="artifact-lore">The chorus tightens — wallets whisper in clusters; commit pulses from the repo. The market breathes.</p>
+    </section>
+
+    <section>
+      <h2>Data Snapshot</h2>
+      <ul id="artifact-data">
+        <li>Price (24h): $0.032</li>
+        <li>TVL change (7d): +21%</li>
+        <li>Top wallet %: 12.4%</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Action Notes</h2>
+      <p id="artifact-actions">Suggested: human review; place small tranche if risk tolerance &gt; X. Watch: vesting date 2025-11-05.</p>
+    </section>
+
+    <div class="footer">
+      Collapse Artifact v1.0 — Hash: <span id="artifact-hash">sha256(...)</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -129,6 +129,11 @@ def build_feature_vector(
         market_snapshot.onchain_metrics.get("unlock_pressure"),
         max_value=1.0,
     )
+    upcoming_unlock_risk = float(
+        np.clip(market_snapshot.onchain_metrics.get("upcoming_unlock_risk", 0.0), 0.0, 1.0)
+    )
+    if upcoming_unlock_risk >= 0.5:
+        tokenomics_risk = min(tokenomics_risk, 0.4)
 
     vector = {
         "SentimentScore": float(np.clip(narrative_embedding_score, 0.0, 1.0)),
@@ -139,6 +144,7 @@ def build_feature_vector(
         "ContractSafety": contract_metrics.get("score", 0.0),
         "NarrativeMomentum": float(np.clip(narrative_momentum, 0.0, 1.0)),
         "CommunityGrowth": normalize_feature(market_snapshot.holders, max_value=500_000),
+        "UpcomingUnlockRisk": upcoming_unlock_risk,
         "RSI": price_features.get("rsi", 0.5),
         "MACD": price_features.get("macd", 0.0),
         "Volatility": price_features.get("volatility", 0.0),

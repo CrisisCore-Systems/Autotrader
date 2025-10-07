@@ -51,6 +51,12 @@ def test_build_feature_vector_merges_sources() -> None:
         volume_24h=1000.0,
         liquidity_usd=150000.0,
         holders=1200,
+        onchain_metrics={
+            "active_wallets": 450,
+            "net_inflows": 20000.0,
+            "unlock_pressure": 0.1,
+            "upcoming_unlock_risk": 0.0,
+        },
         onchain_metrics={"active_wallets": 450, "net_inflows": 20000.0, "unlock_pressure": 0.1},
         narratives=["growth"],
     )
@@ -65,6 +71,7 @@ def test_build_feature_vector_merges_sources() -> None:
     assert vector["SentimentScore"] == 0.7
     assert 0 <= vector["LiquidityDepth"] <= 1
     assert vector["ContractSafety"] == 0.8
+    assert "UpcomingUnlockRisk" in vector
 
 
 def test_merge_feature_vectors_average_values() -> None:

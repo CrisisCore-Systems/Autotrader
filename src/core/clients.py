@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict, Optional
+
+import httpx
+
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence
 
 import httpx
@@ -27,6 +31,9 @@ DEFAULT_RATE_LIMIT = RateLimit(120, 60.0)
 class BaseClient:
     """Shared convenience helpers for HTTP clients."""
 
+    def __init__(self, client: Optional[httpx.Client] = None) -> None:
+        self._client = client
+        self._owns_client = client is None
     def __init__(
         self,
         client: Optional[httpx.Client] = None,
@@ -84,6 +91,14 @@ class CoinGeckoClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
+        super().__init__(session)
+
+    def fetch_market_chart(self, token_id: str, *, vs_currency: str = "usd", days: int = 14) -> Dict[str, Any]:
+        response = self.client.get(
+            f"/coins/{token_id}/market_chart",
+            params={"vs_currency": vs_currency, "days": days},
+        )
+        response.raise_for_status()
         super().__init__(session, rate_limits={"api.coingecko.com": RateLimit(30, 60.0)})
 
     def fetch_market_chart(self, token_id: str, *, vs_currency: str = "usd", days: int = 14) -> Dict[str, Any]:
@@ -107,6 +122,11 @@ class DefiLlamaClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
+        super().__init__(session)
+
+    def fetch_protocol(self, slug: str) -> Dict[str, Any]:
+        response = self.client.get(f"/protocol/{slug}")
+        response.raise_for_status()
         super().__init__(session, rate_limits={"api.llama.fi": RateLimit(60, 60.0)})
 
     def fetch_protocol(self, slug: str) -> Dict[str, Any]:
@@ -130,6 +150,11 @@ class EtherscanClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
+        super().__init__(session)
+        self._api_key = api_key or ""
+
+    def fetch_contract_source(self, address: str) -> Dict[str, Any]:
+        response = self.client.get(
         super().__init__(
             session,
             rate_limits={"api.etherscan.io": RateLimit(5, 1.0)},
@@ -146,6 +171,8 @@ class EtherscanClient(BaseClient):
                 "address": address,
                 "apikey": self._api_key,
             },
+        )
+        response.raise_for_status()
             cache_policy=CachePolicy(ttl_seconds=3600.0),
         )
         payload = response.json()

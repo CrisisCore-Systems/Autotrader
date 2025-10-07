@@ -1,8 +1,18 @@
+"""Placeholder ingestion worker."""
 """Ingestion worker orchestrating multi-source data collection."""
 
 from __future__ import annotations
 
 import time
+
+
+def main() -> None:
+    while True:
+        print("[worker] heartbeat", flush=True)
+        time.sleep(60)
+
+
+if __name__ == "__main__":
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping, Sequence

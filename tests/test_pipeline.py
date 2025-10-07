@@ -61,6 +61,7 @@ def test_hidden_gem_scanner_produces_artifact() -> None:
         coin_client=StubCoinGeckoClient(),
         defi_client=StubDefiLlamaClient(),
         etherscan_client=StubEtherscanClient(),
+        narrative_analyzer=NarrativeAnalyzer(),
         narrative_analyzer=NarrativeAnalyzer(client=narrative_stub),
         liquidity_threshold=50_000,
     )
@@ -78,6 +79,8 @@ def test_hidden_gem_scanner_produces_artifact() -> None:
     result = scanner.scan(token)
 
     assert result.gem_score.score > 0
+    assert "Memorywear Entry" in result.artifact_markdown
+    assert isinstance(result.artifact_payload["flags"], list)
     assert result.final_score >= 0
     assert "NVI" in result.sentiment_metrics
     assert "APS" in result.technical_metrics

@@ -60,4 +60,6 @@ def apply_penalties(features: Dict[str, float], safety_report: SafetyReport, *, 
         adjusted["LiquidityDepth"] = min(adjusted.get("LiquidityDepth", 0.0), 0.3)
     if "owner_can_mint" in safety_report.findings:
         adjusted["TokenomicsRisk"] = min(adjusted.get("TokenomicsRisk", 1.0), 0.4)
+    if adjusted.get("UpcomingUnlockRisk", features.get("UpcomingUnlockRisk", 0.0)) >= 0.5:
+        adjusted["TokenomicsRisk"] = min(adjusted.get("TokenomicsRisk", 1.0), 0.4)
     return adjusted

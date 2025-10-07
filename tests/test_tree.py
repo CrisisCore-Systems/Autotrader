@@ -68,6 +68,15 @@ def test_scan_with_tree_emits_trace() -> None:
     statuses = {node.key: (node.outcome.status if node.outcome else None) for node in tree.iter_nodes()}
 
     assert statuses["A1"] == "success"
+    assert statuses["A3"] == "skipped"
+    assert statuses["A4"] == "skipped"
+    assert statuses["B6"] == "success"
+    assert statuses["C2"] == "success"
+    assert statuses["C3"] == "success"
+    assert statuses["D2"] == "skipped"
+    assert statuses["E1"] == "skipped"
+    assert statuses["E3"] == "success"
+    assert statuses["E4"] == "skipped"
     assert statuses["B6"] == "success"
     assert statuses["C3"] == "success"
     assert statuses["E3"] == "success"

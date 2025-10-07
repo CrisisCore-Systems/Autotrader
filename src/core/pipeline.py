@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from typing import Dict, Iterable, Sequence
 from typing import TYPE_CHECKING, Dict, Iterable, Sequence
 
 import numpy as np
@@ -15,6 +16,7 @@ from src.core.narrative import NarrativeAnalyzer, NarrativeInsight
 from src.core.safety import SafetyReport, apply_penalties, evaluate_contract, liquidity_guardrail
 from src.core.scoring import GemScoreResult, compute_gem_score, should_flag_asset
 from src.core.tree import NodeOutcome, TreeNode
+from src.services.exporter import render_markdown_artifact
 from src.services.exporter import render_html_artifact, render_markdown_artifact
 from src.services.news import NewsAggregator, NewsItem
 
@@ -92,6 +94,9 @@ class ScanContext:
     debug: Dict[str, float] = field(default_factory=dict)
     artifact_payload: Dict[str, object] = field(default_factory=dict)
     artifact_markdown: str | None = None
+    safety_report: SafetyReport | None = None
+    liquidity_ok: bool = False
+    result: ScanResult | None = None
     artifact_html: str | None = None
     safety_report: SafetyReport | None = None
     liquidity_ok: bool = False
@@ -116,6 +121,7 @@ class HiddenGemScanner:
         defi_client: DefiLlamaClient,
         etherscan_client: EtherscanClient,
         narrative_analyzer: NarrativeAnalyzer | None = None,
+        liquidity_threshold: float = 50_000.0,
         news_aggregator: NewsAggregator | None = None,
         liquidity_threshold: float = 50_000.0,
         alert_manager: "AlertManager" | None = None,
@@ -128,6 +134,7 @@ class HiddenGemScanner:
         self.defi_client = defi_client
         self.etherscan_client = etherscan_client
         self.narrative_analyzer = narrative_analyzer or NarrativeAnalyzer()
+        self.liquidity_threshold = liquidity_threshold
         self.news_aggregator = news_aggregator
         self.liquidity_threshold = liquidity_threshold
         self.alert_manager = alert_manager
@@ -178,6 +185,14 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
+                key="A_decision",
+                title="Decision — Ingestion Weighting",
+                description="Prioritise price, on-chain, and contract telemetry for the MVP",
+                action=self._action_record_ingestion_decision,
+            )
+        )
+        branch_a.add_child(
+            TreeNode(
                 key="A1",
                 title="Price + Orderbook",
                 description="Fetch CoinGecko market chart data",
@@ -194,6 +209,28 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
+                key="A5",
+                title="Contract Source & Verification",
+                description="Fetch Etherscan contract metadata",
+                action=self._action_fetch_contract_metadata,
+            )
+        )
+        branch_a.add_child(
+            TreeNode(
+                key="A3",
+                title="Wallet Clustering",
+                description="Smart-money heuristics staged for enrichment",
+                action=self._action_wallet_clustering_deferred,
+            )
+        )
+        branch_a.add_child(
+            TreeNode(
+                key="A4",
+                title="Social & Narrative Streams",
+                description="Memetic signal ingestion queued post-MVP",
+                action=self._action_social_signal_deferred,
+            )
+        )
                 key="A3",
                 title="News & Narrative Signals",
                 description="Aggregate news feeds for sentiment context",
@@ -291,12 +328,36 @@ class HiddenGemScanner:
                 action=self._action_build_feature_vector,
             )
         )
+        branch_b.add_child(
+            TreeNode(
+                key="B_decision",
+                title="Decision — Hybrid Feature Blend",
+                description="Document fusion of numeric, semantic, and risk features",
+                action=self._action_feature_strategy_note,
+            )
+        )
 
         branch_d = root.add_child(
             TreeNode(
                 key="D",
                 title="Branch D — Safety & Filtering",
                 description="Apply liquidity floors and safety penalties before scoring",
+            )
+        )
+        branch_d.add_child(
+            TreeNode(
+                key="D1",
+                title="Static Code Analysis",
+                description="Record contract verification and severity findings",
+                action=self._action_record_static_analysis,
+            )
+        )
+        branch_d.add_child(
+            TreeNode(
+                key="D2",
+                title="Dynamic Analysis Placeholder",
+                description="Fuzzing and symbolic execution scheduled for follow-up",
+                action=self._action_fuzzing_placeholder,
             )
         )
         branch_d.add_child(
@@ -309,6 +370,20 @@ class HiddenGemScanner:
         )
         branch_d.add_child(
             TreeNode(
+                key="D3",
+                title="Heuristic Penalties",
+                description="Apply heuristic penalties based on contract safety and unlocks",
+                action=self._action_apply_penalties,
+            )
+        )
+        branch_d.add_child(
+            TreeNode(
+                key="D3_summary",
+                title="Safety Heuristic Summary",
+                description="Summarise contract flags feeding the safety gate",
+                action=self._action_record_safety_heuristics,
+            )
+        )
                 key="D1",
                 title="Penalty Application",
                 description="Apply safety penalties to the feature vector",
@@ -325,6 +400,10 @@ class HiddenGemScanner:
         )
         branch_c.add_child(
             TreeNode(
+                key="C2",
+                title="Narrative Momentum",
+                description="Record narrative velocity prior to scoring",
+                action=self._action_record_narrative_momentum,
                 key="C3",
                 title="GemScore Ensemble",
                 description="Compute weighted GemScore with contributions",
@@ -334,6 +413,25 @@ class HiddenGemScanner:
         branch_c.add_child(
             TreeNode(
                 key="C4",
+                title="Liquidity Depth Model",
+                description="Summarise liquidity coverage relative to volume",
+                action=self._action_liquidity_model_summary,
+            )
+        )
+        branch_c.add_child(
+            TreeNode(
+                key="C5",
+                title="Tokenomics Adjustment",
+                description="Highlight tokenomics penalties ahead of GemScore",
+                action=self._action_tokenomics_adjustment_summary,
+            )
+        )
+        branch_c.add_child(
+            TreeNode(
+                key="C3",
+                title="GemScore Ensemble",
+                description="Compute weighted GemScore with contributions",
+                action=self._action_compute_gem_score,
                 title="Composite Metric Deck",
                 description="Synthesize narrative, technical, and safety metrics",
                 action=self._action_compute_composite_metrics,
@@ -357,10 +455,34 @@ class HiddenGemScanner:
         )
         branch_e.add_child(
             TreeNode(
+                key="E1",
+                title="Dashboard Surface",
+                description="Surface signals via dashboard once API is wired",
+                action=self._action_dashboard_placeholder,
+            )
+        )
+        branch_e.add_child(
+            TreeNode(
+                key="E2",
+                title="Alert Streams",
+                description="Telegram/Slack notifications staged for rollout",
+                action=self._action_alerts_placeholder,
+            )
+        )
+        branch_e.add_child(
+            TreeNode(
                 key="E3",
                 title="Collapse Artifact Export",
                 description="Render Collapse Artifact payload and markdown",
                 action=self._action_build_artifact,
+            )
+        )
+        branch_e.add_child(
+            TreeNode(
+                key="E4",
+                title="Watchlist Automation",
+                description="TradingView and portfolio hooks remain human-triggered",
+                action=self._action_watchlist_placeholder,
             )
         )
 
@@ -402,6 +524,52 @@ class HiddenGemScanner:
                 data={"error": str(exc)},
                 proceed=False,
             )
+
+    def _action_fetch_contract_metadata(self, context: ScanContext) -> NodeOutcome:
+        try:
+            context.contract_metadata = self.etherscan_client.fetch_contract_source(context.config.contract_address)
+            verified = str((context.contract_metadata or {}).get("IsVerified", "false")).lower() == "true"
+            return NodeOutcome(
+                status="success",
+                summary="Fetched contract metadata",
+                data={"verified": verified},
+            )
+        except Exception as exc:  # pragma: no cover - network failures handled at runtime
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to fetch contract metadata: {exc}",
+                data={"error": str(exc)},
+                proceed=False,
+            )
+
+    def _action_record_ingestion_decision(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="success",
+            summary="Executing A1/A2/A5 for MVP; wallet + social streams deferred",
+            data={"active_streams": ["A1", "A2", "A5"], "deferred": ["A3", "A4"]},
+        )
+
+    def _action_wallet_clustering_deferred(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="skipped",
+            summary="Wallet clustering scheduled for enrichment sprint",
+            data={"scheduled_sprint": "Sprint 3"},
+        )
+
+    def _action_social_signal_deferred(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="skipped",
+            summary="Social feeds deferred until noise controls hardened",
+            data={"reason": "High noise, rate limits"},
+        )
+
+    def _action_feature_strategy_note(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        feature_keys = sorted(context.feature_vector.keys()) if context.feature_vector else []
+        return NodeOutcome(
+            status="success",
+            summary="Hybrid feature blend recorded",
+            data={"features": feature_keys},
+        )
 
     def _action_fetch_news(self, context: ScanContext) -> NodeOutcome:
         if self.news_aggregator is None:
@@ -571,6 +739,7 @@ class HiddenGemScanner:
             liquidity_usd=context.onchain_metrics.get("current_tvl", 0.0),
             holders=context.holders,
             onchain_metrics=context.onchain_metrics,
+            narratives=list(context.config.narratives),
             narratives=combined_narratives,
         )
         context.snapshot = snapshot
@@ -581,6 +750,7 @@ class HiddenGemScanner:
         )
 
     def _action_narrative_analysis(self, context: ScanContext) -> NodeOutcome:
+        context.narrative = self.narrative_analyzer.analyze(context.config.narratives)
         base_narratives = list(context.config.narratives)
         if context.news_items:
             news_texts = [
@@ -680,6 +850,41 @@ class HiddenGemScanner:
             data={"penalized_keys": [k for k in context.feature_vector if context.adjusted_features.get(k) != context.feature_vector.get(k)]},
         )
 
+    def _action_record_static_analysis(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        if context.safety_report is None:
+            return NodeOutcome(
+                status="failure",
+                summary="Safety report unavailable",
+                data={},
+                proceed=False,
+            )
+        return NodeOutcome(
+            status="success",
+            summary=f"Contract severity {context.safety_report.severity}",
+            data={"findings": context.safety_report.findings, "score": context.safety_report.score},
+        )
+
+    def _action_fuzzing_placeholder(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="skipped",
+            summary="Dynamic analysis queued post-MVP",
+            data={"tooling": ["MythX", "echidna"]},
+        )
+
+    def _action_record_safety_heuristics(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        if context.safety_report is None:
+            return NodeOutcome(
+                status="failure",
+                summary="No safety heuristics captured",
+                data={},
+                proceed=False,
+            )
+        return NodeOutcome(
+            status="success",
+            summary="Safety heuristics recorded",
+            data={"flags": context.safety_report.flags},
+        )
+
     def _action_compute_gem_score(self, context: ScanContext) -> NodeOutcome:
         if not context.adjusted_features:
             return NodeOutcome(
@@ -695,6 +900,69 @@ class HiddenGemScanner:
             data=context.gem_score.contributions,
         )
 
+    def _action_flag_asset(self, context: ScanContext) -> NodeOutcome:
+        if context.gem_score is None:
+            return NodeOutcome(
+                status="failure",
+                summary="GemScore missing",
+                data={},
+                proceed=False,
+            )
+        context.flag, context.debug = should_flag_asset(context.gem_score, context.adjusted_features)
+        return NodeOutcome(
+            status="success",
+            summary="Flagged for review" if context.flag else "Below flag threshold",
+            data=context.debug,
+        )
+
+    def _action_record_narrative_momentum(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        if context.narrative is None:
+            return NodeOutcome(
+                status="failure",
+                summary="Narrative insight missing",
+                data={},
+                proceed=False,
+            )
+        return NodeOutcome(
+            status="success",
+            summary=f"Narrative momentum {context.narrative.momentum:.2f}",
+            data={"themes": context.narrative.themes},
+        )
+
+    def _action_liquidity_model_summary(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        if context.snapshot is None:
+            return NodeOutcome(
+                status="failure",
+                summary="Snapshot required for liquidity model",
+                data={},
+                proceed=False,
+            )
+        coverage = 0.0
+        if context.snapshot.volume_24h:
+            coverage = float(np.clip(context.snapshot.liquidity_usd / max(context.snapshot.volume_24h, 1.0), 0.0, 10.0))
+        return NodeOutcome(
+            status="success",
+            summary="Liquidity coverage captured",
+            data={"coverage_ratio": coverage},
+        )
+
+    def _action_tokenomics_adjustment_summary(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        if not context.feature_vector or not context.adjusted_features:
+            return NodeOutcome(
+                status="failure",
+                summary="Feature vectors unavailable",
+                data={},
+                proceed=False,
+            )
+        penalties = {
+            key: round(context.feature_vector.get(key, 0.0) - context.adjusted_features.get(key, 0.0), 4)
+            for key in context.feature_vector
+            if abs(context.feature_vector.get(key, 0.0) - context.adjusted_features.get(key, 0.0)) > 1e-6
+        }
+        return NodeOutcome(
+            status="success",
+            summary="Tokenomics adjustments catalogued",
+            data={"penalties": penalties},
     def _action_compute_composite_metrics(self, context: ScanContext) -> NodeOutcome:
         if context.snapshot is None or context.narrative is None or context.safety_report is None:
             return NodeOutcome(
@@ -760,6 +1028,10 @@ class HiddenGemScanner:
             context.safety_report,
             context.liquidity_ok,
             context.debug,
+        )
+        markdown = render_markdown_artifact(payload)
+        context.artifact_payload = payload
+        context.artifact_markdown = markdown
             context.news_items,
             context.sentiment_metrics,
             context.technical_metrics,
@@ -837,6 +1109,30 @@ class HiddenGemScanner:
             data={"hash": payload.get("hash")},
         )
 
+    def _action_dashboard_placeholder(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="skipped",
+            summary="Dashboard delivery slated once FastAPI endpoints are live",
+            data={"frontend": "Next.js"},
+        )
+
+    def _action_alerts_placeholder(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="skipped",
+            summary="Alert webhooks pending secrets provisioning",
+            data={"channels": ["Telegram", "Slack"]},
+        )
+
+    def _action_watchlist_placeholder(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+        return NodeOutcome(
+            status="skipped",
+            summary="Automated watchlist intentionally human-in-the-loop",
+            data={"scope": "Monitoring only"},
+        )
+
+    # ------------------------------------------------------------------
+    # Legacy helper methods shared by actions
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # Legacy helper methods shared by actions
     # ------------------------------------------------------------------
@@ -892,6 +1188,7 @@ class HiddenGemScanner:
 
         metrics = protocol_metrics.get("metrics", {}) or {}
         active_wallets = float(metrics.get("activeUsers") or metrics.get("uniqueWallets") or 0.0)
+        unlock_pressure, unlock_meta = self._compute_unlock_pressure(unlocks)
         unlock_pressure = self._compute_unlock_pressure(unlocks)
 
         return {
@@ -900,6 +1197,7 @@ class HiddenGemScanner:
             "unlock_pressure": unlock_pressure,
             "tvl_change_pct": tvl_change_pct,
             "current_tvl": current_tvl,
+            **unlock_meta,
         }
 
     def _extract_holder_count(self, contract_metadata: Dict[str, object], protocol_metrics: Dict[str, object]) -> int:
@@ -950,6 +1248,10 @@ class HiddenGemScanner:
         available = sum(1 for key in required_keys if key in features)
         return available / len(required_keys)
 
+    def _compute_unlock_pressure(self, unlocks: Sequence[UnlockEvent]) -> tuple[float, Dict[str, float]]:
+        now = datetime.now(timezone.utc)
+        pressure = 0.0
+        soonest: UnlockEvent | None = None
     def _compute_sentiment_metrics(self, narrative: NarrativeInsight) -> Dict[str, float]:
         return {
             "Sentiment": narrative.sentiment_score,
@@ -1031,6 +1333,24 @@ class HiddenGemScanner:
             days = (unlock.date - now).days
             if days < 0:
                 continue
+            if soonest is None or unlock.date < soonest.date:
+                soonest = unlock
+            decay = np.exp(-days / 30)
+            pressure += unlock.percent_supply * decay
+        normalized_pressure = float(np.clip(pressure / 100, 0.0, 1.0))
+        upcoming_unlock_risk = 0.0
+        next_unlock_days = None
+        next_unlock_percent = None
+        if soonest is not None:
+            next_unlock_days = max((soonest.date - now).days, 0)
+            next_unlock_percent = float(soonest.percent_supply)
+            if next_unlock_percent >= 10.0 and next_unlock_days <= 30:
+                upcoming_unlock_risk = 1.0
+        return normalized_pressure, {
+            "upcoming_unlock_risk": upcoming_unlock_risk,
+            "next_unlock_days": next_unlock_days if next_unlock_days is not None else -1,
+            "next_unlock_percent": next_unlock_percent if next_unlock_percent is not None else 0.0,
+        }
             decay = np.exp(-days / 30)
             pressure += unlock.percent_supply * decay
         return float(np.clip(pressure / 100, 0.0, 1.0))
@@ -1079,6 +1399,9 @@ class HiddenGemScanner:
             "timestamp": snapshot.timestamp.isoformat(),
             "gem_score": gem_score.score,
             "confidence": gem_score.confidence,
+            "flags": flags,
+            "narrative_sentiment": self._sentiment_label(narrative.sentiment_score),
+            "narrative_momentum": narrative.momentum,
             "final_score": final_score,
             "flags": flags,
             "narrative_sentiment": self._sentiment_label(narrative.sentiment_score),
@@ -1093,6 +1416,9 @@ class HiddenGemScanner:
             "debug": debug,
             "hash": self._artifact_hash(config, snapshot, gem_score),
             "narratives": narrative.themes,
+            "upcoming_unlock_risk": features.get("UpcomingUnlockRisk"),
+            "next_unlock_days": snapshot.onchain_metrics.get("next_unlock_days"),
+            "next_unlock_percent": snapshot.onchain_metrics.get("next_unlock_percent"),
             "news_items": news_payload,
             "sentiment_metrics": sentiment_metrics,
             "technical_metrics": technical_metrics,

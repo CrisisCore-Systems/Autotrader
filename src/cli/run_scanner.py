@@ -257,15 +257,45 @@ def main() -> None:
         default=None,
         help="Directory to persist rendered artifacts",
     )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Show summary report with score, drivers, and risk flags",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
-    run(
+    results = run(
         config,
         tree=args.tree,
         tree_format=args.tree_format,
         output_dir=args.output_dir,
     )
+    
+    # Display summary reports if requested
+    if args.summary:
+        from src.cli.summary_report import SummaryReportGenerator
+        
+        generator = SummaryReportGenerator()
+        print("\n" + "=" * 80)
+        print("SUMMARY REPORTS".center(80))
+        print("=" * 80 + "\n")
+        
+        for result in results:
+            report = generator.generate_report(
+                token_symbol=result.token,
+                gem_score=result.gem_score,
+                features=result.adjusted_features,
+                safety_report=result.safety_report,
+                final_score=result.final_score,
+                sentiment_metrics=result.sentiment_metrics,
+                technical_metrics=result.technical_metrics,
+                security_metrics=result.security_metrics,
+                flagged=result.flag,
+                debug_info=result.debug,
+            )
+            generator.print_report(report)
+            print()
 
 
 def _render_tree(node, indent: int = 0) -> list[str]:

@@ -835,6 +835,282 @@ async def get_feature_schema() -> List[Dict[str, Any]]:
 
 
 # ============================================================================
+# GemScore Delta Explainability Endpoints
+# ============================================================================
+
+@app.get("/api/gemscore/delta/{token_symbol}", tags=["Analytics"])
+async def get_gemscore_delta(token_symbol: str) -> Dict[str, Any]:
+    """Get GemScore delta explanation for a token.
+    
+    Returns the most recent score change with detailed feature contributions.
+
+    Args:
+        token_symbol: Token symbol
+
+    Returns:
+        Delta explanation with top contributors
+    """
+    # Get current snapshot
+    current_snapshot = feature_store.read_snapshot(token_symbol)
+    
+    if not current_snapshot:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No GemScore snapshots found for {token_symbol}"
+        )
+    
+    # Compute delta
+    delta = feature_store.compute_score_delta(token_symbol, current_snapshot)
+    
+    if not delta:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Insufficient history to compute delta for {token_symbol}"
+        )
+    
+    return delta.get_summary(top_n=5)
+
+
+@app.get("/api/gemscore/delta/{token_symbol}/narrative", tags=["Analytics"])
+async def get_gemscore_delta_narrative(token_symbol: str) -> Dict[str, str]:
+    """Get human-readable narrative explaining GemScore change.
+
+    Args:
+        token_symbol: Token symbol
+
+    Returns:
+        Narrative explanation
+    """
+    current_snapshot = feature_store.read_snapshot(token_symbol)
+    
+    if not current_snapshot:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No GemScore snapshots found for {token_symbol}"
+        )
+    
+    delta = feature_store.compute_score_delta(token_symbol, current_snapshot)
+    
+    if not delta:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Insufficient history to compute delta for {token_symbol}"
+        )
+    
+    return {
+        "token": token_symbol,
+        "narrative": delta.get_narrative(),
+        "timestamp": current_snapshot.timestamp,
+    }
+
+
+@app.get("/api/gemscore/delta/{token_symbol}/detailed", tags=["Analytics"])
+async def get_gemscore_delta_detailed(
+    token_symbol: str,
+    threshold: float = 0.01,
+) -> Dict[str, Any]:
+    """Get detailed GemScore delta explanation with all significant changes.
+
+    Args:
+        token_symbol: Token symbol
+        threshold: Minimum contribution change in points (default: 0.01)
+
+    Returns:
+        Detailed delta explanation
+    """
+    from src.core.score_explainer import ScoreExplainer
+    
+    current_snapshot = feature_store.read_snapshot(token_symbol)
+    
+    if not current_snapshot:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No GemScore snapshots found for {token_symbol}"
+        )
+    
+    delta = feature_store.compute_score_delta(token_symbol, current_snapshot)
+    
+    if not delta:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Insufficient history to compute delta for {token_symbol}"
+        )
+    
+    explainer = ScoreExplainer()
+    return explainer.explain_score_change(delta, threshold=threshold)
+
+
+@app.get("/api/gemscore/history/{token_symbol}", tags=["Analytics"])
+async def get_gemscore_history(
+    token_symbol: str,
+    limit: int = 10,
+) -> List[Dict[str, Any]]:
+    """Get GemScore history for a token.
+
+    Args:
+        token_symbol: Token symbol
+        limit: Maximum number of snapshots to return (default: 10)
+
+    Returns:
+        List of historical snapshots
+    """
+    snapshots = feature_store.read_snapshot_history(
+        token_symbol=token_symbol,
+        limit=limit,
+    )
+    
+    if not snapshots:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No history found for {token_symbol}"
+        )
+    
+    return [
+        {
+            "timestamp": snapshot.timestamp,
+            "score": snapshot.score,
+            "confidence": snapshot.confidence,
+            "features": snapshot.features,
+            "contributions": snapshot.contributions,
+        }
+        for snapshot in snapshots
+    ]
+
+
+@app.get("/api/gemscore/deltas/{token_symbol}/series", tags=["Analytics"])
+async def get_gemscore_delta_series(
+    token_symbol: str,
+    limit: int = 5,
+) -> List[Dict[str, Any]]:
+    """Get series of GemScore deltas showing trend over time.
+
+    Args:
+        token_symbol: Token symbol
+        limit: Number of deltas to compute (default: 5)
+
+    Returns:
+        List of delta summaries
+    """
+    from src.core.score_explainer import ScoreExplainer
+    
+    snapshots = feature_store.read_snapshot_history(
+        token_symbol=token_symbol,
+        limit=limit + 1,  # Need one extra for comparisons
+    )
+    
+    if len(snapshots) < 2:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Insufficient history for delta series (need at least 2 snapshots)"
+        )
+    
+    explainer = ScoreExplainer()
+    deltas = []
+    
+    # Compute deltas between consecutive snapshots
+    for i in range(len(snapshots) - 1):
+        current = snapshots[i]
+        previous = snapshots[i + 1]  # List is sorted descending
+        
+        delta = explainer.compute_delta(previous, current)
+        deltas.append(delta.get_summary(top_n=3))
+    
+    return deltas
+
+
+# ============================================================================
+# Summary Reports
+# ============================================================================
+
+@app.get("/api/summary/{token_symbol}", tags=["Summary"])
+async def get_token_summary_report(token_symbol: str) -> Dict[str, Any]:
+    """Get comprehensive summary report for a token.
+    
+    Returns score, top drivers, risk flags, and recommendations.
+
+    Args:
+        token_symbol: Token symbol
+
+    Returns:
+        Summary report data
+    """
+    from src.cli.summary_report import SummaryReportGenerator
+    
+    # Find scan result
+    if not hasattr(_scanner_cache, 'results') or not _scanner_cache.results:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No scan results found for {token_symbol}"
+        )
+    
+    result = None
+    for r in _scanner_cache.results:
+        if r.token.upper() == token_symbol.upper():
+            result = r
+            break
+    
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Token {token_symbol} not found"
+        )
+    
+    # Generate summary report
+    generator = SummaryReportGenerator(color_enabled=False)
+    report = generator.generate_report(
+        token_symbol=result.token,
+        gem_score=result.gem_score,
+        features=result.adjusted_features,
+        safety_report=result.safety_report,
+        final_score=result.final_score,
+        sentiment_metrics=result.sentiment_metrics,
+        technical_metrics=result.technical_metrics,
+        security_metrics=result.security_metrics,
+        flagged=result.flag,
+        debug_info=result.debug,
+    )
+    
+    # Convert to JSON
+    return generator.export_json(report)
+
+
+@app.get("/api/summary", tags=["Summary"])
+async def get_all_summaries() -> List[Dict[str, Any]]:
+    """Get summary reports for all scanned tokens.
+
+    Returns:
+        List of summary reports
+    """
+    from src.cli.summary_report import SummaryReportGenerator
+    
+    if not hasattr(_scanner_cache, 'results') or not _scanner_cache.results:
+        return []
+    
+    generator = SummaryReportGenerator(color_enabled=False)
+    summaries = []
+    
+    for result in _scanner_cache.results:
+        report = generator.generate_report(
+            token_symbol=result.token,
+            gem_score=result.gem_score,
+            features=result.adjusted_features,
+            safety_report=result.safety_report,
+            final_score=result.final_score,
+            sentiment_metrics=result.sentiment_metrics,
+            technical_metrics=result.technical_metrics,
+            security_metrics=result.security_metrics,
+            flagged=result.flag,
+            debug_info=result.debug,
+        )
+        summaries.append(generator.export_json(report))
+    
+    # Sort by final score descending
+    summaries.sort(key=lambda x: x['scores']['final_score'], reverse=True)
+    
+    return summaries
+
+
+# ============================================================================
 # Health Check
 # ============================================================================
 

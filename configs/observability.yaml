@@ -1,0 +1,154 @@
+# Observability Configuration
+# Centralized configuration for logging, metrics, and tracing
+
+observability:
+  # Service identification
+  service_name: "autotrader"
+  environment: "${ENVIRONMENT:development}"
+  version: "${APP_VERSION:0.1.0}"
+
+  # Logging configuration
+  logging:
+    level: "${LOG_LEVEL:INFO}"
+    format: "json"  # json or console
+    enable_console: true
+    
+    # Fields to include in all logs
+    default_fields:
+      service: "autotrader"
+      environment: "${ENVIRONMENT:development}"
+      version: "${APP_VERSION:0.1.0}"
+    
+    # Log sampling (for high-volume logs)
+    sampling:
+      enabled: false
+      rate: 0.1  # Sample 10% of logs
+      
+    # Sensitive field redaction
+    redact_fields:
+      - "api_key"
+      - "secret"
+      - "password"
+      - "token"
+
+  # Metrics configuration
+  metrics:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+    
+    # Metric collection intervals
+    collection:
+      feature_store_size: 60  # seconds
+      circuit_breaker_state: 30
+      active_requests: 10
+    
+    # Histogram bucket configurations
+    histograms:
+      scan_duration_buckets: [0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0]
+      api_latency_buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0]
+      data_source_latency_buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+      gem_score_buckets: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+  # Tracing configuration
+  tracing:
+    enabled: true
+    
+    # Sampling configuration
+    sampling:
+      strategy: "always_on"  # always_on, always_off, probability
+      probability: 1.0  # Sample 100% of traces (reduce in production)
+    
+    # Exporters
+    exporters:
+      console:
+        enabled: true
+      jaeger:
+        enabled: false
+        endpoint: "${JAEGER_ENDPOINT:http://localhost:14268/api/traces}"
+      otlp:
+        enabled: false
+        endpoint: "${OTLP_ENDPOINT:http://localhost:4317}"
+    
+    # Instrumentation
+    instrumentation:
+      fastapi: true
+      httpx: true
+      database: true
+      
+  # Health checks
+  health:
+    enabled: true
+    endpoint: "/health"
+    checks:
+      - name: "database"
+        enabled: false
+      - name: "redis"
+        enabled: false
+      - name: "data_sources"
+        enabled: true
+
+  # Alerting thresholds (for metrics)
+  alerts:
+    scan_error_rate:
+      threshold: 0.05  # 5% error rate
+      window: "5m"
+      severity: "warning"
+    
+    data_source_latency:
+      threshold: 5.0  # seconds
+      window: "5m"
+      severity: "warning"
+    
+    circuit_breaker_trips:
+      threshold: 3
+      window: "10m"
+      severity: "critical"
+    
+    feature_validation_failures:
+      threshold: 10
+      window: "5m"
+      severity: "warning"
+    
+    api_latency_p95:
+      threshold: 2.0  # seconds
+      window: "5m"
+      severity: "warning"
+
+  # Performance
+  performance:
+    # Maximum time to wait for metrics export
+    export_timeout_seconds: 30
+    
+    # Batch size for span export
+    span_batch_size: 512
+    
+    # Maximum queue size for spans
+    span_max_queue_size: 2048
+    
+    # Scheduled delay for span export
+    span_export_delay_seconds: 5
+
+  # Integration with external systems
+  integrations:
+    # Prometheus remote write
+    prometheus_remote_write:
+      enabled: false
+      url: "${PROMETHEUS_REMOTE_WRITE_URL:}"
+      
+    # Grafana Cloud
+    grafana_cloud:
+      enabled: false
+      url: "${GRAFANA_CLOUD_URL:}"
+      api_key: "${GRAFANA_API_KEY:}"
+      
+    # Datadog
+    datadog:
+      enabled: false
+      api_key: "${DATADOG_API_KEY:}"
+      site: "${DATADOG_SITE:datadoghq.com}"
+      
+    # New Relic
+    newrelic:
+      enabled: false
+      license_key: "${NEWRELIC_LICENSE_KEY:}"

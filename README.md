@@ -735,15 +735,50 @@ For questions or contributions, please open an issue or submit a pull request.
 
 The `src/alerts` package implements an outbox pattern for GemScore notifications. Rules loaded from [`configs/alert_rules.yaml`](configs/alert_rules.yaml) produce deterministic idempotency keys so each token triggers at most one alert per window and rule version. The evaluation engine enqueues matching payloads with audit-friendly metadata ready for Celery or worker delivery.
 
-## 📈 Backtesting CLI
+## 📈 Backtesting & Experiment Tracking
+
+### Backtesting CLI
 
 Use the walk-forward harness to regenerate metrics and weight suggestions in a single command:
 
 ```bash
 make backtest
+
+# Or with experiment tracking
+python -m src.pipeline.backtest \
+  --start 2024-01-01 --end 2024-12-31 \
+  --experiment-description "Baseline GemScore" \
+  --experiment-tags "baseline,production"
 ```
 
-Artifacts are written under `reports/backtests/<run-date>/` including a `summary.json`, `windows.csv`, and `weights_suggestion.json` for downstream automation.
+Artifacts are written under `reports/backtests/<run-date>/` including a `summary.json`, `windows.csv`, `weights_suggestion.json`, and `experiment_config.json` for full reproducibility.
+
+### Experiment Configuration Tracking ✨ NEW
+
+Track and reproduce experiment configurations with deterministic hashing:
+
+```bash
+# List all experiments
+python -m src.cli.experiments list
+
+# Show experiment details
+python -m src.cli.experiments show abc123
+
+# Compare two experiments
+python -m src.cli.experiments compare abc123 def456
+
+# Search by tag
+python -m src.cli.experiments search baseline
+```
+
+**Key Features:**
+- 🔐 **Deterministic SHA256 hashing** of features + weights + hyperparameters
+- 📊 **Automatic tracking** during backtest runs
+- 🔍 **Searchable registry** with tag-based organization
+- 🔄 **Full reproducibility** - same hash = identical configuration
+- 📝 **Complete documentation** in `docs/EXPERIMENT_TRACKING.md`
+
+See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentation and [Quick Reference](docs/EXPERIMENT_TRACKING_QUICK_REF.md) for common commands.
 
 ## 🛡️ Security & Quality Gates
 

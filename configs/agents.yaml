@@ -1,0 +1,505 @@
+# =============================================================================
+#  Custom Multi-Agent Configuration for Autotrader / GemScore Platform
+#  Purpose:
+#    Centralizes definition, orchestration, routing, guardrails, and lifecycle
+#    metadata for all AI agents used across ingestion, analysis, scoring,
+#    explanation, and alerting flows.
+#
+#  Integration Points:
+#    - configs/llm.yaml : Provider tiers, budget caps, caching TTLs
+#    - prompts/*.md     : Canonical system prompts (referenced here by name)
+#    - Feature Store    : Some agents enrich or validate feature vectors
+#    - Reliability Layer: Agents may fallback or retry via reliability wrappers
+#
+#  Conventions:
+#    - Every agent declares: role, purpose, input_contract, output_contract,
+#      system_prompt_ref or inline_prompt, validation, failure_policy,
+#      routing_policy, and observability tags.
+#    - output_contract MUST be JSON-serializable and validated before use.
+#    - Guardrails section applies cross-agent safety rules.
+#
+#  Notes:
+#    - You can extend with dynamic runtime overrides (per job) by merging a
+#      job-specific YAML patch atop this base.
+# =============================================================================
+
+version: 1.0.0
+last_updated: 2025-10-08
+owner: "CrisisCore Systems"
+environment: "${APP_ENV:-dev}"
+
+# -----------------------------------------------------------------------------
+# Global runtime defaults (override at agent level)
+# -----------------------------------------------------------------------------
+defaults:
+  temperature: 0.2
+  top_p: 0.9
+  max_output_tokens: 900
+  json_enforced: true
+  retry:
+    max_attempts: 2
+    backoff_seconds: 1.5
+    jitter: true
+  cache:
+    enabled: true
+    strategy: semantic
+    min_tokens_to_cache: 50
+  timeout_seconds: 25
+  allow_parallel: true
+  telemetry:
+    emit_prompt_hash: true
+    redact_numbers_over: 1.0e12
+    pii_scrub: true
+
+# -----------------------------------------------------------------------------
+# Shared output validator definitions (referenced by agents.output_contract.validator)
+# -----------------------------------------------------------------------------
+validators:
+  contract_safety_v1:
+    type: json_schema
+    schema:
+      type: object
+      additionalProperties: false
+      required: [verified, owner_privileges, can_mint, upgradable_proxy, severity, key_findings, recommendation]
+      properties:
+        verified: { type: boolean }
+        owner_privileges: { type: boolean }
+        can_mint: { type: boolean }
+        upgradable_proxy: { type: boolean }
+        severity: { type: string, enum: [none, low, medium, high] }
+        key_findings:
+          type: array
+          maxItems: 3
+          items: { type: string, minLength: 2, maxLength: 160 }
+        recommendation: { type: string, minLength: 2, maxLength: 220 }
+  narrative_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [sentiment, sentiment_score, emergent_themes, memetic_hooks, fake_or_buzz_warning, rationale]
+      properties:
+        sentiment: { type: string, enum: [positive, neutral, negative] }
+        sentiment_score: { type: number, minimum: 0.0, maximum: 1.0 }
+        emergent_themes:
+          type: array
+          items: { type: string, maxLength: 32 }
+          maxItems: 8
+        memetic_hooks:
+          type: array
+          items: { type: string, maxLength: 40 }
+          maxItems: 8
+        fake_or_buzz_warning: { type: boolean }
+        rationale: { type: string, maxLength: 200 }
+  onchain_activity_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [accumulation_score, top_wallet_pct, tx_size_skew, suspicious_patterns, notes]
+      properties:
+        accumulation_score: { type: number, minimum: 0.0, maximum: 1.0 }
+        top_wallet_pct: { type: number, minimum: 0.0, maximum: 100.0 }
+        tx_size_skew: { type: string, enum: [small, medium, large] }
+        suspicious_patterns:
+          type: array
+          items: { type: string, maxLength: 64 }
+          maxItems: 6
+        notes: { type: string, maxLength: 200 }
+  technical_pattern_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [trend, divergence_flags, suggested_timeframes_to_watch, confidence, commentary]
+      properties:
+        trend: { type: string, enum: [bullish, neutral, bearish] }
+        divergence_flags: { type: boolean }
+        suggested_timeframes_to_watch:
+          type: array
+          items: { type: string, pattern: "^[0-9]+[mhdw]$|^(1d|4h|1h|15m)$" }
+          minItems: 1
+          maxItems: 4
+        confidence: { type: number, minimum: 0.0, maximum: 1.0 }
+        commentary: { type: string, maxLength: 180 }
+  feature_quality_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [missing_features, out_of_range, staleness_violations, quality_score, recommendations]
+      properties:
+        missing_features: { type: array, items: { type: string }, maxItems: 50 }
+        out_of_range: { type: array, items: { type: string }, maxItems: 50 }
+        staleness_violations: { type: array, items: { type: string }, maxItems: 50 }
+        quality_score: { type: number, minimum: 0.0, maximum: 1.0 }
+        recommendations:
+          type: array
+          items: { type: string, maxLength: 140 }
+          maxItems: 5
+  score_explainer_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [token, gem_score, top_positive_factors, top_negative_factors, narrative, caution_flags]
+      properties:
+        token: { type: string, maxLength: 16 }
+        gem_score: { type: number, minimum: 0.0, maximum: 100.0 }
+        top_positive_factors:
+          type: array
+          items: { type: string, maxLength: 80 }
+          maxItems: 5
+        top_negative_factors:
+          type: array
+          items: { type: string, maxLength: 80 }
+          maxItems: 5
+        narrative: { type: string, maxLength: 320 }
+        caution_flags:
+          type: array
+          items: { type: string, maxLength: 64 }
+          maxItems: 6
+  alert_triage_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [alert_id, priority, rationale, suppress_recommendation, escalation_targets]
+      properties:
+        alert_id: { type: string, maxLength: 64 }
+        priority: { type: string, enum: [low, medium, high, critical] }
+        rationale: { type: string, maxLength: 240 }
+        suppress_recommendation: { type: boolean }
+        escalation_targets:
+          type: array
+          items: { type: string, maxLength: 64 }
+          maxItems: 5
+  simulation_v1:
+    type: json_schema
+    schema:
+      type: object
+      required: [token, scenario_name, parameter_changes, estimated_score_delta, risks, notes]
+      properties:
+        token: { type: string }
+        scenario_name: { type: string, maxLength: 64 }
+        parameter_changes:
+          type: array
+          items:
+            type: object
+            required: [parameter, from, to]
+            properties:
+              parameter: { type: string }
+              from: {}
+              to: {}
+          maxItems: 10
+        estimated_score_delta: { type: number, minimum: -100.0, maximum: 100.0 }
+        risks:
+          type: array
+          items: { type: string, maxLength: 90 }
+          maxItems: 6
+        notes: { type: string, maxLength: 220 }
+
+# -----------------------------------------------------------------------------
+# Agent Catalog
+# -----------------------------------------------------------------------------
+agents:
+
+  # === Core Domain Agents (Existing Prompts) =================================
+  - key: contract_safety
+    role: "Contract Safety Auditor"
+    purpose: "Static review of solidity metadata to flag ownership, minting, upgrade risks."
+    system_prompt_ref: "prompts/contract_safety.md"
+    input_contract:
+      description: "contract source or ABI + chain metadata"
+      expected_fields: [source_code, abi, chain_id, deployed_address, verification_status]
+    output_contract:
+      validator: contract_safety_v1
+    routing_policy:
+      provider_route: contract_explainer   # maps to llm.routes in llm.yaml
+      temperature: 0.0
+      max_output_tokens: 400
+    failure_policy:
+      on_validation_failure: "retry_then_fallback"
+      fallback_agent: "contract_safety_fallback"
+    postprocessors:
+      - name: enrich_with_risk_score
+        logic: "map severity -> numeric risk_score (none:0,low:25,medium:55,high:85)"
+    observability:
+      tags: [risk, security, contract]
+      emit_factor_importance: false
+
+  - key: narrative_analyzer
+    role: "Narrative Sentiment Synthesizer"
+    purpose: "Convert raw social posts/headlines into structured narrative and hype indicators."
+    system_prompt_ref: "prompts/narrative_analyzer.md"
+    input_contract:
+      description: "array of text items with timestamps + engagement stats"
+      expected_fields: [items[], window_hours]
+    output_contract:
+      validator: narrative_v1
+    routing_policy:
+      provider_route: narrative_summary
+      temperature: 0.15
+    failure_policy:
+      on_validation_failure: "drop_with_log"
+    observability:
+      tags: [narrative, sentiment, social]
+      capture_embeddings: true
+
+  - key: onchain_activity
+    role: "On-Chain Token Flow Forensic Agent"
+    purpose: "Summarize ownership concentration, wallet flows, anomalies."
+    system_prompt_ref: "prompts/onchain_activity.md"
+    input_contract:
+      expected_fields: [recent_transactions[], wallet_clusters[], liquidity_info]
+    output_contract:
+      validator: onchain_activity_v1
+    routing_policy:
+      provider_route: rare_deep_report
+      temperature: 0.1
+    observability:
+      tags: [onchain, flows, concentration]
+
+  - key: technical_pattern
+    role: "Technical Market Structure Interpreter"
+    purpose: "Fuse indicators into directional bias & tactical commentary."
+    system_prompt_ref: "prompts/technical_pattern.md"
+    input_contract:
+      expected_fields: [price_series, rsi_series, macd, ema_set, volume_profile]
+    output_contract:
+      validator: technical_pattern_v1
+    routing_policy:
+      provider_route: sentiment_bucket
+      temperature: 0.05
+    observability:
+      tags: [chart, technical]
+
+  # === Supporting Intelligence Agents =======================================
+  - key: feature_quality_guard
+    role: "Feature Integrity Auditor"
+    purpose: "Evaluate completeness, range violations, staleness prior to scoring."
+    inline_prompt: |
+      You are Feature Quality Guard. Given a feature vector with metadata (timestamp, expected ranges),
+      output JSON strictly matching the declared schema. DO NOT hallucinate ranges; only use provided metadata.
+      If no violations, return empty arrays. Provide at most five recommendations prioritizing remediation impact.
+    input_contract:
+      expected_fields: [features{}, feature_metadata{}, freshness_thresholds{}]
+    output_contract:
+      validator: feature_quality_v1
+    routing_policy:
+      provider_route: sentiment_bucket
+      temperature: 0.0
+    failure_policy:
+      on_validation_failure: "escalate_error"
+    observability:
+      tags: [quality, validation]
+
+  - key: score_explainer
+    role: "GemScore Explanation Agent"
+    purpose: "Transform raw feature contributions into human legible rationale and risk flags."
+    inline_prompt: |
+      You are Score Explainer. Given: token symbol, gem_score numeric, list of weighted feature
+      contributions (positive and negative), and any safety flags, produce concise JSON. Avoid repetition.
+      Use short factor phrases (< 8 words). Only include caution_flags that are directly substantiated.
+    input_contract:
+      expected_fields: [token, gem_score, positive_factors[], negative_factors[], safety_flags[]]
+    output_contract:
+      validator: score_explainer_v1
+    routing_policy:
+      provider_route: mid
+      temperature: 0.2
+    failure_policy:
+      on_validation_failure: "retry_once_then_drop"
+    observability:
+      tags: [explainability, scoring]
+
+  - key: alert_triage
+    role: "Alert Prioritization Agent"
+    purpose: "Assign priority and escalation targets to newly generated alerts."
+    inline_prompt: |
+      You are Alert Triage. Given an alert payload (type, signal strength, recent changes, risk flags),
+      assign priority using a risk × novelty matrix. Recommend suppression if alert is redundant or noise.
+      Escalation targets must be roles (e.g. 'quant', 'risk', 'infra'). No free-form text outside fields.
+    input_contract:
+      expected_fields: [alert_id, alert_type, signal_strength, novelty_score, risk_flags[], cooldown_remaining]
+    output_contract:
+      validator: alert_triage_v1
+    routing_policy:
+      provider_route: sentiment_bucket
+      temperature: 0.1
+    failure_policy:
+      on_validation_failure: "fallback_priority_medium"
+    observability:
+      tags: [alerting, triage]
+
+  - key: scenario_simulator
+    role: "Counterfactual Scenario Model"
+    purpose: "Estimate directional score shift under hypothetical parameter deltas."
+    inline_prompt: |
+      You are Scenario Simulator. Given current features and a set of proposed parameter changes
+      (e.g., liquidity +30%, sentiment_score +0.15), estimate a plausible GemScore delta based ONLY on
+      provided weight map and elasticities. If uncertainty is high, bias magnitude toward conservative center.
+      NEVER invent parameters not supplied.
+    input_contract:
+      expected_fields: [token, current_score, feature_weights{}, elasticity_map{}, changes[]]
+    output_contract:
+      validator: simulation_v1
+    routing_policy:
+      provider_route: rare_deep_report
+      temperature: 0.25
+    failure_policy:
+      on_validation_failure: "retry_then_flag_unavailable"
+    observability:
+      tags: [simulation, whatif]
+
+  - key: contract_safety_fallback
+    role: "Deterministic Contract Safety Fallback"
+    purpose: "Heuristic-only scoring when LLM contract_safety fails."
+    implementation: "internal_code"   # Not LLM; uses rule-based Python
+    output_contract:
+      validator: contract_safety_v1
+    fallback_logic:
+      rules:
+        - condition: "unverified == true"      # from scanner
+          set:
+            severity: "high"
+            key_findings: ["unverified_contract"]
+            recommendation: "Avoid until verified."
+        - condition: "owner_mint == true"
+          set:
+            severity: "high"
+        - condition: "upgradeability == true && proxy_admin_unknown == true"
+          set:
+            severity: "medium"
+      defaults:
+        verified: false
+        owner_privileges: false
+        can_mint: false
+        upgradable_proxy: false
+        severity: "low"
+        key_findings: ["insufficient_llm_output"]
+        recommendation: "Re-run analysis with full metadata."
+    observability:
+      tags: [fallback, safety]
+
+# -----------------------------------------------------------------------------
+# Orchestration Pipelines
+#   Define multi-agent workflows with ordering, data passing, and guard conditions.
+# -----------------------------------------------------------------------------
+pipelines:
+
+  - name: scoring_cycle_v1
+    description: "Full pipeline: ingest → validate → analyze → score → explain."
+    steps:
+      - agent: feature_quality_guard
+        abort_if:
+          - condition: "quality_score < 0.4"
+            reason: "Feature quality too low to proceed"
+      - agent: contract_safety
+      - agent: narrative_analyzer
+      - agent: onchain_activity
+      - agent: technical_pattern
+      - agent: score_explainer
+    data_flow:
+      merge_strategy: "shallow_merge_json"
+      fanout_parallel:
+        - [narrative_analyzer, onchain_activity, technical_pattern]
+    post_pipeline_hooks:
+      - name: persist_artifacts
+      - name: emit_score_delta_event
+      - name: update_alert_engine
+
+  - name: alert_handling_v1
+    description: "Triage newly triggered scoring or anomaly alerts."
+    steps:
+      - agent: alert_triage
+    post_pipeline_hooks:
+      - name: route_notification
+      - name: update_alert_metrics
+
+  - name: what_if_simulation_v1
+    description: "Counterfactual scenario scoring for research UI."
+    steps:
+      - agent: scenario_simulator
+
+# -----------------------------------------------------------------------------
+# Guardrails (Cross-Agent Policies)
+# -----------------------------------------------------------------------------
+guardrails:
+  forbidden_content:
+    - pattern: "(?i)private key"
+    - pattern: "(?i)seed phrase"
+    - pattern: "(?i)passphrase"
+  redact_before_send:
+    - regex: "(0x[a-fA-F0-9]{40})"
+      replace_with: "{{SMART_CONTRACT}}"
+  enforce_numeric_ranges: true
+  reject_on_unclosed_json: true
+  max_chain_agents: 8
+  output_diff_audit:
+    enabled: true
+    threshold_char_delta: 600
+  hallucination_checks:
+    enabled: true
+    strategy: "field_presence + enum_validation"
+  fallback_strategy_order:
+    - "retry_same_provider"
+    - "switch_provider_tier_up"
+    - "simplify_prompt"
+    - "invoke_fallback_agent"
+
+# -----------------------------------------------------------------------------
+# Budget & Cost Governance Overrides
+# (Compliments configs/llm.yaml; these are per-agent daily hard caps)
+# -----------------------------------------------------------------------------
+budget_overrides:
+  contract_safety:
+    daily_usd_cap: 4.0
+  narrative_analyzer:
+    daily_usd_cap: 3.0
+  scenario_simulator:
+    per_request_usd_cap: 0.35
+  rare_deep_report_default:
+    daily_usd_cap: 8.0
+
+# -----------------------------------------------------------------------------
+# Observability & Telemetry
+# -----------------------------------------------------------------------------
+telemetry:
+  exporters:
+    - type: "prometheus"
+      endpoint: "/metrics"
+    - type: "otlp"
+      endpoint: "${OTEL_EXPORTER_ENDPOINT:-http://otel-collector:4317}"
+  tracked_fields:
+    - gem_score
+    - narrative.sentiment_score
+    - onchain.accumulation_score
+    - contract_safety.severity
+  anomaly_alerts:
+    - name: "llm_validation_fail_rate"
+      condition: "fail_rate > 0.05 over 15m"
+      action: "page_oncall"
+    - name: "score_volatility_spike"
+      condition: "rolling_std_1d > 2 * rolling_std_7d"
+      action: "flag_recalibration"
+
+# -----------------------------------------------------------------------------
+# Change Management (for future automation)
+# -----------------------------------------------------------------------------
+governance:
+  prompt_versioning: "semantic"
+  required_reviewers:
+    - "security_lead"
+    - "quant_lead"
+  auto_freeze_conditions:
+    - condition: "validation_failure_spike"
+      action: "lock_high_risk_agents"
+    - condition: "budget_exceeded"
+      action: "disable_noncritical_agents"
+  experiment_tracking:
+    feature_hash_algorithm: "sha256"
+    store: "experiments.sqlite"
+
+# -----------------------------------------------------------------------------
+# Developer Notes
+# -----------------------------------------------------------------------------
+notes:
+  - "Add new agents by extending validators + referencing llm.routes."
+  - "All agents returning JSON MUST pass schema validation before persistence."
+  - "Consider migrating simulation to internal gradient-based surrogate once feature importances stabilize."
+  - "Guardrails should emit structured violations for SOC review."

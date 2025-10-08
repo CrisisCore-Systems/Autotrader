@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from collections import Counter
@@ -11,13 +12,17 @@ from pathlib import Path
 from typing import Any, Iterable, List, Optional, Sequence
 
 import numpy as np
+from pydantic import ValidationError
 
+from src.core.llm_schemas import NarrativeAnalysisResponse, validate_llm_response
 from src.services.llm_guardrails import (
     BudgetExceeded,
     LLMBudgetGuardrail,
     PromptCache,
     SemanticCache,
 )
+
+logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover - optional dependency import
     from groq import Groq
@@ -74,43 +79,6 @@ _NEGATIVE_WORDS = {
     "reorg",
     "bankrupt",
 }
-
-
-@dataclass
-class NarrativeInsight:
-    sentiment_score: float
-    momentum: float
-    themes: List[str]
-
-
-class NarrativeAnalyzer:
-    """Lightweight sentiment estimator built for deterministic tests."""
-
-    def analyze(self, narratives: Iterable[str]) -> NarrativeInsight:
-        texts = [text.strip().lower() for text in narratives if text.strip()]
-        if not texts:
-            return NarrativeInsight(sentiment_score=0.5, momentum=0.5, themes=[])
-
-        scores: List[float] = []
-        token_counter: Counter[str] = Counter()
-        for text in texts:
-            tokens = [token.strip(".,!?") for token in text.split()]
-            token_counter.update(tokens)
-            positive_hits = sum(1 for token in tokens if token in _POSITIVE_WORDS)
-            negative_hits = sum(1 for token in tokens if token in _NEGATIVE_WORDS)
-            magnitude = positive_hits + negative_hits
-            if magnitude == 0:
-                sentiment = 0.5
-            else:
-                sentiment = (positive_hits - negative_hits) / max(magnitude, 1)
-                sentiment = 0.5 + 0.5 * np.clip(sentiment, -1.0, 1.0)
-            scores.append(float(sentiment))
-
-        sentiment_score = float(np.clip(np.mean(scores), 0.0, 1.0))
-        momentum = float(np.clip((scores[-1] - scores[0]) * 0.5 + 0.5 if len(scores) > 1 else sentiment_score, 0.0, 1.0))
-        themes = [token for token, _ in token_counter.most_common(5) if len(token) >= 5]
-
-        return NarrativeInsight(sentiment_score=sentiment_score, momentum=momentum, themes=themes)
 
 
 _RISK_WORDS = {"hack", "exploit", "rug", "scam", "phishing", "breach"}
@@ -210,7 +178,11 @@ class NarrativeAnalyzer:
         )
 
     def _request_analysis(self, prompt: str, texts: Sequence[str]) -> dict[str, Any]:
-        """Invoke the LLM and parse the JSON payload it returns."""
+        """Invoke the LLM and parse the JSON payload with strict Pydantic validation.
+        
+        This method enforces JSON schema validation using Pydantic models.
+        Invalid payloads trigger fail-fast behavior with structured logging.
+        """
 
         if not self._use_llm or self._llm_client is None:
             return {}
@@ -231,17 +203,43 @@ class NarrativeAnalyzer:
         try:
             response_content = self._invoke_completion(prompt)
         except BudgetExceeded:
+            logger.warning(
+                "llm_budget_exceeded",
+                extra={"context": "narrative_analysis", "fallback": "heuristics"}
+            )
             return self._fallback_payload(texts)
-        except Exception:
+        except Exception as e:
+            logger.error(
+                "llm_invocation_error",
+                extra={"context": "narrative_analysis", "error": str(e)}
+            )
             return {}
 
+        # Clean markdown formatting from LLM response
         cleaned = _clean_json_response(response_content)
-        try:
-            data = json.loads(cleaned)
-        except json.JSONDecodeError:
-            return {}
-        if not isinstance(data, dict):
-            return {}
+        
+        # Validate with Pydantic schema (fail-fast on invalid payloads)
+        validated_response = validate_llm_response(
+            cleaned,
+            NarrativeAnalysisResponse,
+            context="narrative_analysis"
+        )
+        
+        if validated_response is None:
+            # Validation failed - log detailed error and use fallback
+            logger.warning(
+                "llm_validation_failed_using_fallback",
+                extra={
+                    "context": "narrative_analysis",
+                    "response_preview": cleaned[:200]
+                }
+            )
+            return self._fallback_payload(texts)
+        
+        # Convert validated Pydantic model to dict for backward compatibility
+        data = validated_response.model_dump()
+        
+        # Cache the validated data
         if cache_key and self._prompt_cache:
             self._prompt_cache.set(cache_key, data, ttl=self._cache_ttl)
         if self._semantic_cache is not None:
@@ -252,6 +250,17 @@ class NarrativeAnalyzer:
                 task_type=self._semantic_task_type,
                 ttl_seconds=ttl_override,
             )
+        
+        logger.info(
+            "llm_response_validated",
+            extra={
+                "context": "narrative_analysis",
+                "sentiment": data.get("sentiment"),
+                "sentiment_score": data.get("sentiment_score"),
+                "themes_count": len(data.get("emergent_themes", []))
+            }
+        )
+        
         return data
 
     def _invoke_completion(self, prompt: str) -> str:

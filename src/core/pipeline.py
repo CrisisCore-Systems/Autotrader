@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Dict, Iterable, Sequence
@@ -21,6 +22,19 @@ from src.services.exporter import render_html_artifact, render_markdown_artifact
 from src.core.news_client import NewsClient
 from src.core.sentiment import SentimentAnalyzer
 from src.services.news import NewsItem
+from src.core.logging_config import get_logger
+from src.core.metrics import (
+    record_scan_request,
+    record_scan_duration,
+    record_scan_error,
+    record_gem_score,
+    record_confidence_score,
+    record_flagged_token,
+)
+from src.core.tracing import trace_operation, add_span_attributes
+
+# Initialize logger for this module
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.services.alerting import AlertManager, Alert
@@ -132,6 +146,7 @@ class HiddenGemScanner:
         github_aggregator: "GitHubActivityAggregator" | None = None,
         social_aggregator: "SocialAggregator" | None = None,
         tokenomics_aggregator: "TokenomicsAggregator" | None = None,
+        feature_store: object | None = None,  # Optional FeatureStore for delta explainability
     ) -> None:
         self.coin_client = coin_client
         # Use FREE clients if provided, otherwise fall back to paid clients
@@ -149,15 +164,96 @@ class HiddenGemScanner:
         self.github_aggregator = github_aggregator
         self.social_aggregator = social_aggregator
         self.tokenomics_aggregator = tokenomics_aggregator
+        self.feature_store = feature_store
 
     def scan(self, config: TokenConfig) -> ScanResult:
-        context = ScanContext(config=config)
-        tree = self._build_execution_tree(context)
-        tree.run(context)
-        if context.result is None:
-            raise RuntimeError("Scan execution did not produce a result")
-        self._post_process(context)
-        return context.result
+        """Scan a token and produce a comprehensive analysis result.
+        
+        Args:
+            config: Token configuration
+            
+        Returns:
+            Scan result with scores, metrics, and artifacts
+        """
+        start_time = time.time()
+        
+        # Log scan initiation
+        logger.info(
+            "scan_started",
+            token_symbol=config.symbol,
+            token_id=config.coingecko_id,
+            contract_address=config.contract_address,
+        )
+        
+        try:
+            with trace_operation(
+                "scanner.scan",
+                attributes={
+                    "token.symbol": config.symbol,
+                    "token.contract": config.contract_address,
+                }
+            ):
+                context = ScanContext(config=config)
+                tree = self._build_execution_tree(context)
+                tree.run(context)
+                
+                if context.result is None:
+                    raise RuntimeError("Scan execution did not produce a result")
+                
+                self._post_process(context)
+                
+                # Calculate duration
+                duration = time.time() - start_time
+                
+                # Record metrics
+                record_scan_request(config.symbol, "success")
+                record_scan_duration(config.symbol, duration, "success")
+                record_gem_score(config.symbol, context.result.gem_score.score)
+                record_confidence_score(config.symbol, context.result.gem_score.confidence)
+                
+                if context.result.flag:
+                    record_flagged_token(config.symbol, "security_concern")
+                
+                # Log completion
+                logger.info(
+                    "scan_completed",
+                    token_symbol=config.symbol,
+                    gem_score=context.result.gem_score.score,
+                    confidence=context.result.gem_score.confidence,
+                    flagged=context.result.flag,
+                    duration_seconds=duration,
+                )
+                
+                # Add trace attributes
+                add_span_attributes(
+                    gem_score=context.result.gem_score.score,
+                    confidence=context.result.gem_score.confidence,
+                    flagged=context.result.flag,
+                )
+                
+                return context.result
+                
+        except Exception as e:
+            # Calculate duration even on failure
+            duration = time.time() - start_time
+            
+            # Record error metrics
+            error_type = type(e).__name__
+            record_scan_request(config.symbol, "failure")
+            record_scan_duration(config.symbol, duration, "failure")
+            record_scan_error(config.symbol, error_type)
+            
+            # Log error
+            logger.error(
+                "scan_failed",
+                token_symbol=config.symbol,
+                error_type=error_type,
+                error_message=str(e),
+                duration_seconds=duration,
+                exc_info=True,
+            )
+            
+            raise
 
     def scan_with_tree(self, config: TokenConfig) -> tuple[ScanResult, TreeNode]:
         context = ScanContext(config=config)
@@ -955,6 +1051,38 @@ class HiddenGemScanner:
                 proceed=False,
             )
         context.gem_score = compute_gem_score(context.adjusted_features)
+        
+        # Store snapshot and compute delta if feature store is available
+        if self.feature_store is not None:
+            from src.core.score_explainer import create_snapshot_from_result
+            
+            # Create and store snapshot
+            snapshot = create_snapshot_from_result(
+                token_symbol=context.config.symbol,
+                gem_score_result=context.gem_score,
+                features=context.adjusted_features,
+                timestamp=context.snapshot.timestamp if context.snapshot else None,
+            )
+            self.feature_store.write_snapshot(snapshot)
+            
+            # Compute delta explanation if we have previous history
+            delta = self.feature_store.compute_score_delta(
+                token_symbol=context.config.symbol,
+                current_snapshot=snapshot,
+            )
+            
+            # Log delta if available
+            if delta:
+                logger.info(
+                    "gem_score_delta",
+                    token_symbol=context.config.symbol,
+                    delta_score=delta.delta_score,
+                    percent_change=delta.percent_change,
+                    time_delta_hours=delta.time_delta_hours,
+                    top_positive=[fd.feature_name for fd in delta.top_positive_contributors[:3]],
+                    top_negative=[fd.feature_name for fd in delta.top_negative_contributors[:3]],
+                )
+        
         return NodeOutcome(
             status="success",
             summary=f"GemScore {context.gem_score.score:.2f} (confidence {context.gem_score.confidence:.1f})",

@@ -7,11 +7,12 @@ import functools
 import inspect
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, ForwardRef
 
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from main import build_scanner, demo_tokens
@@ -20,6 +21,14 @@ from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient, 
 from src.core.narrative import NarrativeAnalyzer
 from src.core.pipeline import HiddenGemScanner, ScanResult, TokenConfig
 from src.services.news import NewsAggregator, NewsItem
+from src.core.logging_config import init_logging, get_logger
+from src.core.metrics import (
+    record_api_request,
+    record_api_duration,
+    record_api_error,
+    ActiveRequestTracker,
+)
+from src.core.tracing import setup_tracing, instrument_fastapi, trace_operation
 
 # ---------------------------------------------------------------------------
 # Compatibility patches
@@ -38,7 +47,8 @@ if _forward_ref_evaluate is not None:
         ForwardRef._evaluate = _forward_ref_eval_compat  # type: ignore[attr-defined]
 
 
-logger = logging.getLogger(__name__)
+# Initialize structured logging
+logger = get_logger(__name__)
 
 CONFIG_ENV_VAR = "VOIDBLOOM_CONFIG"
 DEFAULT_CONFIG_PATH = Path("configs/example.yaml")
@@ -84,20 +94,87 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Middleware for request logging and metrics
+@app.middleware("http")
+async def observe_requests(request: Request, call_next):
+    """Middleware to observe API requests with logging and metrics."""
+    start_time = time.time()
+    method = request.method
+    path = request.url.path
+    
+    logger.info(
+        "api_request_started",
+        method=method,
+        path=path,
+        client=request.client.host if request.client else "unknown",
+    )
+    
+    with ActiveRequestTracker(method, path):
+        try:
+            response = await call_next(request)
+            duration = time.time() - start_time
+            
+            # Record metrics
+            record_api_request(method, path, response.status_code)
+            record_api_duration(method, path, duration)
+            
+            # Log completion
+            logger.info(
+                "api_request_completed",
+                method=method,
+                path=path,
+                status_code=response.status_code,
+                duration_seconds=duration,
+            )
+            
+            return response
+            
+        except Exception as e:
+            duration = time.time() - start_time
+            error_type = type(e).__name__
+            
+            # Record error metrics
+            record_api_request(method, path, 500)
+            record_api_duration(method, path, duration)
+            record_api_error(method, path, error_type)
+            
+            # Log error
+            logger.error(
+                "api_request_failed",
+                method=method,
+                path=path,
+                error_type=error_type,
+                error_message=str(e),
+                duration_seconds=duration,
+                exc_info=True,
+            )
+            
+            raise
+
+
 router = APIRouter(prefix="/api")
 
 
 @app.on_event("startup")
 async def _startup() -> None:
+    # Initialize observability
+    init_logging(service_name="autotrader-api", level=os.getenv("LOG_LEVEL", "INFO"))
+    setup_tracing(service_name="autotrader-api")
+    instrument_fastapi(app)
+    
+    logger.info("api_startup", version="0.2.0")
+    
     await _initialize_state()
     try:
         await _run_scan(force=True)
     except Exception as exc:  # pragma: no cover - best effort startup scan
-        logger.warning("Initial scan failed: %s", exc)
+        logger.warning("initial_scan_failed", error=str(exc))
 
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
+    logger.info("api_shutdown")
     _close_clients()
 
 

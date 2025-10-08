@@ -31,4 +31,4 @@ groq>=0.11.0
 # matplotlib>=3.9.0  # Uncomment if needed
 
 # Optional: Additional analysis
-# scipy>=1.14.0  # Uncomment if needed
+scipy>=1.14.0  # Required for drift monitoring statistical tests (KS, PSI, Chi-square)

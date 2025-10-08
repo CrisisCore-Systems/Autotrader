@@ -5,8 +5,9 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 
+import numpy as np
 import pandas as pd
 
 from src.core.scoring import compute_gem_score
@@ -14,6 +15,11 @@ from backtest.baseline_strategies import (
     BaselineResult,
     evaluate_all_baselines,
     format_baseline_comparison,
+)
+from backtest.extended_metrics import (
+    ExtendedBacktestMetrics,
+    calculate_extended_metrics,
+    format_ic_summary,
 )
 
 
@@ -31,6 +37,7 @@ class BacktestResult:
     average_return_at_k: float
     flagged_assets: List[str]
     baseline_results: Dict[str, BaselineResult] | None = None
+    extended_metrics: ExtendedBacktestMetrics | None = None
 
 
 def load_snapshots(path: Path) -> Iterable[TokenSnapshot]:
@@ -52,6 +59,7 @@ def evaluate_period(
     snapshots: Iterable[TokenSnapshot],
     top_k: int = 10,
     compare_baselines: bool = False,
+    extended_metrics: bool = False,
     seed: int | None = None
 ) -> BacktestResult:
     """Compute precision@K and average return for flagged assets.
@@ -60,6 +68,7 @@ def evaluate_period(
         snapshots: Iterable of token snapshots
         top_k: Number of top assets to evaluate
         compare_baselines: Whether to evaluate baseline strategies
+        extended_metrics: Whether to calculate IC and risk metrics
         seed: Random seed for baseline comparisons
     
     Returns:
@@ -86,11 +95,25 @@ def evaluate_period(
     if compare_baselines:
         baseline_results = evaluate_all_baselines(snapshots_list, top_k, seed)
     
+    # Optionally calculate extended metrics
+    extended_metrics_result = None
+    if extended_metrics:
+        # Prepare predictions array from all scored snapshots
+        predictions = np.array([score for _, score in scored])
+        extended_metrics_result = calculate_extended_metrics(
+            snapshots=snapshots_list,
+            predictions=predictions,
+            top_k=top_k,
+            risk_free_rate=0.0,
+            periods_per_year=52,  # Assuming weekly returns
+        )
+    
     return BacktestResult(
         precision_at_k=precision_at_k,
         average_return_at_k=average_return_at_k,
         flagged_assets=[snap.token for snap, _ in top_assets],
         baseline_results=baseline_results,
+        extended_metrics=extended_metrics_result,
     )
 
 
@@ -100,14 +123,20 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--compare-baselines", action="store_true", 
                        help="Compare against baseline strategies")
+    parser.add_argument("--extended-metrics", action="store_true",
+                       help="Calculate IC and risk-adjusted metrics")
     parser.add_argument("--seed", type=int, default=None, 
                        help="Random seed for reproducibility")
     args = parser.parse_args()
 
     snapshots = list(load_snapshots(args.data))
-    result = evaluate_period(snapshots, top_k=args.top_k, 
-                            compare_baselines=args.compare_baselines,
-                            seed=args.seed)
+    result = evaluate_period(
+        snapshots, 
+        top_k=args.top_k, 
+        compare_baselines=args.compare_baselines,
+        extended_metrics=args.extended_metrics,
+        seed=args.seed
+    )
     
     print("=" * 60)
     print("GEMSCORE PERFORMANCE")
@@ -123,6 +152,10 @@ def main() -> None:
             'return': result.average_return_at_k
         }
         print(format_baseline_comparison(gem_score_dict, result.baseline_results))
+    
+    if result.extended_metrics:
+        print()
+        print(result.extended_metrics.summary_string())
 
 
 if __name__ == "__main__":

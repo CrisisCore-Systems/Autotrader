@@ -1,4 +1,8 @@
+# Alert Rules Configuration for Alert Engine v2
+# Supports: compound conditions (AND/OR/NOT), suppression, escalation policies
+
 rules:
+  # ===== LEGACY RULES (v1) =====
   - id: high_score_gate
     description: "GemScore ≥ 70 & Confidence ≥ 0.75 & safety_ok"
     where:
@@ -8,3 +12,305 @@ rules:
     channels: [telegram, slack]
     cool_off_minutes: 240
     version: v1
+
+  # ===== COMPOUND CONDITION RULES (v2) =====
+  - id: critical_risk_token
+    description: "Critical risk: low GemScore AND honeypot detected"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: gem_score
+          operator: lt
+          threshold: 30
+        - metric: honeypot_detected
+          operator: eq
+          threshold: true
+    severity: critical
+    channels: [telegram, slack, pagerduty]
+    escalation_policy: immediate
+    suppression_duration: 3600  # 1 hour
+    version: v2
+
+  - id: suspicious_high_score_token
+    description: "High score but with red flags (low liquidity OR failed safety)"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: gem_score
+          operator: gte
+          threshold: 70
+        - type: compound
+          operator: OR
+          conditions:
+            - metric: liquidity_usd
+              operator: lt
+              threshold: 10000
+            - metric: safety_score
+              operator: lt
+              threshold: 0.5
+    severity: warning
+    channels: [slack]
+    escalation_policy: progressive
+    suppression_duration: 1800  # 30 minutes
+    version: v2
+
+  - id: liquidity_crisis
+    description: "Multiple liquidity red flags"
+    condition:
+      type: compound
+      operator: OR
+      conditions:
+        - type: compound
+          operator: AND
+          conditions:
+            - metric: liquidity_usd
+              operator: lt
+              threshold: 5000
+            - metric: volume_24h
+              operator: lt
+              threshold: 1000
+        - metric: price_impact_5eth
+          operator: gt
+          threshold: 10.0  # >10% slippage
+    severity: high
+    channels: [telegram, slack]
+    escalation_policy: tiered
+    suppression_duration: 7200  # 2 hours
+    version: v2
+
+  - id: potential_market_manipulation
+    description: "Complex pattern indicating possible manipulation"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - type: compound
+          operator: OR
+          conditions:
+            - metric: holder_concentration_top10
+              operator: gt
+              threshold: 80  # Top 10 holders own >80%
+            - metric: buy_sell_ratio_1h
+              operator: gt
+              threshold: 5.0  # Heavy buying pressure
+        - type: compound
+          operator: AND
+          conditions:
+            - metric: price_change_1h
+              operator: gt
+              threshold: 50  # >50% price increase
+            - metric: contract_age_hours
+              operator: lt
+              threshold: 24  # Less than 1 day old
+    severity: critical
+    channels: [telegram, slack, pagerduty]
+    escalation_policy: immediate
+    suppression_duration: 600  # 10 minutes
+    version: v2
+
+  # ===== MODEL PERFORMANCE ALERTS (v2) =====
+  - id: model_performance_degradation
+    description: "Model confidence dropped significantly"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: avg_confidence_1h
+          operator: lt
+          threshold: 0.6
+        - metric: predictions_count_1h
+          operator: gte
+          threshold: 10  # Ensure enough samples
+    severity: warning
+    channels: [slack]
+    escalation_policy: progressive
+    suppression_duration: 3600
+    version: v2
+
+  - id: feature_drift_detected
+    description: "Significant feature distribution drift"
+    condition:
+      type: compound
+      operator: OR
+      conditions:
+        - metric: drift_ks_statistic
+          operator: gt
+          threshold: 0.3
+        - metric: drift_psi_score
+          operator: gt
+          threshold: 0.2
+    severity: high
+    channels: [slack, pagerduty]
+    escalation_policy: tiered
+    suppression_duration: 14400  # 4 hours
+    version: v2
+
+  - id: prediction_distribution_shift
+    description: "Prediction distribution differs from baseline"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: prediction_drift_score
+          operator: gt
+          threshold: 0.25
+        - metric: predictions_count_24h
+          operator: gte
+          threshold: 100  # Minimum sample size
+    severity: warning
+    channels: [slack]
+    escalation_policy: progressive
+    suppression_duration: 7200
+    version: v2
+
+  # ===== SAFETY & SECURITY ALERTS (v2) =====
+  - id: unverified_high_value
+    description: "High value token with unverified contract"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: market_cap_usd
+          operator: gt
+          threshold: 100000
+        - metric: contract_verified
+          operator: eq
+          threshold: false
+    severity: high
+    channels: [telegram, slack]
+    escalation_policy: immediate
+    suppression_duration: 1800
+    version: v2
+
+  - id: rapid_holder_drain
+    description: "Significant holder exodus"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: holder_change_24h
+          operator: lt
+          threshold: -20  # -20% holders
+        - metric: total_holders
+          operator: gte
+          threshold: 100  # Enough holders to matter
+    severity: critical
+    channels: [telegram, slack, pagerduty]
+    escalation_policy: immediate
+    suppression_duration: 3600
+    version: v2
+
+  # ===== OPPORTUNITY ALERTS (v2) =====
+  - id: exceptional_gem_opportunity
+    description: "Perfect storm: high score, good liquidity, early stage"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: gem_score
+          operator: gte
+          threshold: 85
+        - metric: liquidity_usd
+          operator: gte
+          threshold: 50000
+        - metric: contract_age_hours
+          operator: lt
+          threshold: 168  # Less than 1 week
+        - metric: honeypot_detected
+          operator: eq
+          threshold: false
+        - metric: safety_score
+          operator: gte
+          threshold: 0.8
+    severity: info
+    channels: [telegram, slack]
+    escalation_policy: none
+    suppression_duration: 3600
+    version: v2
+
+  - id: undervalued_token
+    description: "Good metrics but low market attention"
+    condition:
+      type: compound
+      operator: AND
+      conditions:
+        - metric: gem_score
+          operator: gte
+          threshold: 65
+        - metric: social_sentiment_score
+          operator: lt
+          threshold: 30  # Low social buzz
+        - metric: volume_24h_usd
+          operator: lt
+          threshold: 50000  # Low volume
+        - metric: safety_score
+          operator: gte
+          threshold: 0.7
+    severity: info
+    channels: [slack]
+    escalation_policy: none
+    suppression_duration: 7200
+    version: v2
+
+# ===== SUPPRESSION RULES =====
+# Global suppression configuration
+suppression:
+  # Suppress alerts for known test tokens
+  - pattern: ".*test.*token.*"
+    field: token_name
+    duration: 86400  # 24 hours
+
+  # Suppress during known maintenance windows
+  - schedule:
+      days: [sunday]
+      hours: [2, 3, 4]  # 2-5 AM Sunday UTC
+    severity: [info, warning]
+    duration: 10800  # 3 hours
+
+  # Suppress duplicate alerts with same fingerprint
+  - deduplication:
+      enabled: true
+      window: 300  # 5 minutes
+
+# ===== ESCALATION POLICIES =====
+escalation_policies:
+  immediate:
+    levels:
+      - delay: 0
+        channels: [telegram, slack, pagerduty]
+        
+  progressive:
+    levels:
+      - delay: 0
+        channels: [slack]
+      - delay: 300  # 5 minutes
+        channels: [telegram]
+      - delay: 900  # 15 minutes
+        channels: [pagerduty]
+        
+  tiered:
+    levels:
+      - delay: 0
+        channels: [slack]
+      - delay: 600  # 10 minutes
+        channels: [telegram, slack]
+      - delay: 1800  # 30 minutes
+        channels: [pagerduty]
+
+# ===== CHANNEL CONFIGURATION =====
+channels:
+  telegram:
+    enabled: true
+    rate_limit: 10  # messages per minute
+    
+  slack:
+    enabled: true
+    rate_limit: 20
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    
+  pagerduty:
+    enabled: false
+    rate_limit: 5
+    integration_key: "${PAGERDUTY_KEY}"

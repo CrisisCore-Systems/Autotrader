@@ -218,6 +218,77 @@ Confidence is computed as `0.5 · Recency + 0.5 · DataCompleteness` and reporte
 - Metrics pipeline (Prometheus + Grafana) tracking ingestion latency, API SLIs, false positive rates.
 - Alerting for safety violations (e.g., contract analyzer flagged HIGH severity) before user notifications.
 
+### Artifact Provenance & Glossary (NEW)
+
+**Full lineage tracking and technical documentation generation**
+
+Track the complete lifecycle of every data artifact from ingestion through to GemScore calculation:
+
+```python
+from src.core.provenance_tracking import complete_pipeline_tracked
+from src.core.provenance import get_provenance_tracker
+
+# Run analysis with full provenance tracking
+results = complete_pipeline_tracked(
+    snapshot=market_snapshot,
+    price_series=prices,
+    narrative_embedding_score=0.75,
+    contract_report=safety_report,
+    data_source="etherscan"
+)
+
+# Explore lineage
+tracker = get_provenance_tracker()
+lineage = tracker.get_lineage(results['provenance']['score_id'])
+mermaid_diagram = tracker.export_lineage_graph(score_id, format="mermaid")
+```
+
+**Key Features:**
+- ✅ **Complete Lineage Tracking**: Track all data transformations and dependencies
+- ✅ **Performance Metrics**: Monitor transformation duration and bottlenecks
+- ✅ **Quality Assurance**: Track data quality metrics throughout pipeline
+- ✅ **Visual Diagrams**: Export lineage as Mermaid diagrams for visualization
+- ✅ **Technical Glossary**: Auto-generated documentation for all metrics and features
+- ✅ **Search & Browse**: Full-text search and category-based browsing of terms
+
+**Usage:**
+
+```python
+# Look up technical terms
+from src.core.glossary import get_glossary
+
+glossary = get_glossary()
+term = glossary.get_term("GemScore")
+print(term.definition)  # Full definition with formula and range
+print(term.formula)     # Mathematical formula
+print(term.range)       # Valid value range
+
+# Search for terms
+results = glossary.search("risk")
+
+# Export documentation
+glossary.export_markdown(Path("docs/GLOSSARY.md"))
+```
+
+**Documentation:**
+- 📖 [Full Guide](PROVENANCE_GLOSSARY_GUIDE.md) - Comprehensive documentation
+- ⚡ [Quick Reference](PROVENANCE_QUICK_REF.md) - Quick examples and patterns
+- 📓 [Interactive Notebook](notebooks/hidden_gem_scanner.ipynb) - Hands-on tutorial
+- 📊 [Implementation Summary](PROVENANCE_IMPLEMENTATION_SUMMARY.md) - Technical details
+
+**Quick Start:**
+
+```bash
+# Run interactive demo
+python demo_provenance.py
+
+# Run test suite
+python test_provenance_glossary.py
+
+# Explore in Jupyter
+jupyter notebook notebooks/hidden_gem_scanner.ipynb
+```
+
 ## Roadmap
 
 | Sprint | Duration | Milestones |

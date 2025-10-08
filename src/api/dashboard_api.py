@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Literal
 
 from src.services.reliability import get_system_health, SLA_REGISTRY, CIRCUIT_REGISTRY
 from src.core.feature_store import FeatureStore
@@ -40,82 +41,146 @@ if not os.environ.get('COINGECKO_API_KEY'):
 
 class TokenResponse(BaseModel):
     """Scanner token summary response."""
-    symbol: str
-    price: float
-    liquidity_usd: float
-    gem_score: float
-    final_score: float
-    confidence: float
-    flagged: bool
-    narrative_momentum: float
-    sentiment_score: float
-    holders: int
-    updated_at: str
+    symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
+    price: float = Field(..., gt=0, description="Token price in USD")
+    liquidity_usd: float = Field(..., ge=0, description="Liquidity in USD")
+    gem_score: float = Field(..., ge=0, le=1, description="Gem score between 0 and 1")
+    final_score: float = Field(..., ge=0, le=1, description="Final score between 0 and 1")
+    confidence: float = Field(..., ge=0, le=1, description="Confidence level")
+    flagged: bool = Field(..., description="Whether token is flagged")
+    narrative_momentum: float = Field(..., ge=0, le=1, description="Narrative momentum score")
+    sentiment_score: float = Field(..., ge=-1, le=1, description="Sentiment score")
+    holders: int = Field(..., ge=0, description="Number of token holders")
+    updated_at: str = Field(..., description="ISO timestamp of last update")
+    
+    @field_validator('symbol')
+    @classmethod
+    def symbol_uppercase(cls, v: str) -> str:
+        """Ensure symbol is uppercase."""
+        return v.upper()
+    
+    @field_validator('updated_at')
+    @classmethod
+    def validate_timestamp(cls, v: str) -> str:
+        """Validate ISO timestamp format."""
+        try:
+            datetime.fromisoformat(v.replace('Z', '+00:00'))
+        except ValueError:
+            raise ValueError('Invalid ISO timestamp format')
+        return v
 
 
 class AnomalyAlert(BaseModel):
     """Anomaly detection alert."""
-    alert_id: str
-    token_symbol: str
-    alert_type: str  # "price_spike", "volume_surge", "liquidity_drain", "sentiment_shift"
-    severity: str  # "low", "medium", "high", "critical"
-    message: str
-    timestamp: float
-    metrics: Dict[str, Any]
+    alert_id: str = Field(..., min_length=1, description="Unique alert identifier")
+    token_symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
+    alert_type: Literal["price_spike", "volume_surge", "liquidity_drain", "sentiment_shift"] = Field(
+        ..., description="Type of anomaly detected"
+    )
+    severity: Literal["low", "medium", "high", "critical"] = Field(..., description="Alert severity")
+    message: str = Field(..., min_length=1, description="Human-readable alert message")
+    timestamp: float = Field(..., gt=0, description="Unix timestamp of alert")
+    metrics: Dict[str, Any] = Field(default_factory=dict, description="Additional metrics")
+    
+    @field_validator('token_symbol')
+    @classmethod
+    def symbol_uppercase(cls, v: str) -> str:
+        """Ensure symbol is uppercase."""
+        return v.upper()
 
 
 class ConfidenceInterval(BaseModel):
     """Confidence interval for a metric."""
-    value: float
-    lower_bound: float
-    upper_bound: float
-    confidence_level: float  # e.g., 0.95 for 95%
+    value: float = Field(..., description="Measured value")
+    lower_bound: float = Field(..., description="Lower confidence bound")
+    upper_bound: float = Field(..., description="Upper confidence bound")
+    confidence_level: float = Field(..., gt=0, le=1, description="Confidence level (e.g., 0.95)")
+    
+    @model_validator(mode='after')
+    def validate_bounds(self):
+        """Ensure bounds are ordered correctly."""
+        if self.lower_bound > self.upper_bound:
+            raise ValueError('lower_bound must be <= upper_bound')
+        if not (self.lower_bound <= self.value <= self.upper_bound):
+            raise ValueError('value must be between lower_bound and upper_bound')
+        return self
 
 
 class SLAStatus(BaseModel):
     """SLA status for a data source."""
-    source_name: str
-    status: str  # "HEALTHY", "DEGRADED", "FAILED"
-    latency_p50: Optional[float]
-    latency_p95: Optional[float]
-    latency_p99: Optional[float]
-    success_rate: Optional[float]
-    uptime_percentage: Optional[float]
+    source_name: str = Field(..., min_length=1, description="Data source name")
+    status: Literal["HEALTHY", "DEGRADED", "FAILED"] = Field(..., description="Current status")
+    latency_p50: Optional[float] = Field(None, ge=0, description="50th percentile latency (ms)")
+    latency_p95: Optional[float] = Field(None, ge=0, description="95th percentile latency (ms)")
+    latency_p99: Optional[float] = Field(None, ge=0, description="99th percentile latency (ms)")
+    success_rate: Optional[float] = Field(None, ge=0, le=1, description="Success rate (0-1)")
+    uptime_percentage: Optional[float] = Field(None, ge=0, le=100, description="Uptime percentage")
 
 
 class CircuitBreakerStatus(BaseModel):
     """Circuit breaker status."""
-    breaker_name: str
-    state: str  # "CLOSED", "OPEN", "HALF_OPEN"
-    failure_count: int
+    breaker_name: str = Field(..., min_length=1, description="Circuit breaker name")
+    state: Literal["CLOSED", "OPEN", "HALF_OPEN"] = Field(..., description="Current state")
+    failure_count: int = Field(..., ge=0, description="Number of failures")
 
 
 class TokenCorrelation(BaseModel):
     """Cross-token correlation data."""
-    token_a: str
-    token_b: str
-    correlation: float
-    metric: str  # "price", "volume", "sentiment"
+    token_a: str = Field(..., min_length=1, max_length=20, description="First token symbol")
+    token_b: str = Field(..., min_length=1, max_length=20, description="Second token symbol")
+    correlation: float = Field(..., ge=-1, le=1, description="Correlation coefficient")
+    metric: Literal["price", "volume", "sentiment"] = Field(..., description="Metric type")
+    
+    @field_validator('token_a', 'token_b')
+    @classmethod
+    def symbol_uppercase(cls, v: str) -> str:
+        """Ensure symbols are uppercase."""
+        return v.upper()
 
 
 class OrderFlowSnapshot(BaseModel):
     """Order flow depth chart data."""
-    token_symbol: str
-    timestamp: float
-    bids: List[tuple[float, float]]  # [(price, volume), ...]
-    asks: List[tuple[float, float]]
-    bid_depth_usd: float
-    ask_depth_usd: float
-    imbalance: float
+    token_symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
+    timestamp: float = Field(..., gt=0, description="Unix timestamp")
+    bids: List[tuple[float, float]] = Field(..., description="Bid levels [(price, volume), ...]")
+    asks: List[tuple[float, float]] = Field(..., description="Ask levels [(price, volume), ...]")
+    bid_depth_usd: float = Field(..., ge=0, description="Total bid depth in USD")
+    ask_depth_usd: float = Field(..., ge=0, description="Total ask depth in USD")
+    imbalance: float = Field(..., ge=-1, le=1, description="Order book imbalance")
+    
+    @field_validator('token_symbol')
+    @classmethod
+    def symbol_uppercase(cls, v: str) -> str:
+        """Ensure symbol is uppercase."""
+        return v.upper()
 
 
 class SentimentTrend(BaseModel):
     """Twitter sentiment trend data."""
-    token_symbol: str
-    timestamps: List[float]
-    sentiment_scores: List[float]
-    tweet_volumes: List[int]
-    engagement_scores: List[float]
+    token_symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
+    timestamps: List[float] = Field(..., min_length=1, description="Unix timestamps")
+    sentiment_scores: List[float] = Field(..., min_length=1, description="Sentiment scores")
+    tweet_volumes: List[int] = Field(..., min_length=1, description="Tweet volumes")
+    engagement_scores: List[float] = Field(..., min_length=1, description="Engagement scores")
+    
+    @field_validator('token_symbol')
+    @classmethod
+    def symbol_uppercase(cls, v: str) -> str:
+        """Ensure symbol is uppercase."""
+        return v.upper()
+    
+    @model_validator(mode='after')
+    def validate_list_lengths(self):
+        """Ensure all lists have the same length."""
+        lengths = [
+            len(self.timestamps),
+            len(self.sentiment_scores),
+            len(self.tweet_volumes),
+            len(self.engagement_scores)
+        ]
+        if len(set(lengths)) > 1:
+            raise ValueError('All trend data lists must have the same length')
+        return self
 
 
 # ============================================================================
@@ -144,6 +209,28 @@ feature_store = FeatureStore()
 scanner = None
 cached_results: Dict[str, Dict[str, Any]] = {}
 CACHE_TTL_SECONDS = 300
+
+
+# Scanner cache class to hold scan results
+class ScannerCache:
+    """Cache for scanner results."""
+    def __init__(self):
+        self.results: List[Any] = []
+        self.last_updated: float = 0.0
+    
+    def update(self, results: List[Any]) -> None:
+        """Update cache with new results."""
+        self.results = results
+        self.last_updated = time.time()
+    
+    def clear(self) -> None:
+        """Clear the cache."""
+        self.results = []
+        self.last_updated = 0.0
+
+
+# Global scanner cache instance
+_scanner_cache = ScannerCache()
 
 
 # ============================================================================

@@ -1,14 +1,3 @@
-"""Simple narrative analysis utilities for scoring."""
-
-from __future__ import annotations
-
-from collections import Counter
-from dataclasses import dataclass
-from typing import Iterable, List
-
-import numpy as np
-
-_POSITIVE_TOKENS = {
 """Narrative analysis utilities with optional Groq LLM integration."""
 
 from __future__ import annotations
@@ -74,9 +63,6 @@ _POSITIVE_WORDS = {
     "milestone",
     "launch",
 }
-_NEGATIVE_TOKENS = {
-    "hack",
-    "rug",
 _NEGATIVE_WORDS = {
     "hack",
     "exploit",
@@ -110,8 +96,8 @@ class NarrativeAnalyzer:
         for text in texts:
             tokens = [token.strip(".,!?") for token in text.split()]
             token_counter.update(tokens)
-            positive_hits = sum(1 for token in tokens if token in _POSITIVE_TOKENS)
-            negative_hits = sum(1 for token in tokens if token in _NEGATIVE_TOKENS)
+            positive_hits = sum(1 for token in tokens if token in _POSITIVE_WORDS)
+            negative_hits = sum(1 for token in tokens if token in _NEGATIVE_WORDS)
             magnitude = positive_hits + negative_hits
             if magnitude == 0:
                 sentiment = 0.5
@@ -125,9 +111,8 @@ class NarrativeAnalyzer:
         themes = [token for token, _ in token_counter.most_common(5) if len(token) >= 5]
 
         return NarrativeInsight(sentiment_score=sentiment_score, momentum=momentum, themes=themes)
-    "rug",
-    "bankrupt",
-}
+
+
 _RISK_WORDS = {"hack", "exploit", "rug", "scam", "phishing", "breach"}
 _STOPWORDS = {
     "the",

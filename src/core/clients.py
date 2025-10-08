@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
-import httpx
-
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence
 
 import httpx
@@ -31,9 +27,6 @@ DEFAULT_RATE_LIMIT = RateLimit(120, 60.0)
 class BaseClient:
     """Shared convenience helpers for HTTP clients."""
 
-    def __init__(self, client: Optional[httpx.Client] = None) -> None:
-        self._client = client
-        self._owns_client = client is None
     def __init__(
         self,
         client: Optional[httpx.Client] = None,
@@ -150,11 +143,6 @@ class EtherscanClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
-        super().__init__(session)
-        self._api_key = api_key or ""
-
-    def fetch_contract_source(self, address: str) -> Dict[str, Any]:
-        response = self.client.get(
         super().__init__(
             session,
             rate_limits={"api.etherscan.io": RateLimit(5, 1.0)},
@@ -171,10 +159,9 @@ class EtherscanClient(BaseClient):
                 "address": address,
                 "apikey": self._api_key,
             },
-        )
-        response.raise_for_status()
             cache_policy=CachePolicy(ttl_seconds=3600.0),
         )
+        response.raise_for_status()
         payload = response.json()
         if payload.get("status") != "1":
             raise RuntimeError(f"Etherscan error: {payload.get('message', 'unknown error')}")

@@ -1,0 +1,34 @@
+# VoidBloom AutoTrader - Python 3.13 Compatible Requirements
+# Uses newer versions with pre-built wheels for Python 3.13
+
+# Core API Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+httpx==0.27.2
+
+# Data Processing (Python 3.13 compatible versions)
+numpy>=2.0.0  # Python 3.13 support added in 2.0+
+pandas>=2.2.3  # Better Python 3.13 support
+scikit-learn>=1.5.0  # Python 3.13 compatible
+
+# Natural Language Processing
+nltk==3.9.1
+feedparser==6.0.11
+
+# Configuration & Testing
+pyyaml==6.0.2
+pytest==8.3.3
+respx==0.21.1
+
+# HTTP Requests
+requests==2.32.3
+
+# AI/ML APIs
+groq>=0.11.0
+
+# Optional: Data visualization
+# matplotlib>=3.9.0  # Uncomment if needed
+
+# Optional: Additional analysis
+# scipy>=1.14.0  # Uncomment if needed

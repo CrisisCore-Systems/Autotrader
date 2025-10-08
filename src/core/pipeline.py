@@ -4,21 +4,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Iterable, Sequence
 from typing import TYPE_CHECKING, Dict, Iterable, Sequence
 
 import numpy as np
 import pandas as pd
 
 from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient
+from src.core.free_clients import BlockscoutClient, EthereumRPCClient
+from src.core.orderflow_clients import DexscreenerClient
 from src.core.features import MarketSnapshot, build_feature_vector, compute_time_series_features
 from src.core.narrative import NarrativeAnalyzer, NarrativeInsight
 from src.core.safety import SafetyReport, apply_penalties, evaluate_contract, liquidity_guardrail
 from src.core.scoring import GemScoreResult, compute_gem_score, should_flag_asset
 from src.core.tree import NodeOutcome, TreeNode
-from src.services.exporter import render_markdown_artifact
 from src.services.exporter import render_html_artifact, render_markdown_artifact
-from src.services.news import NewsAggregator, NewsItem
+from src.core.news_client import NewsClient
+from src.core.sentiment import SentimentAnalyzer
+from src.services.news import NewsItem
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.services.alerting import AlertManager, Alert
@@ -118,11 +120,12 @@ class HiddenGemScanner:
         self,
         *,
         coin_client: CoinGeckoClient,
-        defi_client: DefiLlamaClient,
-        etherscan_client: EtherscanClient,
+        defi_client: DefiLlamaClient | None = None,  # Keep for backward compatibility
+        etherscan_client: EtherscanClient | None = None,  # Keep for backward compatibility
+        dex_client: DexscreenerClient | None = None,  # NEW - FREE Dexscreener
+        blockscout_client: BlockscoutClient | None = None,  # NEW - FREE Blockscout
+        rpc_client: EthereumRPCClient | None = None,  # NEW - FREE RPC
         narrative_analyzer: NarrativeAnalyzer | None = None,
-        liquidity_threshold: float = 50_000.0,
-        news_aggregator: NewsAggregator | None = None,
         liquidity_threshold: float = 50_000.0,
         alert_manager: "AlertManager" | None = None,
         precision_tracker: "PrecisionTracker" | None = None,
@@ -131,12 +134,16 @@ class HiddenGemScanner:
         tokenomics_aggregator: "TokenomicsAggregator" | None = None,
     ) -> None:
         self.coin_client = coin_client
+        # Use FREE clients if provided, otherwise fall back to paid clients
         self.defi_client = defi_client
+        self.dex_client = dex_client
         self.etherscan_client = etherscan_client
+        self.blockscout_client = blockscout_client
+        self.rpc_client = rpc_client
         self.narrative_analyzer = narrative_analyzer or NarrativeAnalyzer()
         self.liquidity_threshold = liquidity_threshold
-        self.news_aggregator = news_aggregator
-        self.liquidity_threshold = liquidity_threshold
+        self.news_client = NewsClient()
+        self.sentiment_analyzer = SentimentAnalyzer()
         self.alert_manager = alert_manager
         self.precision_tracker = precision_tracker
         self.github_aggregator = github_aggregator
@@ -225,16 +232,18 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
-                key="A4",
-                title="Social & Narrative Streams",
-                description="Memetic signal ingestion queued post-MVP",
-                action=self._action_social_signal_deferred,
-            )
-        )
                 key="A3",
                 title="News & Narrative Signals",
                 description="Aggregate news feeds for sentiment context",
                 action=self._action_fetch_news,
+            )
+        )
+        branch_a.add_child(
+            TreeNode(
+                key="A4",
+                title="Social & Narrative Streams",
+                description="Memetic signal ingestion queued post-MVP",
+                action=self._action_social_signal_deferred,
             )
         )
         if self.github_aggregator is not None:
@@ -384,6 +393,8 @@ class HiddenGemScanner:
                 action=self._action_record_safety_heuristics,
             )
         )
+        branch_d.add_child(
+            TreeNode(
                 key="D1",
                 title="Penalty Application",
                 description="Apply safety penalties to the feature vector",
@@ -404,6 +415,10 @@ class HiddenGemScanner:
                 title="Narrative Momentum",
                 description="Record narrative velocity prior to scoring",
                 action=self._action_record_narrative_momentum,
+            )
+        )
+        branch_c.add_child(
+            TreeNode(
                 key="C3",
                 title="GemScore Ensemble",
                 description="Compute weighted GemScore with contributions",
@@ -432,6 +447,11 @@ class HiddenGemScanner:
                 title="GemScore Ensemble",
                 description="Compute weighted GemScore with contributions",
                 action=self._action_compute_gem_score,
+            )
+        )
+        branch_c.add_child(
+            TreeNode(
+                key="C6",
                 title="Composite Metric Deck",
                 description="Synthesize narrative, technical, and safety metrics",
                 action=self._action_compute_composite_metrics,
@@ -510,13 +530,38 @@ class HiddenGemScanner:
 
     def _action_fetch_onchain_metrics(self, context: ScanContext) -> NodeOutcome:
         try:
-            context.protocol_metrics = self.defi_client.fetch_protocol(context.config.defillama_slug)
-            points = len((context.protocol_metrics or {}).get("tvl", []) or [])
-            return NodeOutcome(
-                status="success",
-                summary=f"Fetched {points} on-chain points",
-                data={"tvl_points": points},
-            )
+            # Use FREE Dexscreener if available, otherwise fall back to DeFiLlama
+            if self.dex_client:
+                pairs_data = self.dex_client.fetch_token_pairs(context.config.contract_address)
+                pairs = pairs_data.get("pairs", [])
+                total_liquidity = sum(p.get("liquidity", {}).get("usd", 0) for p in pairs)
+                total_volume = sum(p.get("volume", {}).get("h24", 0) for p in pairs)
+                context.protocol_metrics = {
+                    "liquidity": total_liquidity,
+                    "volume_24h": total_volume,
+                    "pairs": pairs,
+                    "tvl": [{"totalLiquidityUSD": total_liquidity}],  # Compatibility format
+                }
+                return NodeOutcome(
+                    status="success",
+                    summary=f"Fetched {len(pairs)} DEX pairs via Dexscreener (FREE)",
+                    data={"pairs": len(pairs), "liquidity": total_liquidity},
+                )
+            elif self.defi_client:
+                context.protocol_metrics = self.defi_client.fetch_protocol(context.config.defillama_slug)
+                points = len((context.protocol_metrics or {}).get("tvl", []) or [])
+                return NodeOutcome(
+                    status="success",
+                    summary=f"Fetched {points} on-chain points via DeFiLlama",
+                    data={"tvl_points": points},
+                )
+            else:
+                return NodeOutcome(
+                    status="failure",
+                    summary="No liquidity data client available (need dex_client or defi_client)",
+                    data={"error": "missing_client"},
+                    proceed=False,
+                )
         except Exception as exc:  # pragma: no cover - network failures handled at runtime
             return NodeOutcome(
                 status="failure",
@@ -527,13 +572,30 @@ class HiddenGemScanner:
 
     def _action_fetch_contract_metadata(self, context: ScanContext) -> NodeOutcome:
         try:
-            context.contract_metadata = self.etherscan_client.fetch_contract_source(context.config.contract_address)
-            verified = str((context.contract_metadata or {}).get("IsVerified", "false")).lower() == "true"
-            return NodeOutcome(
-                status="success",
-                summary="Fetched contract metadata",
-                data={"verified": verified},
-            )
+            # Use FREE Blockscout if available, otherwise fall back to Etherscan
+            if self.blockscout_client:
+                context.contract_metadata = self.blockscout_client.fetch_contract_source(context.config.contract_address)
+                verified = str((context.contract_metadata or {}).get("is_verified", "false")).lower() == "true"
+                return NodeOutcome(
+                    status="success",
+                    summary="Fetched contract metadata via Blockscout (FREE)",
+                    data={"verified": verified},
+                )
+            elif self.etherscan_client:
+                context.contract_metadata = self.etherscan_client.fetch_contract_source(context.config.contract_address)
+                verified = str((context.contract_metadata or {}).get("IsVerified", "false")).lower() == "true"
+                return NodeOutcome(
+                    status="success",
+                    summary="Fetched contract metadata via Etherscan",
+                    data={"verified": verified},
+                )
+            else:
+                return NodeOutcome(
+                    status="failure",
+                    summary="No contract verification client available (need blockscout_client or etherscan_client)",
+                    data={"error": "missing_client"},
+                    proceed=False,
+                )
         except Exception as exc:  # pragma: no cover - network failures handled at runtime
             return NodeOutcome(
                 status="failure",
@@ -739,7 +801,6 @@ class HiddenGemScanner:
             liquidity_usd=context.onchain_metrics.get("current_tvl", 0.0),
             holders=context.holders,
             onchain_metrics=context.onchain_metrics,
-            narratives=list(context.config.narratives),
             narratives=combined_narratives,
         )
         context.snapshot = snapshot
@@ -963,6 +1024,8 @@ class HiddenGemScanner:
             status="success",
             summary="Tokenomics adjustments catalogued",
             data={"penalties": penalties},
+        )
+
     def _action_compute_composite_metrics(self, context: ScanContext) -> NodeOutcome:
         if context.snapshot is None or context.narrative is None or context.safety_report is None:
             return NodeOutcome(
@@ -1028,16 +1091,15 @@ class HiddenGemScanner:
             context.safety_report,
             context.liquidity_ok,
             context.debug,
-        )
-        markdown = render_markdown_artifact(payload)
-        context.artifact_payload = payload
-        context.artifact_markdown = markdown
             context.news_items,
             context.sentiment_metrics,
             context.technical_metrics,
             context.security_metrics,
             context.final_score,
         )
+        markdown = render_markdown_artifact(payload)
+        context.artifact_payload = payload
+        context.artifact_markdown = markdown
         if context.github_events:
             payload["github_activity"] = [
                 {
@@ -1351,9 +1413,6 @@ class HiddenGemScanner:
             "next_unlock_days": next_unlock_days if next_unlock_days is not None else -1,
             "next_unlock_percent": next_unlock_percent if next_unlock_percent is not None else 0.0,
         }
-            decay = np.exp(-days / 30)
-            pressure += unlock.percent_supply * decay
-        return float(np.clip(pressure / 100, 0.0, 1.0))
 
     def _build_artifact_payload(
         self,

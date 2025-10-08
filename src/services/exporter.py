@@ -373,45 +373,6 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         template += "\n-"
 
     return template
-        f"date: {timestamp}",
-        f'glyph: "{glyph}"',
-        f"GemScore: {gem_score}",
-        f"Confidence: {confidence}",
-        f"FinalScore: {final_score}",
-        f"NVI: {nvi}",
-        "Flags:",
-    ]
-    flag_lines = _make_bullet_list(flags, indent=2) or ["  - None"]
-    header_lines.extend(flag_lines)
-    if hash_value:
-        header_lines.append(f"hash: {hash_value}")
-
-    header_lines.append("---")
-
-    summary_lines = _make_bullet_list(
-        [
-            f"**GemScore:** {gem_score} (confidence {confidence})",
-            f"**Final Score:** {final_score}",
-            f"**Flags:** {', '.join(flags) if flags else 'None'}",
-            f"**Narrative Sentiment:** {payload.get('narrative_sentiment', 'unknown')}",
-        ]
-    )
-    momentum = payload.get("narrative_momentum")
-    if momentum is not None:
-        summary_lines.append(
-            f"- **Narrative Momentum:** {_format_number(momentum, precision=3)}"
-        )
-
-    market_rows = []
-    for label, key in (
-        ("Price", "price"),
-        ("24h Volume", "volume_24h"),
-        ("Liquidity", "liquidity"),
-        ("Holders", "holders"),
-    ):
-        value = payload.get(key)
-        if value is not None:
-            market_rows.append((label, _format_number(value)))
 
     market_section_lines = _format_table(market_rows)
 

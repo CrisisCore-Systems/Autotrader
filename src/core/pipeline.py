@@ -1365,7 +1365,6 @@ class HiddenGemScanner:
         metrics = protocol_metrics.get("metrics", {}) or {}
         active_wallets = float(metrics.get("activeUsers") or metrics.get("uniqueWallets") or 0.0)
         unlock_pressure, unlock_meta = self._compute_unlock_pressure(unlocks)
-        unlock_pressure = self._compute_unlock_pressure(unlocks)
 
         return {
             "active_wallets": active_wallets,
@@ -1424,10 +1423,6 @@ class HiddenGemScanner:
         available = sum(1 for key in required_keys if key in features)
         return available / len(required_keys)
 
-    def _compute_unlock_pressure(self, unlocks: Sequence[UnlockEvent]) -> tuple[float, Dict[str, float]]:
-        now = datetime.now(timezone.utc)
-        pressure = 0.0
-        soonest: UnlockEvent | None = None
     def _compute_sentiment_metrics(self, narrative: NarrativeInsight) -> Dict[str, float]:
         return {
             "Sentiment": narrative.sentiment_score,
@@ -1502,9 +1497,10 @@ class HiddenGemScanner:
         rrr = float(np.clip(technical_metrics.get("RRR", 0.0), 0.0, 1.0))
         return (0.4 * aps + 0.3 * nvi + 0.2 * (1.0 - err) + 0.1 * rrr) * 100
 
-    def _compute_unlock_pressure(self, unlocks: Sequence[UnlockEvent]) -> float:
+    def _compute_unlock_pressure(self, unlocks: Sequence[UnlockEvent]) -> tuple[float, Dict[str, float]]:
         now = datetime.now(timezone.utc)
         pressure = 0.0
+        soonest: UnlockEvent | None = None
         for unlock in unlocks:
             days = (unlock.date - now).days
             if days < 0:

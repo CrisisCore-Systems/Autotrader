@@ -851,7 +851,37 @@ python -m src.cli.experiments search baseline
 
 See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentation and [Quick Reference](docs/EXPERIMENT_TRACKING_QUICK_REF.md) for common commands.
 
-## 🛡️ Security & Quality Gates
+## � Documentation
+
+### CLI Reference
+- **[CLI_REFERENCE.md](CLI_REFERENCE.md)** - Complete CLI reference (NEW - consolidated)
+  - Quick start and installation
+  - Configuration precedence (CLI > Env > File)
+  - Command reference with all options
+  - Exit codes (simplified to 8 canonical categories)
+  - Strategy plugin development guide
+  - Metrics naming conventions
+  - Best practices and troubleshooting
+
+### Feature Guides
+- **[PROVENANCE_GLOSSARY_GUIDE.md](PROVENANCE_GLOSSARY_GUIDE.md)** - Artifact lineage tracking
+- **[OBSERVABILITY_QUICK_REF.md](OBSERVABILITY_QUICK_REF.md)** - Metrics and logging
+- **[FREE_DATA_SOURCES.md](FREE_DATA_SOURCES.md)** - FREE data alternatives ($0/month)
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Installation and setup
+- **[docs/EXPERIMENT_TRACKING.md](docs/EXPERIMENT_TRACKING.md)** - Experiment tracking
+
+### Examples
+- **[examples/example_strategy_plugin.py](examples/example_strategy_plugin.py)** - Custom strategy template (NEW)
+
+### Quick References
+- **[PROVENANCE_QUICK_REF.md](PROVENANCE_QUICK_REF.md)** - Provenance patterns
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - General quick reference
+- **[docs/EXPERIMENT_TRACKING_QUICK_REF.md](docs/EXPERIMENT_TRACKING_QUICK_REF.md)** - Experiment tracking
+
+### Implementation Details
+- **[SIMPLIFICATION_COMPLETE.md](SIMPLIFICATION_COMPLETE.md)** - Recent simplifications (NEW)
+
+## �🛡️ Security & Quality Gates
 
 Continuous security scanning and coverage enforcement ship with the repo:
 

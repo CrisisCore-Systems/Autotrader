@@ -1,0 +1,234 @@
+# MkDocs Configuration for AutoTrader Documentation Site
+
+site_name: AutoTrader Platform
+site_description: Automated trading strategy scanner and backtesting platform with reproducibility guarantees
+site_author: CrisisCore Systems / AutoTrader Development Team
+site_url: https://crisiscore-systems.github.io/Autotrader
+
+# Repository information
+repo_name: CrisisCore-Systems/Autotrader
+repo_url: https://github.com/CrisisCore-Systems/Autotrader
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 CrisisCore Systems
+
+# Theme configuration
+theme:
+  name: material
+  language: en
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  features:
+    - navigation.instant      # Fast page loading
+    - navigation.tracking     # URL updates with scroll
+    - navigation.tabs         # Top-level sections as tabs
+    - navigation.tabs.sticky  # Tabs always visible
+    - navigation.sections     # Sections in sidebar
+    - navigation.expand       # Expand all sections by default
+    - navigation.indexes      # Index pages for sections
+    - navigation.top          # Back-to-top button
+    - search.suggest          # Search suggestions
+    - search.highlight        # Highlight search terms
+    - search.share            # Share search results
+    - content.code.copy       # Copy button for code blocks
+    - content.code.annotate   # Code annotations
+    - toc.follow              # TOC follows scroll
+    - toc.integrate           # Integrate TOC into sidebar
+  
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+# Navigation structure
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quick Start: quickstart.md
+      - Installation: installation.md
+      - Configuration: configuration.md
+      - First Scan: first-scan.md
+  - CLI Reference:
+      - Overview: cli/index.md
+      - Command-Line Options: cli/options.md
+      - Exit Codes: cli/exit-codes.md
+      - Environment Variables: cli/environment.md
+      - Examples: cli/examples.md
+  - Configuration:
+      - Overview: config/index.md
+      - File Format: config/format.md
+      - Configuration Sources: config/sources.md
+      - Effective Config: config/effective-config.md
+      - Best Practices: config/best-practices.md
+  - Strategies:
+      - Overview: strategies/index.md
+      - Plugin API: strategies/plugin-api.md
+      - Writing Strategies: strategies/writing-strategies.md
+      - Example Strategies: strategies/examples.md
+      - API Versioning: strategies/api-versioning.md
+  - Data & Metrics:
+      - Metrics Registry: metrics/registry.md
+      - Metric Types: metrics/types.md
+      - Validation Rules: metrics/validation.md
+      - Observability: metrics/observability.md
+      - Free Data Sources: metrics/free-data-sources.md
+  - Schema & Versioning:
+      - Schema Overview: schema/index.md
+      - Current Schema: schema/current.md
+      - Version History: schema/history.md
+      - Migration Guide: schema/migration.md
+  - Reproducibility:
+      - Overview: reproducibility/index.md
+      - Reproducibility Stamp: reproducibility/stamp.md
+      - Deterministic Mode: reproducibility/deterministic.md
+      - Validation: reproducibility/validation.md
+  - Operations:
+      - File Locking: operations/locking.md
+      - Concurrency Control: operations/concurrency.md
+      - Error Handling: operations/errors.md
+      - Logging: operations/logging.md
+      - Monitoring: operations/monitoring.md
+  - Release & Development:
+      - Release Process: development/release-checklist.md
+      - Changelog: development/changelog.md
+      - Contributing: development/contributing.md
+      - Testing: development/testing.md
+  - Reference:
+      - Manual Page: reference/manpage.md
+      - API Documentation: reference/api.md
+      - Glossary: reference/glossary.md
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+      lang:
+        - en
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+          remove_comments: true
+      cache_safe: true
+
+# Markdown extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr                    # Abbreviations
+  - admonition              # Admonitions (notes, warnings, etc.)
+  - attr_list               # Add HTML attributes to elements
+  - def_list                # Definition lists
+  - footnotes               # Footnotes
+  - md_in_html              # Markdown in HTML
+  - toc:                    # Table of contents
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+      toc_depth: 3
+  - tables                  # Tables
+  
+  # PyMdown Extensions
+  - pymdownx.arithmatex:    # Math formulas
+      generic: true
+  - pymdownx.betterem:      # Better emphasis
+      smart_enable: all
+  - pymdownx.caret          # Superscript
+  - pymdownx.mark           # Highlighting
+  - pymdownx.tilde          # Subscript
+  - pymdownx.critic         # Track changes
+  - pymdownx.details        # Collapsible details
+  - pymdownx.emoji:         # Emojis
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:     # Syntax highlighting
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite   # Inline code highlighting
+  - pymdownx.keys           # Keyboard keys
+  - pymdownx.magiclink:     # Auto-link URLs
+      repo_url_shorthand: true
+      user: CrisisCore-Systems
+      repo: Autotrader
+  - pymdownx.smartsymbols   # Smart symbols
+  - pymdownx.superfences:   # Nested code blocks
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:        # Tabbed content
+      alternate_style: true
+  - pymdownx.tasklist:      # Task lists
+      custom_checkbox: true
+  - pymdownx.snippets:      # Include external files
+      check_paths: true
+
+# Extra CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Extra JavaScript
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Extra configuration
+extra:
+  version:
+    provider: mike
+    default: latest
+  
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/CrisisCore-Systems/Autotrader
+      name: GitHub Repository
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/autotrader/
+      name: PyPI Package
+  
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/thumb-down-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks for your feedback! Help us improve by
+            <a href="https://github.com/CrisisCore-Systems/Autotrader/issues/new" target="_blank" rel="noopener">
+            opening an issue</a>.
+
+# Validation
+strict: true

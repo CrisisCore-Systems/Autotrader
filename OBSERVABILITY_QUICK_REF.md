@@ -4,7 +4,55 @@ Quick reference for using structured logging, metrics, and tracing in AutoTrader
 
 ---
 
-## 📝 Structured Logging
+## � Metrics Naming Convention
+
+**All metrics follow a standardized naming pattern:**
+
+### Pattern
+```
+autotrader.<component>.<metric_name>
+```
+
+### Components
+- `scan` - Scanner operations
+- `backtest` - Backtesting operations  
+- `api` - External API calls
+- `strategy` - Strategy execution
+- `pipeline` - Pipeline operations
+- `error` - Error tracking
+- `system` - System-level metrics
+
+### Standard Metrics
+
+**Scanner:**
+- `autotrader.scan.total_duration` (timer) - Total scan execution time
+- `autotrader.scan.tokens_scanned` (counter) - Tokens analyzed count
+- `autotrader.scan.gems_found` (counter) - Gems identified count
+
+**Backtest:**
+- `autotrader.backtest.precision_at_10` (gauge) - Precision@10 metric
+- `autotrader.backtest.sharpe_ratio` (gauge) - Sharpe ratio
+- `autotrader.backtest.total_duration` (timer) - Execution time
+
+**API:**
+- `autotrader.api.etherscan.latency` (timer) - API latency
+- `autotrader.api.coingecko.errors` (counter) - Error count
+- `autotrader.api.defillama.rate_limit` (counter) - Rate limits
+
+**Errors:**
+- `autotrader.error.api_timeout` (counter) - Timeout errors
+- `autotrader.error.validation_failed` (counter) - Validation errors
+
+### StatsD Format
+```
+autotrader.scan.total_duration:125.5|ms
+autotrader.scan.tokens_scanned:1|c
+autotrader.backtest.precision_at_10:0.85|g
+```
+
+---
+
+## �📝 Structured Logging
 
 ### Import
 ```python

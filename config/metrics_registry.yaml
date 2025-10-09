@@ -1,0 +1,333 @@
+# Metrics Registry for AutoTrader
+# This file defines all valid metrics with their metadata
+# Use this to maintain consistency and prevent metric sprawl
+
+version: "1.0"
+namespace: "autotrader"
+
+# Naming conventions:
+# - Use snake_case for metric names
+# - End counters with _total
+# - Use descriptive labels (not generic like 'type' or 'status')
+# - Keep cardinality low (avoid unbounded label values)
+
+metrics:
+  # =============================================================================
+  # Feature Validation Metrics
+  # =============================================================================
+  
+  feature_validation_failures_total:
+    type: counter
+    description: "Total number of feature validation failures"
+    labels:
+      - feature_name
+      - validation_type
+      - severity
+    category: validation
+    unit: count
+    example: 'feature_validation_failures_total{feature_name="price",validation_type="range",severity="error"}'
+  
+  feature_validation_warnings_total:
+    type: counter
+    description: "Total number of feature validation warnings"
+    labels:
+      - feature_name
+      - validation_type
+    category: validation
+    unit: count
+    example: 'feature_validation_warnings_total{feature_name="volume",validation_type="outlier"}'
+  
+  feature_validation_success_total:
+    type: counter
+    description: "Total number of successful feature validations"
+    labels:
+      - feature_name
+    category: validation
+    unit: count
+    example: 'feature_validation_success_total{feature_name="price"}'
+  
+  feature_value_distribution:
+    type: histogram
+    description: "Distribution of feature values"
+    labels:
+      - feature_name
+      - category
+    buckets: [0, 10, 25, 50, 75, 90, 100]
+    category: validation
+    unit: value
+    example: 'feature_value_distribution{feature_name="gem_score",category="crypto"}'
+  
+  feature_freshness_seconds:
+    type: histogram
+    description: "Age of feature data in seconds"
+    labels:
+      - feature_name
+    buckets: [1, 5, 10, 30, 60, 300, 600, 1800, 3600]
+    category: data_quality
+    unit: seconds
+    example: 'feature_freshness_seconds{feature_name="price"}'
+  
+  feature_write_duration_seconds:
+    type: histogram
+    description: "Duration of feature write operations"
+    labels:
+      - feature_name
+    buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
+    category: performance
+    unit: seconds
+    example: 'feature_write_duration_seconds{feature_name="sentiment"}'
+  
+  # =============================================================================
+  # Alerting Metrics
+  # =============================================================================
+  
+  alerts_fired_total:
+    type: counter
+    description: "Total number of alerts fired"
+    labels:
+      - rule_name
+      - severity
+      - channel
+    category: alerting
+    unit: count
+    example: 'alerts_fired_total{rule_name="high_gem_score",severity="info",channel="slack"}'
+  
+  alerts_suppressed_total:
+    type: counter
+    description: "Total number of suppressed alerts"
+    labels:
+      - rule_name
+      - reason
+    category: alerting
+    unit: count
+    example: 'alerts_suppressed_total{rule_name="price_spike",reason="cooldown"}'
+  
+  active_alerts:
+    type: gauge
+    description: "Current number of active alerts"
+    labels:
+      - severity
+    category: alerting
+    unit: count
+    example: 'active_alerts{severity="warning"}'
+  
+  # =============================================================================
+  # Drift Detection Metrics
+  # =============================================================================
+  
+  drift_detections_total:
+    type: counter
+    description: "Total number of drift detections"
+    labels:
+      - feature_name
+      - drift_type
+      - severity
+    category: monitoring
+    unit: count
+    example: 'drift_detections_total{feature_name="price",drift_type="distribution",severity="high"}'
+  
+  drift_score:
+    type: gauge
+    description: "Current drift score for a metric"
+    labels:
+      - metric_name
+    category: monitoring
+    unit: score
+    example: 'drift_score{metric_name="gem_score"}'
+  
+  prediction_distribution:
+    type: histogram
+    description: "Distribution of model predictions"
+    labels:
+      - model_name
+    buckets: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    category: monitoring
+    unit: probability
+    example: 'prediction_distribution{model_name="gem_scorer"}'
+  
+  # =============================================================================
+  # Scan Performance Metrics
+  # =============================================================================
+  
+  scan_duration_seconds:
+    type: histogram
+    description: "Duration of scan operations"
+    labels:
+      - strategy
+      - outcome
+    buckets: [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0]
+    category: performance
+    unit: seconds
+    example: 'scan_duration_seconds{strategy="momentum",outcome="success"}'
+  
+  scan_errors_total:
+    type: counter
+    description: "Total number of scan errors"
+    labels:
+      - error_type
+      - strategy
+    category: errors
+    unit: count
+    example: 'scan_errors_total{error_type="api_timeout",strategy="default"}'
+  
+  tokens_scanned_total:
+    type: counter
+    description: "Total number of tokens scanned"
+    labels:
+      - strategy
+      - result
+    category: business
+    unit: count
+    example: 'tokens_scanned_total{strategy="momentum",result="gem"}'
+  
+  # =============================================================================
+  # API Metrics
+  # =============================================================================
+  
+  api_requests_total:
+    type: counter
+    description: "Total number of API requests"
+    labels:
+      - endpoint
+      - method
+      - status_code
+    category: api
+    unit: count
+    example: 'api_requests_total{endpoint="/scan",method="POST",status_code="200"}'
+  
+  api_request_duration_seconds:
+    type: histogram
+    description: "Duration of API requests"
+    labels:
+      - endpoint
+      - method
+    buckets: [0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0, 10.0]
+    category: api
+    unit: seconds
+    example: 'api_request_duration_seconds{endpoint="/scan",method="POST"}'
+  
+  # =============================================================================
+  # Cache Metrics
+  # =============================================================================
+  
+  cache_hits_total:
+    type: counter
+    description: "Total number of cache hits"
+    labels:
+      - cache_name
+    category: cache
+    unit: count
+    example: 'cache_hits_total{cache_name="price_data"}'
+  
+  cache_misses_total:
+    type: counter
+    description: "Total number of cache misses"
+    labels:
+      - cache_name
+    category: cache
+    unit: count
+    example: 'cache_misses_total{cache_name="price_data"}'
+  
+  cache_size_bytes:
+    type: gauge
+    description: "Current cache size in bytes"
+    labels:
+      - cache_name
+    category: cache
+    unit: bytes
+    example: 'cache_size_bytes{cache_name="price_data"}'
+
+# =============================================================================
+# Pattern Rules
+# =============================================================================
+
+patterns:
+  # Counter patterns
+  - pattern: "^[a-z_]+_total$"
+    type: counter
+    description: "Counters must end with _total"
+  
+  # Histogram patterns  
+  - pattern: "^[a-z_]+_(seconds|bytes|duration)$"
+    type: histogram
+    description: "Histograms should indicate unit in name"
+  
+  # Label naming
+  - pattern: "^[a-z_]+$"
+    applies_to: labels
+    description: "Labels must use snake_case"
+
+# =============================================================================
+# Validation Rules
+# =============================================================================
+
+validation:
+  max_labels_per_metric: 5
+  max_label_cardinality: 100
+  forbidden_label_names:
+    - type  # Too generic
+    - status  # Too generic, use specific names
+    - name  # Too generic
+  
+  required_fields:
+    - type
+    - description
+    - category
+    - unit
+  
+  categories:
+    - validation
+    - monitoring
+    - performance
+    - errors
+    - business
+    - api
+    - cache
+    - alerting
+    - data_quality
+  
+  types:
+    - counter
+    - gauge
+    - histogram
+    - summary
+
+# =============================================================================
+# Migration Guide
+# =============================================================================
+
+deprecated_metrics:
+  # Old metric name -> New metric name
+  feature_check_failures: feature_validation_failures_total
+  scan_time: scan_duration_seconds
+  api_calls: api_requests_total
+
+# =============================================================================
+# Documentation
+# =============================================================================
+
+docs:
+  overview: |
+    This metrics registry defines all valid metrics for AutoTrader.
+    Before adding a new metric:
+    1. Check if an existing metric can be reused
+    2. Follow naming conventions
+    3. Keep cardinality low
+    4. Add documentation
+    5. Update this file
+  
+  naming_guide: |
+    Metric Naming Best Practices:
+    - Use snake_case
+    - Include unit suffix for histograms (e.g., _seconds, _bytes)
+    - End counters with _total
+    - Be specific (e.g., tokens_scanned_total vs items_processed_total)
+    - Avoid redundant namespace prefix (already in namespace)
+  
+  label_guide: |
+    Label Best Practices:
+    - Use descriptive names (e.g., error_type not type)
+    - Avoid unbounded cardinality (e.g., don't use user_id, use user_tier)
+    - Keep label count low (< 5 per metric)
+    - Use consistent label names across metrics
+    - Document expected label values

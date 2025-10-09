@@ -1,3 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autotrader"
+version = "0.1.0"
+description = "AutoTrader - Cryptocurrency Trading Bot"
+requires-python = ">=3.11"
+
+[project.scripts]
+autotrader-backtest = "pipeline.cli_backtest:cli_main"
+autotrader-backtest-harness = "backtest.harness:main"
+autotrader-scan = "src.cli.main:cli_main"
+
+[project.entry-points."autotrader.strategies"]
+default = "src.core.pipeline:HiddenGemScanner"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "pipeline*", "backtest*"]
+namespaces = false
+
 [tool.pytest.ini_options]
 addopts = "-q --maxfail=1"
 

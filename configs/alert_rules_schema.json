@@ -1,0 +1,362 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://crisiscore.systems/schemas/alert_rules.json",
+  "title": "Alert Rules Configuration Schema",
+  "description": "Strict JSON schema for alert_rules.yaml with compound condition validation",
+  "type": "object",
+  "required": ["rules"],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "description": "List of alert rules",
+      "items": {
+        "$ref": "#/definitions/AlertRule"
+      },
+      "minItems": 1
+    },
+    "suppression": {
+      "type": "array",
+      "description": "Global suppression rules",
+      "items": {
+        "$ref": "#/definitions/SuppressionRule"
+      }
+    },
+    "escalation_policies": {
+      "type": "object",
+      "description": "Named escalation policy definitions",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "$ref": "#/definitions/EscalationPolicy"
+        }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "description": "Communication channel configurations",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "$ref": "#/definitions/ChannelConfig"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AlertRule": {
+      "type": "object",
+      "required": ["id", "description", "severity", "channels"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_]*$",
+          "description": "Unique rule identifier (snake_case)"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500,
+          "description": "Human-readable rule description"
+        },
+        "version": {
+          "type": "string",
+          "enum": ["v1", "v2"],
+          "description": "Rule version (v1=legacy, v2=compound conditions)"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "high", "critical"],
+          "description": "Alert severity level"
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "minItems": 1,
+          "description": "Notification channels"
+        },
+        "where": {
+          "$ref": "#/definitions/LegacyCondition",
+          "description": "Legacy v1 simple conditions (deprecated)"
+        },
+        "condition": {
+          "$ref": "#/definitions/CompoundCondition",
+          "description": "v2 compound condition tree"
+        },
+        "escalation_policy": {
+          "type": "string",
+          "enum": ["none", "immediate", "progressive", "tiered"],
+          "description": "Escalation policy name"
+        },
+        "suppression_duration": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400,
+          "description": "Alert suppression window in seconds"
+        },
+        "cool_off_minutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Legacy cool-off period (deprecated, use suppression_duration)"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["where"],
+          "properties": {
+            "version": {
+              "const": "v1"
+            }
+          }
+        },
+        {
+          "required": ["condition"],
+          "properties": {
+            "version": {
+              "const": "v2"
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "LegacyCondition": {
+      "type": "object",
+      "description": "v1 legacy simple conditions",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "oneOf": [
+            {"type": "number"},
+            {"type": "boolean"},
+            {"type": "string"}
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "CompoundCondition": {
+      "type": "object",
+      "description": "Recursive compound condition tree supporting AND/OR/NOT",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/LeafCondition"
+        },
+        {
+          "$ref": "#/definitions/CompoundOperator"
+        }
+      ]
+    },
+    "LeafCondition": {
+      "type": "object",
+      "required": ["metric", "operator", "threshold"],
+      "properties": {
+        "metric": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_]*$",
+          "description": "Metric name to evaluate"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["eq", "ne", "lt", "lte", "gt", "gte", "in", "not_in", "contains"],
+          "description": "Comparison operator"
+        },
+        "threshold": {
+          "oneOf": [
+            {"type": "number"},
+            {"type": "boolean"},
+            {"type": "string"},
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "number"},
+                  {"type": "string"}
+                ]
+              }
+            }
+          ],
+          "description": "Threshold value or list for comparison"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["usd", "eth", "btc", "percent", "ratio", "seconds", "hours", "days", "count"],
+          "description": "Optional unit for threshold normalization"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CompoundOperator": {
+      "type": "object",
+      "required": ["type", "operator", "conditions"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "compound",
+          "description": "Marker for compound condition"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["AND", "OR", "NOT"],
+          "description": "Logical operator"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CompoundCondition"
+          },
+          "minItems": 1,
+          "description": "Child conditions"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "NOT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "conditions": {
+                "minItems": 1,
+                "maxItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "enum": ["AND", "OR"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "conditions": {
+                "minItems": 2
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "SuppressionRule": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for suppression matching"
+        },
+        "field": {
+          "type": "string",
+          "description": "Field to match pattern against"
+        },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+              }
+            },
+            "hours": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 23
+              }
+            }
+          },
+          "description": "Time-based suppression schedule"
+        },
+        "severity": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["info", "warning", "high", "critical"]
+          },
+          "description": "Severities to suppress"
+        },
+        "duration": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Suppression duration in seconds"
+        },
+        "deduplication": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "window": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Deduplication window in seconds"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "EscalationPolicy": {
+      "type": "object",
+      "required": ["levels"],
+      "properties": {
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["delay", "channels"],
+            "properties": {
+              "delay": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Delay in seconds before this level"
+              },
+              "channels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChannelConfig": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "rate_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum messages per minute"
+        },
+        "webhook_url": {
+          "type": "string",
+          "pattern": "^(https?://|\\$\\{[A-Z_]+\\})"
+        },
+        "integration_key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

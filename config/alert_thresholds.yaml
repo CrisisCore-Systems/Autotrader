@@ -1,0 +1,479 @@
+# Alert Threshold Configuration for AutoTrader
+# All thresholds are annotated with units and data types
+# Version: 1.0
+
+version: "1.0"
+namespace: "autotrader.alerts"
+
+# =============================================================================
+# UNIT DEFINITIONS
+# =============================================================================
+# percentage: 0-100 scale (e.g., 15.5 means 15.5%)
+# ratio: 0-1 scale (e.g., 0.155 means 15.5%)
+# percentage_points: absolute change in percentage (e.g., +5 pp)
+# basis_points: 1 bp = 0.01%, 100 bp = 1%
+# usd: US dollars
+# count: integer count
+# boolean: true/false
+# score: normalized 0-100 score
+# seconds: time in seconds
+
+# =============================================================================
+# GEM SCORE ALERTS
+# =============================================================================
+
+gem_score_thresholds:
+  high_potential:
+    threshold: 80.0
+    unit: score
+    data_type: float
+    operator: gte
+    description: "Gem score indicating high investment potential"
+    severity: info
+    
+  excellent_gem:
+    threshold: 90.0
+    unit: score
+    data_type: float
+    operator: gte
+    description: "Exceptionally high gem score"
+    severity: high
+    
+  low_quality:
+    threshold: 30.0
+    unit: score
+    data_type: float
+    operator: lte
+    description: "Gem score below acceptable quality threshold"
+    severity: warning
+
+# =============================================================================
+# LIQUIDITY ALERTS
+# =============================================================================
+
+liquidity_thresholds:
+  minimum_liquidity:
+    threshold: 10000.0
+    unit: usd
+    data_type: float
+    operator: gte
+    description: "Minimum liquidity required for safe trading"
+    severity: error
+    
+  healthy_liquidity:
+    threshold: 50000.0
+    unit: usd
+    data_type: float
+    operator: gte
+    description: "Liquidity level indicating healthy market"
+    severity: info
+    
+  illiquid_warning:
+    threshold: 5000.0
+    unit: usd
+    data_type: float
+    operator: lte
+    description: "Warning threshold for illiquid markets"
+    severity: warning
+
+# =============================================================================
+# HOLDER METRICS (24-HOUR CHANGES)
+# =============================================================================
+
+holder_change_thresholds:
+  # NOTE: All holder changes are in PERCENTAGE POINTS (absolute change)
+  # Example: holder_change_24h = 5.0 means holders increased by 5 percentage points
+  # NOT a 5% relative increase
+  
+  significant_increase:
+    threshold: 10.0
+    unit: percentage_points
+    data_type: float
+    operator: gte
+    description: "Significant increase in holder count (>10 percentage points)"
+    severity: info
+    annotation: "Absolute change in percentage, not relative growth rate"
+    
+  rapid_growth:
+    threshold: 20.0
+    unit: percentage_points
+    data_type: float
+    operator: gte
+    description: "Rapid holder growth indicating strong interest"
+    severity: high
+    annotation: "Absolute change in percentage, not relative growth rate"
+    
+  concerning_decrease:
+    threshold: -10.0
+    unit: percentage_points
+    data_type: float
+    operator: lte
+    description: "Significant holder decrease (>10 percentage points drop)"
+    severity: warning
+    annotation: "Negative value indicates decrease"
+    
+  holder_concentration_change:
+    threshold: 15.0
+    unit: percentage_points
+    data_type: float
+    operator: gte
+    description: "Large change in holder concentration"
+    severity: warning
+    annotation: "Measures change in top holder concentration"
+
+# =============================================================================
+# VOLUME ALERTS
+# =============================================================================
+
+volume_thresholds:
+  volume_spike:
+    threshold: 200.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "Volume spike (200% of normal, i.e., 2x increase)"
+    severity: info
+    annotation: "Percentage increase relative to baseline (100 = baseline)"
+    
+  unusual_activity:
+    threshold: 500.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "Unusual volume activity (5x normal volume)"
+    severity: high
+    annotation: "Percentage increase relative to baseline"
+    
+  low_volume:
+    threshold: 25.0
+    unit: percentage
+    data_type: float
+    operator: lte
+    description: "Abnormally low trading volume"
+    severity: warning
+    annotation: "Percentage of normal volume"
+
+# =============================================================================
+# PRICE CHANGE ALERTS
+# =============================================================================
+
+price_change_thresholds:
+  # All price changes use PERCENTAGE not ratio
+  
+  price_pump:
+    threshold: 50.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "Rapid price increase (>50%)"
+    severity: info
+    annotation: "Percentage increase from baseline"
+    
+  extreme_pump:
+    threshold: 100.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "Extreme price pump (>100%, i.e., 2x)"
+    severity: high
+    annotation: "Percentage increase from baseline"
+    
+  price_dump:
+    threshold: -30.0
+    unit: percentage
+    data_type: float
+    operator: lte
+    description: "Significant price drop (>30%)"
+    severity: warning
+    annotation: "Negative percentage indicates price decrease"
+    
+  price_volatility_24h:
+    threshold: 40.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "High 24-hour price volatility"
+    severity: info
+    annotation: "Standard deviation as percentage of mean"
+
+# =============================================================================
+# SAFETY ALERTS
+# =============================================================================
+
+safety_thresholds:
+  honeypot_detected:
+    threshold: true
+    unit: boolean
+    data_type: bool
+    operator: eq
+    description: "Honeypot contract detected"
+    severity: critical
+    
+  scam_detected:
+    threshold: true
+    unit: boolean
+    data_type: bool
+    operator: eq
+    description: "Scam indicators detected"
+    severity: critical
+    
+  ownership_renounced:
+    threshold: false
+    unit: boolean
+    data_type: bool
+    operator: eq
+    description: "Contract ownership not renounced (centralization risk)"
+    severity: warning
+    
+  max_transaction_limit:
+    threshold: 2.0
+    unit: percentage
+    data_type: float
+    operator: lte
+    description: "Maximum transaction size as percentage of supply"
+    severity: warning
+    annotation: "Percentage of total supply"
+
+# =============================================================================
+# MARKET CAP ALERTS
+# =============================================================================
+
+market_cap_thresholds:
+  micro_cap:
+    threshold: 1000000.0
+    unit: usd
+    data_type: float
+    operator: lte
+    description: "Micro-cap token (<$1M market cap)"
+    severity: info
+    
+  small_cap:
+    threshold: 10000000.0
+    unit: usd
+    data_type: float
+    operator: lte
+    description: "Small-cap token (<$10M market cap)"
+    severity: info
+    
+  minimum_cap:
+    threshold: 100000.0
+    unit: usd
+    data_type: float
+    operator: gte
+    description: "Minimum market cap for consideration"
+    severity: warning
+
+# =============================================================================
+# SENTIMENT & SOCIAL ALERTS
+# =============================================================================
+
+sentiment_thresholds:
+  positive_sentiment:
+    threshold: 0.7
+    unit: ratio
+    data_type: float
+    operator: gte
+    description: "Strong positive sentiment score"
+    severity: info
+    annotation: "Ratio scale 0-1, where 1 is most positive"
+    
+  negative_sentiment:
+    threshold: 0.3
+    unit: ratio
+    data_type: float
+    operator: lte
+    description: "Negative sentiment detected"
+    severity: warning
+    annotation: "Ratio scale 0-1, where 0 is most negative"
+    
+  social_volume_spike:
+    threshold: 300.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "Social media volume spike (3x normal)"
+    severity: info
+    annotation: "Percentage of baseline volume"
+
+# =============================================================================
+# DRIFT DETECTION THRESHOLDS
+# =============================================================================
+
+drift_thresholds:
+  feature_drift_warning:
+    threshold: 0.15
+    unit: ratio
+    data_type: float
+    operator: gte
+    description: "Feature drift detected (15% change from baseline)"
+    severity: warning
+    annotation: "Ratio representing absolute change from baseline distribution"
+    
+  feature_drift_critical:
+    threshold: 0.30
+    unit: ratio
+    data_type: float
+    operator: gte
+    description: "Critical feature drift (30% change)"
+    severity: critical
+    annotation: "Ratio representing absolute change from baseline distribution"
+    
+  prediction_drift:
+    threshold: 0.20
+    unit: ratio
+    data_type: float
+    operator: gte
+    description: "Model prediction drift detected"
+    severity: warning
+    annotation: "KL divergence or similar metric as ratio"
+
+# =============================================================================
+# PERFORMANCE ALERTS
+# =============================================================================
+
+performance_thresholds:
+  scan_duration_warning:
+    threshold: 30.0
+    unit: seconds
+    data_type: float
+    operator: gte
+    description: "Scan taking longer than expected"
+    severity: warning
+    
+  scan_duration_critical:
+    threshold: 60.0
+    unit: seconds
+    data_type: float
+    operator: gte
+    description: "Scan duration critically high"
+    severity: critical
+    
+  api_error_rate:
+    threshold: 10.0
+    unit: percentage
+    data_type: float
+    operator: gte
+    description: "API error rate exceeds acceptable threshold"
+    severity: error
+    annotation: "Percentage of failed requests"
+    
+  cache_hit_rate_low:
+    threshold: 50.0
+    unit: percentage
+    data_type: float
+    operator: lte
+    description: "Cache hit rate below optimal level"
+    severity: info
+    annotation: "Percentage of requests served from cache"
+
+# =============================================================================
+# VALIDATION RULES
+# =============================================================================
+
+validation:
+  required_fields:
+    - threshold
+    - unit
+    - data_type
+    - operator
+    - description
+    - severity
+  
+  valid_units:
+    - percentage
+    - ratio
+    - percentage_points
+    - basis_points
+    - usd
+    - count
+    - boolean
+    - score
+    - seconds
+  
+  valid_data_types:
+    - float
+    - int
+    - bool
+    - string
+  
+  valid_operators:
+    - gte  # greater than or equal
+    - lte  # less than or equal
+    - gt   # greater than
+    - lt   # less than
+    - eq   # equal
+    - ne   # not equal
+  
+  valid_severities:
+    - info
+    - warning
+    - error
+    - critical
+    - high
+
+# =============================================================================
+# UNIT CONVERSION HELPERS
+# =============================================================================
+
+unit_conversions:
+  percentage_to_ratio: "divide by 100"
+  ratio_to_percentage: "multiply by 100"
+  basis_points_to_percentage: "divide by 100"
+  percentage_to_basis_points: "multiply by 100"
+  
+unit_examples:
+  percentage: "15.5 means 15.5%"
+  ratio: "0.155 means 15.5%"
+  percentage_points: "+5 pp means absolute increase of 5 percentage points"
+  basis_points: "150 bp means 1.5%"
+  usd: "10000.0 means $10,000"
+  boolean: "true or false"
+  score: "75.0 on a 0-100 scale"
+
+# =============================================================================
+# MIGRATION NOTES
+# =============================================================================
+
+deprecated_thresholds:
+  # Old name -> New name (for backward compatibility)
+  holder_change_percent: holder_change_thresholds.significant_increase
+  volume_change_percent: volume_thresholds.volume_spike
+  
+migration_guide: |
+  When migrating from old threshold system:
+  1. Check if your metric uses percentage or ratio
+  2. Convert values if necessary using unit_conversions
+  3. Add explicit 'unit' field to all thresholds
+  4. Document whether changes are absolute or relative
+  5. Use percentage_points for absolute changes
+  6. Use percentage for relative changes
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+
+docs:
+  overview: |
+    This file standardizes all alert thresholds with explicit units.
+    
+    KEY PRINCIPLES:
+    - Every threshold has a 'unit' field
+    - Percentage vs ratio is explicitly defined
+    - Absolute changes use 'percentage_points'
+    - Relative changes use 'percentage' or 'ratio'
+    - Include annotations for clarity
+    
+  common_mistakes: |
+    ❌ WRONG: holder_change_24h: 5.0 (ambiguous - is it 5% or 5pp?)
+    ✓ RIGHT: holder_change_24h: 5.0, unit: percentage_points, annotation: "absolute change"
+    
+    ❌ WRONG: threshold: 0.10 (ambiguous - is it 10% or 0.1%?)
+    ✓ RIGHT: threshold: 10.0, unit: percentage OR threshold: 0.10, unit: ratio
+    
+  best_practices: |
+    1. Always specify unit explicitly
+    2. Add annotations for complex metrics
+    3. Use consistent units within categories
+    4. Document whether metric is absolute or relative
+    5. Provide examples in annotations
+    6. Version your threshold configurations

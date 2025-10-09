@@ -1,0 +1,116 @@
+{
+  "schema_id": "notebook_scan_output",
+  "schema_type": "notebook_output",
+  "version": "1.0.0",
+  "created_at": "2025-10-09T00:00:00Z",
+  "description": "Output structure for notebook-based token scans",
+  "backward_compatible": true,
+  "breaking_changes": [],
+  "fields": [
+    {
+      "name": "scan_id",
+      "type": "string",
+      "required": true,
+      "nullable": false,
+      "description": "Unique identifier for this scan execution"
+    },
+    {
+      "name": "notebook_name",
+      "type": "string",
+      "required": true,
+      "nullable": false,
+      "description": "Name of the notebook that generated output"
+    },
+    {
+      "name": "execution_time",
+      "type": "string",
+      "required": true,
+      "nullable": false,
+      "description": "ISO 8601 timestamp of execution"
+    },
+    {
+      "name": "tokens_analyzed",
+      "type": "int",
+      "required": true,
+      "nullable": false,
+      "description": "Number of tokens analyzed",
+      "constraints": {
+        "min": 0
+      }
+    },
+    {
+      "name": "gems_found",
+      "type": "array",
+      "required": true,
+      "nullable": false,
+      "description": "List of identified gem tokens"
+    },
+    {
+      "name": "execution_metadata",
+      "type": "object",
+      "required": true,
+      "nullable": false,
+      "description": "Metadata about execution environment"
+    },
+    {
+      "name": "schema_version",
+      "type": "string",
+      "required": true,
+      "nullable": false,
+      "description": "Version of this output schema"
+    },
+    {
+      "name": "provenance",
+      "type": "object",
+      "required": false,
+      "nullable": true,
+      "description": "Provenance tracking information"
+    },
+    {
+      "name": "warnings",
+      "type": "array",
+      "required": false,
+      "nullable": false,
+      "description": "List of warnings or issues encountered",
+      "default": []
+    },
+    {
+      "name": "performance_metrics",
+      "type": "object",
+      "required": false,
+      "nullable": false,
+      "description": "Performance metrics for the scan",
+      "default": {}
+    }
+  ],
+  "examples": [
+    {
+      "scan_id": "scan_20251009_120000",
+      "notebook_name": "hidden_gem_scanner",
+      "execution_time": "2025-10-09T12:00:00Z",
+      "tokens_analyzed": 50,
+      "gems_found": [
+        {
+          "token_address": "0x1234567890123456789012345678901234567890",
+          "symbol": "GEM1",
+          "score": 87.5
+        }
+      ],
+      "execution_metadata": {
+        "python_version": "3.11.0",
+        "snapshot_mode": false,
+        "deterministic_seed": 42
+      },
+      "schema_version": "1.0.0",
+      "provenance": {
+        "git_commit": "abc123",
+        "feature_hash": "def456"
+      },
+      "warnings": [],
+      "performance_metrics": {
+        "duration_seconds": 45.2,
+        "tokens_per_second": 1.1
+      }
+    }
+  ]
+}

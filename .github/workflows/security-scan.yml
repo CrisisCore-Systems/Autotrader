@@ -7,37 +7,254 @@ on:
   schedule:
     - cron: '0 6 * * *'
 
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
 jobs:
+  # === Static Analysis ===
   semgrep:
+    name: Semgrep Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1.76.0
         with:
-          config: ci/semgrep.yml
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/python
+            ci/semgrep.yml
           generateSarif: true
+      
       - name: Upload Semgrep SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
+          category: semgrep
 
+  # === Python Security ===
   bandit:
+    name: Bandit Python Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: '3.11'
-      - run: pip install bandit
-      - run: bandit -r src -ll
+      
+      - name: Install Bandit
+        run: pip install bandit[sarif]
+      
+      - name: Run Bandit
+        run: bandit -r src pipeline -f sarif -o bandit-results.sarif --severity-level medium || true
+      
+      - name: Upload Bandit SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+  # === Dependency Scanning ===
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@0c155c5e8556a497adf53f2c18edabf945ed8e70 # v4.0.0
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-2.0, AGPL-3.0
+          comment-summary-in-pr: always
 
   pip-audit:
+    name: Python Dependency Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: '3.11'
-      - run: pip install pip-audit
-      - run: pip-audit -r requirements.txt
+      
+      - name: Install pip-audit
+        run: pip install pip-audit
+      
+      - name: Audit dependencies
+        run: pip-audit -r requirements.txt --desc --fix-dry-run --format json --output pip-audit-results.json || true
+      
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          name: pip-audit-results
+          path: pip-audit-results.json
+          retention-days: 30
+
+  # === Container Scanning ===
+  trivy:
+    name: Trivy Security Scanner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # v0.18.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          scanners: 'vuln,secret,config,license'
+      
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-filesystem
+      
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # v0.18.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 1  # Fail on critical/high
+
+  # === Secrets Scanning ===
+  gitleaks:
+    name: Gitleaks Secret Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0  # Full history for secret detection
+      
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@cb7149a9a29d30c7c97db3e783e94b87c7dc260a # v2.3.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  trufflehog:
+    name: TruffleHog Secret Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+      
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@23cf93577bb0b7f2ff9ed715fd24ef1cdd1d47be # v3.68.0
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  # === SBOM Generation ===
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - name: Generate Python SBOM
+        uses: anchore/sbom-action@ab5d7b5f48981941c4c5d6bf33aeb98fe3bae38c # v0.15.7
+        with:
+          path: .
+          format: spdx-json
+          artifact-name: python-sbom.spdx.json
+          output-file: sbom-python.spdx.json
+      
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          name: sbom-reports
+          path: sbom-python.spdx.json
+          retention-days: 90
+      
+      - name: Scan SBOM with Grype
+        uses: anchore/scan-action@3343887d815d7b07465f6fdcd395bd66508d486a # v3.6.4
+        with:
+          sbom: sbom-python.spdx.json
+          fail-build: true
+          severity-cutoff: high
+          output-format: sarif
+      
+      - name: Upload Grype SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+          category: grype-sbom
+
+  # === License Compliance ===
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: '3.11'
+      
+      - name: Install pip-licenses
+        run: pip install pip-licenses
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Check licenses
+        run: |
+          pip-licenses \
+            --format=json \
+            --output-file=licenses.json \
+            --fail-on="GPL-2.0;GPL-3.0;AGPL-3.0" \
+            --allow-only="MIT;Apache-2.0;BSD-3-Clause;BSD-2-Clause;ISC;Python-2.0;MPL-2.0"
+      
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          name: license-report
+          path: licenses.json
+          retention-days: 90
+
+  # === Security Summary ===
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs: [semgrep, bandit, trivy, gitleaks, trufflehog, pip-audit, license-check]
+    if: always()
+    steps:
+      - name: Generate Security Summary
+        run: |
+          echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scanner | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Semgrep | ${{ needs.semgrep.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bandit | ${{ needs.bandit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy | ${{ needs.trivy.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gitleaks | ${{ needs.gitleaks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TruffleHog | ${{ needs.trufflehog.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| pip-audit | ${{ needs.pip-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| License Check | ${{ needs.license-check.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -43,6 +43,29 @@ class TransformationType(Enum):
 
 
 @dataclass
+class LineageMetadata:
+    """Standardized lineage chain metadata for reproducibility."""
+    
+    source_commit: Optional[str] = None  # Git commit hash
+    feature_hash: Optional[str] = None  # Hash of feature extraction code
+    model_route: Optional[str] = None  # Model version/path used
+    pipeline_version: Optional[str] = None  # Pipeline code version
+    environment: Optional[Dict[str, str]] = field(default_factory=dict)  # Python version, packages
+    data_snapshot_hash: Optional[str] = None  # Hash of input data snapshot
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "source_commit": self.source_commit,
+            "feature_hash": self.feature_hash,
+            "model_route": self.model_route,
+            "pipeline_version": self.pipeline_version,
+            "environment": self.environment or {},
+            "data_snapshot_hash": self.data_snapshot_hash,
+        }
+
+
+@dataclass
 class ArtifactMetadata:
     """Metadata describing an artifact's properties and origin."""
     
@@ -56,6 +79,7 @@ class ArtifactMetadata:
     checksum: Optional[str] = None
     tags: Set[str] = field(default_factory=set)
     custom_attributes: Dict[str, Any] = field(default_factory=dict)
+    lineage: Optional[LineageMetadata] = None  # Standardized lineage metadata
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -63,6 +87,8 @@ class ArtifactMetadata:
         d["artifact_type"] = self.artifact_type.value
         d["created_at"] = self.created_at.isoformat()
         d["tags"] = list(self.tags)
+        if self.lineage:
+            d["lineage"] = self.lineage.to_dict()
         return d
 
 
@@ -135,6 +161,7 @@ class ProvenanceTracker:
         data_source: Optional[str] = None,
         tags: Optional[Set[str]] = None,
         custom_attributes: Optional[Dict[str, Any]] = None,
+        lineage_metadata: Optional[LineageMetadata] = None,
     ) -> str:
         """Register a new artifact with provenance tracking.
         
@@ -156,6 +183,8 @@ class ProvenanceTracker:
             Tags for categorization.
         custom_attributes : Optional[Dict[str, Any]]
             Additional custom metadata.
+        lineage_metadata : Optional[LineageMetadata]
+            Standardized lineage chain (git commit, feature hash, model route).
             
         Returns
         -------
@@ -167,6 +196,7 @@ class ProvenanceTracker:
             name=name,
             tags=tags or set(),
             custom_attributes=custom_attributes or {},
+            lineage=lineage_metadata,
         )
         
         record = ProvenanceRecord(artifact=metadata)
@@ -379,3 +409,77 @@ def reset_provenance_tracker() -> None:
     """Reset the global provenance tracker (useful for testing)."""
     global _global_tracker
     _global_tracker = ProvenanceTracker()
+
+
+def capture_lineage_metadata(
+    feature_hash: Optional[str] = None,
+    model_route: Optional[str] = None,
+    data_snapshot_hash: Optional[str] = None,
+) -> LineageMetadata:
+    """Capture standardized lineage metadata for reproducibility.
+    
+    Parameters
+    ----------
+    feature_hash : Optional[str]
+        Hash of feature extraction code (e.g., SHA256 of feature module).
+    model_route : Optional[str]
+        Model version or path (e.g., "groq:llama3.1-8b" or "local:v2.1").
+    data_snapshot_hash : Optional[str]
+        Hash of input data snapshot for pinned reproducibility.
+        
+    Returns
+    -------
+    LineageMetadata
+        Complete lineage metadata with git commit and environment info.
+    """
+    import os
+    import subprocess
+    import sys
+    
+    lineage = LineageMetadata()
+    
+    # Capture git commit hash
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        if result.returncode == 0:
+            lineage.source_commit = result.stdout.strip()
+    except Exception:
+        pass  # Git not available or not a git repo
+    
+    # Capture environment info
+    lineage.environment = {
+        "python_version": sys.version.split()[0],
+        "platform": sys.platform,
+    }
+    
+    # Add package versions for key dependencies
+    try:
+        import numpy
+        lineage.environment["numpy"] = numpy.__version__
+    except ImportError:
+        pass
+    
+    try:
+        import pandas
+        lineage.environment["pandas"] = pandas.__version__
+    except ImportError:
+        pass
+    
+    # Set user-provided hashes
+    lineage.feature_hash = feature_hash
+    lineage.model_route = model_route
+    lineage.data_snapshot_hash = data_snapshot_hash
+    
+    # Compute pipeline version from git or fallback
+    if lineage.source_commit:
+        lineage.pipeline_version = f"git:{lineage.source_commit[:8]}"
+    else:
+        lineage.pipeline_version = "dev:uncommitted"
+    
+    return lineage

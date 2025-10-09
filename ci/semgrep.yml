@@ -1,9 +1,25 @@
+# Enhanced Semgrep Rules for AutoTrader
+# High-severity security patterns specific to crypto trading and LLM integration
+
 rules:
+  # === Critical Security ===
+  
   - id: python-no-eval
     languages: [python]
     message: "Avoid using eval(); prefer safer parsing alternatives."
     severity: ERROR
     pattern: eval(...)
+    metadata:
+      cwe: 'CWE-95: Code Injection'
+  
+  - id: python-no-exec
+    languages: [python]
+    message: "Avoid using exec(); high security risk"
+    severity: ERROR
+    pattern: exec(...)
+    metadata:
+      cwe: 'CWE-95: Code Injection'
+  
   - id: requests-timeout
     languages: [python]
     message: "httpx/requests calls should define a timeout."
@@ -16,3 +32,574 @@ rules:
     metavariable-pattern:
       metavariable: $FUNC
       pattern: "(get|post|put|delete|patch|head)"
+
+  # === Crypto-specific Security ===
+  
+  - id: hardcoded-private-key
+    patterns:
+      - pattern-regex: '(private_key|privateKey|PRIVATE_KEY)\s*=\s*["\'][0-9a-fA-F]{64}["\']'
+    message: Hardcoded private key detected - use secure key management
+    severity: ERROR
+    languages: [python, javascript, typescript]
+    
+  - id: api-key-in-code
+    patterns:
+      - pattern-regex: '(GROQ_API_KEY|OPENAI_API_KEY|api_key)\s*=\s*["\'][a-zA-Z0-9_-]{20,}["\']'
+      - pattern-not-regex: '.*\$\{.*\}.*'
+    message: API key hardcoded in source code - use environment variables
+    severity: ERROR
+    languages: [python, javascript, typescript]
+
+  # === LLM Security ===
+  
+  - id: llm-output-trust
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $RESPONSE = $CLIENT.chat.completions.create(...)
+              ...
+              eval($RESPONSE)
+          - pattern: |
+              $RESPONSE = $CLIENT.chat.completions.create(...)
+              ...
+              exec($RESPONSE)
+    message: Executing LLM output directly - high security risk
+    severity: ERROR
+    languages: [python]
+
+  # === Data Validation ===
+  
+  - id: dangerous-yaml-load
+    patterns:
+      - pattern: yaml.load($FILE, ...)
+      - pattern-not: yaml.safe_load($FILE)
+    message: Unsafe yaml.load() - use yaml.safe_load()
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-502: Deserialization of Untrusted Data'
+  
+  - id: dangerous-pickle-load
+    patterns:
+      - pattern: pickle.load($FILE)
+    message: pickle.load() is unsafe with untrusted data - use JSON or msgpack
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-502: Deserialization of Untrusted Data'
+
+  # === SQL Injection ===
+  
+  - id: sql-injection-f-string
+    patterns:
+      - pattern: |
+          $SQL = f"... {$VAR} ..."
+          ...
+          $CONN.execute($SQL)
+    message: Potential SQL injection via f-string - use parameterized queries
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-89: SQL Injection'
+  
+  - id: sql-injection-concat
+    patterns:
+      - pattern: |
+          $SQL = "..." + $VAR + "..."
+          ...
+          $CONN.execute($SQL)
+    message: Potential SQL injection via concatenation - use parameterized queries
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-89: SQL Injection'
+
+  # === Path Traversal ===
+  
+  - id: path-traversal
+    patterns:
+      - pattern: open($PATH, ...)
+      - metavariable-pattern:
+          metavariable: $PATH
+          patterns:
+            - pattern-regex: '.*(user_input|request\.|params\.).*'
+    message: Potential path traversal - validate file paths against allowed directory
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-22: Path Traversal'
+
+  # === Timing Attacks ===
+  
+  - id: timing-attack-comparison
+    patterns:
+      - pattern: |
+          if $SECRET == $INPUT:
+            ...
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: '.*(password|token|key|secret).*'
+    message: String comparison vulnerable to timing attacks - use secrets.compare_digest()
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-208: Observable Timing Discrepancy'
+
+  # === Weak Cryptography ===
+  
+  - id: weak-hash-algorithm
+    patterns:
+      - pattern-either:
+          - pattern: hashlib.md5(...)
+          - pattern: hashlib.sha1(...)
+    message: Weak hash algorithm - use SHA-256 or stronger
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-327: Weak Cryptography'
+    
+  - id: insecure-random
+    patterns:
+      - pattern: random.choice(...)
+      - pattern-inside: |
+          import random
+          ...
+    message: Insecure random for security - use secrets.choice()
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-330: Weak Random Number Generator'
+
+  # === Information Disclosure ===
+  
+  - id: debug-mode-enabled
+    patterns:
+      - pattern-either:
+          - pattern: app.run(..., debug=True, ...)
+          - pattern: |
+              DEBUG = True
+    message: Debug mode enabled - disable in production
+    severity: ERROR
+    languages: [python]
+    
+  - id: secret-in-log
+    patterns:
+      - pattern: logger.$METHOD(... + $VAR + ...)
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: '.*(password|secret|token|key|api).*'
+    message: Potential secret in log message - sanitize sensitive data
+    severity: WARNING
+    languages: [python]
+
+  # === Denial of Service ===
+  
+  - id: regex-dos
+    patterns:
+      - pattern: re.compile($PATTERN)
+      - metavariable-regex:
+          metavariable: $PATTERN
+          regex: '.*(\.\*\.\*|\+\+|\*\*).*'
+    message: Potential ReDoS vulnerability - avoid nested quantifiers
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-1333: Inefficient Regular Expression Complexity'
+
+  # === Misconfiguration ===
+  
+  - id: permissive-cors
+    patterns:
+      - pattern: CORS($APP, ..., origins="*", ...)
+    message: Permissive CORS configuration - specify allowed origins explicitly
+    severity: WARNING
+    languages: [python]
+  
+  - id: insecure-ssl-verify
+    patterns:
+      - pattern: requests.$METHOD(..., verify=False, ...)
+    message: SSL verification disabled - security risk for MITM attacks
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-295: Certificate Validation'
+
+  # === Subprocess Injection ===
+  
+  - id: subprocess-shell-injection
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.$FUNC(..., shell=True, ...)
+          - pattern: subprocess.$FUNC($CMD, shell=True)
+      - metavariable-pattern:
+          metavariable: $CMD
+          patterns:
+            - pattern-regex: '.*\+.*'  # String concatenation
+    message: Shell injection risk - avoid shell=True with user input or use shlex.quote()
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-78: OS Command Injection'
+  
+  - id: subprocess-no-shell
+    patterns:
+      - pattern: subprocess.$FUNC($CMD, ...)
+      - metavariable-pattern:
+          metavariable: $CMD
+          pattern: |
+            $VAR + ...
+    message: Command injection risk - use list form instead of string concatenation
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-78: OS Command Injection'
+
+  # === Exception Handling ===
+  
+  - id: bare-except
+    patterns:
+      - pattern: |
+          try:
+              ...
+          except:
+              ...
+    message: Bare except clause catches all exceptions including system exits - use specific exceptions
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-396: Declaration of Catch for Generic Exception'
+  
+  - id: broad-exception-pass
+    patterns:
+      - pattern: |
+          try:
+              ...
+          except Exception:
+              pass
+    message: Broad exception silently swallowed - at least log the error
+    severity: WARNING
+    languages: [python]
+  
+  - id: broad-exception-swallowing
+    patterns:
+      - pattern-either:
+          - pattern: |
+              try:
+                  ...
+              except $EX:
+                  ...
+      - metavariable-pattern:
+          metavariable: $EX
+          patterns:
+            - pattern-either:
+                - pattern: Exception
+                - pattern: BaseException
+      - pattern-not-inside: |
+          try:
+              ...
+          except $EX:
+              ...
+              logging.$METHOD(...)
+              ...
+      - pattern-not-inside: |
+          try:
+              ...
+          except $EX:
+              ...
+              logger.$METHOD(...)
+              ...
+    message: Broad exception caught without logging - errors will be silently ignored
+    severity: WARNING
+    languages: [python]
+
+  # === Deserialization Vulnerabilities ===
+  
+  - id: unsafe-deserialization-pickle
+    patterns:
+      - pattern-either:
+          - pattern: pickle.loads($DATA)
+          - pattern: pickle.load($FILE)
+      - pattern-not-inside: |
+          if $TRUSTED:
+              ...
+              pickle.$METHOD(...)
+    message: Unsafe pickle deserialization - can execute arbitrary code. Use JSON or validate source
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-502: Deserialization of Untrusted Data'
+  
+  - id: unsafe-deserialization-marshal
+    patterns:
+      - pattern: marshal.loads($DATA)
+    message: marshal.loads() is unsafe with untrusted data - use safer serialization
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-502: Deserialization of Untrusted Data'
+  
+  - id: unsafe-deserialization-shelve
+    patterns:
+      - pattern: shelve.open($PATH)
+      - metavariable-pattern:
+          metavariable: $PATH
+          patterns:
+            - pattern-regex: '.*(user_input|request\.|params\.).*'
+    message: shelve.open() with user-controlled path can lead to code execution
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-502: Deserialization of Untrusted Data'
+
+  # === Request Timeout Issues ===
+  
+  - id: requests-no-timeout
+    patterns:
+      - pattern-either:
+          - pattern: requests.$FUNC($URL, ...)
+          - pattern: httpx.$FUNC($URL, ...)
+      - pattern-not: $OBJ(..., timeout=$TIMEOUT, ...)
+      - metavariable-pattern:
+          metavariable: $FUNC
+          patterns:
+            - pattern-either:
+                - pattern: get
+                - pattern: post
+                - pattern: put
+                - pattern: delete
+                - pattern: patch
+                - pattern: head
+                - pattern: request
+    message: Network request without timeout - can hang indefinitely. Add timeout parameter
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-400: Uncontrolled Resource Consumption'
+  
+  - id: session-no-timeout
+    patterns:
+      - pattern: |
+          $SESSION = requests.Session()
+          ...
+          $SESSION.$METHOD($URL, ...)
+      - pattern-not: |
+          $SESSION = requests.Session()
+          ...
+          $SESSION.$METHOD($URL, ..., timeout=$T, ...)
+    message: Session request without timeout - set default timeout on session or per-request
+    severity: WARNING
+    languages: [python]
+  
+  - id: aiohttp-no-timeout
+    patterns:
+      - pattern: |
+          async with aiohttp.ClientSession() as $SESSION:
+              ...
+              $SESSION.$METHOD($URL, ...)
+      - pattern-not: |
+          async with aiohttp.ClientSession(timeout=...) as $SESSION:
+              ...
+    message: aiohttp session without timeout configuration
+    severity: WARNING
+    languages: [python]
+
+  # === Insecure File Operations ===
+  
+  - id: insecure-temp-file
+    patterns:
+      - pattern-either:
+          - pattern: tempfile.mktemp(...)
+          - pattern: os.tmpnam()
+    message: Insecure temporary file creation - use tempfile.NamedTemporaryFile() or mkstemp()
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-377: Insecure Temporary File'
+  
+  - id: world-writable-file
+    patterns:
+      - pattern: os.chmod($PATH, 0o777)
+    message: Setting file permissions to world-writable (777) is insecure
+    severity: ERROR
+    languages: [python]
+  
+  - id: world-readable-chmod
+    patterns:
+      - pattern: os.chmod($PATH, ...)
+      - metavariable-pattern:
+          metavariable: $PATH
+          patterns:
+            - pattern-regex: '.*(secret|key|password|credential|token).*'
+    message: Setting permissions on sensitive file - ensure it's not world-readable
+    severity: WARNING
+    languages: [python]
+
+  # === Cryptographic Issues ===
+  
+  - id: hardcoded-cryptographic-key
+    patterns:
+      - pattern: |
+          $KEY = $BYTES
+          ...
+          $CIPHER = $CRYPTO(..., key=$KEY, ...)
+      - metavariable-pattern:
+          metavariable: $BYTES
+          patterns:
+            - pattern-regex: 'b["\'][a-zA-Z0-9+/=]{16,}["\']'
+    message: Hardcoded cryptographic key - load from secure key management system
+    severity: ERROR
+    languages: [python]
+  
+  - id: inadequate-encryption-key-size
+    patterns:
+      - pattern-either:
+          - pattern: Crypto.Cipher.AES.new($KEY, ...)
+          - pattern: cryptography.hazmat.primitives.ciphers.Cipher(algorithms.AES($KEY), ...)
+      - metavariable-pattern:
+          metavariable: $KEY
+          patterns:
+            - pattern-regex: '.{0,15}$'  # Less than 16 bytes
+    message: AES key size too small - use at least 128 bits (16 bytes)
+    severity: ERROR
+    languages: [python]
+
+  # === Database Security ===
+  
+  - id: sqlalchemy-raw-sql
+    patterns:
+      - pattern: |
+          $SQL = f"..."
+          ...
+          $DB.execute($SQL)
+    message: Raw SQL with f-string in SQLAlchemy - use parameterized queries
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-89: SQL Injection'
+  
+  - id: mongodb-injection
+    patterns:
+      - pattern: |
+          $QUERY = {..., "$where": $EXPR, ...}
+          ...
+          $DB.find($QUERY)
+    message: MongoDB $where operator with user input is vulnerable to injection
+    severity: ERROR
+    languages: [python]
+
+  # === Rate Limiting & DoS ===
+  
+  - id: no-rate-limiting
+    patterns:
+      - pattern: |
+          @app.route(...)
+          def $FUNC(...):
+              ...
+      - pattern-not-inside: |
+          @limiter.limit(...)
+          @app.route(...)
+          def $FUNC(...):
+              ...
+    message: API endpoint without rate limiting - vulnerable to DoS attacks
+    severity: INFO
+    languages: [python]
+
+  # === Authentication & Session ===
+  
+  - id: weak-session-secret
+    patterns:
+      - pattern: app.secret_key = $SECRET
+      - metavariable-pattern:
+          metavariable: $SECRET
+          patterns:
+            - pattern-regex: '^["\'][a-zA-Z0-9]{1,16}["\']$'
+    message: Weak session secret key - use at least 32 bytes of random data
+    severity: ERROR
+    languages: [python]
+  
+  - id: session-no-httponly
+    patterns:
+      - pattern: |
+          $RESPONSE.set_cookie($NAME, $VALUE, ...)
+      - pattern-not: |
+          $RESPONSE.set_cookie($NAME, $VALUE, ..., httponly=True, ...)
+    message: Cookie without httponly flag - vulnerable to XSS attacks
+    severity: WARNING
+    languages: [python]
+  
+  - id: session-no-secure
+    patterns:
+      - pattern: |
+          $RESPONSE.set_cookie($NAME, $VALUE, ...)
+      - pattern-not: |
+          $RESPONSE.set_cookie($NAME, $VALUE, ..., secure=True, ...)
+    message: Cookie without secure flag - can be transmitted over unencrypted connections
+    severity: WARNING
+    languages: [python]
+
+  # === Integer Overflow ===
+  
+  - id: unchecked-division-by-zero
+    patterns:
+      - pattern: |
+          $RESULT = $NUM / $DENOM
+      - pattern-not-inside: |
+          if $DENOM != 0:
+              ...
+              $RESULT = $NUM / $DENOM
+      - pattern-not-inside: |
+          try:
+              $RESULT = $NUM / $DENOM
+          except ZeroDivisionError:
+              ...
+    message: Division without zero check - add validation or exception handling
+    severity: WARNING
+    languages: [python]
+
+  # === Code Quality & Security ===
+  
+  - id: assert-in-production
+    patterns:
+      - pattern: assert $CONDITION, ...
+      - pattern-not-inside: |
+          if __debug__:
+              ...
+      - pattern-not-inside: |
+          def test_$FUNC(...):
+              ...
+    message: Assert statements are removed in optimized Python - use explicit checks in production
+    severity: WARNING
+    languages: [python]
+  
+  - id: mutable-default-argument
+    patterns:
+      - pattern: |
+          def $FUNC(..., $ARG=[], ...):
+              ...
+      - pattern: |
+          def $FUNC(..., $ARG={}, ...):
+              ...
+    message: Mutable default argument - defaults are shared between calls. Use None and initialize in function
+    severity: WARNING
+    languages: [python]
+
+  # === Third-Party Library Security ===
+  
+  - id: unsafe-jinja2-autoescape
+    patterns:
+      - pattern: jinja2.Environment(..., autoescape=False, ...)
+    message: Jinja2 autoescape disabled - vulnerable to XSS attacks
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-79: Cross-site Scripting'
+  
+  - id: pandas-read-pickle-unsafe
+    patterns:
+      - pattern: pandas.read_pickle($PATH)
+    message: pandas.read_pickle() is unsafe with untrusted data - use read_csv or read_json
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: 'CWE-502: Deserialization of Untrusted Data'
+

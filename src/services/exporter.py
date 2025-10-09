@@ -11,6 +11,8 @@ from math import isfinite, isnan
 from pathlib import Path
 from typing import Dict, List
 
+from src.security.artifact_integrity import get_signer
+
 try:  # pragma: no cover - optional dependency for CLI usage
     from fastapi import FastAPI
 except Exception:  # noqa: BLE001 - broad to tolerate optional import failures
@@ -371,6 +373,21 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         template += "\n" + "\n".join(f"- {note}" for note in actions)
     else:
         template += "\n-"
+    
+    # Sign the artifact with cryptographic signature
+    signer = get_signer()
+    signature = signer.sign_artifact(template, metadata={
+        "title": title,
+        "timestamp": timestamp,
+        "type": "markdown_artifact"
+    })
+    
+    # Append signature section
+    template += "\n\n---\n\n# Artifact Signature\n\n"
+    template += f"**Hash Algorithm:** {signature.hash_algorithm}\n\n"
+    template += f"**Content Hash (SHA-256):**\n```\n{signature.content_hash}\n```\n\n"
+    template += f"**HMAC Signature:**\n```\n{signature.hmac_signature}\n```\n\n"
+    template += f"**Signed At:** {signature.timestamp}\n"
 
     return template
 
@@ -558,9 +575,7 @@ pre { white-space: pre-wrap; }
         ("Action Notes", _render_list_html(actions)),
     ]
 
-    if hash_value:
-        sections.append(("Artifact Hash", f"<p>{escape(str(hash_value))}</p>"))
-
+    # Build HTML content first (without signature section)
     body_fragments = ["<main>"]
     for title_text, content in sections:
         body_fragments.append("  <section>")
@@ -571,7 +586,7 @@ pre { white-space: pre-wrap; }
         body_fragments.append("  </section>")
     body_fragments.append("</main>")
 
-    html = [
+    html_content = [
         "<!DOCTYPE html>",
         '<html lang="en">',
         "<head>",
@@ -588,8 +603,37 @@ pre { white-space: pre-wrap; }
         "</body>",
         "</html>",
     ]
-
-    return "\n".join(html)
+    
+    html_string = "\n".join(html_content)
+    
+    # Sign the complete HTML artifact
+    signer = get_signer()
+    signature = signer.sign_artifact(html_string, metadata={
+        "title": title,
+        "timestamp": timestamp,
+        "type": "html_artifact"
+    })
+    
+    # Insert signature section before closing body tag
+    signature_section = [
+        "  <section class=\"signature-section\">",
+        "    <h2>🔐 Artifact Signature</h2>",
+        "    <div class=\"content\">",
+        f"      <p><strong>Hash Algorithm:</strong> {escape(signature.hash_algorithm)}</p>",
+        f"      <p><strong>Content Hash (SHA-256):</strong></p>",
+        f"      <pre style=\"font-size: 0.85em; overflow-wrap: break-word;\">{escape(signature.content_hash)}</pre>",
+        f"      <p><strong>HMAC Signature:</strong></p>",
+        f"      <pre style=\"font-size: 0.85em; overflow-wrap: break-word;\">{escape(signature.hmac_signature)}</pre>",
+        f"      <p><strong>Signed At:</strong> {escape(signature.timestamp)}</p>",
+        f"      <p class=\"muted\" style=\"font-size: 0.9em; margin-top: 1rem;\">This cryptographic signature ensures the integrity of this artifact. Any tampering will be detected during verification.</p>",
+        "    </div>",
+        "  </section>",
+    ]
+    
+    # Insert signature before </body></html>
+    final_html = html_string.replace("</body>", "\n".join(signature_section) + "\n</body>")
+    
+    return final_html
 
 
 def save_artifact(markdown: str, output_dir: Path, filename: str) -> Path:

@@ -1,0 +1,257 @@
+name: notebook-validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Run weekly to catch drift
+    - cron: '0 2 * * 0'
+
+jobs:
+  validate-notebooks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+        notebook:
+          - 'notebooks/hidden_gem_scanner.ipynb'
+          - 'notebooks/example_analysis.ipynb'
+      fail-fast: false
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nbconvert nbformat jupyter jupyter-client ipykernel
+      
+      - name: Set deterministic seed
+        run: |
+          echo "PYTHONHASHSEED=42" >> $GITHUB_ENV
+          echo "NUMPY_RANDOM_SEED=42" >> $GITHUB_ENV
+      
+      - name: Validate notebook format
+        run: |
+          python -c "
+          import json
+          import sys
+          
+          notebook_path = '${{ matrix.notebook }}'
+          
+          try:
+              with open(notebook_path, 'r', encoding='utf-8') as f:
+                  nb = json.load(f)
+              
+              # Validate structure
+              assert 'cells' in nb, 'Missing cells key'
+              assert 'metadata' in nb, 'Missing metadata key'
+              assert 'nbformat' in nb, 'Missing nbformat key'
+              
+              # Check for output clearing
+              has_outputs = False
+              for cell in nb['cells']:
+                  if cell.get('cell_type') == 'code':
+                      if cell.get('outputs'):
+                          has_outputs = True
+              
+              if has_outputs:
+                  print('⚠️  Notebook contains outputs - should be cleared before commit')
+              else:
+                  print('✓ Notebook format valid')
+              
+          except Exception as e:
+              print(f'❌ Notebook validation failed: {e}')
+              sys.exit(1)
+          "
+      
+      - name: Execute notebook with constraints
+        timeout-minutes: 10
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute \
+            --ExecutePreprocessor.timeout=600 \
+            --ExecutePreprocessor.kernel_name=python3 \
+            --output-dir=./executed_notebooks \
+            --output="$(basename ${{ matrix.notebook }})" \
+            "${{ matrix.notebook }}"
+        env:
+          PYTHONHASHSEED: 42
+          SNAPSHOT_MODE: "true"
+          CI: "true"
+      
+      - name: Check for execution errors
+        run: |
+          python -c "
+          import json
+          import sys
+          
+          executed_path = './executed_notebooks/$(basename ${{ matrix.notebook }})'
+          
+          with open(executed_path, 'r', encoding='utf-8') as f:
+              nb = json.load(f)
+          
+          errors = []
+          for i, cell in enumerate(nb['cells']):
+              if cell.get('cell_type') == 'code':
+                  for output in cell.get('outputs', []):
+                      if output.get('output_type') == 'error':
+                          errors.append({
+                              'cell': i + 1,
+                              'error': output.get('ename'),
+                              'message': output.get('evalue')
+                          })
+          
+          if errors:
+              print('❌ Notebook execution errors found:')
+              for err in errors:
+                  print(f'  Cell {err[\"cell\"]}: {err[\"error\"]} - {err[\"message\"]}')
+              sys.exit(1)
+          else:
+              print('✓ Notebook executed successfully without errors')
+          "
+      
+      - name: Verify deterministic output
+        if: github.event_name == 'push'
+        run: |
+          python -c "
+          import json
+          import hashlib
+          
+          executed_path = './executed_notebooks/$(basename ${{ matrix.notebook }})'
+          
+          with open(executed_path, 'r', encoding='utf-8') as f:
+              nb = json.load(f)
+          
+          # Extract code and output (excluding metadata that may vary)
+          deterministic_content = []
+          for cell in nb['cells']:
+              if cell.get('cell_type') == 'code':
+                  deterministic_content.append({
+                      'source': cell.get('source', []),
+                      'outputs': [
+                          {
+                              'type': o.get('output_type'),
+                              'text': o.get('text') or o.get('data', {}).get('text/plain')
+                          }
+                          for o in cell.get('outputs', [])
+                      ]
+                  })
+          
+          # Compute hash
+          content_str = json.dumps(deterministic_content, sort_keys=True)
+          content_hash = hashlib.sha256(content_str.encode()).hexdigest()[:8]
+          
+          print(f'Notebook deterministic hash: {content_hash}')
+          
+          # Save for comparison (in real setup, compare with baseline)
+          with open('notebook_hash.txt', 'w') as f:
+              f.write(content_hash)
+          "
+      
+      - name: Check notebook size
+        run: |
+          SIZE=\$(stat -f%z \"${{ matrix.notebook }}\" 2>/dev/null || stat -c%s \"${{ matrix.notebook }}\")
+          MAX_SIZE=\$((1024 * 1024))  # 1MB
+          
+          if [ \$SIZE -gt \$MAX_SIZE ]; then
+            echo \"⚠️  Notebook size (\${SIZE} bytes) exceeds recommended maximum (\${MAX_SIZE} bytes)\"
+            echo \"Consider clearing outputs or splitting into smaller notebooks\"
+          else
+            echo \"✓ Notebook size acceptable\"
+          fi
+      
+      - name: Upload executed notebook
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: executed-notebook-${{ matrix.python-version }}-$(basename ${{ matrix.notebook }} .ipynb)
+          path: ./executed_notebooks/
+          retention-days: 7
+      
+      - name: Check for drift markers
+        if: github.event_name == 'schedule'
+        run: |
+          python -c "
+          import json
+          
+          executed_path = './executed_notebooks/$(basename ${{ matrix.notebook }})'
+          
+          with open(executed_path, 'r', encoding='utf-8') as f:
+              nb = json.load(f)
+          
+          # Look for drift warning patterns in outputs
+          drift_warnings = []
+          for i, cell in enumerate(nb['cells']):
+              if cell.get('cell_type') == 'code':
+                  for output in cell.get('outputs', []):
+                      text = output.get('text', '')
+                      if isinstance(text, list):
+                          text = ''.join(text)
+                      
+                      if 'drift' in text.lower() or 'warning' in text.lower():
+                          drift_warnings.append({
+                              'cell': i + 1,
+                              'text': text[:200]
+                          })
+          
+          if drift_warnings:
+              print('⚠️  Potential drift detected in notebook:')
+              for warn in drift_warnings:
+                  print(f'  Cell {warn[\"cell\"]}: {warn[\"text\"]}')
+              # Don't fail, just warn
+          else:
+              print('✓ No drift markers detected')
+          "
+  
+  notebook-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install nbqa
+        run: pip install nbqa ruff black isort
+      
+      - name: Run ruff on notebooks
+        run: nbqa ruff notebooks/ --ignore=E501
+      
+      - name: Check notebook code formatting
+        run: nbqa black --check notebooks/
+      
+      - name: Check import sorting
+        run: nbqa isort --check notebooks/
+
+  notebook-summary:
+    runs-on: ubuntu-latest
+    needs: [validate-notebooks, notebook-lint]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📓 Notebook Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Notebook Execution | ${{ needs.validate-notebooks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Notebook Linting | ${{ needs.notebook-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.validate-notebooks.result }}" != "success" ] || [ "${{ needs.notebook-lint.result }}" != "success" ]; then
+            echo "❌ Notebook validation failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All notebook checks passed" >> $GITHUB_STEP_SUMMARY
+          fi

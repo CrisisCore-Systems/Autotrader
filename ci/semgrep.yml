@@ -28,10 +28,24 @@ rules:
       - pattern-either:
           - pattern: requests.$FUNC(...)
           - pattern: httpx.$FUNC(...)
-      - pattern-not: $OBJ(..., timeout=$TIMEOUT, ...)
-    metavariable-pattern:
-      metavariable: $FUNC
-      pattern: "(get|post|put|delete|patch|head)"
+          - pattern: $SESSION.$FUNC(...)
+      - pattern-not: |
+          requests.$FUNC(..., timeout=$TIMEOUT, ...)
+      - pattern-not: |
+          httpx.$FUNC(..., timeout=$TIMEOUT, ...)
+      - pattern-not: |
+          $SESSION.$FUNC(..., timeout=$TIMEOUT, ...)
+      - metavariable-pattern:
+          metavariable: $FUNC
+          patterns:
+            - pattern-either:
+                - pattern: get
+                - pattern: post
+                - pattern: put
+                - pattern: delete
+                - pattern: patch
+                - pattern: head
+                - pattern: request
 
   # === Crypto-specific Security ===
   
@@ -378,14 +392,44 @@ rules:
   
   - id: session-no-timeout
     patterns:
-      - pattern: |
-          $SESSION = requests.Session()
-          ...
-          $SESSION.$METHOD($URL, ...)
+      - pattern-either:
+          - pattern: |
+              $SESSION = requests.Session()
+              ...
+              $SESSION.$METHOD($URL, ...)
+          - pattern: |
+              $SESSION = httpx.Client()
+              ...
+              $SESSION.$METHOD($URL, ...)
+          - pattern: |
+              with requests.Session() as $SESSION:
+                  ...
+                  $SESSION.$METHOD($URL, ...)
+          - pattern: |
+              with httpx.Client() as $SESSION:
+                  ...
+                  $SESSION.$METHOD($URL, ...)
       - pattern-not: |
           $SESSION = requests.Session()
           ...
+          $SESSION.timeout = ...
+          ...
+      - pattern-not: |
+          $SESSION = httpx.Client(..., timeout=..., ...)
+          ...
+      - pattern-not: |
           $SESSION.$METHOD($URL, ..., timeout=$T, ...)
+      - metavariable-pattern:
+          metavariable: $METHOD
+          patterns:
+            - pattern-either:
+                - pattern: get
+                - pattern: post
+                - pattern: put
+                - pattern: delete
+                - pattern: patch
+                - pattern: head
+                - pattern: request
     message: Session request without timeout - set default timeout on session or per-request
     severity: WARNING
     languages: [python]

@@ -1602,6 +1602,10 @@ class HiddenGemScanner:
             "features": features,
             "debug": debug,
             "hash": self._artifact_hash(config, snapshot, gem_score),
+            "schema_version": "1.0",
+            "source_commit": self._get_source_commit(),
+            "feature_set_hash": self._compute_feature_set_hash(features),
+            "classification": self._classify_score(gem_score.score),
             "narratives": narrative.themes,
             "upcoming_unlock_risk": features.get("UpcomingUnlockRisk"),
             "next_unlock_days": snapshot.onchain_metrics.get("next_unlock_days"),
@@ -1614,8 +1618,48 @@ class HiddenGemScanner:
         return payload
 
     def _artifact_hash(self, config: TokenConfig, snapshot: MarketSnapshot, gem_score: GemScoreResult) -> str:
+        """Generate artifact hash using cryptographic signature."""
+        from src.security.artifact_integrity import get_signer
+        
         data = f"{config.symbol}|{snapshot.timestamp.isoformat()}|{gem_score.score:.2f}|{gem_score.confidence:.2f}"
-        return str(abs(hash(data)))
+        signer = get_signer()
+        return signer.compute_hash(data, algorithm="sha256")[:16]  # First 16 chars for readability
+    
+    def _get_source_commit(self) -> str:
+        """Get current git commit hash for reproducibility."""
+        try:
+            import subprocess
+            result = subprocess.run(
+                ['git', 'rev-parse', 'HEAD'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()[:8]
+        except Exception:
+            pass
+        return "unknown"
+    
+    def _compute_feature_set_hash(self, features: Dict[str, Any]) -> str:
+        """Compute hash of feature names and values for provenance."""
+        import hashlib
+        feature_str = "|".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" 
+                               for k, v in sorted(features.items()))
+        return hashlib.sha256(feature_str.encode()).hexdigest()[:16]
+    
+    def _classify_score(self, score: float) -> str:
+        """Classify GemScore into categories."""
+        if score >= 80:
+            return "exceptional"
+        elif score >= 70:
+            return "strong"
+        elif score >= 60:
+            return "moderate"
+        elif score >= 50:
+            return "weak"
+        else:
+            return "poor"
 
     def _sentiment_label(self, score: float) -> str:
         if score >= 0.65:

@@ -1,0 +1,221 @@
+# LLM Model Version Pinning Configuration
+# Explicit model versions for production reproducibility and cost control
+
+providers:
+  groq:
+    models:
+      # Llama models - Fast inference, cost-effective
+      llama-3.1-70b-versatile:
+        version: "llama-3.1-70b-versatile"  # Groq serves latest stable
+        context_window: 131072
+        max_output: 8192
+        cost_per_1m_input: 0.59
+        cost_per_1m_output: 0.79
+        rate_limits:
+          requests_per_minute: 30
+          tokens_per_minute: 30000
+          tokens_per_day: 1000000
+        recommended_for: ["general_analysis", "narrative_generation", "sentiment"]
+      
+      llama-3.1-8b-instant:
+        version: "llama-3.1-8b-instant"
+        context_window: 131072
+        max_output: 8192
+        cost_per_1m_input: 0.05
+        cost_per_1m_output: 0.08
+        rate_limits:
+          requests_per_minute: 30
+          tokens_per_minute: 30000
+          tokens_per_day: 1000000
+        recommended_for: ["quick_summaries", "classification", "cheap_tasks"]
+      
+      mixtral-8x7b-32768:
+        version: "mixtral-8x7b-32768"
+        context_window: 32768
+        max_output: 32768
+        cost_per_1m_input: 0.24
+        cost_per_1m_output: 0.24
+        rate_limits:
+          requests_per_minute: 30
+          tokens_per_minute: 14400
+          tokens_per_day: 1000000
+        recommended_for: ["structured_analysis", "code_generation"]
+      
+      gemma-7b-it:
+        version: "gemma-7b-it"
+        context_window: 8192
+        max_output: 8192
+        cost_per_1m_input: 0.07
+        cost_per_1m_output: 0.07
+        rate_limits:
+          requests_per_minute: 30
+          tokens_per_minute: 15000
+          tokens_per_day: 1000000
+        recommended_for: ["instruction_following", "chat"]
+
+  openai:
+    models:
+      # GPT-4 family - High capability, higher cost
+      gpt-4o:
+        version: "gpt-4o-2024-08-06"  # Pinned to specific version
+        context_window: 128000
+        max_output: 16384
+        cost_per_1m_input: 2.50
+        cost_per_1m_output: 10.00
+        rate_limits:
+          requests_per_minute: 10
+          tokens_per_minute: 30000
+          tokens_per_day: 500000
+        recommended_for: ["complex_reasoning", "critical_analysis", "premium_tasks"]
+      
+      gpt-4o-mini:
+        version: "gpt-4o-mini-2024-07-18"  # Pinned to specific version
+        context_window: 128000
+        max_output: 16384
+        cost_per_1m_input: 0.15
+        cost_per_1m_output: 0.60
+        rate_limits:
+          requests_per_minute: 10
+          tokens_per_minute: 10000
+          tokens_per_day: 500000
+        recommended_for: ["general_purpose", "cost_effective", "fallback"]
+      
+      gpt-3.5-turbo:
+        version: "gpt-3.5-turbo-0125"  # Pinned to specific version
+        context_window: 16385
+        max_output: 4096
+        cost_per_1m_input: 0.50
+        cost_per_1m_output: 1.50
+        rate_limits:
+          requests_per_minute: 10
+          tokens_per_minute: 10000
+          tokens_per_day: 1000000
+        recommended_for: ["legacy_compatibility", "simple_tasks"]
+
+  anthropic:
+    models:
+      # Claude family - Strong reasoning, safety
+      claude-3-5-sonnet:
+        version: "claude-3-5-sonnet-20241022"  # Pinned to specific date
+        context_window: 200000
+        max_output: 8192
+        cost_per_1m_input: 3.00
+        cost_per_1m_output: 15.00
+        rate_limits:
+          requests_per_minute: 10
+          tokens_per_minute: 40000
+          tokens_per_day: 500000
+        recommended_for: ["advanced_reasoning", "safety_critical", "long_context"]
+      
+      claude-3-haiku:
+        version: "claude-3-haiku-20240307"
+        context_window: 200000
+        max_output: 4096
+        cost_per_1m_input: 0.25
+        cost_per_1m_output: 1.25
+        rate_limits:
+          requests_per_minute: 10
+          tokens_per_minute: 20000
+          tokens_per_day: 1000000
+        recommended_for: ["fast_responses", "cost_effective", "high_volume"]
+
+# Routing configuration - Task → Model mapping
+routing:
+  # Core trading tasks
+  gem_score_analysis:
+    primary: "groq/llama-3.1-70b-versatile"
+    fallback: ["openai/gpt-4o-mini", "groq/llama-3.1-8b-instant"]
+    max_cost_per_request: 0.10
+  
+  narrative_generation:
+    primary: "groq/llama-3.1-70b-versatile"
+    fallback: ["openai/gpt-4o-mini"]
+    max_cost_per_request: 0.05
+  
+  sentiment_analysis:
+    primary: "groq/llama-3.1-8b-instant"
+    fallback: ["openai/gpt-3.5-turbo"]
+    max_cost_per_request: 0.01
+  
+  contract_safety:
+    primary: "openai/gpt-4o"
+    fallback: ["anthropic/claude-3-5-sonnet"]
+    max_cost_per_request: 0.50
+  
+  rare_gem_report:
+    primary: "openai/gpt-4o"
+    fallback: ["anthropic/claude-3-5-sonnet", "groq/llama-3.1-70b-versatile"]
+    max_cost_per_request: 1.00
+  
+  quick_summary:
+    primary: "groq/llama-3.1-8b-instant"
+    fallback: ["openai/gpt-3.5-turbo"]
+    max_cost_per_request: 0.01
+
+# Global budget controls
+budgets:
+  daily_usd_limit: 50.00
+  per_request_usd_limit: 2.00
+  monthly_usd_limit: 1000.00
+  
+  # Alert thresholds
+  warning_threshold_pct: 80  # Warn at 80% of daily budget
+  critical_threshold_pct: 95  # Critical alert at 95%
+
+# Retry and timeout configuration
+retry:
+  max_attempts: 3
+  initial_delay_seconds: 1.0
+  exponential_backoff: true
+  max_delay_seconds: 30.0
+  
+  # Retry on these errors
+  retry_on:
+    - "rate_limit_exceeded"
+    - "timeout"
+    - "service_unavailable"
+    - "internal_server_error"
+  
+  # Don't retry on these
+  no_retry_on:
+    - "invalid_api_key"
+    - "quota_exceeded"
+    - "invalid_request"
+
+# Timeout configuration
+timeouts:
+  connection_timeout_seconds: 10
+  read_timeout_seconds: 60
+  total_timeout_seconds: 120
+
+# Caching configuration
+caching:
+  enabled: true
+  ttl_seconds: 3600  # 1 hour
+  semantic_similarity_threshold: 0.95  # Cache hit if >95% similar
+  max_cache_size_mb: 100
+
+# Monitoring and logging
+monitoring:
+  log_all_requests: true
+  log_token_usage: true
+  log_costs: true
+  track_latency: true
+  
+  # Alerting
+  alert_on_high_cost: true
+  alert_on_quota_exceeded: true
+  alert_on_repeated_failures: true
+
+# Version tracking
+metadata:
+  config_version: "1.0.0"
+  last_updated: "2025-10-09"
+  reviewed_by: "system"
+  notes: |
+    - Model versions pinned to specific releases for reproducibility
+    - Cost limits enforced at multiple levels (request, daily, monthly)
+    - Fallback chains configured per task type
+    - Rate limits aligned with provider quotas
+    - Groq models preferred for cost-effectiveness
+    - OpenAI/Anthropic reserved for critical/complex tasks

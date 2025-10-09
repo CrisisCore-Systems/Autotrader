@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -38,6 +39,52 @@ class BacktestResult:
     flagged_assets: List[str]
     baseline_results: Dict[str, BaselineResult] | None = None
     extended_metrics: ExtendedBacktestMetrics | None = None
+    
+    def to_dict(self) -> Dict:
+        """Convert result to dictionary for JSON export."""
+        result_dict = {
+            "precision_at_k": self.precision_at_k,
+            "average_return_at_k": self.average_return_at_k,
+            "flagged_assets": self.flagged_assets,
+        }
+        
+        if self.baseline_results:
+            result_dict["baseline_results"] = {
+                name: {
+                    "precision": res.precision,
+                    "avg_return": res.avg_return,
+                }
+                for name, res in self.baseline_results.items()
+            }
+        
+        if self.extended_metrics:
+            result_dict["extended_metrics"] = {
+                "ic": self.extended_metrics.ic,
+                "rank_ic": self.extended_metrics.rank_ic,
+                "sharpe_ratio": self.extended_metrics.sharpe_ratio,
+                "sortino_ratio": self.extended_metrics.sortino_ratio,
+                "max_drawdown": self.extended_metrics.max_drawdown,
+            }
+        
+        return result_dict
+    
+    def to_json(self, path: Optional[Path] = None, indent: int = 2) -> str:
+        """Export result as JSON string or to file.
+        
+        Args:
+            path: Optional path to write JSON file
+            indent: JSON indentation level
+            
+        Returns:
+            JSON string representation
+        """
+        json_str = json.dumps(self.to_dict(), indent=indent, sort_keys=True)
+        
+        if path:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json_str)
+        
+        return json_str
 
 
 def load_snapshots(path: Path) -> Iterable[TokenSnapshot]:
@@ -82,7 +129,8 @@ def evaluate_period(
         result = compute_gem_score(snapshot.features)
         scored.append((snapshot, result.score))
 
-    scored.sort(key=lambda item: item[1], reverse=True)
+    # Sort with deterministic tie-breaking: primary=score (desc), secondary=token (asc)
+    scored.sort(key=lambda item: (-item[1], item[0].token))
     top_assets = scored[:top_k]
     flagged_returns = [snap.future_return_7d for snap, _ in top_assets]
     positives = [r for r in flagged_returns if r > 0]
@@ -127,6 +175,8 @@ def main() -> None:
                        help="Calculate IC and risk-adjusted metrics")
     parser.add_argument("--seed", type=int, default=None, 
                        help="Random seed for reproducibility")
+    parser.add_argument("--json-output", type=Path, default=None,
+                       help="Path to export results as JSON")
     args = parser.parse_args()
 
     snapshots = list(load_snapshots(args.data))
@@ -137,6 +187,11 @@ def main() -> None:
         extended_metrics=args.extended_metrics,
         seed=args.seed
     )
+    
+    # Export JSON if requested
+    if args.json_output:
+        result.to_json(args.json_output)
+        print(f"Results exported to: {args.json_output}")
     
     print("=" * 60)
     print("GEMSCORE PERFORMANCE")

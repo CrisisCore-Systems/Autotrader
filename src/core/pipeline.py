@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Dict, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -42,6 +42,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from src.services.github import GitHubActivityAggregator, GitHubEvent
     from src.services.social import SocialAggregator, SocialPost
     from src.services.tokenomics import TokenomicsAggregator, TokenomicsSnapshot
+    from src.services.news import NewsAggregator
 
 
 @dataclass
@@ -146,6 +147,7 @@ class HiddenGemScanner:
         github_aggregator: "GitHubActivityAggregator" | None = None,
         social_aggregator: "SocialAggregator" | None = None,
         tokenomics_aggregator: "TokenomicsAggregator" | None = None,
+        news_aggregator: "NewsAggregator" | None = None,
         feature_store: object | None = None,  # Optional FeatureStore for delta explainability
     ) -> None:
         self.coin_client = coin_client
@@ -164,6 +166,7 @@ class HiddenGemScanner:
         self.github_aggregator = github_aggregator
         self.social_aggregator = social_aggregator
         self.tokenomics_aggregator = tokenomics_aggregator
+        self.news_aggregator = news_aggregator
         self.feature_store = feature_store
 
     def scan(self, config: TokenConfig) -> ScanResult:
@@ -823,23 +826,6 @@ class HiddenGemScanner:
             summary=f"Collected {len(context.tokenomics_metrics)} tokenomics datapoints",
             data={"snapshots": len(context.tokenomics_metrics)},
         )
-
-    def _action_fetch_contract_metadata(self, context: ScanContext) -> NodeOutcome:
-        try:
-            context.contract_metadata = self.etherscan_client.fetch_contract_source(context.config.contract_address)
-            verified = str((context.contract_metadata or {}).get("IsVerified", "false")).lower() == "true"
-            return NodeOutcome(
-                status="success",
-                summary="Fetched contract metadata",
-                data={"verified": verified},
-            )
-        except Exception as exc:  # pragma: no cover - network failures handled at runtime
-            return NodeOutcome(
-                status="failure",
-                summary=f"Failed to fetch contract metadata: {exc}",
-                data={"error": str(exc)},
-                proceed=False,
-            )
 
     def _action_build_price_series(self, context: ScanContext) -> NodeOutcome:
         if context.market_chart is None:

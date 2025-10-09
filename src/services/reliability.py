@@ -178,11 +178,13 @@ def reliable_cex_call(
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        # Extract breaker name from original function name before wrapping
+        breaker_name = func.__name__.split("_")[0] + "_api"  # e.g., "binance_api"
+
         # Apply monitoring
         func = monitored(func.__name__, SLA_REGISTRY)(func)
 
-        # Apply circuit breaker
-        breaker_name = func.__name__.split("_")[0] + "_api"  # e.g., "binance_api"
+        # Apply circuit breaker with unique name
         func = with_circuit_breaker(breaker_name, CEX_CIRCUIT_CONFIG, CIRCUIT_REGISTRY)(func)
 
         # Apply caching

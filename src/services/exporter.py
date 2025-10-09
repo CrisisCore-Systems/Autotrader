@@ -351,7 +351,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
     header_lines = [
         "---",
         f'title: "{title}"',
-        f"date: {date}",
+        f"date: {timestamp}",
         f'glyph: "{glyph}"',
         f"GemScore: {gem_score}",
         f"Confidence: {confidence}",

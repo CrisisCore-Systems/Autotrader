@@ -310,7 +310,7 @@ def init_scanner():
         scanner = HiddenGemScanner(
             coin_client=CoinGeckoClient(),
             defi_client=DefiLlamaClient(),
-            etherscan_client=EtherscanClient(api_key=os.environ['ETHERSCAN_API_KEY']),
+            etherscan_client=EtherscanClient(api_key=os.environ.get('ETHERSCAN_API_KEY', '')),
         )
     return scanner
 
@@ -376,9 +376,9 @@ def scan_token_full(symbol: str, coingecko_id: str, defillama_slug: str, address
             "symbol": symbol,
             "price": snap.price,
             "liquidity_usd": snap.liquidity_usd,
-            "gem_score": gem_score.score if gem_score else 0.0,
-            "final_score": result.final_score,
-            "confidence": gem_score.confidence if gem_score else 100.0,
+            "gem_score": (gem_score.score if gem_score else 0.0) / 100.0,
+            "final_score": result.final_score / 100.0,
+            "confidence": (gem_score.confidence if gem_score else 100.0) / 100.0,
             "flagged": result.flag,
             "narrative_momentum": narrative.momentum if narrative else 0.5,
             "sentiment_score": narrative.sentiment_score if narrative else 0.5,

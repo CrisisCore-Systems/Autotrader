@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://autotrader.crisiscore.systems/schemas/narrative-analyzer-v1.json",
+  "title": "Narrative Analyzer Output Schema",
+  "description": "Schema for validating Narrative GPT outputs with provenance tracking",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "sentiment",
+    "sentiment_score",
+    "emergent_themes",
+    "memetic_hooks",
+    "fake_or_buzz_warning",
+    "rationale"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for compatibility tracking"
+    },
+    "sentiment": {
+      "type": "string",
+      "enum": ["positive", "neutral", "negative"],
+      "description": "Overall sentiment classification"
+    },
+    "sentiment_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Normalized sentiment score (0=bearish, 1=euphoric)"
+    },
+    "emergent_themes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50,
+        "pattern": "^[A-Za-z0-9\\s\\-_]+$"
+      },
+      "minItems": 0,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "description": "Concise thematic phrases (≤3 words preferred)"
+    },
+    "memetic_hooks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "minItems": 0,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "description": "Viral-ready phrases, slogans, or glyphs"
+    },
+    "fake_or_buzz_warning": {
+      "type": "boolean",
+      "description": "True if narrative appears manufactured or suspicious"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Brief explanation (≤2 sentences preferred)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional provenance metadata",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model identifier (e.g., gpt-4, claude-3)"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of generation"
+        },
+        "input_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of input narratives"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 2.0
+        }
+      }
+    }
+  }
+}

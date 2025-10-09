@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://autotrader.crisiscore.systems/schemas/contract-safety-v1.json",
+  "title": "Contract Safety Analysis Output Schema",
+  "description": "Schema for contract safety prompt outputs",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "safety_score",
+    "risk_level",
+    "findings",
+    "honeypot_indicators",
+    "verified_contract",
+    "recommendation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "safety_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Normalized safety score (0=dangerous, 1=safe)"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Categorical risk assessment"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "category", "description"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "critical"]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "ownership",
+              "mint_function",
+              "blacklist",
+              "tax_abuse",
+              "proxy_pattern",
+              "timelock",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 200
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Code snippet or data supporting finding"
+          }
+        }
+      },
+      "minItems": 0,
+      "maxItems": 20
+    },
+    "honeypot_indicators": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "transfer_restrictions",
+          "sell_disabled",
+          "blacklist_present",
+          "hidden_mint",
+          "ownership_risks",
+          "gas_abuse",
+          "none"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "verified_contract": {
+      "type": "boolean",
+      "description": "Whether contract source is verified on Etherscan"
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": ["safe", "caution", "avoid"],
+      "description": "Action recommendation based on analysis"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence in the safety assessment"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "model": {"type": "string"},
+        "timestamp": {"type": "string", "format": "date-time"},
+        "contract_address": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        },
+        "analysis_version": {"type": "string"}
+      }
+    }
+  }
+}

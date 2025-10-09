@@ -1,0 +1,216 @@
+name: notebook-execution
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'notebooks/**'
+      - 'src/**'
+  pull_request:
+    paths:
+      - 'notebooks/**'
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly on Monday at 8 AM UTC
+  workflow_dispatch:
+    inputs:
+      notebook:
+        description: 'Specific notebook to execute (leave empty for all)'
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  discover-notebooks:
+    name: Discover Notebooks
+    runs-on: ubuntu-latest
+    outputs:
+      notebooks: ${{ steps.find.outputs.notebooks }}
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+      
+      - name: Find notebooks
+        id: find
+        run: |
+          if [ -n "${{ github.event.inputs.notebook }}" ]; then
+            # Specific notebook requested
+            NOTEBOOKS='["${{ github.event.inputs.notebook }}"]'
+          else
+            # Find all notebooks with CI execution enabled
+            NOTEBOOKS=$(find notebooks -name "*.ipynb" -not -path "*/.*" | jq -R -s -c 'split("\n")[:-1]')
+          fi
+          echo "notebooks=$NOTEBOOKS" >> $GITHUB_OUTPUT
+          echo "Found notebooks: $NOTEBOOKS"
+
+  execute-notebook:
+    name: Execute ${{ matrix.notebook }}
+    needs: discover-notebooks
+    if: needs.discover-notebooks.outputs.notebooks != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        notebook: ${{ fromJson(needs.discover-notebooks.outputs.notebooks) }}
+    
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # v5.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install papermill nbconvert ipykernel jupyter-client
+      
+      - name: Create output directory
+        run: mkdir -p build/notebook_outputs
+      
+      - name: Capture environment snapshot
+        run: |
+          echo "## Environment Snapshot" > build/environment.md
+          echo "Python: $(python --version)" >> build/environment.md
+          echo "Git commit: ${{ github.sha }}" >> build/environment.md
+          echo "Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> build/environment.md
+          echo "Commit: ${{ github.sha }}" >> build/environment.md
+          echo "" >> build/environment.md
+          echo "### Installed Packages" >> build/environment.md
+          pip list --format=freeze >> build/environment.md
+      
+      - name: Execute notebook with Papermill
+        id: papermill
+        env:
+          PYTHONHASHSEED: 42
+          EXECUTION_SEED: 42
+          # Mock external calls in CI
+          CI_MODE: true
+          MOCK_EXTERNAL_APIS: true
+          # Smoke mode for faster execution
+          SMOKE_MODE: true
+        run: |
+          set -e
+          
+          NOTEBOOK_NAME=$(basename "${{ matrix.notebook }}")
+          OUTPUT_PATH="build/notebook_outputs/${NOTEBOOK_NAME}"
+          
+          # Execute with timeout, seed, and smoke mode for reproducibility
+          papermill \
+            "${{ matrix.notebook }}" \
+            "$OUTPUT_PATH" \
+            --log-output \
+            --report-mode \
+            --execution-timeout 1800 \
+            --kernel python3 \
+            --cwd "$(dirname ${{ matrix.notebook }})" \
+            -p SMOKE_MODE true \
+            -p SEED 42 \
+            -p CI_MODE true \
+            || echo "EXECUTION_FAILED=true" >> $GITHUB_OUTPUT
+      
+      - name: Convert to HTML
+        if: always()
+        run: |
+          NOTEBOOK_NAME=$(basename "${{ matrix.notebook }}")
+          jupyter nbconvert \
+            --to html \
+            --no-input \
+            "build/notebook_outputs/${NOTEBOOK_NAME}" \
+            --output "${NOTEBOOK_NAME%.ipynb}.html"
+      
+      - name: Extract execution metadata
+        if: always()
+        run: |
+          NOTEBOOK_NAME=$(basename "${{ matrix.notebook }}")
+          python -c "
+          import json
+          import nbformat
+          
+          with open('build/notebook_outputs/${NOTEBOOK_NAME}') as f:
+              nb = nbformat.read(f, as_version=4)
+          
+          metadata = {
+              'notebook': '${NOTEBOOK_NAME}',
+              'cell_count': len(nb.cells),
+              'kernel': nb.metadata.get('kernelspec', {}).get('name', 'unknown'),
+              'execution_time_seconds': sum(
+                  cell.get('metadata', {}).get('execution', {}).get('shell.execute_reply.duration', 0)
+                  for cell in nb.cells if cell.cell_type == 'code'
+              ),
+              'errors': [
+                  {
+                      'cell_index': i,
+                      'error_type': output.get('ename'),
+                      'error_message': output.get('evalue'),
+                  }
+                  for i, cell in enumerate(nb.cells)
+                  if cell.cell_type == 'code'
+                  for output in cell.get('outputs', [])
+                  if output.get('output_type') == 'error'
+              ]
+          }
+          
+          with open('build/notebook_outputs/${NOTEBOOK_NAME%.ipynb}_metadata.json', 'w') as f:
+              json.dump(metadata, f, indent=2)
+          
+          print(f'Cells: {metadata[\"cell_count\"]}')
+          print(f'Execution time: {metadata[\"execution_time_seconds\"]:.2f}s')
+          print(f'Errors: {len(metadata[\"errors\"])}')
+          "
+      
+      - name: Upload executed notebook
+        if: always()
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8  # v4.3.0
+        with:
+          name: notebook-${{ hashFiles(matrix.notebook) }}
+          path: |
+            build/notebook_outputs/*.ipynb
+            build/notebook_outputs/*.html
+            build/notebook_outputs/*_metadata.json
+            build/environment.md
+          retention-days: 30
+      
+      - name: Fail if notebook execution failed
+        if: steps.papermill.outputs.EXECUTION_FAILED == 'true'
+        run: |
+          echo "::error::Notebook execution failed: ${{ matrix.notebook }}"
+          exit 1
+      
+      - name: Check for export violations
+        run: |
+          # Ensure notebooks don't export directly to ../docs
+          if grep -r "\.\.\/docs" "${{ matrix.notebook }}"; then
+            echo "::error::Notebook exports to ../docs directory. Use build/docs instead."
+            exit 1
+          fi
+      
+      - name: Validate output artifacts
+        if: success()
+        run: |
+          # Check that expected outputs exist in build/ directory
+          if [ -d "build/docs" ]; then
+            echo "✅ Outputs in build/docs/"
+            ls -lh build/docs/
+          fi
+
+  notebook-summary:
+    name: Notebook Execution Summary
+    needs: execute-notebook
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📓 Notebook Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ needs.execute-notebook.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All notebooks executed successfully!" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autotrader.local/schemas/prompt_outputs/onchain_activity",
+  "title": "On-chain Activity Output",
+  "description": "Schema for Onchain GPT forensic analysis of token flows and wallet behavior",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "accumulation_score",
+    "top_wallet_pct",
+    "tx_size_skew",
+    "suspicious_patterns",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^v\\d+(?:\\.\\d+)*$",
+      "description": "Schema version for this output contract",
+      "examples": ["v1.0.0"]
+    },
+    "accumulation_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Net smart-money accumulation signal (0 = distribution, 1 = strong accumulation)"
+    },
+    "top_wallet_pct": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "description": "Percentage of supply held by top 5 wallets"
+    },
+    "tx_size_skew": {
+      "type": "string",
+      "enum": ["small", "medium", "large"],
+      "description": "Dominant transaction cohort size"
+    },
+    "suspicious_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128,
+        "examples": [
+          "wash trading detected",
+          "sandwich attacks",
+          "circular transfers",
+          "coordinated buy/sell"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 5,
+      "description": "Concrete anomalies (wash trading, sandwich attacks, etc.); empty if none"
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 320,
+      "description": "Context and interpretation (≤2 sentences)"
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "v1.0.0",
+      "accumulation_score": 0.65,
+      "top_wallet_pct": 42.3,
+      "tx_size_skew": "medium",
+      "suspicious_patterns": ["circular transfers between 3 wallets"],
+      "notes": "Moderate accumulation with some circular activity; top wallets slightly concentrated."
+    }
+  ]
+}

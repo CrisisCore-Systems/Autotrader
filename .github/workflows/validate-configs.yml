@@ -1,0 +1,189 @@
+name: validate-configs
+
+on:
+  pull_request:
+    paths:
+      - 'configs/**'
+      - 'schemas/**'
+      - 'tests/fixtures/**'
+      - 'scripts/validate_*.py'
+      - '.github/workflows/validate-configs.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'configs/**'
+      - 'schemas/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-alert-rules:
+    name: Validate Alert Rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      
+      - name: Install dependencies
+        run: |
+          pip install --no-deps jsonschema pyyaml
+      
+      - name: Validate alert rules schema
+        run: |
+          python scripts/validate_alert_rules.py \
+            --config configs/alert_rules.yaml \
+            --schema schemas/alert_rules.schema.json \
+            --strict
+      
+      - name: Check for legacy minute-based fields
+        run: |
+          if grep -q "cool_off_minutes" configs/alert_rules.yaml; then
+            echo "⚠️  WARNING: Found cool_off_minutes (v1 legacy). Consider migrating to suppression_duration (seconds)."
+            exit 0  # Warning only, don't fail
+          fi
+
+  validate-prompt-outputs:
+    name: Validate Prompt Output Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      
+      - name: Install dependencies
+        run: |
+          pip install --no-deps jsonschema
+      
+      - name: Validate all prompt output fixtures
+        run: |
+          python scripts/validate_prompt_outputs.py --fail-on-extra
+      
+      - name: Check schema versions consistency
+        run: |
+          # Ensure all fixtures use consistent schema versions
+          for fixture in tests/fixtures/prompt_outputs/*.json; do
+            version=$(jq -r '.schema_version' "$fixture")
+            if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "❌ Invalid schema_version in $fixture: $version"
+              exit 1
+            fi
+          done
+          echo "✅ All schema versions are valid"
+
+  validate-llm-config:
+    name: Validate LLM Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      
+      - name: Install dependencies
+        run: |
+          pip install --no-deps pyyaml
+      
+      - name: Validate LLM v2 config syntax
+        run: |
+          python -c "
+          import yaml
+          import sys
+          
+          with open('configs/llm_v2.yaml') as f:
+              config = yaml.safe_load(f)
+          
+          # Check required top-level keys
+          required = ['llm']
+          missing = [k for k in required if k not in config]
+          if missing:
+              print(f'❌ Missing required keys: {missing}')
+              sys.exit(1)
+          
+          # Check providers have cost information
+          providers = config['llm'].get('providers', {})
+          for name, provider in providers.items():
+              if 'cost_per_1k_input' not in provider:
+                  print(f'⚠️  Provider {name} missing cost_per_1k_input')
+              if 'cost_per_1k_output' not in provider:
+                  print(f'⚠️  Provider {name} missing cost_per_1k_output')
+          
+          # Check routes have primary + retry config
+          routes = config['llm'].get('routes', {})
+          for name, route in routes.items():
+              if 'primary' not in route:
+                  print(f'❌ Route {name} missing primary provider')
+                  sys.exit(1)
+              if 'retry' not in route:
+                  print(f'⚠️  Route {name} missing retry config')
+          
+          print('✅ LLM v2 config is valid')
+          "
+      
+      - name: Check daily budget is reasonable
+        run: |
+          budget=$(python -c "import yaml; print(yaml.safe_load(open('configs/llm_v2.yaml'))['llm']['budget']['daily_usd_cap'])")
+          if (( $(echo "$budget > 100" | bc -l) )); then
+            echo "⚠️  WARNING: Daily LLM budget is high: \$$budget"
+          fi
+
+  validate-backtest-schema:
+    name: Validate Backtest Schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      
+      - name: Install dependencies
+        run: |
+          pip install --no-deps jsonschema
+      
+      - name: Validate backtest schema itself
+        run: |
+          python -c "
+          import json
+          import sys
+          from jsonschema import Draft202012Validator
+          
+          with open('schemas/backtest_results.schema.json') as f:
+              schema = json.load(f)
+          
+          try:
+              Draft202012Validator.check_schema(schema)
+              print('✅ Backtest results schema is valid JSON Schema')
+          except Exception as e:
+              print(f'❌ Schema validation failed: {e}')
+              sys.exit(1)
+          "
+
+  config-summary:
+    name: Configuration Summary
+    runs-on: ubuntu-latest
+    needs: [validate-alert-rules, validate-prompt-outputs, validate-llm-config, validate-backtest-schema]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## Configuration Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Alert Rules | ${{ needs.validate-alert-rules.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prompt Outputs | ${{ needs.validate-prompt-outputs.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| LLM Config | ${{ needs.validate-llm-config.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backtest Schema | ${{ needs.validate-backtest-schema.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

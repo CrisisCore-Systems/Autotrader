@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://autotrader.crisiscore.systems/schemas/artifact-metadata-v1.json",
+  "title": "Artifact Metadata Schema",
+  "description": "Schema for artifact front matter with provenance tracking",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "generation_id",
+    "generated_at",
+    "source_commit",
+    "generator_version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of artifact schema"
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": [
+        "dashboard",
+        "report",
+        "scan_results",
+        "summary",
+        "chart",
+        "notebook_output"
+      ],
+      "description": "Type of artifact for categorization"
+    },
+    "generation_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "description": "UUID v4 unique identifier for this generation"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of generation"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{7,40}$",
+      "description": "Git commit SHA that generated this artifact"
+    },
+    "generator_version": {
+      "type": "string",
+      "description": "Version of the generator tool/script"
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "restricted"],
+      "default": "internal",
+      "description": "Data classification level"
+    },
+    "input_window": {
+      "type": "object",
+      "description": "Time window of input data",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration_hours": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "model_info": {
+      "type": "object",
+      "description": "LLM model information if applicable",
+      "properties": {
+        "model_name": {
+          "type": "string"
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        }
+      }
+    },
+    "feature_set": {
+      "type": "object",
+      "description": "Feature set used for generation",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of feature definitions"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "data_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "version"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "External data sources used"
+    },
+    "checksums": {
+      "type": "object",
+      "properties": {
+        "artifact_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of artifact content (excluding front matter)"
+        },
+        "full_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of entire artifact including metadata"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "properties": {
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When artifact should be deleted"
+        },
+        "retention_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy": {
+          "type": "string",
+          "description": "Retention policy name"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Runtime dependencies and versions",
+      "properties": {
+        "python_version": {
+          "type": "string"
+        },
+        "packages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provenance_trail": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "timestamp"],
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Audit trail of generation steps"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]+$"
+      },
+      "uniqueItems": true,
+      "description": "Searchable tags for artifact"
+    },
+    "custom_metadata": {
+      "type": "object",
+      "description": "Arbitrary custom fields",
+      "additionalProperties": true
+    }
+  }
+}

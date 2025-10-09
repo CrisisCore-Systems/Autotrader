@@ -1,0 +1,214 @@
+# LLM Configuration v2
+# Enhanced LLM routing with cost tracking, fallback chains, retry policies, and audit
+
+llm:
+  # Provider configurations with cost models
+  providers:
+    openai:
+      model: gpt-4o-mini
+      cost_per_1k_input: 0.00015  # $0.15 per 1M tokens
+      cost_per_1k_output: 0.00060  # $0.60 per 1M tokens
+      max_concurrency: 4
+      timeout_seconds: 30
+      endpoint: https://api.openai.com/v1
+    
+    groq:
+      model: llama-3.1-70b-versatile
+      cost_per_1k_input: 0.00005  # $0.05 per 1M tokens
+      cost_per_1k_output: 0.00020  # $0.20 per 1M tokens
+      max_concurrency: 8
+      timeout_seconds: 20
+      endpoint: https://api.groq.com/openai/v1
+    
+    anthropic:
+      model: claude-3-haiku-20240307
+      cost_per_1k_input: 0.00025
+      cost_per_1k_output: 0.00125
+      max_concurrency: 6
+      timeout_seconds: 30
+      endpoint: https://api.anthropic.com/v1
+    
+    fallback_small:
+      model: gpt-4o-mini
+      cost_per_1k_input: 0.00015
+      cost_per_1k_output: 0.00060
+      max_concurrency: 6
+      timeout_seconds: 30
+      endpoint: https://api.openai.com/v1
+    
+    fallback_groq:
+      model: llama-3.1-8b-instant
+      cost_per_1k_input: 0.00001
+      cost_per_1k_output: 0.00005
+      max_concurrency: 12
+      timeout_seconds: 15
+      endpoint: https://api.groq.com/openai/v1
+    
+    local_ollama:
+      model: llama2
+      cost_per_1k_input: 0.0
+      cost_per_1k_output: 0.0
+      max_concurrency: 2
+      timeout_seconds: 60
+      endpoint: http://localhost:11434
+
+  # Route definitions with primary + fallback chains
+  routes:
+    narrative_summary:
+      description: "Analyze crypto discourse sentiment and themes"
+      primary: groq
+      fallbacks: [openai, fallback_small]
+      max_tokens: 500
+      temperature: 0.3
+      retry:
+        max_attempts: 3
+        backoff: exponential
+        base_seconds: 0.5
+        max_seconds: 8
+        jitter: true
+    
+    contract_explainer:
+      description: "Static review of Solidity contracts"
+      primary: openai
+      fallbacks: [anthropic, groq]
+      max_tokens: 800
+      temperature: 0.1
+      retry:
+        max_attempts: 2
+        backoff: jittered
+        base_seconds: 0.4
+        max_seconds: 5
+        jitter: true
+    
+    sentiment_bucket:
+      description: "Fast sentiment classification"
+      primary: fallback_groq
+      fallbacks: [groq, fallback_small]
+      max_tokens: 150
+      temperature: 0.2
+      retry:
+        max_attempts: 2
+        backoff: fixed
+        base_seconds: 0.25
+        max_seconds: 1.5
+        jitter: false
+    
+    technical_pattern:
+      description: "Technical indicator synthesis"
+      primary: groq
+      fallbacks: [openai]
+      max_tokens: 400
+      temperature: 0.2
+      retry:
+        max_attempts: 3
+        backoff: exponential
+        base_seconds: 0.5
+        max_seconds: 8
+        jitter: true
+    
+    onchain_forensics:
+      description: "Token flow and wallet behavior analysis"
+      primary: anthropic
+      fallbacks: [openai, groq]
+      max_tokens: 600
+      temperature: 0.15
+      retry:
+        max_attempts: 2
+        backoff: exponential
+        base_seconds: 0.4
+        max_seconds: 6
+        jitter: true
+    
+    rare_deep_report:
+      description: "High-cost comprehensive analysis (use sparingly)"
+      primary: openai
+      fallbacks: [anthropic]
+      max_tokens: 2000
+      temperature: 0.3
+      retry:
+        max_attempts: 3
+        backoff: exponential
+        base_seconds: 1.0
+        max_seconds: 15
+        jitter: true
+    
+    local_dev:
+      description: "Local development with Ollama (free, offline)"
+      primary: local_ollama
+      fallbacks: []
+      max_tokens: 1000
+      temperature: 0.4
+      retry:
+        max_attempts: 1
+        backoff: fixed
+        base_seconds: 2.0
+        max_seconds: 2.0
+        jitter: false
+
+  # Budget controls
+  budget:
+    daily_usd_cap: 25.0
+    per_job_usd_cap: 1.25
+    per_route_usd_cap:
+      rare_deep_report: 5.0
+      contract_explainer: 0.50
+      sentiment_bucket: 0.10
+    alert_threshold_pct: 80  # Alert at 80% of daily cap
+    hard_stop_threshold_pct: 95  # Hard stop at 95%
+
+  # Rate limiting
+  rate_limit:
+    per_minute: 60
+    burst: 120
+    per_provider:
+      openai: 50
+      groq: 100
+      anthropic: 40
+
+  # Audit and observability
+  audit:
+    log_features: true
+    log_prompts: false  # Set true for debugging (PII risk)
+    log_completions: false  # Set true for debugging (PII risk)
+    redact_pii: true
+    redact_patterns:
+      - '\b\d{3}-\d{2}-\d{4}\b'  # SSN
+      - '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'  # Email
+      - '\b(?:\d{4}[-\s]?){3}\d{4}\b'  # Credit card
+    trace_spans: true
+    export_metrics: true
+    metrics_port: 9091
+    export_interval_seconds: 10
+
+  # Caching configuration
+  caching:
+    enabled: true
+    backend: redis  # redis, memory, or disabled
+    redis_url: redis://localhost:6379/1
+    semantic_ttl_hours: 12
+    exact_ttl_hours: 24
+    cache_key_version: v2
+    max_cache_size_mb: 512
+
+  # Circuit breaker for provider health
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5  # Open after 5 failures
+    success_threshold: 2  # Close after 2 successes
+    timeout_seconds: 60  # Stay open for 60s
+
+  # Response validation
+  validation:
+    enforce_json: true
+    enforce_schemas: true
+    schemas_dir: schemas/prompt_outputs
+    golden_fixtures_dir: tests/fixtures/prompt_outputs
+    validate_on_startup: true
+
+  # Development overrides
+  development:
+    enable_verbose_logging: false
+    enable_request_replay: false
+    replay_storage_dir: .llm_replays
+    enable_cost_override: false
+    cost_multiplier: 1.0

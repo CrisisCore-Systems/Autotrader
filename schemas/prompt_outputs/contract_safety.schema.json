@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autotrader.local/schemas/prompt_outputs/contract_safety",
+  "title": "Contract Safety Output",
+  "description": "Schema for Contract Safety GPT static review outputs on Solidity contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "verified",
+    "owner_privileges",
+    "can_mint",
+    "upgradable_proxy",
+    "severity",
+    "key_findings",
+    "recommendation"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^v\\d+(?:\\.\\d+)*$",
+      "description": "Schema version for this output contract",
+      "examples": ["v1.0.0"]
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "True when contract source is verified on-chain (e.g., Etherscan)"
+    },
+    "owner_privileges": {
+      "type": "boolean",
+      "description": "True if privileged functions can drain, pause, or reconfigure critical parameters"
+    },
+    "can_mint": {
+      "type": "boolean",
+      "description": "True when arbitrary mint/burn is possible outside documented tokenomics"
+    },
+    "upgradable_proxy": {
+      "type": "boolean",
+      "description": "True if contract uses proxy pattern (UUPS, Beacon, Transparent)"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["none", "low", "medium", "high"],
+      "description": "Risk severity (high = immediate fund risk)"
+    },
+    "key_findings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 256
+      },
+      "minItems": 0,
+      "maxItems": 5,
+      "description": "1-5 concise security findings"
+    },
+    "recommendation": {
+      "type": "string",
+      "maxLength": 320,
+      "description": "Remediation or cautionary guidance (≤2 sentences)"
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "v1.0.0",
+      "verified": true,
+      "owner_privileges": true,
+      "can_mint": false,
+      "upgradable_proxy": true,
+      "severity": "medium",
+      "key_findings": [
+        "Owner can pause transfers indefinitely",
+        "UUPS proxy allows logic upgrades by owner multisig"
+      ],
+      "recommendation": "Monitor owner multisig composition and upgrade events. Consider timelock for critical changes."
+    }
+  ]
+}

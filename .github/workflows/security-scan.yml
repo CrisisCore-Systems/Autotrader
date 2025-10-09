@@ -128,7 +128,7 @@ jobs:
       
       - name: Upload Trivy SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v3.24.6
         with:
           sarif_file: trivy-results.sarif
           category: trivy-filesystem
@@ -205,7 +205,7 @@ jobs:
       
       - name: Upload Grype SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v3.24.6
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
           category: grype-sbom
@@ -243,7 +243,7 @@ jobs:
           path: licenses.json
           retention-days: 90
 
-  # === Security Summary ===
+  # === Configuration Validation ===
   alert-config-validation:
     name: Alert Rules Validation
     runs-on: ubuntu-latest
@@ -260,10 +260,32 @@ jobs:
       - name: Validate alert rules configuration
         run: python scripts/validate_alert_rules.py --config configs/alert_rules.yaml
   
+  prompt-contract-validation:
+    name: Prompt Contract Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install jsonschema pyyaml
+      
+      - name: Validate prompt contracts
+        run: python scripts/validate_prompt_contracts.py
+      
+      - name: Check for schema drift
+        run: |
+          if python scripts/validate_prompt_contracts.py | grep -i "extra keys"; then
+            echo "::warning::Schema drift detected - review prompt outputs"
+          fi
+  
   security-summary:
     name: Security Scan Summary
     runs-on: ubuntu-latest
-    needs: [semgrep, bandit, trivy, gitleaks, trufflehog, pip-audit, license-check, alert-config-validation]
+    needs: [semgrep, bandit, trivy, gitleaks, trufflehog, pip-audit, license-check, alert-config-validation, prompt-contract-validation]
     if: always()
     steps:
       - name: Generate Security Summary
@@ -280,3 +302,6 @@ jobs:
           echo "| pip-audit | ${{ needs.pip-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| License Check | ${{ needs.license-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Alert Config | ${{ needs.alert-config-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prompt Contracts | ${{ needs.prompt-contract-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📚 [Security Posture Documentation](../SECURITY_POSTURE_COMPLETE.md)" >> $GITHUB_STEP_SUMMARY

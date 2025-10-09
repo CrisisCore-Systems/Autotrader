@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autotrader.local/schemas/backtest_results",
+  "title": "Backtest Results Output",
+  "description": "Schema for backtest harness JSON exports with performance metrics and trade logs",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "backtest_id",
+    "start_timestamp",
+    "end_timestamp",
+    "config",
+    "summary",
+    "trades"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^v\\d+(?:\\.\\d+)*$",
+      "description": "Schema version for backtest results format",
+      "examples": ["v1.0.0"]
+    },
+    "backtest_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this backtest run"
+    },
+    "start_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of backtest period start"
+    },
+    "end_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of backtest period end"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["strategy", "initial_capital", "assets"],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "description": "Strategy identifier (e.g., 'hidden_gem_scanner')"
+        },
+        "initial_capital": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Starting capital in USD"
+        },
+        "assets": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of assets backtested"
+        },
+        "slippage_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "commission_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_return_pct",
+        "sharpe_ratio",
+        "max_drawdown_pct",
+        "win_rate_pct",
+        "total_trades"
+      ],
+      "properties": {
+        "total_return_pct": {
+          "type": "number",
+          "description": "Total return percentage"
+        },
+        "sharpe_ratio": {
+          "type": "number",
+          "description": "Risk-adjusted return metric"
+        },
+        "sortino_ratio": {
+          "type": "number",
+          "description": "Downside risk-adjusted return metric"
+        },
+        "max_drawdown_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Maximum peak-to-trough decline"
+        },
+        "win_rate_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of winning trades"
+        },
+        "profit_factor": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Gross profit / gross loss ratio"
+        },
+        "total_trades": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "winning_trades": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "losing_trades": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "avg_trade_return_pct": {
+          "type": "number"
+        },
+        "final_capital": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "trades": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "trade_id",
+          "asset",
+          "entry_timestamp",
+          "exit_timestamp",
+          "entry_price",
+          "exit_price",
+          "position_size",
+          "pnl_pct",
+          "pnl_usd"
+        ],
+        "properties": {
+          "trade_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "asset": {
+            "type": "string"
+          },
+          "entry_timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "exit_timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entry_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "exit_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "position_size": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Position size in USD"
+          },
+          "pnl_pct": {
+            "type": "number",
+            "description": "Profit/loss percentage"
+          },
+          "pnl_usd": {
+            "type": "number",
+            "description": "Profit/loss in USD"
+          },
+          "hold_duration_hours": {
+            "type": "number",
+            "minimum": 0
+          },
+          "entry_signals": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Signals that triggered entry"
+          },
+          "exit_reason": {
+            "type": "string",
+            "enum": ["take_profit", "stop_loss", "signal_exit", "period_end"],
+            "description": "Reason for trade exit"
+          }
+        }
+      }
+    },
+    "equity_curve": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["timestamp", "equity"],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "equity": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "description": "Time series of portfolio equity"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "git_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "execution_time_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "data_sources": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "v1.0.0",
+      "backtest_id": "550e8400-e29b-41d4-a716-446655440000",
+      "start_timestamp": "2024-01-01T00:00:00Z",
+      "end_timestamp": "2024-12-31T23:59:59Z",
+      "config": {
+        "strategy": "hidden_gem_scanner",
+        "initial_capital": 10000,
+        "assets": ["BTC-USD", "ETH-USD"],
+        "slippage_pct": 0.1,
+        "commission_pct": 0.05
+      },
+      "summary": {
+        "total_return_pct": 45.2,
+        "sharpe_ratio": 1.85,
+        "sortino_ratio": 2.12,
+        "max_drawdown_pct": 18.3,
+        "win_rate_pct": 62.5,
+        "profit_factor": 2.35,
+        "total_trades": 48,
+        "winning_trades": 30,
+        "losing_trades": 18,
+        "avg_trade_return_pct": 3.2,
+        "final_capital": 14520.0
+      },
+      "trades": [],
+      "equity_curve": [],
+      "metadata": {
+        "git_commit": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0",
+        "execution_time_seconds": 45.2,
+        "data_sources": ["yahoo_finance", "coingecko"]
+      }
+    }
+  ]
+}

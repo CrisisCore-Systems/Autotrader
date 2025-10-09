@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autotrader.local/schemas/alert_rules",
+  "title": "Alert Rules Configuration",
+  "description": "Schema for alerting rules with support for v1 (minute-based) and v2 (second-based) suppression",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rules"],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9_-]+$",
+            "description": "Unique identifier for the rule"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Rule-level enable flag (defaults to true if omitted)"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable description of the alert"
+          },
+          "where": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Filtering criteria (e.g., {\"chain\": \"ethereum\"})"
+          },
+          "condition": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["type", "operator", "conditions"],
+                "properties": {
+                  "type": {
+                    "const": "compound",
+                    "description": "Compound condition with AND/OR/NOT logic"
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": ["AND", "OR", "NOT"]
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["metric", "operator", "threshold"],
+                "properties": {
+                  "metric": {
+                    "type": "string",
+                    "description": "Metric to evaluate (e.g., gem_score)"
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": ["lt", "lte", "eq", "neq", "gte", "gt"]
+                  },
+                  "threshold": {
+                    "description": "Threshold value (number, string, or boolean)"
+                  }
+                }
+              }
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "high", "critical"],
+            "description": "Alert severity level"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["telegram", "slack", "pagerduty", "email", "webhook"]
+            },
+            "minItems": 1,
+            "description": "Notification channels"
+          },
+          "escalation_policy": {
+            "type": "string",
+            "description": "Name of escalation policy to apply"
+          },
+          "suppression_duration": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Suppression duration in SECONDS (v2 standard)"
+          },
+          "cool_off_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "DEPRECATED: Cooloff duration in MINUTES (v1 legacy). Use suppression_duration instead."
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^v\\d+$",
+            "description": "Rule version (v1 or v2)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Tags for rule organization"
+          }
+        }
+      }
+    },
+    "suppression": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "description": "Global suppression rules"
+    },
+    "escalation_policies": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Escalation policy definitions"
+    },
+    "channels": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Channel configurations"
+    }
+  }
+}

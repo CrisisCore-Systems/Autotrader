@@ -1,0 +1,8 @@
+{
+  "schema_version": "v1.0.0",
+  "trend": "bullish",
+  "divergence_flags": false,
+  "suggested_timeframes_to_watch": ["4h", "1d"],
+  "confidence": 0.75,
+  "commentary": "RSI above 60 with increasing volume on 4h and daily charts. MACD histogram expanding bullish."
+}

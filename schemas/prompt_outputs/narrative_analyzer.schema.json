@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autotrader.local/schemas/prompt_outputs/narrative_analyzer",
+  "title": "Narrative Analyzer Output",
+  "description": "Schema for Narrative GPT prompt outputs analyzing crypto discourse sentiment and themes",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "sentiment",
+    "sentiment_score",
+    "emergent_themes",
+    "memetic_hooks",
+    "fake_or_buzz_warning",
+    "rationale"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^v\\d+(?:\\.\\d+)*$",
+      "description": "Schema version for this output contract (e.g., v1.0.0)",
+      "examples": ["v1.0.0", "v1.1.0"]
+    },
+    "sentiment": {
+      "type": "string",
+      "enum": ["positive", "neutral", "negative"],
+      "description": "Overall sentiment classification of the narrative"
+    },
+    "sentiment_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Numerical sentiment score (0 = bearish, 1 = euphoric)"
+    },
+    "emergent_themes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 32,
+        "pattern": "^[a-z0-9 _-]+$"
+      },
+      "minItems": 0,
+      "maxItems": 10,
+      "description": "Concise thematic phrases (≤3 words each)"
+    },
+    "memetic_hooks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
+      "minItems": 0,
+      "maxItems": 10,
+      "description": "Viral-ready phrases, slogans, or glyphs from the discourse"
+    },
+    "fake_or_buzz_warning": {
+      "type": "boolean",
+      "description": "True if narrative appears manufactured or astroturfed"
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 320,
+      "description": "Brief explanation of the analysis (≤2 sentences)"
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "v1.0.0",
+      "sentiment": "positive",
+      "sentiment_score": 0.78,
+      "emergent_themes": ["dev progress", "ecosystem grants", "mainnet launch"],
+      "memetic_hooks": ["wagmi", "gm", "wen token"],
+      "fake_or_buzz_warning": false,
+      "rationale": "Multiple credible builders announced milestones; sentiment skew positive with organic engagement."
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autotrader.local/schemas/prompt_outputs/technical_pattern",
+  "title": "Technical Pattern Output",
+  "description": "Schema for Chart GPT technical indicator synthesis outputs",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trend",
+    "divergence_flags",
+    "suggested_timeframes_to_watch",
+    "confidence",
+    "commentary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^v\\d+(?:\\.\\d+)*$",
+      "description": "Schema version for this output contract",
+      "examples": ["v1.0.0"]
+    },
+    "trend": {
+      "type": "string",
+      "enum": ["bullish", "neutral", "bearish"],
+      "description": "Overall directional assessment from technical indicators"
+    },
+    "divergence_flags": {
+      "type": "boolean",
+      "description": "True if price momentum diverges from oscillator signals"
+    },
+    "suggested_timeframes_to_watch": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]+[mhd]$",
+        "examples": ["5m", "15m", "1h", "4h", "1d", "1w"]
+      },
+      "minItems": 1,
+      "maxItems": 5,
+      "description": "2-3 timeframes showing strongest confluence or divergence"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Analysis confidence (0 = noisy/conflicting, 1 = clear confluence)"
+    },
+    "commentary": {
+      "type": "string",
+      "maxLength": 320,
+      "description": "Tactical color and context (≤2 sentences)"
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "v1.0.0",
+      "trend": "bullish",
+      "divergence_flags": false,
+      "suggested_timeframes_to_watch": ["4h", "1d"],
+      "confidence": 0.82,
+      "commentary": "RSI broke above 50 with volume expansion; MACD golden cross on 4h confirms bullish momentum."
+    }
+  ]
+}

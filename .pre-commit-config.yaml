@@ -16,18 +16,36 @@ repos:
       - id: check-case-conflict
       - id: detect-private-key
 
-  # Alert Rules Validation
+  # Configuration Validation
   - repo: local
     hooks:
       - id: validate-alert-rules
         name: Validate alert_rules.yaml
-        entry: python scripts/validate_alert_rules.py
+        entry: python scripts/validate_alert_rules.py --config configs/alert_rules.yaml
         language: python
         files: ^configs/alert_rules\.yaml$
         pass_filenames: false
         additional_dependencies:
           - pyyaml>=6.0
           - jsonschema>=4.0.0
+      
+      - id: validate-prompt-contracts
+        name: Validate LLM prompt output contracts
+        entry: python scripts/validate_prompt_outputs.py --fail-on-extra
+        language: python
+        files: ^(schemas/prompt_outputs/.*\.schema\.json|tests/fixtures/prompt_outputs/.*\.json)$
+        pass_filenames: false
+        additional_dependencies:
+          - jsonschema>=4.0.0
+      
+      - id: validate-llm-config
+        name: Validate LLM v2 configuration
+        entry: python -c "import yaml; import sys; yaml.safe_load(open('configs/llm_v2.yaml')); print('✅ LLM v2 config valid'); sys.exit(0)"
+        language: python
+        files: ^configs/llm_v2\.yaml$
+        pass_filenames: false
+        additional_dependencies:
+          - pyyaml>=6.0
 
   # Python formatting
   - repo: https://github.com/psf/black

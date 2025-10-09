@@ -319,6 +319,11 @@ def main(argv: List[str] | None = None) -> int:
         action="store_true",
         help="Exit with error code 1 on any validation errors",
     )
+    parser.add_argument(
+        "--fail-on-minutes",
+        action="store_true",
+        help="Fail if cool_off_minutes found (v1 legacy). Prefer suppression_duration (seconds).",
+    )
     
     args = parser.parse_args(argv)
     

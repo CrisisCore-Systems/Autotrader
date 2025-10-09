@@ -1,0 +1,118 @@
+# Prometheus configuration for AutoTrader monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'autotrader'
+    environment: 'production'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  
+  # AutoTrader API metrics
+  - job_name: 'autotrader-api'
+    static_configs:
+      - targets: ['api:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+  
+  # AutoTrader Worker metrics
+  - job_name: 'autotrader-worker'
+    static_configs:
+      - targets: ['worker:9100']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+  
+  # Standalone metrics exporter
+  - job_name: 'autotrader-metrics'
+    static_configs:
+      - targets: ['metrics-exporter:9200']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 5s
+  
+  # PostgreSQL metrics (postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'postgres-primary'
+  
+  # Milvus vector database metrics
+  - job_name: 'milvus'
+    static_configs:
+      - targets: ['vector:9091']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Recording rules for pre-computed metrics
+# Uncomment to enable custom aggregations and alerts
+# rule_files:
+#   - '/etc/prometheus/rules/autotrader_rules.yml'
+#   - '/etc/prometheus/rules/alerts.yml'
+
+# Example recording rules (create in rules/autotrader_rules.yml):
+# groups:
+#   - name: autotrader_aggregations
+#     interval: 30s
+#     rules:
+#       - record: job:api_requests_total:rate5m
+#         expr: rate(api_requests_total[5m])
+#       
+#       - record: job:api_request_duration_seconds:p95
+#         expr: histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m]))
+#       
+#       - record: job:llm_tokens_consumed:rate1h
+#         expr: rate(llm_tokens_consumed_total[1h])
+#       
+#       - record: job:gemscore_calculations:success_rate
+#         expr: rate(gemscore_calculations_success_total[10m]) / rate(gemscore_calculations_total[10m])
+
+# Example alert rules (create in rules/alerts.yml):
+# groups:
+#   - name: autotrader_alerts
+#     rules:
+#       - alert: HighErrorRate
+#         expr: rate(api_errors_total[5m]) > 0.05
+#         for: 5m
+#         labels:
+#           severity: warning
+#         annotations:
+#           summary: "High error rate detected"
+#           description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+#       
+#       - alert: LLMCostSpike
+#         expr: rate(llm_cost_usd_total[1h]) > 10
+#         for: 10m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "LLM cost spike detected"
+#           description: "LLM costs are ${{ $value }} per hour"
+#       
+#       - alert: DatabaseConnectionFailure
+#         expr: up{job="postgres"} == 0
+#         for: 2m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "PostgreSQL connection failed"
+

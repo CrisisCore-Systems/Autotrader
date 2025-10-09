@@ -2,7 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <!-- Content Security Policy: Prevent XSS attacks -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AutoTrader GemScore Analysis Artifact - Memorywear Entry" />
   <title>Collapse Artifact</title>
+  <!--
+    SECURITY NOTE FOR DEVELOPERS:
+    - This template uses static placeholders (e.g., id="artifact-score")
+    - When dynamically injecting content, ALWAYS sanitize user input
+    - Use textContent (not innerHTML) for dynamic data insertion
+    - Avoid inline event handlers and eval()
+    - For JSON data, use JSON.parse() safely within try-catch
+    - Validate all numeric values before display
+    - Example safe injection:
+      document.getElementById('artifact-score').textContent = sanitize(data.score);
+  -->
   <style>
     :root {
       --bg: #050608;
@@ -99,6 +114,7 @@
       <div>
         <span>Confidence</span>
         <strong id="artifact-confidence">85%</strong>
+        <!-- Expected: 0-1 float, displayed as percentage. Example: 0.85 → "85%" -->
       </div>
       <div>
         <span>Narrative Volatility Index</span>
@@ -137,5 +153,66 @@
       Collapse Artifact v1.0 — Hash: <span id="artifact-hash">sha256(...)</span>
     </div>
   </div>
+
+  <!--
+    DYNAMIC CONTENT INJECTION GUIDE:
+    
+    To safely populate this template with dynamic data:
+    
+    1. SANITIZE ALL INPUT:
+       - HTML-encode special characters: & < > " '
+       - Validate numeric ranges (score: 0-100, confidence: 0-1)
+       - Strip script tags and event handlers
+    
+    2. USE SAFE DOM METHODS:
+       // SAFE ✅
+       element.textContent = userInput;
+       element.setAttribute('data-value', sanitizedValue);
+       
+       // UNSAFE ❌ 
+       element.innerHTML = userInput;  // Can execute scripts!
+       element.outerHTML = userInput;   // Dangerous!
+    
+    3. EXAMPLE SAFE INJECTION (JavaScript):
+       function updateArtifact(data) {
+         // Validate and sanitize
+         const score = Math.max(0, Math.min(100, parseFloat(data.score) || 0));
+         const confidence = Math.max(0, Math.min(1, parseFloat(data.confidence) || 0));
+         
+         // Safe updates using textContent
+         document.getElementById('token-title').textContent = 
+           sanitizeHTML(data.token) + ' — Memorywear Entry';
+         document.getElementById('artifact-score').textContent = score.toFixed(1);
+         document.getElementById('artifact-confidence').textContent = 
+           (confidence * 100).toFixed(0) + '%';
+         document.getElementById('artifact-lore').textContent = sanitizeHTML(data.lore);
+       }
+       
+       function sanitizeHTML(str) {
+         const div = document.createElement('div');
+         div.textContent = str;
+         return div.innerHTML;
+       }
+    
+    4. PYTHON BACKEND SANITIZATION:
+       from html import escape
+       from markupsafe import Markup
+       
+       def render_artifact(data):
+           return template.render(
+               token=escape(data['token']),
+               score=max(0, min(100, float(data['score']))),
+               confidence=max(0, min(1, float(data['confidence']))),
+               lore=escape(data['lore'])[:10000]  # Length limit
+           )
+    
+    5. VALIDATION CHECKLIST:
+       ☑ All user input HTML-escaped
+       ☑ Numeric values range-validated
+       ☑ String length limits enforced
+       ☑ No innerHTML usage for user data
+       ☑ CSP headers properly configured
+       ☑ No inline JavaScript event handlers
+  -->
 </body>
 </html>

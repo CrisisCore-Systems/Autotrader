@@ -109,6 +109,7 @@ nav:
       - Error Handling: operations/errors.md
       - Logging: operations/logging.md
       - Monitoring: operations/monitoring.md
+  - Pump & Dump Detection: crypto_pnd_implementation_plan.md
   - Release & Development:
       - Release Process: development/release-checklist.md
       - Changelog: development/changelog.md

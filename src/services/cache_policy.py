@@ -196,7 +196,7 @@ class EnhancedCache:
             del self._cache[key]
 
     def clear(self) -> None:
-        """Clear all cache entries."""
+        """Clear all cache entries and reset statistics."""
         self._cache.clear()
         self._hits = 0
         self._misses = 0

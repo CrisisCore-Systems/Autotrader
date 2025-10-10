@@ -254,6 +254,11 @@ class CircuitBreakerRegistry:
         """
         return self._breakers.get(name)
 
+    def get_all(self) -> dict[str, CircuitBreaker]:
+        """Return mapping of registered circuit breakers."""
+
+        return self._breakers
+
     def get_all_stats(self) -> list[dict[str, Any]]:
         """Get stats for all circuit breakers.
 

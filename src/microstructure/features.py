@@ -9,6 +9,7 @@ from typing import Deque, List, Optional
 import numpy as np
 
 from src.microstructure.stream import OrderBookSnapshot, Trade
+from src.microstructure.bocpd import BOCPDDetector
 
 
 @dataclass
@@ -93,17 +94,27 @@ class MicrostructureFeatures:
 class OrderBookFeatureExtractor:
     """Extract features from order book snapshots."""
 
-    def __init__(self, lookback: int = 100):
+    def __init__(self, lookback: int = 100, enable_bocpd: bool = True):
         """
         Initialize feature extractor.
         
         Args:
             lookback: Number of historical snapshots for rolling stats
+            enable_bocpd: Whether to run BOCPD regime detection
         """
         self.lookback = lookback
+        self.enable_bocpd = enable_bocpd
         self.history: Deque[OrderBookSnapshot] = deque(maxlen=lookback)
         self.microprice_history: Deque[float] = deque(maxlen=lookback)
         self.spread_history: Deque[float] = deque(maxlen=lookback)
+        
+        # BOCPD detectors
+        if enable_bocpd:
+            self.bocpd_imbalance = BOCPDDetector(hazard_rate=0.01, threshold=0.5)
+            self.bocpd_spread = BOCPDDetector(hazard_rate=0.01, threshold=0.5)
+        else:
+            self.bocpd_imbalance = None
+            self.bocpd_spread = None
 
     def extract(self, snapshot: OrderBookSnapshot) -> OrderBookFeatures:
         """Extract features from order book snapshot."""
@@ -153,6 +164,11 @@ class OrderBookFeatureExtractor:
         ask_depth = sum(size for _, size in snapshot.asks)
         depth_ratio = bid_depth / ask_depth if ask_depth > 0 else 1.0
 
+        # Update BOCPD detectors (optional)
+        if self.enable_bocpd and self.bocpd_imbalance and self.bocpd_spread:
+            self.bocpd_imbalance.update(imbalance_top5)
+            self.bocpd_spread.update(spread_bps)
+
         return OrderBookFeatures(
             timestamp=snapshot.timestamp,
             imbalance_top5=imbalance_top5,
@@ -198,6 +214,28 @@ class OrderBookFeatureExtractor:
             best_ask=0.0,
             mid_price=0.0,
         )
+
+    def get_regime_info(self) -> Optional[tuple[int, float]]:
+        """
+        Get current regime information from BOCPD.
+        
+        Returns:
+            (regime_id, changepoint_prob) or None if BOCPD disabled
+        """
+        if not self.enable_bocpd or not self.bocpd_imbalance:
+            return None
+        
+        # Use imbalance detector as primary regime indicator
+        regime_stats = self.bocpd_imbalance.get_regime_stats()
+        regime_id = regime_stats["current_regime"]
+        
+        # Get latest changepoint probability
+        if self.bocpd_imbalance.changepoint_probs:
+            cp_prob = self.bocpd_imbalance.changepoint_probs[-1]
+        else:
+            cp_prob = 0.0
+        
+        return regime_id, cp_prob
 
 
 class TradeFeatureExtractor:

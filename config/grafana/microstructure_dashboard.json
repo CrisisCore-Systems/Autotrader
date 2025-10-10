@@ -1,0 +1,276 @@
+{
+  "dashboard": {
+    "title": "Microstructure Detection Dashboard",
+    "tags": ["microstructure", "orderflow", "detection"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Signal Rate (signals/min)",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(microstructure_signals_total[1m]) * 60",
+            "legendFormat": "{{signal_type}} - {{symbol}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Signals/min",
+            "show": true
+          }
+        ],
+        "tooltip": {
+          "shared": true
+        }
+      },
+      {
+        "id": 2,
+        "title": "Active Signals by Type",
+        "type": "stat",
+        "gridPos": {
+          "x": 12,
+          "y": 0,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "microstructure_active_signals{signal_type=\"buy_imbalance\"}",
+            "legendFormat": "Buy Imbalance",
+            "refId": "A"
+          },
+          {
+            "expr": "microstructure_active_signals{signal_type=\"sell_imbalance\"}",
+            "legendFormat": "Sell Imbalance",
+            "refId": "B"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Total Signals",
+        "type": "stat",
+        "gridPos": {
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "sum(microstructure_signals_total)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 4,
+        "title": "Detection Score Distribution",
+        "type": "graph",
+        "gridPos": {
+          "x": 12,
+          "y": 4,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "microstructure_detection_score",
+            "legendFormat": "{{symbol}} - {{signal_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Score",
+            "min": 0,
+            "max": 1,
+            "show": true
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Signal Processing Latency (p95)",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(microstructure_signal_processing_seconds_bucket[5m]))",
+            "legendFormat": "p95 latency",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(microstructure_signal_processing_seconds_bucket[5m]))",
+            "legendFormat": "p99 latency",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Seconds",
+            "show": true,
+            "format": "s"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Alert Delivery Latency",
+        "type": "graph",
+        "gridPos": {
+          "x": 12,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(microstructure_alert_latency_seconds_bucket[5m]))",
+            "legendFormat": "{{channel}} p95",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Seconds",
+            "show": true,
+            "format": "s"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Alerts Sent by Channel",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(microstructure_alerts_sent_total[5m]) * 300",
+            "legendFormat": "{{channel}} - {{status}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Alerts (5min)",
+            "show": true
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Signal Type Breakdown",
+        "type": "piechart",
+        "gridPos": {
+          "x": 12,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "sum by (signal_type) (microstructure_signals_total)",
+            "legendFormat": "{{signal_type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "values": ["value", "percent"]
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Recent Detection Scores (Heatmap)",
+        "type": "heatmap",
+        "gridPos": {
+          "x": 0,
+          "y": 24,
+          "w": 24,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "microstructure_detection_score",
+            "refId": "A",
+            "format": "time_series"
+          }
+        ],
+        "options": {
+          "calculate": false,
+          "cellGap": 2,
+          "cellRadius": 0,
+          "color": {
+            "mode": "spectrum",
+            "scheme": "Spectral",
+            "steps": 128
+          }
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "symbol",
+          "type": "query",
+          "label": "Symbol",
+          "query": "label_values(microstructure_signals_total, symbol)",
+          "refresh": 1,
+          "multi": false,
+          "includeAll": true
+        },
+        {
+          "name": "signal_type",
+          "type": "query",
+          "label": "Signal Type",
+          "query": "label_values(microstructure_signals_total, signal_type)",
+          "refresh": 1,
+          "multi": false,
+          "includeAll": true
+        }
+      ]
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
+    }
+  }
+}

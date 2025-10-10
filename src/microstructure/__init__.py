@@ -7,7 +7,15 @@ from src.microstructure.features import (
     MicrostructureFeatures,
 )
 from src.microstructure.detector import MicrostructureDetector
-from src.microstructure.backtester import TickBacktester
+from src.microstructure.backtester import TickBacktester, BacktestConfig
+from src.microstructure.alerting import (
+    AlertManager,
+    AlertConfig,
+    AlertPriority,
+)
+
+# BOCPD not yet implemented
+# from src.microstructure.bocpd import BOCPDDetector, MultivariateBOCPD, RegimeInfo
 
 __all__ = [
     "BinanceOrderBookStream",
@@ -16,4 +24,8 @@ __all__ = [
     "MicrostructureFeatures",
     "MicrostructureDetector",
     "TickBacktester",
+    "BacktestConfig",
+    "AlertManager",
+    "AlertConfig",
+    "AlertPriority",
 ]

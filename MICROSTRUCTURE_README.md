@@ -277,24 +277,32 @@ stats = detector.get_stats()
 
 - [x] WebSocket streaming infrastructure
 - [x] Order book feature extraction
-- [x] Trade feature extraction  
+- [x] Trade feature extraction
 - [x] CUSUM drift detection
 - [x] Ensemble scoring with cooldowns
 - [x] Real-time example script
 - [x] Comprehensive documentation
 
-### 🚧 In Progress (Week 2)
+### ✅ Completed (Week 2)
+
+- [x] Full backtesting framework with triple-barrier labeling
+- [x] Event-driven tick simulator
+- [x] Transaction cost modeling (fees + slippage)
+- [x] Purged time-series cross-validation
+- [x] Precision@k and lead-time metrics
+- [x] FastAPI alert endpoint (`/api/v1/signals`)
+- [x] Prometheus metrics export (`/metrics`)
+- [x] Grafana dashboard configuration
+- [x] Slack/Discord/Telegram notification channels
+- [x] Complete alert system with rate limiting
+- [x] Backtesting examples and tests
+
+### 🚧 Remaining
 
 - [ ] BOCPD regime detection integration
-- [ ] Full backtesting implementation
-- [ ] Triple-barrier labeling
-- [ ] Precision@k and lead-time metrics
-- [ ] FastAPI alert endpoint
-- [ ] Prometheus metrics export
-- [ ] Grafana dashboard config
-- [ ] Slack/Discord/Telegram notifications
-
-## 🧪 Testing
+- [ ] Enhanced metrics module (confusion matrix, ROC curves)
+- [ ] Multi-symbol concurrent detection
+- [ ] Advanced order flow toxicity metrics## 🧪 Testing
 
 ```bash
 # Test streaming (requires API keys or will use public feed)
@@ -306,8 +314,78 @@ python -m pytest tests/test_microstructure_features.py
 # Test detection
 python -m pytest tests/test_microstructure_detector.py
 
-# Integration test
+# Test backtesting
+python examples/microstructure_backtest.py
+
+# Integration test - Live detection
 python examples/microstructure_live.py
+
+# Test alert channels (set environment variables first)
+python examples/microstructure_alerts.py test
+
+# Run live with alerts
+python examples/microstructure_alerts.py live
+
+# Start FastAPI server
+uvicorn src.microstructure.api:app --reload --port 8000
+
+# Test API endpoints
+curl http://localhost:8000/health
+curl http://localhost:8000/metrics
+curl -X POST http://localhost:8000/api/v1/signals \
+  -H "Content-Type: application/json" \
+  -d '{
+    "timestamp": 1696867200.0,
+    "signal_type": "buy_imbalance",
+    "score": 0.85,
+    "symbol": "BTC/USDT"
+  }'
+```
+
+## 🔧 Configuration
+
+### Environment Variables for Alerts
+
+```bash
+# Slack
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+# Discord
+export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/YOUR/WEBHOOK"
+
+# Telegram
+export TELEGRAM_BOT_TOKEN="your:bot:token:here"
+export TELEGRAM_CHAT_ID="your_chat_id"
+```
+
+### Grafana Dashboard Setup
+
+1. Import dashboard configuration:
+   ```bash
+   # Copy dashboard JSON to Grafana
+   cat config/grafana/microstructure_dashboard.json
+   ```
+
+2. Configure Prometheus data source in Grafana pointing to `:9090`
+
+3. Dashboard includes:
+   - Signal rate monitoring
+   - Active signals by type
+   - Detection score distribution
+   - Processing latency (p95/p99)
+   - Alert delivery metrics
+   - Signal type breakdown
+
+### Prometheus Configuration
+
+Add to `prometheus.yml`:
+```yaml
+scrape_configs:
+  - job_name: 'microstructure_api'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
 ```
 
 ## 📚 References
@@ -319,29 +397,33 @@ python examples/microstructure_live.py
 
 ## 🐛 Known Issues
 
-1. **BOCPD Integration**: Regime detection placeholder - needs full implementation
-2. **Backtester**: Currently a stub - full event-driven simulator in progress
-3. **API Endpoints**: FastAPI integration pending
-4. **Notifications**: Alert channels not yet implemented
+1. **BOCPD Integration**: Regime detection not yet implemented - planned for future release
+2. **Enhanced Metrics**: Confusion matrix and ROC curves pending dedicated metrics module
+3. **Multi-Symbol**: Currently single-symbol - concurrent multi-symbol detection planned
 
 ## 🗺️ Roadmap
 
-### Week 2 Priorities
+### ✅ Completed Features
 
-1. Complete backtesting framework
-2. Implement FastAPI endpoints
-3. Add Prometheus metrics
-4. Set up Grafana dashboard
-5. Integrate notification channels
-6. Add BOCPD regime detection
+- Real-time WebSocket streaming with gap detection
+- Order book and trade feature extraction
+- CUSUM drift detection with ensemble scoring
+- Event-driven tick backtesting with triple-barrier
+- FastAPI endpoints for signal ingestion
+- Prometheus metrics and Grafana dashboards
+- Multi-channel alerting (Slack/Discord/Telegram)
+- Comprehensive examples and documentation
 
-### Future Enhancements
+### 🔮 Future Enhancements
 
-- Multi-symbol support
-- L3 order book (individual orders)
+- BOCPD regime detection with changepoint probability
+- Dedicated metrics module (confusion matrix, ROC, calibration)
+- Multi-symbol concurrent detection
+- L3 order book support (individual orders)
 - Order flow toxicity metrics
 - Market maker inventory tracking
 - Cross-venue arbitrage detection
+- Machine learning model integration for signal prediction
 
 ## 📞 Support
 
@@ -349,6 +431,6 @@ For issues or questions, create an issue in the repository or contact the develo
 
 ---
 
-**Status**: 🟢 Week 1 Complete | 🟡 Week 2 In Progress
+**Status**: 🟢 Week 1 Complete | � Week 2 Complete | 🔵 Ready for Production Testing
 
 **Last Updated**: 2025-10-09

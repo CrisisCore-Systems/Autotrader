@@ -29,6 +29,37 @@ This repository contains the foundational blueprint and implementation for **Voi
 - **Security**: All hardcoded API keys removed, environment variables required
 - **Testing**: Comprehensive test suite with 21 passing tests
 - **Documentation**: Complete guides for FREE data sources and integration
+- **Pump & Dump Detection**: Modular `crypto_pnd_detector` package with collectors, feature engineering, explainable ensemble, and streaming pipeline helpers now ships with the repo.
+
+### 🆕 Pump & Dump Detection Module
+
+The repository now bundles a self-contained `src/crypto_pnd_detector/` package that translates the 2025 pump & dump detection roadmap into runnable components:
+
+- **Streaming ingestion** – reusable collector interfaces and an asyncio orchestrator that emulate Pulsar semantics for deterministic testing.
+- **Feature engineering** – market, social, and coordination feature builders that align with the existing dataclass-based patterns in the core scanner.
+- **Explainable ensemble** – lightweight gradient boosting, anomaly scoring, and temporal smoothing models wired together with human-readable explanations.
+- **Real-time pipeline** – `RealtimePumpDetector` stitches collectors, feature store, and ensemble inference with probability gating.
+- **Tests** – `pytest tests/test_crypto_pnd_detector.py` exercises the full loop to guarantee compatibility with the project’s tooling and dependency constraints.
+- **Dev deployment harness** – `build_dev_deployment` assembles a ready-to-run pipeline with static collectors so you can validate detections in a development environment without wiring external services.
+
+You can instantiate the detector directly in notebooks or services alongside the existing `HiddenGemScanner` components:
+
+```python
+import asyncio
+
+from src.crypto_pnd_detector.deployment import build_dev_deployment, run_dev_deployment
+
+deployment = build_dev_deployment(
+    market_events=market_events,
+    social_events=social_events,
+    probability_threshold=0.5,
+)
+
+result = run_dev_deployment(deployment)
+alerts = result.detections
+```
+
+The module avoids third-party dependencies so it plugs into existing environments without additional installation steps.
 
 ## System Overview
 

@@ -98,6 +98,9 @@ Reproducibility stamps, deterministic mode, and validation.
 ### 🔧 **[Operations](operations/locking.md)**
 File locking, concurrency control, error handling, and logging.
 
+### 🚨 **[Pump & Dump Detection](crypto_pnd_implementation_plan.md)**
+Roadmap and integration notes for the real-time pump & dump detection module.
+
 ### 🚀 **[Development](development/release-checklist.md)**
 Release process, contributing guidelines, and testing.
 

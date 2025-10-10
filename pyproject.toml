@@ -7,6 +7,24 @@ name = "autotrader"
 version = "0.1.0"
 description = "AutoTrader - Cryptocurrency Trading Bot"
 requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "ccxt>=4.0.0",
+    "fastapi>=0.100.0",
+    "prometheus-client>=0.17.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+microstructure = [
+    "ccxt[async]>=4.0.0",  # WebSocket support via ccxt.pro
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+]
 
 [project.scripts]
 autotrader-backtest = "pipeline.cli_backtest:cli_main"

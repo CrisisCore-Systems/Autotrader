@@ -536,7 +536,7 @@ logger.error("Processing failed", error=str(error), exc_info=True)
 - `src/core/logging_config.py` - Core implementation
 - `docs/OBSERVABILITY_GUIDE.md` - Full observability stack
 - `docs/CLI_BACKTEST_GUIDE.md` - CLI usage examples
-- `OBSERVABILITY_QUICK_REF.md` - Metrics and tracing
+- `status-reports/quick-reference/OBSERVABILITY_QUICK_REF.md` - Metrics and tracing
 
 ## Quick Reference Card
 

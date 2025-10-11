@@ -61,6 +61,10 @@ alerts = result.detections
 
 The module avoids third-party dependencies so it plugs into existing environments without additional installation steps.
 
+## 📁 Repository Layout
+
+- `docs/status-reports/` – archived milestone reports, quick references, and project notes that used to live in the project root. Documents are grouped by purpose (milestones, summaries, guides, quick references, plans, and checklists) with an index at `docs/status-reports/index.md` for quick navigation.
+
 ## System Overview
 
 The system ingests multi-modal crypto intelligence, transforms it into hybrid feature vectors, scores each asset with the `GemScore` ensemble, and renders both operational dashboards and Collapse Artifacts for archival lore. The architecture keeps safety as a hard gate while providing a tunable scoring surface for discovery experiments.
@@ -302,10 +306,10 @@ glossary.export_markdown(Path("docs/GLOSSARY.md"))
 ```
 
 **Documentation:**
-- 📖 [Full Guide](PROVENANCE_GLOSSARY_GUIDE.md) - Comprehensive documentation
-- ⚡ [Quick Reference](PROVENANCE_QUICK_REF.md) - Quick examples and patterns
+- 📖 [Full Guide](docs/status-reports/guides/PROVENANCE_GLOSSARY_GUIDE.md) - Comprehensive documentation
+- ⚡ [Quick Reference](docs/status-reports/quick-reference/PROVENANCE_QUICK_REF.md) - Quick examples and patterns
 - 📓 [Interactive Notebook](notebooks/hidden_gem_scanner.ipynb) - Hands-on tutorial
-- 📊 [Implementation Summary](PROVENANCE_IMPLEMENTATION_SUMMARY.md) - Technical details
+- 📊 [Implementation Summary](docs/status-reports/summaries/PROVENANCE_IMPLEMENTATION_SUMMARY.md) - Technical details
 
 **Quick Start:**
 
@@ -606,7 +610,7 @@ Edge arises from curated data, risk gating, and a recursive workflow—not just 
 
 ```
 .
-├── ARCHITECTURE.md      # Mermaid architecture diagram and system overview
+├── docs/status-reports/guides/ARCHITECTURE.md  # Mermaid architecture diagram and system overview
 ├── dashboard/          # React dashboard for interactive visualization
 ├── main.py             # Python pipeline skeleton (Phase 1-2)
 ├── main.ts             # TypeScript pipeline skeleton (Phase 1-2)
@@ -626,7 +630,7 @@ The system is built on six core layers:
 5. **Signal Fusion Matrix** - Composite Scoring Algorithm
 6. **Visualization/Dashboard** - Output Layer (Future Phase)
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the detailed architecture diagram and component descriptions.
+See [ARCHITECTURE.md](docs/status-reports/guides/ARCHITECTURE.md) for the detailed architecture diagram and component descriptions.
 
 ## 🚀 Getting Started
 
@@ -885,7 +889,7 @@ See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentat
 ## � Documentation
 
 ### CLI Reference
-- **[CLI_REFERENCE.md](CLI_REFERENCE.md)** - Complete CLI reference (NEW - consolidated)
+- **[CLI_REFERENCE.md](docs/status-reports/notes/CLI_REFERENCE.md)** - Complete CLI reference (NEW - consolidated)
   - Quick start and installation
   - Configuration precedence (CLI > Env > File)
   - Command reference with all options
@@ -895,22 +899,22 @@ See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentat
   - Best practices and troubleshooting
 
 ### Feature Guides
-- **[PROVENANCE_GLOSSARY_GUIDE.md](PROVENANCE_GLOSSARY_GUIDE.md)** - Artifact lineage tracking
-- **[OBSERVABILITY_QUICK_REF.md](OBSERVABILITY_QUICK_REF.md)** - Metrics and logging
+- **[PROVENANCE_GLOSSARY_GUIDE.md](docs/status-reports/guides/PROVENANCE_GLOSSARY_GUIDE.md)** - Artifact lineage tracking
+- **[OBSERVABILITY_QUICK_REF.md](docs/status-reports/quick-reference/OBSERVABILITY_QUICK_REF.md)** - Metrics and logging
 - **[FREE_DATA_SOURCES.md](FREE_DATA_SOURCES.md)** - FREE data alternatives ($0/month)
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Installation and setup
+- **[SETUP_GUIDE.md](docs/status-reports/guides/SETUP_GUIDE.md)** - Installation and setup
 - **[docs/EXPERIMENT_TRACKING.md](docs/EXPERIMENT_TRACKING.md)** - Experiment tracking
 
 ### Examples
 - **[examples/example_strategy_plugin.py](examples/example_strategy_plugin.py)** - Custom strategy template (NEW)
 
 ### Quick References
-- **[PROVENANCE_QUICK_REF.md](PROVENANCE_QUICK_REF.md)** - Provenance patterns
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - General quick reference
+- **[PROVENANCE_QUICK_REF.md](docs/status-reports/quick-reference/PROVENANCE_QUICK_REF.md)** - Provenance patterns
+- **[QUICK_REFERENCE.md](docs/status-reports/quick-reference/QUICK_REFERENCE.md)** - General quick reference
 - **[docs/EXPERIMENT_TRACKING_QUICK_REF.md](docs/EXPERIMENT_TRACKING_QUICK_REF.md)** - Experiment tracking
 
 ### Implementation Details
-- **[SIMPLIFICATION_COMPLETE.md](SIMPLIFICATION_COMPLETE.md)** - Recent simplifications (NEW)
+- **[SIMPLIFICATION_COMPLETE.md](docs/status-reports/milestones/SIMPLIFICATION_COMPLETE.md)** - Recent simplifications (NEW)
 
 ## �🛡️ Security & Quality Gates
 

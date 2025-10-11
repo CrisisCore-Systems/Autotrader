@@ -284,7 +284,7 @@ GET  /health                             # API health check
 - `docs/QUICKSTART_NEW_SIGNALS.md` - Quick start guide
 - `docs/RELIABILITY_IMPLEMENTATION.md` - SLA/caching architecture
 - `docs/FEATURE_STORE_IMPLEMENTATION.md` - Feature store design
-- `STATUS_REPORT.md` - System status (updated)
+- `status-reports/summaries/STATUS_REPORT.md` - System status (updated)
 
 ### Examples
 - `examples/orderflow_example.py` - CEX/DEX order flow

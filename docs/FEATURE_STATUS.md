@@ -287,8 +287,8 @@ All original objectives have been met:
 ## 📞 Support
 
 ### Documentation
-- `ARCHITECTURE.md` - System architecture
-- `SETUP_GUIDE.md` - Installation guide
+- `status-reports/guides/ARCHITECTURE.md` - System architecture
+- `status-reports/guides/SETUP_GUIDE.md` - Installation guide
 - `docs/ETHERSCAN_V2_MIGRATION.md` - V2 migration guide
 
 ### Debug Tools

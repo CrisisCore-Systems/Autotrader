@@ -1,0 +1,117 @@
+# World Liberty Financial (WLFI) - Safety Gate Test Case
+# Category: High-Risk / Safety Testing
+# Risk Level: Very High
+# Expected GemScore: 45-62 (may flag)
+
+scanner:
+  mode: "testing"  # Testing mode for safety validation
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "World Liberty Financial"
+  contract_address: "0x0Bf3820B5c8ed020ab3B192e77c56e10F3c3A988"
+  token_id: "world-liberty-financial"
+  symbol: "WLFI"
+  chain: "ethereum"
+  decimals: 18
+  category: "test_case"
+  safety_strict: true  # CRITICAL - Strict safety enforcement
+  tags:
+    - "political"
+    - "high_hype"
+    - "high_risk"
+    - "safety_test"
+    - "controversial"
+
+scoring:
+  weights:
+    S: 0.20  # Sentiment/Narrative - Political narrative (boosted)
+    A: 0.15  # Accumulation
+    O: 0.12  # On-chain Activity
+    L: 0.10  # Liquidity Depth
+    T: 0.18  # Tokenomics Risk - CRITICAL (boosted)
+    C: 0.18  # Contract Safety - CRITICAL (boosted)
+    M: 0.12  # Meme Momentum - Political meme
+    G: 0.05  # Community Growth
+
+  safety_gate:
+    enabled: true
+    strict_mode: true
+    aggressive_checks: true
+    
+    # Stringent thresholds for high-risk tokens
+    min_liquidity_usd: 250000
+    max_holder_concentration: 0.30  # Very strict
+    max_unlock_30d: 0.05  # Very strict
+    max_team_allocation: 0.20
+    
+    require_verified_contract: true
+    require_audit: true  # Strongly recommended
+    check_honeypot: true
+    check_mint_function: true
+    check_ownership_renounced: true
+    check_proxy_pattern: true
+    check_transfer_restrictions: true
+    check_pause_function: true
+
+  narrative_focus:
+    keywords:
+      - "world liberty financial"
+      - "wlfi"
+      - "trump"
+      - "political"
+      - "defi"
+    sentiment_weight: 0.25
+    
+  risk_modifiers:
+    political_risk_penalty: 0.20  # 20% penalty for political tokens
+    hype_risk_penalty: 0.15  # 15% penalty for high hype
+    new_token_penalty: 0.10  # 10% penalty for newness
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "detailed_risk_report"
+    - "safety_analysis"
+    - "contract_audit_checklist"
+  save_to: "reports/scans/wlfi/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.55  # Lower threshold expected
+  gem_score_threshold: 50  # May not meet minimum
+  
+  # Verbose logging for test case
+  verbose: true
+  log_safety_checks: true
+  
+alerts:
+  enabled: false
+  channels: []
+  
+monitoring:
+  watch_for:
+    - "centralized_control"
+    - "ownership_concentration"
+    - "unusual_vesting"
+    - "transfer_restrictions"
+    - "liquidity_issues"
+    - "contract_vulnerabilities"
+  
+testing:
+  purpose: "Safety gate validation"
+  expected_flags:
+    - "high_team_allocation"
+    - "new_token_risk"
+    - "political_narrative_risk"
+  success_criteria:
+    - "Safety gate properly identifies risks"
+    - "GemScore reflects multiple risk factors"
+    - "Confidence score penalized appropriately"

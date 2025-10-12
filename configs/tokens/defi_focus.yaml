@@ -1,0 +1,121 @@
+# DeFi Infrastructure Focus Scan
+# Purpose: High technical signal, minimal meme noise
+# Tokens: ENA, PENDLE, MORPHO, ETHFI
+
+scanner:
+  mode: "defi_analysis"
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+scan_config:
+  scan_type: "sector_analysis"
+  sector: "defi_infrastructure"
+  comparison_mode: true
+  
+tokens:
+  - name: "Ethena"
+    contract_address: "0x57e114B691Db790C35207b2e685D4A43181e6061"
+    token_id: "ethena"
+    symbol: "ENA"
+    chain: "ethereum"
+    category: "synthetic_assets"
+    
+  - name: "Pendle"
+    contract_address: "0x808507121B80c02388fAd14726482e061B8da827"
+    token_id: "pendle"
+    symbol: "PENDLE"
+    chain: "ethereum"
+    category: "yield_trading"
+    
+  - name: "Morpho"
+    contract_address: "0x58D97B57BB95320F9a05dC918Aef65434969c2B2"
+    token_id: "morpho"
+    symbol: "MORPHO"
+    chain: "ethereum"
+    category: "lending_optimizer"
+    
+  - name: "Ether.fi"
+    contract_address: "0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB"
+    token_id: "ether-fi"
+    symbol: "ETHFI"
+    chain: "ethereum"
+    category: "liquid_restaking"
+
+scoring:
+  # DeFi-optimized weights (meme momentum disabled)
+  weights:
+    S: 0.15  # Sentiment/Narrative - DeFi narratives
+    A: 0.22  # Accumulation - Institutional focus (boosted)
+    O: 0.18  # On-chain Activity - Protocol interactions (boosted)
+    L: 0.12  # Liquidity Depth - Important for DeFi (boosted)
+    T: 0.15  # Tokenomics Risk - Important for protocols (boosted)
+    C: 0.15  # Contract Safety - Critical for DeFi (boosted)
+    M: 0.00  # Meme Momentum - DISABLED
+    G: 0.03  # Community Growth - Minimal weight
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 150000  # Higher for DeFi
+    max_holder_concentration: 0.45
+    max_unlock_30d: 0.10
+    require_verified_contract: true
+    require_audit: true  # Strongly recommended for DeFi
+
+  narrative_focus:
+    defi_specific:
+      - "protocol_tvl_growth"
+      - "integration_count"
+      - "smart_contract_calls"
+      - "developer_activity"
+      - "audit_coverage"
+    sentiment_weight: 0.20
+
+output:
+  format: "defi_dashboard"
+  artifacts:
+    - "dashboard_html"
+    - "defi_metrics_report"
+    - "protocol_comparison"
+    - "tvl_analysis"
+    - "lore_capsule"
+  save_to: "reports/scans/defi_focus/"
+  
+  defi_metrics:
+    - "tvl_growth_rate"
+    - "protocol_integrations"
+    - "audit_score"
+    - "developer_commits"
+    - "smart_contract_complexity"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.70
+  gem_score_threshold: 65
+  
+  parallel_scans: true
+  max_workers: 4
+  
+alerts:
+  enabled: false
+  channels: []
+  
+analysis:
+  defi_specific_insights:
+    - "tvl_momentum_analysis"
+    - "protocol_maturity_assessment"
+    - "competitive_positioning"
+    - "integration_network_effects"
+    - "smart_contract_risk_profile"
+  
+  expected_performance:
+    high_performers:
+      - "ENA"     # Synthetic dollar narrative
+      - "MORPHO"  # Lending optimization
+    moderate:
+      - "PENDLE"  # Yield trading complexity
+      - "ETHFI"   # Restaking adoption phase

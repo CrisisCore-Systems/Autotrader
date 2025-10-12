@@ -1,0 +1,63 @@
+/* Custom styles for AutoTrader documentation */
+
+/* Badge styles for metric types */
+.metric-type-badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    font-size: 0.875em;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+/* Code block enhancements */
+.highlight code {
+    font-size: 0.9em;
+}
+
+/* Table of contents styling */
+.md-sidebar--secondary {
+    position: sticky;
+    top: 4rem;
+}
+
+/* Improve readability of tables */
+table {
+    font-size: 0.9em;
+}
+
+table th {
+    font-weight: 600;
+}
+
+/* Better spacing for admonitions */
+.admonition {
+    margin: 1.5em 0;
+}
+
+/* Custom colors for exit code severity */
+.exit-code-success {
+    color: var(--md-code-hl-keyword-color, #00c853);
+}
+
+.exit-code-warning {
+    color: var(--md-code-hl-special-color, #ffa726);
+}
+
+.exit-code-error {
+    color: var(--md-code-hl-error-color, #ef5350);
+}
+
+/* Enhance inline code */
+code {
+    padding: 0.1em 0.3em;
+    border-radius: 0.2em;
+}
+
+/* Navigation tab icons */
+.md-tabs__link {
+    font-weight: 500;
+}

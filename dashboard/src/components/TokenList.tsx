@@ -1,4 +1,5 @@
 import type { TokenSummary } from '../types';
+import { EmptyState } from './EmptyState';
 
 interface Props {
   tokens: TokenSummary[];
@@ -7,9 +8,21 @@ interface Props {
 }
 
 export function TokenList({ tokens, selectedSymbol, onSelect }: Props) {
+  if (tokens.length === 0) {
+    return (
+      <div className="token-list">
+        <EmptyState
+          title="No Tokens Found"
+          description="Try adjusting your search or filter criteria to find tokens."
+          icon="🔍"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="token-list">
-      <div className="section-title">GemScore Radar</div>
+      <div className="section-title">GemScore Radar ({tokens.length})</div>
       {tokens.map((token) => {
         const isSelected = token.symbol === selectedSymbol;
         return (
@@ -32,6 +45,9 @@ export function TokenList({ tokens, selectedSymbol, onSelect }: Props) {
               <span>Liquidity</span>
               <strong>${token.liquidity_usd.toLocaleString()}</strong>
             </div>
+            {token.flagged && (
+              <div className="token-flag">⚠️ Flagged</div>
+            )}
           </button>
         );
       })}

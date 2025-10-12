@@ -109,7 +109,7 @@ class NarrativeAnalyzer:
         *,
         client: Optional[Any] = None,
         use_llm: bool = True,
-        model: str = "llama-3.1-70b-versatile",
+        model: str = "llama-3.3-70b-versatile",
         temperature: float = 0.3,
         max_tokens: int = 600,
         prompt_cache: PromptCache | None = None,
@@ -270,16 +270,38 @@ class NarrativeAnalyzer:
             return ""
         if self._cost_guardrail is not None:
             self._cost_guardrail.reserve(prompt)
-        completion = self._llm_client.chat.completions.create(
-            model=self._model,
-            temperature=self._temperature,
-            max_tokens=self._max_tokens,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-        )
-        return completion.choices[0].message.content or ""
+        
+        try:
+            completion = self._llm_client.chat.completions.create(
+                model=self._model,
+                temperature=self._temperature,
+                max_tokens=self._max_tokens,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+            )
+            return completion.choices[0].message.content or ""
+        except Exception as e:
+            # Try to get more details from the error
+            error_details = str(e)
+            if hasattr(e, 'response') and e.response:
+                try:
+                    error_details = f"{error_details} - Response: {e.response.text}"
+                except:
+                    pass
+            
+            logger.error(
+                "groq_api_error",
+                extra={
+                    "error_type": type(e).__name__,
+                    "error_message": error_details,
+                    "model": self._model,
+                    "prompt_length": len(prompt),
+                    "prompt_preview": prompt[:200] + "..." if len(prompt) > 200 else prompt
+                }
+            )
+            raise
 
     def _build_user_prompt(self, texts: Sequence[str]) -> str:
         joined = "\n".join(f"- {text}" for text in texts[:10])

@@ -1,0 +1,35 @@
+# Multi-token test - compare scores
+scanner:
+  liquidity_threshold: 75000
+
+tokens:
+  - symbol: ONDO
+    coingecko_id: ondo-finance
+    contract_address: "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3"
+    glyph: "⧖⟡"
+    narratives:
+      - "Ondo Finance pioneers institutional-grade RWA tokenization"
+      - "BlackRock partnership validates approach"
+    unlocks:
+      - date: 2025-12-01T00:00:00
+        percent_supply: 3.0
+        
+  - symbol: ENA
+    coingecko_id: ethena
+    contract_address: "0x57e114B691Db790C35207b2e685D4A43181e6061"
+    glyph: "⧗⟡"
+    narratives:
+      - "Ethena synthetic dollar gaining adoption"
+      - "Novel DeFi primitive with growing TVL"
+    unlocks:
+      - date: 2025-11-15T00:00:00
+        percent_supply: 5.0
+        
+  - symbol: PEPE
+    coingecko_id: pepe
+    contract_address: "0x6982508145454Ce325dDbE47a25d4ec3d2311933"
+    glyph: "⧘⟡"
+    narratives:
+      - "Pepe meme momentum remains strong"
+      - "Large community drives viral growth"
+    unlocks: []

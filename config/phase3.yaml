@@ -1,0 +1,87 @@
+# Phase 3: Derivatives and On-chain Flow Analysis Configuration
+# This file contains configuration for advanced derivatives monitoring and on-chain flow analysis
+
+# Feature gating configuration
+feature_gate:
+  # Maximum API calls per hour for derivatives data
+  derivatives_quota: 1000
+  # Maximum API calls per hour for on-chain monitoring
+  onchain_quota: 500
+  # Cost control - disable expensive features in production if budget exceeded
+  enable_cost_control: true
+
+# Derivatives data sources configuration
+derivatives:
+  # Exchange API configurations
+  exchanges:
+    binance:
+      enabled: true
+      api_key: "${BINANCE_API_KEY}"
+      api_secret: "${BINANCE_API_SECRET}"
+      rate_limit: 10  # requests per second
+    bybit:
+      enabled: true
+      api_key: "${BYBIT_API_KEY}"
+      api_secret: "${BYBIT_API_SECRET}"
+      rate_limit: 5
+    kraken:
+      enabled: true
+      api_key: "${KRAKEN_API_KEY}"
+      api_secret: "${KRAKEN_API_SECRET}"
+      rate_limit: 1
+    huobi:
+      enabled: true
+      api_key: "${HUOBI_API_KEY}"
+      api_secret: "${HUOBI_API_SECRET}"
+      rate_limit: 10
+    okx:
+      enabled: true
+      api_key: "${OKX_API_KEY}"
+      api_secret: "${OKX_API_SECRET}"
+      rate_limit: 10
+
+  # Alert thresholds for derivatives monitoring
+  alerts:
+    funding_rate_threshold: 0.01  # 1% funding rate threshold
+    open_interest_spike: 0.20     # 20% OI change threshold
+    liquidation_spike_threshold: 1000000  # $1M liquidation spike
+
+# On-chain monitoring configuration
+onchain:
+  # Blockchain explorers
+  explorers:
+    etherscan:
+      enabled: true
+      api_key: "${ETHERSCAN_API_KEY}"
+      rate_limit: 5  # requests per second
+    bscscan:
+      enabled: true
+      api_key: "${BSCSCAN_API_KEY}"
+      rate_limit: 5
+
+  # CEX wallet addresses to monitor (sample - add real addresses)
+  cex_wallets:
+    binance_hot:
+      - "0x0000000000000000000000000000000000000000"  # Replace with real addresses
+    coinbase_hot:
+      - "0x0000000000000000000000000000000000000000"
+    kraken_hot:
+      - "0x0000000000000000000000000000000000000000"
+
+  # Alert thresholds for on-chain monitoring
+  alerts:
+    whale_transfer_threshold: 1000000  # $1M transfer threshold
+    cex_inflow_alert: 500000           # $500K CEX inflow threshold
+    scan_interval_minutes: 15          # How often to scan for transfers
+
+# General Phase 3 settings
+phase3:
+  # Enable/disable Phase 3 features
+  enabled: true
+  # Timeout for API calls (seconds)
+  api_timeout: 30
+  # Retry configuration
+  max_retries: 3
+  retry_delay: 1.0  # seconds
+  # Cache settings
+  cache_ttl_minutes: 5  # How long to cache derivatives data

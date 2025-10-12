@@ -421,7 +421,7 @@ class RetentionPolicyManager:
         report_json = json.dumps(report_data, indent=2)
         
         if output_path:
-            output_path.write_text(report_json)
+            output_path.write_text(report_json, encoding='utf-8')
         
         return report_json
     

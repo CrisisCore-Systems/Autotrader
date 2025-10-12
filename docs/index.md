@@ -8,6 +8,8 @@
 
 AutoTrader is a comprehensive platform for scanning markets, identifying profitable trading strategies, and backtesting them against historical data with full reproducibility guarantees. Built with observability, versioning, and operational excellence in mind.
 
+Looking for a specific guide? Start with the [Documentation Portal](documentation_portal.md) for a curated map of every major document in this repository.
+
 ## Key Features
 
 ### 🎯 **Strategy Scanning**
@@ -74,32 +76,33 @@ autotrader-scan --print-deprecation-warnings
 
 ## Documentation Sections
 
-### 📚 **[Getting Started](quickstart.md)**
-Installation, configuration, and your first scan.
+### � **Start Here**
+- [System Snapshot](overview/PROJECT_OVERVIEW.md)
+- [Implementation Summary](IMPLEMENTATION_SUMMARY.md)
+- [Feature Status](FEATURE_STATUS.md)
 
-### 💻 **[CLI Reference](cli/index.md)**
-Complete command-line interface documentation with options, exit codes, and examples.
+### �️ **Setup & Operations**
+- [Setup Guide](install/SETUP_GUIDE.md)
+- [Quickstart: New Signals](QUICKSTART_NEW_SIGNALS.md)
+- [CLI Backtest Guide](CLI_BACKTEST_GUIDE.md)
+- [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md)
 
-### ⚙️ **[Configuration](config/index.md)**
-Configuration file format, environment variables, and effective config debugging.
+### 📈 **Reliability & Observability**
+- [Reliability Implementation](RELIABILITY_IMPLEMENTATION.md)
+- [Observability Guide](OBSERVABILITY_GUIDE.md)
+- [Extended Backtest Metrics](EXTENDED_BACKTEST_METRICS.md)
+- [Drift Monitoring Guide](DRIFT_MONITORING_GUIDE.md)
 
-### 🎯 **[Strategies](strategies/index.md)**
-Writing strategy plugins, API reference, and versioning.
+### 🤖 **AI & Narrative Intelligence**
+- [LLM Validation Guide](LLM_VALIDATION_GUIDE.md)
+- [LLM Validation Quick Reference](LLM_VALIDATION_QUICK_REF.md)
+- [Groq Enhancements](llm/GROQ_ENHANCEMENTS.md)
 
-### 📊 **[Metrics & Observability](metrics/registry.md)**
-Metrics registry, validation rules, and monitoring setup.
-
-### 📋 **[Schema & Versioning](schema/index.md)**
-Output schema documentation, version history, and migration guides.
-
-### 🔁 **[Reproducibility](reproducibility/index.md)**
-Reproducibility stamps, deterministic mode, and validation.
-
-### 🔧 **[Operations](operations/locking.md)**
-File locking, concurrency control, error handling, and logging.
-
-### 🚀 **[Development](development/release-checklist.md)**
-Release process, contributing guidelines, and testing.
+### � **Reference Library**
+- [Provider Rate Limits](provider_rate_limits.md)
+- [Signal Coverage Audit](signal_coverage_audit.md)
+- [Confidence Representation Standard](CONFIDENCE_REPRESENTATION_STANDARD.md)
+- [Unified Logging Guide](UNIFIED_LOGGING_GUIDE.md)
 
 ---
 
@@ -183,7 +186,7 @@ Simplified exit code scheme following Unix conventions:
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](development/contributing.md) for details.
+We welcome contributions! Please see our [Contributing Guide](https://github.com/CrisisCore-Systems/Autotrader/blob/main/CONTRIBUTING.md) for details.
 
 ### Development Setup
 

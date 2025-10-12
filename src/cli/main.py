@@ -365,8 +365,8 @@ def run_scan(config: dict[str, Any]) -> dict[str, Any]:
                 md_path = output_dir / f"{token.symbol.lower()}_report.md"
                 html_path = output_dir / f"{token.symbol.lower()}_report.html"
                 
-                md_path.write_text(result.artifact_markdown)
-                html_path.write_text(result.artifact_html)
+                md_path.write_text(result.artifact_markdown, encoding='utf-8')
+                html_path.write_text(result.artifact_html, encoding='utf-8')
                 
                 # Add to results
                 token_result = {

@@ -2,6 +2,8 @@
 **Generated:** December 2024  
 **Status:** ✅ PRODUCTION READY
 
+📚 **Documentation Hub:** For an always-up-to-date map of the key runbooks and references, start with the [Documentation Portal](docs/documentation_portal.md).
+
 ---
 
 ## 🎯 Executive Summary
@@ -41,7 +43,7 @@ pip install -r requirements.txt
 pytest tests/test_smoke.py tests/test_free_clients_integration.py -v
 
 # Validate system
-python validate_system.py
+python scripts/testing/validate_system.py
 ```
 
 ### Usage with FREE Data Sources:
@@ -77,8 +79,8 @@ with CoinGeckoClient() as coin_client, \
 
 ### Access Points:
 - **Tests:** `pytest tests/test_smoke.py -v`
-- **Validation:** `python validate_system.py`
-- **API (optional):** `python simple_api.py` → http://127.0.0.1:8000/docs
+- **Validation:** `python scripts/testing/validate_system.py`
+- **API (optional):** `uvicorn src.api.main:app --host 127.0.0.1 --port 8000` → http://127.0.0.1:8000/docs
 - **Enhanced API:** `python start_enhanced_api.py`
 
 ---
@@ -309,7 +311,7 @@ python test_etherscan_v2.py
 python test_all_features.py
 
 # System status check
-python status_check.py
+python scripts/monitoring/status_check.py
 ```
 
 ### API Testing:
@@ -406,7 +408,7 @@ Get-Process | Where-Object { $_.ProcessName -match "python" } | Stop-Process -Fo
 # Set PYTHONPATH and start
 cd C:\Users\kay\Documents\Projects\AutoTrader\Autotrader
 $env:PYTHONPATH="C:\Users\kay\Documents\Projects\AutoTrader\Autotrader"
-uvicorn simple_api:app --host 127.0.0.1 --port 8000
+uvicorn src.api.main:app --host 127.0.0.1 --port 8000
 ```
 
 ### Frontend Won't Start:

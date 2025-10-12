@@ -833,7 +833,7 @@ def validate_baseline(baseline: Baseline) -> bool:
 
 - [Alert Engine v2 Guide](ALERTING_V2_GUIDE.md)
 - [Observability Guide](OBSERVABILITY_GUIDE.md)
-- [Jupyter Notebook Demo](../notebooks/hidden_gem_scanner.ipynb)
+- [Jupyter Notebook Demo](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/notebooks/hidden_gem_scanner.ipynb)
 - [Statistical Tests Reference](https://docs.scipy.org/doc/scipy/reference/stats.html)
 
 ## 🚀 What's Next?

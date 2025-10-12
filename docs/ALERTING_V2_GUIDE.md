@@ -641,10 +641,10 @@ print(f"Active alerts: {len(active)}")
 
 ## 📚 Additional Resources
 
-- [Alert Rules Configuration](../configs/alert_rules.yaml)
+- [Alert Rules Configuration](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/configs/alert_rules.yaml)
 - [Observability Guide](OBSERVABILITY_GUIDE.md)
 - [Drift Monitoring Guide](DRIFT_MONITORING_GUIDE.md)
-- [Jupyter Notebook Demo](../notebooks/hidden_gem_scanner.ipynb)
+- [Jupyter Notebook Demo](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/notebooks/hidden_gem_scanner.ipynb)
 
 ## 🚀 What's Next?
 

@@ -1,5 +1,7 @@
 # 🎉 VoidBloom Scanner - All Features Working!
 
+📚 **Need a specific guide?** Visit the in-repo [Documentation Portal](docs/documentation_portal.md) for a consolidated list of every major runbook, guide, and reference.
+
 ## ✅ System Status: OPERATIONAL
 
 ### 🚀 Quick Start
@@ -12,7 +14,7 @@ cd C:\Users\kay\Documents\Projects\AutoTrader\Autotrader
 # Terminal 1 - Backend:
 cd C:\Users\kay\Documents\Projects\AutoTrader\Autotrader
 $env:PYTHONPATH="C:\Users\kay\Documents\Projects\AutoTrader\Autotrader"
-uvicorn simple_api:app --host 127.0.0.1 --port 8000
+uvicorn src.api.main:app --host 127.0.0.1 --port 8000
 
 # Terminal 2 - Frontend:
 cd C:\Users\kay\Documents\Projects\AutoTrader\Autotrader\dashboard
@@ -201,7 +203,7 @@ python test_all_tokens.py
 python test_scan.py
 
 # System status
-python status_check.py
+python scripts/monitoring/status_check.py
 
 # Test Etherscan APIs
 python test_etherscan_v2.py

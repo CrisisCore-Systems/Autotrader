@@ -1,0 +1,107 @@
+# Virtuals Protocol (VIRTUAL) - AI Agent Platform
+# Category: Emerging DeFi Infrastructure
+# Risk Level: Medium-High
+# Expected GemScore: 65-72
+
+scanner:
+  mode: "production"
+  liquidity_threshold: 100000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Virtuals Protocol"
+  contract_address: "0x44ff319aed9cd1461d8877038026310f686aed68"
+  token_id: "virtuals-protocol"
+  symbol: "VIRTUAL"
+  chain: "base"  # Note: Base L2
+  decimals: 18
+  category: "ai_agents"
+  coingecko_id: "virtuals-protocol"
+  glyph: "⧘⟡"
+  tags:
+    - "ai_crypto_convergence"
+    - "agent_deployment"
+    - "base_l2"
+    - "emerging"
+    - "high_growth_potential"
+
+scoring:
+  weights:
+    S: 0.20  # Sentiment/Narrative - AI/crypto convergence (boosted)
+    A: 0.15  # Accumulation
+    O: 0.15  # On-chain Activity
+    L: 0.12  # Liquidity Depth - Excellent for L2 (boosted)
+    T: 0.15  # Tokenomics Risk - Early stage, monitor closely (boosted)
+    C: 0.10  # Contract Safety - Verify on Basescan
+    M: 0.10  # Meme Momentum - AI theme has viral potential (boosted)
+    G: 0.08  # Community Growth
+
+  safety_gate:
+    enabled: true
+    strict_mode: true  # Higher scrutiny for emerging tokens
+    min_liquidity_usd: 100000
+    max_holder_concentration: 0.50
+    max_unlock_30d: 0.10
+    require_verified_contract: true
+    check_proxy_pattern: true
+
+  narrative_focus:
+    keywords:
+      - "virtuals protocol"
+      - "ai agents"
+      - "autonomous agents"
+      - "ai crypto"
+      - "base chain"
+      - "agent deployment"
+      - "artificial intelligence"
+    sentiment_weight: 0.25
+
+  risk_modifiers:
+    emerging_token_penalty: 0.05  # 5% penalty for newness
+    l2_liquidity_adjustment: 1.1  # 10% boost for L2 liquidity
+
+narratives:
+  - "AI agent deployment on Base gaining traction"
+  - "Convergence of AI and crypto creating new use cases"
+  - "High volume on Base despite market conditions"
+  - "Developer activity suggests strong technical foundation"
+
+unlocks:
+  - date: 2025-11-30T00:00:00
+    percent_supply: 8.0
+  - date: 2026-01-30T00:00:00
+    percent_supply: 7.5
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "risk_report"
+  save_to: "reports/scans/virtual/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.68
+  gem_score_threshold: 62
+  
+  # Note for Base chain integration
+  notes:
+    - "Requires Ethereum RPC with Base endpoint"
+    - "Verify contract on Basescan"
+    - "Monitor L2 bridge activity"
+  
+alerts:
+  enabled: false
+  channels: []
+  
+monitoring:
+  watch_for:
+    - "base_bridge_volume"
+    - "ai_narrative_momentum"
+    - "developer_activity"

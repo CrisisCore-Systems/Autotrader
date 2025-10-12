@@ -1,0 +1,141 @@
+# Narrative-Driven Meme Token Portfolio
+# Purpose: Test high NVI/MMS signal detection
+# Tokens: PEPE, PENGU, FLOKI
+
+scanner:
+  mode: "narrative_focus"
+  liquidity_threshold: 100000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+scan_config:
+  scan_type: "portfolio"
+  sector: "meme_tokens"
+  comparison_mode: true
+  safety_priority: "high"  # Strict safety for memes
+  
+tokens:
+  - name: "Pepe"
+    contract_address: "0x6982508145454Ce325dDbE47a25d4ec3d2311933"
+    token_id: "pepe"
+    symbol: "PEPE"
+    chain: "ethereum"
+    category: "meme"
+    risk_tier: "high"
+    safety_strict: true
+    
+  - name: "Pudgy Penguins"
+    contract_address: "TBD"  # Update when available
+    token_id: "pudgy-penguins"
+    symbol: "PENGU"
+    chain: "ethereum"
+    category: "nft_meme"
+    risk_tier: "high"
+    safety_strict: true
+    
+  - name: "Floki"
+    contract_address: "0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E"
+    token_id: "floki"
+    symbol: "FLOKI"
+    chain: "ethereum"
+    category: "meme_utility"
+    risk_tier: "high"
+    safety_strict: true
+
+scoring:
+  # Meme-optimized weights
+  weights:
+    S: 0.12  # Sentiment/Narrative - Meme narratives
+    A: 0.12  # Accumulation
+    O: 0.10  # On-chain Activity
+    L: 0.12  # Liquidity Depth - Important for memes (boosted)
+    T: 0.14  # Tokenomics Risk - Critical safety (boosted)
+    C: 0.16  # Contract Safety - CRITICAL for memes (boosted)
+    M: 0.18  # Meme Momentum - PRIMARY driver (boosted)
+    G: 0.12  # Community Growth - Important (boosted)
+
+  safety_gate:
+    enabled: true
+    strict_mode: true
+    aggressive_checks: true
+    min_liquidity_usd: 150000
+    max_holder_concentration: 0.35  # Very strict for memes
+    max_unlock_30d: 0.05
+    require_verified_contract: true
+    check_honeypot: true
+    check_mint_function: true
+    check_ownership_renounced: true
+    check_transfer_restrictions: true
+
+  narrative_focus:
+    meme_specific:
+      - "viral_momentum"
+      - "community_engagement"
+      - "social_volume"
+      - "influencer_mentions"
+      - "meme_quality"
+    sentiment_weight: 0.20
+
+  risk_modifiers:
+    meme_volatility_weight: 1.5
+    community_sentiment_multiplier: 1.3
+
+output:
+  format: "meme_dashboard"
+  artifacts:
+    - "dashboard_html"
+    - "meme_momentum_analysis"
+    - "viral_tracking_report"
+    - "risk_matrix"
+  save_to: "reports/scans/meme_portfolio/"
+  
+  meme_metrics:
+    - "viral_score"
+    - "community_growth_rate"
+    - "social_sentiment"
+    - "influencer_engagement"
+    - "meme_quality_index"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.60  # Lower for memes
+  gem_score_threshold: 55  # Lower threshold
+  
+  parallel_scans: true
+  max_workers: 3
+  
+alerts:
+  enabled: false
+  channels: []
+  
+analysis:
+  meme_specific_insights:
+    - "viral_momentum_comparison"
+    - "community_strength_ranking"
+    - "safety_risk_assessment"
+    - "liquidity_stability_check"
+  
+  expected_ranking:
+    # Predicted ranking based on current momentum
+    1: "PEPE"   # Expected: 58-68 (established meme)
+    2: "FLOKI"  # Expected: 62-71 (utility development)
+    3: "PENGU"  # Expected: 60-70 (NFT community strength)
+    
+monitoring:
+  watch_for:
+    - "sudden_volume_spikes"
+    - "whale_accumulation"
+    - "community_sentiment_shifts"
+    - "influencer_endorsements"
+    - "liquidity_drain_attempts"
+  
+notes:
+  - "Meme tokens require constant monitoring"
+  - "Safety gate is critical - never bypass"
+  - "Community sentiment can shift rapidly"
+  - "High volatility expected - size positions accordingly"

@@ -472,10 +472,10 @@ def format_baseline_comparison(
 
 ## Related Documentation
 
-- [Backtest Harness](../backtest/harness.py) - Single-period backtest evaluation
-- [Pipeline Backtest](../src/pipeline/backtest.py) - Walk-forward backtest framework
-- [GemScore Computation](../src/core/scoring.py) - Feature scoring logic
-- [Feature Validation](../docs/FEATURE_VALIDATION.md) - Feature quality checks
+- [Backtest Harness](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/backtest/harness.py) - Single-period backtest evaluation
+- [Pipeline Backtest](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/src/pipeline/backtest.py) - Walk-forward backtest framework
+- [GemScore Computation](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/src/core/scoring.py) - Feature scoring logic
+- [Feature Validation Guide](FEATURE_VALIDATION_GUIDE.md) - Feature quality checks
 
 ## Contributing
 

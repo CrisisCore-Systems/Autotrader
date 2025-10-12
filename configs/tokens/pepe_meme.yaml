@@ -1,0 +1,86 @@
+# Pepe (PEPE) - Meme Token
+# Category: Meme / High Volatility
+# Risk Level: High
+# Expected GemScore: 58-68
+
+scanner:
+  mode: "production"
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Pepe"
+  contract_address: "0x6982508145454Ce325dDbE47a25d4ec3d2311933"
+  token_id: "pepe"
+  symbol: "PEPE"
+  chain: "ethereum"
+  decimals: 18
+  category: "meme"
+  safety_strict: true  # Enforce strict safety checks
+  tags:
+    - "meme"
+    - "community_driven"
+    - "high_volatility"
+    - "viral"
+
+scoring:
+  weights:
+    S: 0.12  # Sentiment/Narrative - Meme narrative
+    A: 0.15  # Accumulation - Community accumulation
+    O: 0.12  # On-chain Activity
+    L: 0.12  # Liquidity Depth - Important for memes
+    T: 0.12  # Tokenomics Risk - Critical safety check
+    C: 0.15  # Contract Safety - CRITICAL for memes
+    M: 0.15  # Meme Momentum - Primary driver (boosted)
+    G: 0.12  # Community Growth - Important (boosted)
+
+  safety_gate:
+    enabled: true
+    strict_mode: true
+    min_liquidity_usd: 200000  # Higher for memes
+    max_holder_concentration: 0.40  # Stricter for memes
+    max_unlock_30d: 0.05
+    require_verified_contract: true
+    check_honeypot: true
+    check_mint_function: true
+    check_ownership_renounced: true
+
+  narrative_focus:
+    keywords:
+      - "pepe"
+      - "frog"
+      - "meme"
+      - "viral"
+      - "community"
+    sentiment_weight: 0.15
+
+  risk_modifiers:
+    meme_risk_penalty: 0.10  # Apply 10% penalty to base score
+    volatility_weight: 1.5
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "risk_report"
+  save_to: "reports/scans/pepe/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.65
+  gem_score_threshold: 55
+  
+alerts:
+  enabled: false
+  channels: []
+  
+monitoring:
+  watch_for:
+    - "sudden_volume_spike"
+    - "holder_concentration_change"
+    - "liquidity_drain"

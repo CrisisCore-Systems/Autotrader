@@ -544,10 +544,10 @@ registry.register(experiment)
 
 ## Related Documentation
 
-- [Backtest Pipeline](../docs/runbooks/backtesting.md)
-- [Feature Engineering](../src/services/feature_engineering.py)
-- [GemScore Calculation](../src/core/scoring.py)
-- [Baseline Strategies](../docs/BASELINE_STRATEGIES.md)
+- [Backtest Runbook](runbooks/backtesting.md)
+- [Feature Engineering](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/src/services/feature_engineering.py)
+- [GemScore Calculation](https://github.com/CrisisCore-Systems/Autotrader/blob/main/Autotrader/src/core/scoring.py)
+- [Baseline Strategies](BASELINE_STRATEGIES.md)
 
 ## Future Enhancements
 

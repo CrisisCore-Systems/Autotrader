@@ -18,10 +18,10 @@ This testing suite provides complete coverage of:
 ### Run All Tests
 ```powershell
 # Using PowerShell script
-.\run_tests.ps1
+.\scripts\powershell\run_tests.ps1
 
 # Using Python script
-python run_tests.py
+python scripts/testing/run_tests.py
 
 # Using pytest directly
 pytest tests/ -v
@@ -329,7 +329,7 @@ pip install pytest pytest-cov pytest-asyncio pytest-mock fastapi httpx psutil
 
 ## 🎯 Next Steps
 
-1. **Run the full suite**: `.\run_tests.ps1 --all`
+1. **Run the full suite**: `.\scripts\powershell\run_tests.ps1 --all`
 2. **Check coverage**: `pytest --cov=src --cov-report=html`
 3. **Add new tests**: Follow the template above
 4. **Integrate with CI**: Add to GitHub Actions or similar

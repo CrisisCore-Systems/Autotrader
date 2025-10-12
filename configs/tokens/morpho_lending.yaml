@@ -1,0 +1,91 @@
+# Morpho (MORPHO) - Lending Optimizer
+# Category: DeFi Infrastructure
+# Risk Level: Low-Medium
+# Expected GemScore: 70-76
+
+scanner:
+  mode: "production"
+  liquidity_threshold: 80000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Morpho"
+  contract_address: "0x58D97B57BB95320F9a05dC918Aef65434969c2B2"
+  token_id: "morpho"
+  symbol: "MORPHO"
+  chain: "ethereum"
+  decimals: 18
+  category: "lending_optimizer"
+  coingecko_id: "morpho"
+  glyph: "⧉⟡"
+  tags:
+    - "lending_optimizer"
+    - "defi_infrastructure"
+    - "yield_optimization"
+    - "audited"
+    - "security_focused"
+
+scoring:
+  weights:
+    S: 0.16  # Sentiment/Narrative - DeFi optimization story (boosted)
+    A: 0.22  # Accumulation - Institutional focus (boosted)
+    O: 0.16  # On-chain Activity - Growing protocol interactions (boosted)
+    L: 0.10  # Liquidity Depth
+    T: 0.15  # Tokenomics Risk - Transparent early-stage (boosted)
+    C: 0.16  # Contract Safety - Security-focused (boosted)
+    M: 0.00  # Meme Momentum - Not applicable
+    G: 0.05  # Community Growth
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 80000
+    max_holder_concentration: 0.45
+    max_unlock_30d: 0.12
+    require_verified_contract: true
+    require_audit: true
+
+  narrative_focus:
+    keywords:
+      - "morpho"
+      - "lending optimizer"
+      - "yield optimization"
+      - "aave"
+      - "compound"
+      - "defi lending"
+      - "peer to peer"
+    sentiment_weight: 0.20
+
+narratives:
+  - "Morpho optimizes lending rates across major DeFi protocols"
+  - "Security-first approach with multiple audits completed"
+  - "Growing TVL demonstrates protocol-market fit"
+  - "Institutional adoption in early stages"
+
+unlocks:
+  - date: 2025-12-15T00:00:00
+    percent_supply: 5.0
+  - date: 2026-03-15T00:00:00
+    percent_supply: 4.5
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "markdown_summary"
+    - "lore_capsule"
+  save_to: "reports/scans/morpho/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.72
+  gem_score_threshold: 68
+  
+alerts:
+  enabled: false
+  channels: []

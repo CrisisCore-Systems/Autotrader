@@ -255,7 +255,7 @@ class LLMRequestResult:
 
 def create_groq_config(
     api_key_env_var: str = "GROQ_API_KEY",
-    model: str = "llama-3.1-70b-versatile",
+    model: str = "llama-3.3-70b-versatile",
     tokens_per_minute: int = 30000,
     tokens_per_day: int = 1000000,
     max_cost_per_day: float = 10.0,

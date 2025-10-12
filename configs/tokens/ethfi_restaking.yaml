@@ -1,0 +1,98 @@
+# Ether.fi (ETHFI) - Liquid Restaking Protocol
+# Category: Emerging DeFi Infrastructure
+# Risk Level: Medium
+# Expected GemScore: 66-73
+
+scanner:
+  mode: "production"
+  liquidity_threshold: 100000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Ether.fi"
+  contract_address: "0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB"
+  token_id: "ether-fi"
+  symbol: "ETHFI"
+  chain: "ethereum"
+  decimals: 18
+  category: "liquid_restaking"
+  coingecko_id: "ether-fi"
+  glyph: "⧙⟡"
+  tags:
+    - "liquid_restaking"
+    - "ethereum_staking"
+    - "eigenlayer"
+    - "defi_infrastructure"
+    - "institutional_adoption"
+
+scoring:
+  weights:
+    S: 0.17  # Sentiment/Narrative - Restaking narrative (boosted)
+    A: 0.20  # Accumulation - ETH whale overlap (boosted)
+    O: 0.18  # On-chain Activity - High staking interactions (boosted)
+    L: 0.10  # Liquidity Depth
+    T: 0.15  # Tokenomics Risk - Monitor unlock schedule (boosted)
+    C: 0.12  # Contract Safety - Audited restaking contracts
+    M: 0.03  # Meme Momentum - Minimal
+    G: 0.05  # Community Growth
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 100000
+    max_holder_concentration: 0.45
+    max_unlock_30d: 0.12
+    require_verified_contract: true
+    require_audit: true
+
+  narrative_focus:
+    keywords:
+      - "ether.fi"
+      - "liquid restaking"
+      - "eigenlayer"
+      - "ethereum staking"
+      - "restaking protocol"
+      - "eETH"
+      - "liquid staking token"
+    sentiment_weight: 0.20
+
+narratives:
+  - "Liquid restaking protocol aligned with Ethereum roadmap"
+  - "EigenLayer integration expanding restaking utility"
+  - "Growing TVL demonstrates institutional confidence"
+  - "Strong ETH whale accumulation patterns"
+
+unlocks:
+  - date: 2025-11-10T00:00:00
+    percent_supply: 6.5
+  - date: 2026-02-10T00:00:00
+    percent_supply: 6.0
+  - date: 2026-05-10T00:00:00
+    percent_supply: 5.5
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "markdown_summary"
+  save_to: "reports/scans/ethfi/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.70
+  gem_score_threshold: 64
+  
+alerts:
+  enabled: false
+  channels: []
+  
+monitoring:
+  watch_for:
+    - "tvl_growth"
+    - "eigenlayer_integration"
+    - "eth_whale_accumulation"

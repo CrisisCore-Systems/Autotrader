@@ -1,0 +1,198 @@
+# Complete Token Portfolio - All 10 Recommended Tokens
+# Purpose: Comprehensive cross-spectrum analysis
+# Tokens: ENA, ONDO, PENDLE, MORPHO, VIRTUAL, ETHFI, PEPE, PENGU, FLOKI, WLFI
+
+scanner:
+  mode: "comprehensive"
+  liquidity_threshold: 75000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+scan_config:
+  scan_type: "portfolio"
+  comparison_mode: true
+  rank_tokens: true
+  full_analysis: true
+  
+tokens:
+  # Category A: High-Signal Established (DeFi)
+  - name: "Ethena"
+    contract_address: "0x57e114B691Db790C35207b2e685D4A43181e6061"
+    token_id: "ethena"
+    symbol: "ENA"
+    chain: "ethereum"
+    category: "defi"
+    risk_tier: "medium"
+    
+  - name: "Ondo Finance"
+    contract_address: "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3"
+    token_id: "ondo-finance"
+    symbol: "ONDO"
+    chain: "ethereum"
+    category: "rwa"
+    risk_tier: "low"
+    
+  - name: "Pendle"
+    contract_address: "0x808507121B80c02388fAd14726482e061B8da827"
+    token_id: "pendle"
+    symbol: "PENDLE"
+    chain: "ethereum"
+    category: "yield_trading"
+    risk_tier: "medium"
+    
+  - name: "Morpho"
+    contract_address: "0x58D97B57BB95320F9a05dC918Aef65434969c2B2"
+    token_id: "morpho"
+    symbol: "MORPHO"
+    chain: "ethereum"
+    category: "lending_optimizer"
+    risk_tier: "low_medium"
+    
+  # Category B: Emerging Infrastructure
+  - name: "Virtuals Protocol"
+    contract_address: "0x44ff319aed9cd1461d8877038026310f686aed68"
+    token_id: "virtuals-protocol"
+    symbol: "VIRTUAL"
+    chain: "base"
+    category: "ai_agents"
+    risk_tier: "medium_high"
+    
+  - name: "Ether.fi"
+    contract_address: "0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB"
+    token_id: "ether-fi"
+    symbol: "ETHFI"
+    chain: "ethereum"
+    category: "liquid_restaking"
+    risk_tier: "medium"
+    
+  # Category C: Narrative-Driven Memes
+  - name: "Pepe"
+    contract_address: "0x6982508145454Ce325dDbE47a25d4ec3d2311933"
+    token_id: "pepe"
+    symbol: "PEPE"
+    chain: "ethereum"
+    category: "meme"
+    risk_tier: "high"
+    safety_strict: true
+    
+  - name: "Pudgy Penguins"
+    contract_address: "TBD"
+    token_id: "pudgy-penguins"
+    symbol: "PENGU"
+    chain: "ethereum"
+    category: "nft_meme"
+    risk_tier: "high"
+    safety_strict: true
+    
+  - name: "Floki"
+    contract_address: "0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E"
+    token_id: "floki"
+    symbol: "FLOKI"
+    chain: "ethereum"
+    category: "meme_utility"
+    risk_tier: "high"
+    safety_strict: true
+    
+  # Category D: Safety Testing
+  - name: "World Liberty Financial"
+    contract_address: "0x0Bf3820B5c8ed020ab3B192e77c56e10F3c3A988"
+    token_id: "world-liberty-financial"
+    symbol: "WLFI"
+    chain: "ethereum"
+    category: "test_case"
+    risk_tier: "very_high"
+    safety_strict: true
+
+scoring:
+  # Balanced weights for comprehensive analysis
+  weights:
+    S: 0.15  # Sentiment/Narrative
+    A: 0.20  # Accumulation
+    O: 0.15  # On-chain Activity
+    L: 0.10  # Liquidity Depth
+    T: 0.12  # Tokenomics Risk
+    C: 0.12  # Contract Safety
+    M: 0.08  # Meme Momentum
+    G: 0.08  # Community Growth
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 75000
+    max_holder_concentration: 0.50
+    max_unlock_30d: 0.10
+    require_verified_contract: true
+
+output:
+  format: "comprehensive_dashboard"
+  artifacts:
+    - "dashboard_html"
+    - "comparison_table"
+    - "ranking_analysis"
+    - "risk_matrix"
+    - "category_performance"
+    - "lore_capsule"
+  save_to: "reports/scans/complete_portfolio/"
+  
+  comparison_metrics:
+    - "gem_score"
+    - "confidence"
+    - "liquidity_depth"
+    - "safety_rating"
+    - "narrative_strength"
+    - "meme_momentum"
+    - "risk_adjusted_score"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.60
+  gem_score_threshold: 50  # Lower to include all tokens
+  
+  parallel_scans: true
+  max_workers: 5
+  
+alerts:
+  enabled: false
+  channels: []
+  
+analysis:
+  generate_insights:
+    - "category_performance_analysis"
+    - "risk_tier_comparison"
+    - "relative_risk_assessment"
+    - "diversification_analysis"
+    - "correlation_matrix"
+    - "optimal_allocation_suggestion"
+    - "sector_rotation_signals"
+  
+  expected_ranking:
+    # Predicted ranking (highest to lowest GemScore)
+    1: "ONDO"    # Expected: 75-82
+    2: "ENA"     # Expected: 72-78
+    3: "MORPHO"  # Expected: 70-76
+    4: "PENDLE"  # Expected: 68-75
+    5: "ETHFI"   # Expected: 66-73
+    6: "VIRTUAL" # Expected: 65-72
+    7: "FLOKI"   # Expected: 62-71
+    8: "PENGU"   # Expected: 60-70
+    9: "PEPE"    # Expected: 58-68
+    10: "WLFI"   # Expected: 45-62 (may flag)
+    
+monitoring:
+  watch_for:
+    - "category_rotation"
+    - "risk_tier_divergence"
+    - "safety_gate_violations"
+    - "liquidity_changes"
+    - "narrative_shifts"
+  
+notes:
+  - "Comprehensive scan covering all risk tiers"
+  - "PENGU contract address TBD - update before scanning"
+  - "VIRTUAL on Base - requires Base RPC endpoint"
+  - "WLFI expected to flag on safety gate"
+  - "PEPE, PENGU, FLOKI require strict safety checks"

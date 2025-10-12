@@ -1,0 +1,75 @@
+# Ondo Finance (ONDO) - Real World Assets (RWA)
+# Category: Institutional DeFi
+# Risk Level: Low-Medium
+# Expected GemScore: 75-82
+
+scanner:
+  mode: "production"
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Ondo Finance"
+  contract_address: "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3"
+  token_id: "ondo-finance"
+  symbol: "ONDO"
+  chain: "ethereum"
+  decimals: 18
+  category: "rwa"
+  tags:
+    - "real_world_assets"
+    - "institutional"
+    - "tokenization"
+    - "treasury_bonds"
+
+scoring:
+  weights:
+    S: 0.18  # Sentiment/Narrative - Institutional RWA story (boosted)
+    A: 0.22  # Accumulation - Institutional patterns (boosted)
+    O: 0.15  # On-chain Activity
+    L: 0.10  # Liquidity Depth
+    T: 0.12  # Tokenomics Risk - Professional structure
+    C: 0.15  # Contract Safety - Institutional grade (boosted)
+    M: 0.00  # Meme Momentum - Not applicable
+    G: 0.08  # Community Growth
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 150000  # Higher threshold for institutional
+    max_holder_concentration: 0.45
+    max_unlock_30d: 0.08
+    require_verified_contract: true
+    require_audit: true
+
+  narrative_focus:
+    keywords:
+      - "ondo"
+      - "real world assets"
+      - "rwa"
+      - "tokenization"
+      - "institutional"
+      - "treasury"
+      - "blackrock"
+    sentiment_weight: 0.25
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "lore_capsule"
+    - "obsidian_export"
+  save_to: "reports/scans/ondo/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.75
+  gem_score_threshold: 70
+  
+alerts:
+  enabled: false
+  channels: []

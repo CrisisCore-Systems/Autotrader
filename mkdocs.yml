@@ -64,60 +64,182 @@ theme:
 # Navigation structure
 nav:
   - Home: index.md
-  - Getting Started:
-      - Quick Start: quickstart.md
-      - Installation: installation.md
-      - Configuration: configuration.md
-      - First Scan: first-scan.md
-  - CLI Reference:
-      - Overview: cli/index.md
-      - Command-Line Options: cli/options.md
-      - Exit Codes: cli/exit-codes.md
-      - Environment Variables: cli/environment.md
-      - Examples: cli/examples.md
-  - Configuration:
-      - Overview: config/index.md
-      - File Format: config/format.md
-      - Configuration Sources: config/sources.md
-      - Effective Config: config/effective-config.md
-      - Best Practices: config/best-practices.md
-  - Strategies:
-      - Overview: strategies/index.md
-      - Plugin API: strategies/plugin-api.md
-      - Writing Strategies: strategies/writing-strategies.md
-      - Example Strategies: strategies/examples.md
-      - API Versioning: strategies/api-versioning.md
-  - Data & Metrics:
-      - Metrics Registry: metrics/registry.md
-      - Metric Types: metrics/types.md
-      - Validation Rules: metrics/validation.md
-      - Observability: metrics/observability.md
-      - Free Data Sources: metrics/free-data-sources.md
-  - Schema & Versioning:
-      - Schema Overview: schema/index.md
-      - Current Schema: schema/current.md
-      - Version History: schema/history.md
-      - Migration Guide: schema/migration.md
-  - Reproducibility:
-      - Overview: reproducibility/index.md
-      - Reproducibility Stamp: reproducibility/stamp.md
-      - Deterministic Mode: reproducibility/deterministic.md
-      - Validation: reproducibility/validation.md
-  - Operations:
-      - File Locking: operations/locking.md
-      - Concurrency Control: operations/concurrency.md
-      - Error Handling: operations/errors.md
-      - Logging: operations/logging.md
-      - Monitoring: operations/monitoring.md
-  - Release & Development:
-      - Release Process: development/release-checklist.md
-      - Changelog: development/changelog.md
-      - Contributing: development/contributing.md
-      - Testing: development/testing.md
+  - Documentation Portal: documentation_portal.md
+  - Start Here:
+    - System Snapshot: overview/PROJECT_OVERVIEW.md
+    - Implementation Summary: IMPLEMENTATION_SUMMARY.md
+    - Feature Status: FEATURE_STATUS.md
+  - Setup & Operations:
+    - Setup Guide: install/SETUP_GUIDE.md
+    - Quickstart – New Signals: QUICKSTART_NEW_SIGNALS.md
+    - CLI Backtest Guide: CLI_BACKTEST_GUIDE.md
+    - Deployment Guide: deployment/DEPLOYMENT_GUIDE.md
+    - Production Deployment Runbook: deployment/PRODUCTION_DEPLOYMENT.md
+  - Reliability & Observability:
+    - Reliability Implementation: RELIABILITY_IMPLEMENTATION.md
+    - Observability Guide: OBSERVABILITY_GUIDE.md
+    - Extended Backtest Metrics: EXTENDED_BACKTEST_METRICS.md
+    - Drift Monitoring Guide: DRIFT_MONITORING_GUIDE.md
+    - Extended Metrics Quick Reference: EXTENDED_METRICS_QUICK_REF.md
+  - Alerting & Incident Response:
+    - Alerting V2 Guide: ALERTING_V2_GUIDE.md
+    - Alerting Drift Setup: alerting/ALERTING_DRIFT_SETUP.md
+    - Alerting Drift Quick Reference: alerting/ALERTING_DRIFT_QUICK_REF.md
+    - Alerting Drift Implementation Report: alerting/ALERTING_DRIFT_COMPLETE.md
+  - AI & Narrative Intelligence:
+    - LLM Validation Guide: LLM_VALIDATION_GUIDE.md
+    - LLM Validation Quick Reference: LLM_VALIDATION_QUICK_REF.md
+    - Groq Enhancements: llm/GROQ_ENHANCEMENTS.md
+    - LLM Validation Completion Notes: LLM_VALIDATION_IMPLEMENTATION_COMPLETE.md
+  - Feature Engineering:
+    - GemScore Delta Explainability: GEMSCORE_DELTA_EXPLAINABILITY.md
+    - GemScore Delta Quick Reference: GEMSCORE_DELTA_QUICK_REF.md
+    - Feature Validation Guide: FEATURE_VALIDATION_GUIDE.md
+    - Feature Validation Quick Reference: FEATURE_VALIDATION_QUICK_REF.md
+    - Feature Validation Completion Log: features/FEATURE_VALIDATION_COMPLETE.md
+  - Governance & Roadmap:
+    - Roadmap Completion Summary: ROADMAP_COMPLETION_SUMMARY.md
+    - Alerting & Backtesting Roadmap: roadmap_alerting_backtesting.md
+    - Technical Debt Final Summary: improvements/TECH_DEBT_FINAL_SUMMARY.md
+    - Process Simplification Log: improvements/SIMPLIFICATION_COMPLETE.md
+    - Spec Alignment Review: spec_alignment_review.md
   - Reference:
-      - Manual Page: reference/manpage.md
-      - API Documentation: reference/api.md
-      - Glossary: reference/glossary.md
+    - Provider Rate Limits: provider_rate_limits.md
+    - Signal Coverage Audit: signal_coverage_audit.md
+    - Confidence Representation Standard: CONFIDENCE_REPRESENTATION_STANDARD.md
+    - Unified Logging Guide: UNIFIED_LOGGING_GUIDE.md
+    - Orderflow Twitter Implementation: ORDERFLOW_TWITTER_IMPLEMENTATION.md
+  - Additional Guides:
+    - Etherscan V2 Migration: ETHERSCAN_V2_MIGRATION.md
+    - Feature Store Implementation: FEATURE_STORE_IMPLEMENTATION.md
+    - Feature Validation Implementation Complete: FEATURE_VALIDATION_IMPLEMENTATION_COMPLETE.md
+    - Phase 2 Implementation: PHASE2_IMPLEMENTATION.md
+    - Phase 2 Quick Reference: phases/phase2/PHASE2_QUICK_REF.md
+    - Phase 2 Summary: phases/phase2/PHASE2_SUMMARY.md
+  - Baseline Strategies:
+    - Strategy Overview: BASELINE_STRATEGIES.md
+    - Strategy Quick Reference: BASELINE_STRATEGIES_QUICK_REF.md
+    - Comparator Study: baselines/BASELINE_COMPARATORS_COMPLETE.md
+  - Experiment Tracking:
+    - Experiment Tracking Overview: EXPERIMENT_TRACKING.md
+    - Experiment Tracking Quick Reference: EXPERIMENT_TRACKING_QUICK_REF.md
+    - Experiment Tracking Completion Report: experiments/EXPERIMENT_TRACKING_COMPLETE.md
+  - CLI Archive:
+    - CLI Enhancements Complete: cli/CLI_ENHANCEMENTS_COMPLETE.md
+    - CLI Enhancement Summary: cli/CLI_ENHANCEMENT_SUMMARY.md
+    - CLI Guide: cli/CLI_GUIDE.md
+    - CLI Implementation Success: cli/CLI_IMPLEMENTATION_SUCCESS.md
+    - CLI Quick Reference: cli/CLI_QUICK_REF.md
+    - CLI Reference: cli/CLI_REFERENCE.md
+    - CLI Scanner Quick Reference: cli/CLI_SCANNER_QUICK_REF.md
+    - CLI Manpage Generation: cli/MANPAGE_MKDOCS_COMPLETE.md
+    - CLI Options: cli/options.md
+    - CLI Exit Codes: cli/exit-codes.md
+    - CLI Environment Variables: cli/environment.md
+    - CLI Examples: cli/examples.md
+  - Data Integrations:
+    - Free Data Quick Reference: data/FREE_DATA_QUICK_REF.md
+    - Free Data Sources Complete: data/FREE_DATA_SOURCES_COMPLETE.md
+    - Free Integration Complete: data/FREE_INTEGRATION_COMPLETE.md
+  - Documentation Ops:
+    - Documentation Update Complete: documentation/DOCUMENTATION_UPDATE_COMPLETE.md
+    - Documentation Update Summary: documentation/DOCUMENTATION_UPDATE_SUMMARY.md
+  - Feature Engineering Archive:
+    - Feature Delta Explainability: features/FEATURE_DELTA_EXPLAINABILITY.md
+    - Feature Validation Checklist: features/FEATURE_VALIDATION_CHECKLIST.md
+    - Feature Validation Complete: features/FEATURE_VALIDATION_COMPLETE.md
+  - Fixes & Remediation:
+    - Corruption Fix Complete: fixes/CORRUPTION_FIX_COMPLETE.md
+    - Fixes Complete: fixes/FIXES_COMPLETE.md
+    - Fixes Summary: fixes/FIXES_SUMMARY.md
+  - Frontend Enhancements:
+    - Enhanced Frontend Guide: frontend/ENHANCED_FRONTEND_GUIDE.md
+    - Enhanced Frontend Quick Reference: frontend/ENHANCED_FRONTEND_QUICK_REF.md
+    - Frontend Enhancement Complete: frontend/FRONTEND_ENHANCEMENT_COMPLETE.md
+  - Architecture & GemScore:
+    - Architecture Diagram: architecture/ARCHITECTURE.md
+    - GemScore Delta Implementation: gemscore/GEMSCORE_DELTA_IMPLEMENTATION.md
+  - Governance & Policy Archive:
+    - Config Governance Complete: governance/CONFIG_GOVERNANCE_COMPLETE.md
+    - Retention Policy Guide: governance/RETENTION_POLICY_GUIDE.md
+  - Improvements & Tech Debt:
+    - Polish Improvements Complete: improvements/POLISH_IMPROVEMENTS_COMPLETE.md
+    - Polish Quick Reference: improvements/POLISH_QUICK_REF.md
+    - Simplification Complete: improvements/SIMPLIFICATION_COMPLETE.md
+    - Technical Debt Resolution: improvements/TECHNICAL_DEBT_RESOLUTION.md
+    - Tech Debt Command Reference: improvements/TECH_DEBT_COMMAND_REFERENCE.md
+    - Tech Debt Quick Reference: improvements/TECH_DEBT_QUICK_REF.md
+  - Installation History:
+    - Installation Success Log: install/INSTALLATION_SUCCESS.md
+  - LLM Updates:
+    - LLM Validation README Update: llm/LLM_VALIDATION_README_UPDATE.md
+  - Metrics Reference:
+    - Metrics Registry: metrics/registry.md
+    - Metrics Validation Rules: metrics/validation.md
+    - Extended Metrics Complete: metrics/EXTENDED_METRICS_COMPLETE.md
+    - Logging Metrics Enhancement Complete: metrics/LOGGING_METRICS_ENHANCEMENT_COMPLETE.md
+    - Logging Metrics Quick Reference: metrics/LOGGING_METRICS_QUICK_REF.md
+  - Microstructure Research:
+    - Microstructure Notebook: microstructure/MICROSTRUCTURE_README.md
+    - Microstructure Week 2 Summary: microstructure/MICROSTRUCTURE_WEEK2_SUMMARY.md
+  - Observability Archive:
+    - Observability Complete: observability/OBSERVABILITY_COMPLETE.md
+    - Observability Implementation Complete: observability/OBSERVABILITY_IMPLEMENTATION_COMPLETE.md
+    - Observability Quick Reference: observability/OBSERVABILITY_QUICK_REF.md
+  - Process & Runbooks:
+    - GitHub Issues Process: process/GITHUB_ISSUES.md
+    - Alerting Runbook: runbooks/alerting.md
+    - Backtesting Runbook: runbooks/backtesting.md
+  - Provenance Library:
+    - Provenance Glossary Guide: provenance/PROVENANCE_GLOSSARY_GUIDE.md
+    - Provenance Implementation Summary: provenance/PROVENANCE_IMPLEMENTATION_SUMMARY.md
+    - Provenance Quick Reference: provenance/PROVENANCE_QUICK_REF.md
+  - Quick Reference Cards:
+    - Quick Reference Handbook: quickref/QUICK_REFERENCE.md
+    - Quick Reference Card: quickref/QUICK_REF_CARD.md
+  - Releases & Reproducibility:
+    - Release Checklist: releases/RELEASE_CHECKLIST.md
+    - Reproducibility Integration Test Complete: reproducibility/REPRODUCIBILITY_INTEGRATION_TEST_COMPLETE.md
+  - Schema & API:
+    - Schema Migration Guide: schema/SCHEMA_MIGRATION_GUIDE.md
+  - Security Archive:
+    - Security Architecture: security/SECURITY_ARCHITECTURE.md
+    - Security Implementation Guide: security/SECURITY_IMPLEMENTATION_GUIDE.md
+    - Security Implementation Summary: security/SECURITY_IMPLEMENTATION_SUMMARY.md
+    - Security Layer Complete: security/SECURITY_LAYER_COMPLETE.md
+    - Security Fixes Quick Reference: security/SECURITY_FIXES_QUICK_REF.md
+    - Security Posture Complete: security/SECURITY_POSTURE_COMPLETE.md
+    - Security Posture Remediation: security/SECURITY_POSTURE_REMEDIATION.md
+    - Security Quick Reference: security/SECURITY_QUICK_REF.md
+  - Status Archives:
+    - High Priority:
+      - High Priority Resolution Summary: status/high-priority/HIGH_PRIORITY_RESOLUTION_SUMMARY.md
+      - Implementation Plan (High Priority): status/high-priority/IMPLEMENTATION_PLAN_HIGH_PRIORITY.md
+    - Medium Priority:
+      - Medium Priority Checklist: status/medium-priority/MEDIUM_PRIORITY_CHECKLIST.md
+      - Medium Priority Quick Reference: status/medium-priority/MEDIUM_PRIORITY_QUICK_REF.md
+      - Medium Priority Resolution: status/medium-priority/MEDIUM_PRIORITY_RESOLUTION.md
+      - Medium Priority Summary: status/medium-priority/MEDIUM_PRIORITY_SUMMARY.md
+      - Medium Priority Visual: status/medium-priority/MEDIUM_PRIORITY_VISUAL.md
+    - Low Priority:
+      - Low Priority Quick Reference: status/low-priority/LOW_PRIORITY_QUICK_REF.md
+      - Low Priority Resolution Complete: status/low-priority/LOW_PRIORITY_RESOLUTION_COMPLETE.md
+    - Reports:
+      - Final Status Report: status/reports/FINAL_STATUS_REPORT.md
+      - Status Report Archive: status/reports/STATUS_REPORT.md
+      - Summary Report: status/reports/SUMMARY.md
+      - Summary Report Complete: status/reports/SUMMARY_REPORT_COMPLETE.md
+      - Summary Report Guide: status/reports/SUMMARY_REPORT_GUIDE.md
+      - Summary Report Quick Reference: status/reports/SUMMARY_REPORT_QUICK_REF.md
+      - Week 2 Completion Report: status/reports/WEEK2_COMPLETION_REPORT.md
+  - Testing Archives:
+    - Testing Quick Reference: testing/TESTING_QUICK_REF.md
+    - Testing Suite Complete: testing/TESTING_SUITE_COMPLETE.md
+    - Testing Summary: testing/TESTING_SUMMARY.md
+  - Vision & Roadmap:
+    - Greatness Roadmap: vision/greatness_roadmap.md
+  - Documentation Maintenance:
+    - Doc Maintenance Guide: DOC_MAINTENANCE.md
 
 # Plugins
 plugins:
@@ -128,6 +250,7 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
+      enable_git_follow: false
   - minify:
       minify_html: true
       minify_js: true

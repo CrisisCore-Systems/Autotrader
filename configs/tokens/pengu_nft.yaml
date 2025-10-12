@@ -1,0 +1,112 @@
+# Pudgy Penguins (PENGU) - NFT Community Token
+# Category: Meme / NFT Crossover
+# Risk Level: High
+# Expected GemScore: 60-70
+
+scanner:
+  mode: "production"
+  liquidity_threshold: 150000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Pudgy Penguins"
+  contract_address: "TBD"  # Update with actual contract when available
+  token_id: "pudgy-penguins"
+  symbol: "PENGU"
+  chain: "ethereum"
+  decimals: 18
+  category: "nft_meme"
+  coingecko_id: "pudgy-penguins"
+  glyph: "⧚⟡"
+  safety_strict: true
+  tags:
+    - "nft_community"
+    - "meme"
+    - "community_driven"
+    - "brand_recognition"
+    - "high_volatility"
+
+scoring:
+  weights:
+    S: 0.15  # Sentiment/Narrative - NFT community transition
+    A: 0.12  # Accumulation
+    O: 0.10  # On-chain Activity
+    L: 0.12  # Liquidity Depth - Important for memes
+    T: 0.15  # Tokenomics Risk - CRITICAL for airdrop mechanics (boosted)
+    C: 0.15  # Contract Safety - CRITICAL (boosted)
+    M: 0.15  # Meme Momentum - Strong brand (boosted)
+    G: 0.12  # Community Growth - NFT community overlap (boosted)
+
+  safety_gate:
+    enabled: true
+    strict_mode: true
+    min_liquidity_usd: 150000
+    max_holder_concentration: 0.35  # Stricter for NFT tokens
+    max_unlock_30d: 0.08
+    require_verified_contract: true
+    check_honeypot: true
+    check_mint_function: true
+    check_airdrop_mechanics: true  # NFT-specific check
+
+  narrative_focus:
+    keywords:
+      - "pudgy penguins"
+      - "pengu"
+      - "nft"
+      - "community token"
+      - "penguin"
+      - "nft to token"
+    sentiment_weight: 0.18
+
+  risk_modifiers:
+    nft_airdrop_risk_penalty: 0.12  # 12% penalty for airdrop complexity
+    meme_volatility_weight: 1.4
+
+narratives:
+  - "Pudgy Penguins community transitions from NFT to token"
+  - "Strong brand recognition in NFT space"
+  - "Community-driven development with active engagement"
+  - "NFT holder airdrop mechanics require verification"
+
+unlocks:
+  - date: 2025-11-20T00:00:00
+    percent_supply: 10.0  # Potential airdrop unlock
+    note: "Verify airdrop distribution schedule"
+  - date: 2026-02-20T00:00:00
+    percent_supply: 8.0
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "risk_report"
+    - "nft_analysis"
+  save_to: "reports/scans/pengu/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.65
+  gem_score_threshold: 58
+  
+alerts:
+  enabled: false
+  channels: []
+  
+monitoring:
+  watch_for:
+    - "airdrop_claims"
+    - "nft_holder_activity"
+    - "community_sentiment"
+    - "liquidity_drain_risk"
+  
+notes:
+  - "Verify contract address before scanning"
+  - "Monitor NFT floor price correlation"
+  - "Check airdrop snapshot mechanics"
+  - "Validate tokenomics documentation"

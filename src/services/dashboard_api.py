@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Forwa
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from main import build_scanner, demo_tokens
+from scripts.demo.main import build_scanner, demo_tokens
 from src.cli.run_scanner import build_unlocks, load_config
 from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient, NewsFeedClient
 from src.core.narrative import NarrativeAnalyzer
@@ -51,7 +51,7 @@ if _forward_ref_evaluate is not None:
 logger = get_logger(__name__)
 
 CONFIG_ENV_VAR = "VOIDBLOOM_CONFIG"
-DEFAULT_CONFIG_PATH = Path("configs/example.yaml")
+DEFAULT_CONFIG_PATH = Path("configs/ten_tokens.yaml")
 
 
 @dataclass
@@ -70,9 +70,16 @@ class _DashboardState:
 
 def _resolve_config_path() -> Path:
     env_value = os.getenv(CONFIG_ENV_VAR)
-    if env_value:
-        return Path(env_value)
-    return DEFAULT_CONFIG_PATH
+    path = Path(env_value) if env_value else DEFAULT_CONFIG_PATH
+    
+    # If the path is relative, resolve it relative to the project root
+    if not path.is_absolute():
+        # Assume this file is at src/services/dashboard_api.py
+        # So project root is 2 levels up
+        project_root = Path(__file__).parent.parent.parent
+        path = (project_root / path).resolve()
+    
+    return path
 
 
 _state = _DashboardState(config_path=_resolve_config_path())
@@ -163,7 +170,7 @@ async def _startup() -> None:
     setup_tracing(service_name="autotrader-api")
     instrument_fastapi(app)
     
-    logger.info("api_startup", version="0.2.0")
+    logger.info("api_startup", version="0.2.0", config_file="TEN_TOKENS_YAML")
     
     await _initialize_state()
     try:
@@ -185,15 +192,22 @@ async def _initialize_state() -> None:
     _state.scanner = None
     _state.using_demo = False
 
+    logger.info("loading_config", path=str(_state.config_path), absolute_path=str(_state.config_path.absolute()), exists=_state.config_path.exists())
     config = _load_config(_state.config_path)
     _state.config = config
 
-    token_map = _build_token_map(config)
-    if not token_map:
-        logger.info("Falling back to demo token set for dashboard API")
+    if not config:
+        logger.warning("Config failed to load, falling back to demo mode")
         _activate_demo_mode()
         return
 
+    token_map = _build_token_map(config)
+    if not token_map:
+        logger.warning("No tokens found in config, falling back to demo mode")
+        _activate_demo_mode()
+        return
+
+    logger.info("loaded_tokens", count=len(token_map), symbols=[s for s in token_map.keys()])
     _state.token_map = token_map
     scanner, cleanups = _create_scanner(config or {}, token_map)
     _state.scanner = scanner
@@ -203,12 +217,12 @@ async def _initialize_state() -> None:
 
 def _load_config(path: Path) -> Dict[str, Any] | None:
     if not path.exists():
-        logger.info("Dashboard config not found at %s", path)
+        logger.info("config_not_found", path=str(path))
         return None
     try:
         return load_config(path)
     except Exception as exc:  # pragma: no cover - config errors surfaced at runtime
-        logger.warning("Failed to load dashboard config: %s", exc)
+        logger.warning("config_load_failed", error=str(exc))
         return None
 
 
@@ -232,7 +246,7 @@ def _build_token_map(config: Dict[str, Any] | None) -> Dict[str, TokenConfig]:
                 keywords=[str(keyword) for keyword in (raw.get("keywords") or [raw["symbol"]]) if keyword],
             )
         except KeyError as exc:
-            logger.warning("Skipping token configuration missing key %s", exc)
+            logger.warning("token_config_missing_key", key=str(exc))
             continue
         token_map[symbol] = token_config
     return token_map
@@ -241,7 +255,13 @@ def _build_token_map(config: Dict[str, Any] | None) -> Dict[str, TokenConfig]:
 def _create_scanner(config: Dict[str, Any], tokens: Mapping[str, TokenConfig]) -> tuple[HiddenGemScanner, List[Callable[[], None]]]:
     coin_client = CoinGeckoClient()
     defi_client = DefiLlamaClient()
-    etherscan_client = EtherscanClient(api_key=config.get("etherscan_api_key"))
+    
+    # Prefer environment variable over config file for API keys
+    # This allows config files to have placeholder values like "YOUR_KEY_HERE"
+    etherscan_key = os.getenv("ETHERSCAN_API_KEY") or config.get("etherscan_api_key")
+    if etherscan_key == "YOUR_KEY_HERE":
+        etherscan_key = None
+    etherscan_client = EtherscanClient(api_key=etherscan_key)
 
     cleanups: List[Callable[[], None]] = [coin_client.close, defi_client.close, etherscan_client.close]
 
@@ -310,9 +330,17 @@ async def _run_scan(*, force: bool) -> None:
             trees: Dict[str, Dict[str, Any] | None] = {}
             for symbol, config in current_map.items():
                 try:
+                    # BUGFIX: Call scan_with_tree which should create a fresh context per token
+                    # The issue was that the same scanner instance may have shared state
                     result, tree = current_scanner.scan_with_tree(config)
+                    logger.info(
+                        "token_scanned",
+                        symbol=symbol,
+                        price=result.market_snapshot.price if result.market_snapshot else 0,
+                        liquidity=result.market_snapshot.liquidity_usd if result.market_snapshot else 0,
+                    )
                 except Exception as exc:  # pragma: no cover - network/runtime failure handling
-                    logger.warning("Scan failed for %s: %s", symbol, exc)
+                    logger.error("scan_failed", symbol=symbol, error=str(exc), exc_info=True)
                     continue
                 results[symbol] = result
                 trees[symbol] = tree.to_dict() if tree else None
@@ -334,13 +362,15 @@ async def _run_scan(*, force: bool) -> None:
             _state.trees = trees
             return
 
-        if not _state.using_demo:
-            logger.warning("Primary scanner produced no results; switching to demo dataset")
-            _activate_demo_mode()
-            results, trees = await _run_once()
-            if results:
-                _state.results = results
-                _state.trees = trees
+        # Don't fall back to demo mode - let the errors be visible
+        logger.error("Primary scanner produced no results - all token scans failed!")
+        # if not _state.using_demo:
+        #     logger.warning("Primary scanner produced no results; switching to demo dataset")
+        #     _activate_demo_mode()
+        #     results, trees = await _run_once()
+        #     if results:
+        #         _state.results = results
+        #         _state.trees = trees
 
 
 async def _ensure_results() -> None:
@@ -508,6 +538,19 @@ async def trigger_scan() -> Dict[str, Any]:
 async def refresh() -> Dict[str, str]:
     _clear_results()
     return {"status": "refreshed"}
+
+
+@router.get("/debug/state")
+async def debug_state() -> Dict[str, Any]:
+    """Debug endpoint to check API state."""
+    return {
+        "using_demo": _state.using_demo,
+        "config_path": str(_state.config_path),
+        "config_loaded": _state.config is not None,
+        "token_count": len(_state.token_map),
+        "results_count": len(_state.results),
+        "scanner_type": type(_state.scanner).__name__ if _state.scanner else None,
+    }
 
 
 app.include_router(router)

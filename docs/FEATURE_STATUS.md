@@ -187,7 +187,7 @@ The scanner implements robust error handling that allows operation even when opt
 ### Start Backend
 ```powershell
 cd C:\Users\kay\Documents\Projects\AutoTrader\Autotrader
-python main.py
+python scripts/demo/main.py
 ```
 
 ### Start Frontend

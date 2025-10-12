@@ -1,0 +1,13 @@
+# Quick test configuration for scanning PEPE token
+scanner:
+  liquidity_threshold: 50000
+
+tokens:
+  - symbol: PEPE
+    coingecko_id: pepe
+    defillama_slug: pepe
+    contract_address: "0x6982508145454Ce325dDbE47a25d4ec3d2311933"
+    glyph: "🐸"
+    narratives:
+      - "PEPE meme coin maintains strong community support"
+      - "Trading volume remains high on major exchanges"

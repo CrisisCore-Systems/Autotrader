@@ -1,0 +1,114 @@
+# Floki (FLOKI) - Meme-to-Utility Token
+# Category: Meme / Utility Hybrid
+# Risk Level: High
+# Expected GemScore: 62-71
+
+scanner:
+  mode: "production"
+  liquidity_threshold: 120000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Floki"
+  contract_address: "0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E"
+  token_id: "floki"
+  symbol: "FLOKI"
+  chain: "ethereum"  # Also on BSC
+  decimals: 9
+  category: "meme_utility"
+  coingecko_id: "floki"
+  glyph: "⧛⟡"
+  safety_strict: true
+  tags:
+    - "meme"
+    - "multi_chain"
+    - "utility_development"
+    - "community_driven"
+    - "flokifi"
+    - "valhalla"
+
+scoring:
+  weights:
+    S: 0.16  # Sentiment/Narrative - Meme-to-utility transition (boosted)
+    A: 0.14  # Accumulation
+    O: 0.12  # On-chain Activity
+    L: 0.12  # Liquidity Depth - Multi-chain presence (boosted)
+    T: 0.14  # Tokenomics Risk - Verify bridge mechanics (boosted)
+    C: 0.14  # Contract Safety - Check both chains (boosted)
+    M: 0.14  # Meme Momentum - Established brand (boosted)
+    G: 0.10  # Community Growth - Large community
+
+  safety_gate:
+    enabled: true
+    strict_mode: true
+    min_liquidity_usd: 120000
+    max_holder_concentration: 0.40
+    max_unlock_30d: 0.08
+    require_verified_contract: true
+    check_honeypot: true
+    check_mint_function: true
+    check_bridge_mechanics: true  # Multi-chain specific
+
+  narrative_focus:
+    keywords:
+      - "floki"
+      - "floki inu"
+      - "flokifi"
+      - "valhalla"
+      - "metaverse"
+      - "utility token"
+      - "meme to utility"
+    sentiment_weight: 0.18
+
+  risk_modifiers:
+    meme_risk_penalty: 0.08  # Lower than pure memes due to utility
+    multi_chain_complexity: 0.05
+    utility_development_bonus: -0.05  # Bonus for actual products
+
+narratives:
+  - "Floki transitions from meme to utility with FlokiFi ecosystem"
+  - "Valhalla metaverse game development progressing"
+  - "Cross-chain presence expands accessibility"
+  - "Large community backing real product development"
+
+unlocks:
+  - date: 2025-12-01T00:00:00
+    percent_supply: 3.5
+  - date: 2026-03-01T00:00:00
+    percent_supply: 3.0
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "multi_chain_analysis"
+    - "utility_assessment"
+  save_to: "reports/scans/floki/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.68
+  gem_score_threshold: 60
+  
+alerts:
+  enabled: false
+  channels: []
+  
+monitoring:
+  watch_for:
+    - "flokifi_product_launches"
+    - "valhalla_milestones"
+    - "cross_chain_bridge_activity"
+    - "utility_adoption_metrics"
+  
+notes:
+  - "Also deployed on BSC - may need separate config"
+  - "Monitor both Ethereum and BSC liquidity"
+  - "Track FlokiFi and Valhalla development progress"
+  - "Verify bridge contract security"

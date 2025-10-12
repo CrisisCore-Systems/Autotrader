@@ -1,0 +1,16 @@
+# Quick test config for ONDO Finance
+scanner:
+  liquidity_threshold: 75000
+
+tokens:
+  - symbol: ONDO
+    coingecko_id: ondo-finance
+    contract_address: "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3"
+    glyph: "⧖⟡"
+    narratives:
+      - "Ondo Finance pioneers institutional-grade RWA tokenization"
+      - "BlackRock partnership validates tokenized treasury approach"
+      - "Regulatory compliance focus attracts institutional capital"
+    unlocks:
+      - date: 2025-12-01T00:00:00
+        percent_supply: 3.0

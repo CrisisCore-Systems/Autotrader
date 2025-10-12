@@ -1,10 +1,18 @@
-# VoidBloom / CrisisCore Hidden-Gem Scanner
+# Autotrader Documentation# VoidBloom / CrisisCore Hidden-Gem Scanner
 
-**🆓 Now 100% FREE** - Zero API keys required with FREE data sources!
 
-This repository contains the foundational blueprint and implementation for **VoidBloom / CrisisCore**, a Hidden-Gem Scanner that fuses on-chain telemetry, narrative intelligence, technical analysis, and safety gating into actionable trade intelligence and ritualized "Collapse Artifact" outputs.
+
+The documentation set has moved under [`docs/`](docs/).**🆓 Now 100% FREE** - Zero API keys required with FREE data sources!
+
+
+
+- Project overview: [`docs/overview/PROJECT_OVERVIEW.md`](docs/overview/PROJECT_OVERVIEW.md)This repository contains the foundational blueprint and implementation for **VoidBloom / CrisisCore**, a Hidden-Gem Scanner that fuses on-chain telemetry, narrative intelligence, technical analysis, and safety gating into actionable trade intelligence and ritualized "Collapse Artifact" outputs.
+
+- Detailed guides and runbooks: see the categorized directories inside [`docs/`](docs/).
 
 > **Disclaimer:** All outputs are informational only and **not financial advice**. Always retain a human-in-the-loop for execution decisions.
+
+> This lightweight README keeps the repository browsable on GitHub while the full documentation lives in the structured `docs/` tree.
 
 ## 🎯 Current Status (October 2025)
 
@@ -29,6 +37,7 @@ This repository contains the foundational blueprint and implementation for **Voi
 - **Security**: All hardcoded API keys removed, environment variables required
 - **Testing**: Comprehensive test suite with 21 passing tests
 - **Documentation**: Complete guides for FREE data sources and integration
+- **Script Organization**: Generator and validator scripts now live under `scripts/docs/`, `scripts/validation/`, and `scripts/artifacts/` with root-level shims for compatibility
 
 ## System Overview
 
@@ -321,10 +330,30 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
 ├── requirements.txt              # Python dependencies
 ├── requirements-py313.txt        # Python 3.13 compatible dependencies
 ├── pyproject.toml               # Project configuration
-├── main.py                      # Main entry point
-├── simple_api.py                # Simple FastAPI server
-├── start_enhanced_api.py        # Enhanced API with FREE clients
-├── validate_system.py           # System validation script
+├── simple_api.py                # Compatibility shim for legacy imports
+├── sitecustomize.py             # Ensures UTF-8 output on interpreters
+├── scripts/
+│   ├── api/                     # FastAPI launchers and helpers
+│   ├── dashboard/               # Frontend tooling
+│   ├── demo/
+│   │   ├── main.py              # Hidden Gem scanner demo entry point
+│   │   └── main.ts              # TypeScript pipeline skeleton (Phase 1-2)
+│   ├── monitoring/
+│   │   └── status_check.py      # System health check script
+│   ├── notebooks/
+│   │   └── create_notebook.py   # Notebook repair helper
+│   ├── powershell/              # Windows automation scripts
+│   ├── testing/
+│   │   ├── run_tests.py         # Pytest convenience runner
+│   │   ├── validate_fixes.py    # Namespace/schema/notebook validator
+│   │   ├── validate_system.py   # Post-installation system checks
+│   │   └── verify_cli.py        # CLI verification harness
+│   └── manual/                  # Interactive regression experiments
+├── prompts/
+│   ├── narrative_analyzer.md    # LLM prompt for narrative analysis
+│   ├── onchain_activity.md      # LLM prompt for on-chain metrics
+│   ├── contract_safety.md       # LLM prompt for safety analysis
+│   └── technical_pattern.md     # LLM prompt for technical patterns
 ├── prompts/
 │   ├── narrative_analyzer.md    # LLM prompt for narrative analysis
 │   ├── onchain_activity.md      # LLM prompt for on-chain metrics
@@ -374,8 +403,18 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
     │   └── safety.py             # Contract & liquidity safety heuristics
     ├── cli/
     │   └── run_scanner.py        # CLI entrypoint to execute scans
-    ├── api/
-    │   └── dashboard_api.py      # FastAPI dashboard endpoints
+  ├── api/
+  │   ├── main.py              # Lightweight scanner API entrypoint
+  │   ├── routes/
+  │   │   └── tokens.py        # Token discovery endpoints
+  │   ├── services/
+  │   │   ├── cache.py         # In-memory cache utilities
+  │   │   └── scanner.py       # Hidden Gem scanner coordination
+  │   ├── schemas/
+  │   │   └── token.py         # Pydantic response models
+  │   ├── utils/
+  │   │   └── tree.py          # Execution tree serialization helpers
+  │   └── dashboard_api.py      # FastAPI dashboard endpoints
     └── services/
         └── exporter.py           # Collapse Artifact exporter
 ```
@@ -409,7 +448,7 @@ pip install -r requirements-py313.txt
 
 ```bash
 # Run system validation
-python validate_system.py
+python scripts/testing/validate_system.py
 
 # Run all tests (21 tests should pass)
 pytest tests/test_smoke.py tests/test_free_clients_integration.py -v
@@ -425,8 +464,8 @@ cp configs/example.yaml configs/my_scan.yaml
 # Execute scan with FREE clients
 python -m src.cli.run_scanner configs/my_scan.yaml --tree
 
-# Or use the simple API
-python simple_api.py
+# Or start the lightweight API
+uvicorn src.api.main:app --host 127.0.0.1 --port 8000
 # Visit http://localhost:8000/docs for API documentation
 ```
 
@@ -577,8 +616,8 @@ Edge arises from curated data, risk gating, and a recursive workflow—not just 
 .
 ├── ARCHITECTURE.md      # Mermaid architecture diagram and system overview
 ├── dashboard/          # React dashboard for interactive visualization
-├── main.py             # Python pipeline skeleton (Phase 1-2)
-├── main.ts             # TypeScript pipeline skeleton (Phase 1-2)
+├── scripts/demo/main.py  # Python pipeline skeleton (Phase 1-2)
+├── scripts/demo/main.ts  # TypeScript pipeline skeleton (Phase 1-2)
 ├── tsconfig.json       # TypeScript configuration
 ├── .gitignore          # Git ignore patterns
 └── README.md           # This file
@@ -601,27 +640,27 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the detailed architecture diagram and
 
 ### Python Implementation
 
-The Python skeleton (`main.py`) provides the core pipeline structure:
+The Python skeleton (`scripts/demo/main.py`) provides the core pipeline structure:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python main.py
+python scripts/demo/main.py
 ```
 
 Running the pipeline generates both `artifacts/dashboard.md` and a richer `artifacts/dashboard.html` loreboard containing fused metrics, ascii trend sparklines, and nearest-narrative references. Historical payloads, embeddings, and a fast full-text search index are persisted in `artifacts/voidbloom.db`.
 
 ### TypeScript Implementation
 
-The TypeScript skeleton (`main.ts`) provides an async/await-based pipeline:
+The TypeScript skeleton (`scripts/demo/main.ts`) provides an async/await-based pipeline:
 
 ```bash
 # Install dependencies (when ready to implement)
 npm install @supabase/supabase-js axios
 
 # Compile and run
-tsc
-node main.js
+tsc scripts/demo/main.ts
+node scripts/demo/main.js
 ```
 
 ### Visualization Dashboard
@@ -757,7 +796,7 @@ Final Score = (0.4 × APS) + (0.3 × NVI) + (0.2 × ERR⁻¹) + (0.1 × RRR)
 pytest
 
 # Python syntax check
-python3 -m py_compile main.py
+python3 -m py_compile scripts/demo/main.py
 
 # TypeScript type check
 tsc --noEmit

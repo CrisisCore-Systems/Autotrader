@@ -389,7 +389,7 @@ def _parse_walk(raw: str) -> timedelta:
 
 
 def _write_json(path: Path, data: object) -> None:
-    path.write_text(json.dumps(data, indent=2, sort_keys=True))
+    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding='utf-8')
 
 
 def _write_csv(path: Path, rows: List[dict[str, object]]) -> None:

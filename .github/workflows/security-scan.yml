@@ -34,7 +34,8 @@ jobs:
             p/owasp-top-ten
             p/python
             ci/semgrep.yml
-          generateSarif: true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
       
       - name: Upload Semgrep SARIF
         if: always()
@@ -100,7 +101,7 @@ jobs:
       
       - name: Upload audit results
         if: always()
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: pip-audit-results
           path: pip-audit-results.json
@@ -152,10 +153,9 @@ jobs:
           fetch-depth: 0  # Full history for secret detection
       
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@cb7149a9a29d30c7c97db3e783e94b87c7dc260a # v2.3.3
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   trufflehog:
     name: TruffleHog Secret Scanner
@@ -166,7 +166,7 @@ jobs:
           fetch-depth: 0
       
       - name: Run TruffleHog
-        uses: trufflesecurity/trufflehog@23cf93577bb0b7f2ff9ed715fd24ef1cdd1d47be # v3.68.0
+        uses: trufflesecurity/trufflehog@main
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
@@ -189,13 +189,14 @@ jobs:
           output-file: sbom-python.spdx.json
       
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-reports
           path: sbom-python.spdx.json
           retention-days: 90
       
       - name: Scan SBOM with Grype
+        id: grype-scan
         uses: anchore/scan-action@3343887d815d7b07465f6fdcd395bd66508d486a # v3.6.4
         with:
           sbom: sbom-python.spdx.json
@@ -207,7 +208,7 @@ jobs:
         if: always()
         uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v3.24.6
         with:
-          sarif_file: ${{ steps.scan.outputs.sarif }}
+          sarif_file: ${{ steps.grype-scan.outputs.sarif }}
           category: grype-sbom
 
   # === License Compliance ===
@@ -237,7 +238,7 @@ jobs:
       
       - name: Upload license report
         if: always()
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: license-report
           path: licenses.json

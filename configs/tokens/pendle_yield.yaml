@@ -1,0 +1,87 @@
+# Pendle (PENDLE) - Yield Trading Protocol
+# Category: DeFi Infrastructure
+# Risk Level: Medium
+# Expected GemScore: 68-75
+
+scanner:
+  mode: "production"
+  liquidity_threshold: 100000
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Pendle"
+  contract_address: "0x808507121B80c02388fAd14726482e061B8da827"
+  token_id: "pendle"
+  symbol: "PENDLE"
+  chain: "ethereum"
+  decimals: 18
+  category: "yield_trading"
+  coingecko_id: "pendle"
+  glyph: "⧖⟡"
+  tags:
+    - "yield_tokenization"
+    - "defi_infrastructure"
+    - "interest_rate_derivatives"
+    - "time_decay"
+
+scoring:
+  weights:
+    S: 0.15  # Sentiment/Narrative - Novel yield mechanism
+    A: 0.20  # Accumulation - DeFi whale patterns
+    O: 0.18  # On-chain Activity - High protocol interaction (boosted)
+    L: 0.10  # Liquidity Depth
+    T: 0.15  # Tokenomics Risk - Structured emissions (boosted)
+    C: 0.12  # Contract Safety - Battle-tested
+    M: 0.05  # Meme Momentum - Minimal
+    G: 0.05  # Community Growth
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 100000
+    max_holder_concentration: 0.45
+    max_unlock_30d: 0.10
+    require_verified_contract: true
+    require_audit: true
+
+  narrative_focus:
+    keywords:
+      - "pendle"
+      - "yield trading"
+      - "interest rate"
+      - "time decay"
+      - "tokenized yield"
+      - "fixed yield"
+    sentiment_weight: 0.18
+
+narratives:
+  - "Pendle leads yield tokenization innovation in DeFi"
+  - "Growing TVL and protocol integrations signal adoption"
+  - "Fixed yield products gaining traction in volatile markets"
+
+unlocks:
+  - date: 2025-11-01T00:00:00
+    percent_supply: 2.5
+  - date: 2026-02-01T00:00:00
+    percent_supply: 3.0
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "markdown_summary"
+  save_to: "reports/scans/pendle/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.72
+  gem_score_threshold: 65
+  
+alerts:
+  enabled: false
+  channels: []

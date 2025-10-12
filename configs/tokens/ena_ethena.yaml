@@ -1,0 +1,71 @@
+# Ethena (ENA) - Synthetic Dollar Protocol
+# Category: DeFi Infrastructure
+# Risk Level: Medium
+# Expected GemScore: 72-78
+
+scanner:
+  mode: "production"
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+token:
+  name: "Ethena"
+  contract_address: "0x57e114B691Db790C35207b2e685D4A43181e6061"
+  token_id: "ethena"
+  symbol: "ENA"
+  chain: "ethereum"
+  decimals: 18
+  category: "defi"
+  tags:
+    - "synthetic_assets"
+    - "stablecoins"
+    - "defi_infrastructure"
+
+scoring:
+  weights:
+    S: 0.15  # Sentiment/Narrative - Synthetic dollar story
+    A: 0.20  # Accumulation - Monitor institutional patterns
+    O: 0.15  # On-chain Activity - High DeFi interaction
+    L: 0.10  # Liquidity Depth - Strong DEX presence
+    T: 0.12  # Tokenomics Risk - Clear vesting
+    C: 0.12  # Contract Safety - Audited
+    M: 0.08  # Meme Momentum - Lower priority
+    G: 0.08  # Community Growth - DeFi community
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 100000
+    max_holder_concentration: 0.50
+    max_unlock_30d: 0.10
+    require_verified_contract: true
+
+  narrative_focus:
+    keywords:
+      - "synthetic dollar"
+      - "ethena"
+      - "usde"
+      - "stablecoin"
+      - "yield generation"
+      - "delta neutral"
+    sentiment_weight: 0.20
+
+output:
+  format: "json"
+  artifacts:
+    - "dashboard_html"
+    - "markdown_summary"
+  save_to: "reports/scans/ena/"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.70
+  gem_score_threshold: 65
+  
+alerts:
+  enabled: false
+  channels: []

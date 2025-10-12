@@ -43,6 +43,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from src.services.social import SocialAggregator, SocialPost
     from src.services.tokenomics import TokenomicsAggregator, TokenomicsSnapshot
     from src.services.news import NewsAggregator
+    # Phase 3: Derivatives & On-Chain Flow
+    from src.services.onchain_monitor import OnChainAlert
+    from src.services.derivatives import DerivativesAggregator
+    from src.services.feature_gate import FeatureGate
 
 
 @dataclass
@@ -87,6 +91,10 @@ class ScanResult:
     social_posts: Sequence["SocialPost"] = field(default_factory=list)
     tokenomics_metrics: Sequence["TokenomicsSnapshot"] = field(default_factory=list)
     alerts: Sequence["Alert"] = field(default_factory=list)
+    # Phase 3: Derivatives & On-Chain Flow
+    derivatives_data: Dict[str, Any] = field(default_factory=dict)
+    onchain_alerts: Sequence["OnChainAlert"] = field(default_factory=list)
+    liquidation_spikes: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -115,9 +123,19 @@ class ScanContext:
     liquidity_ok: bool = False
     result: ScanResult | None = None
     artifact_html: str | None = None
-    safety_report: SafetyReport | None = None
-    liquidity_ok: bool = False
-    result: ScanResult | None = None
+    news_items: Sequence[NewsItem] = field(default_factory=list)
+    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
+    technical_metrics: Dict[str, float] = field(default_factory=dict)
+    security_metrics: Dict[str, float] = field(default_factory=dict)
+    final_score: float = 0.0
+    github_events: Sequence["GitHubEvent"] = field(default_factory=list)
+    social_posts: Sequence["SocialPost"] = field(default_factory=list)
+    tokenomics_metrics: Sequence["TokenomicsSnapshot"] = field(default_factory=list)
+    alerts: Sequence["Alert"] = field(default_factory=list)
+    # Phase 3: Derivatives & On-Chain Flow
+    derivatives_data: Dict[str, Any] = field(default_factory=dict)
+    onchain_alerts: Sequence["OnChainAlert"] = field(default_factory=list)
+    liquidation_spikes: Dict[str, Any] = field(default_factory=dict)
     news_items: list[NewsItem] = field(default_factory=list)
     sentiment_metrics: Dict[str, float] = field(default_factory=dict)
     technical_metrics: Dict[str, float] = field(default_factory=dict)
@@ -149,6 +167,10 @@ class HiddenGemScanner:
         tokenomics_aggregator: "TokenomicsAggregator" | None = None,
         news_aggregator: "NewsAggregator" | None = None,
         feature_store: object | None = None,  # Optional FeatureStore for delta explainability
+        # Phase 3: Derivatives & On-Chain Flow
+        derivatives_aggregator: "DerivativesAggregator" | None = None,
+        onchain_monitor: "OnChainMonitor" | None = None,
+        feature_gate: "FeatureGate" | None = None,
     ) -> None:
         self.coin_client = coin_client
         # Use FREE clients if provided, otherwise fall back to paid clients
@@ -168,6 +190,10 @@ class HiddenGemScanner:
         self.tokenomics_aggregator = tokenomics_aggregator
         self.news_aggregator = news_aggregator
         self.feature_store = feature_store
+        # Phase 3: Derivatives & On-Chain Flow
+        self.derivatives_aggregator = derivatives_aggregator
+        self.onchain_monitor = onchain_monitor
+        self.feature_gate = feature_gate
 
     def scan(self, config: TokenConfig) -> ScanResult:
         """Scan a token and produce a comprehensive analysis result.
@@ -259,12 +285,19 @@ class HiddenGemScanner:
             raise
 
     def scan_with_tree(self, config: TokenConfig) -> tuple[ScanResult, TreeNode]:
+        logger.info(f"Starting scan_with_tree for {config.symbol}")
         context = ScanContext(config=config)
+        logger.info(f"Building execution tree for {config.symbol}")
         tree = self._build_execution_tree(context)
+        logger.info(f"Running tree execution for {config.symbol}")
         tree.run(context)
+        logger.info(f"Tree execution completed for {config.symbol}, checking result...")
         if context.result is None:
+            logger.error(f"ERROR: context.result is None for {config.symbol} after tree execution")
             raise RuntimeError("Scan execution did not produce a result")
+        logger.info(f"Result found for {config.symbol}, running post-process")
         self._post_process(context)
+        logger.info(f"Scan completed successfully for {config.symbol}")
         return context.result, tree
 
     # ------------------------------------------------------------------
@@ -378,6 +411,26 @@ class HiddenGemScanner:
                     title="Tokenomics Intelligence",
                     description="Normalize circulating supply & unlock data",
                     action=self._action_fetch_tokenomics,
+                )
+            )
+
+        # Phase 3: Derivatives and On-chain Flow Analysis
+        if self.derivatives_aggregator is not None:
+            branch_a.add_child(
+                TreeNode(
+                    key="A7",
+                    title="Derivatives Data",
+                    description="Fetch funding rates, open interest, and liquidation data",
+                    action=self._action_fetch_derivatives_data,
+                )
+            )
+        if self.onchain_monitor is not None:
+            branch_a.add_child(
+                TreeNode(
+                    key="A8",
+                    title="On-chain Flow Analysis",
+                    description="Monitor CEX wallet transfers and whale movements",
+                    action=self._action_scan_onchain_transfers,
                 )
             )
 
@@ -620,11 +673,14 @@ class HiddenGemScanner:
                 data={"price_points": points},
             )
         except Exception as exc:  # pragma: no cover - network failures handled at runtime
+            # Allow scan to continue with missing price data - not critical
+            logger.warning(f"Could not fetch price data: {exc}", exc_info=True)
+            context.price_history = None
             return NodeOutcome(
-                status="failure",
-                summary=f"Failed to fetch price data: {exc}",
+                status="partial_success",
+                summary=f"Could not fetch price data, continuing scan: {exc}",
                 data={"error": str(exc)},
-                proceed=False,
+                proceed=True,  # Changed: Allow scan to continue
             )
 
     def _action_fetch_onchain_metrics(self, context: ScanContext) -> NodeOutcome:
@@ -662,11 +718,14 @@ class HiddenGemScanner:
                     proceed=False,
                 )
         except Exception as exc:  # pragma: no cover - network failures handled at runtime
+            # Allow scan to continue with missing onchain metrics - not critical
+            logger.warning(f"Could not fetch on-chain metrics: {exc}", exc_info=True)
+            context.protocol_metrics = None
             return NodeOutcome(
-                status="failure",
-                summary=f"Failed to fetch on-chain metrics: {exc}",
+                status="partial_success",
+                summary=f"Could not fetch on-chain metrics, continuing scan: {exc}",
                 data={"error": str(exc)},
-                proceed=False,
+                proceed=True,  # Changed: Allow scan to continue
             )
 
     def _action_fetch_contract_metadata(self, context: ScanContext) -> NodeOutcome:
@@ -696,11 +755,14 @@ class HiddenGemScanner:
                     proceed=False,
                 )
         except Exception as exc:  # pragma: no cover - network failures handled at runtime
+            # Allow scan to continue with missing contract metadata - not critical
+            logger.warning(f"Could not fetch contract metadata: {exc}", exc_info=True)
+            context.contract_metadata = None
             return NodeOutcome(
-                status="failure",
-                summary=f"Failed to fetch contract metadata: {exc}",
+                status="partial_success",
+                summary=f"Could not fetch contract metadata, continuing scan: {exc}",
                 data={"error": str(exc)},
-                proceed=False,
+                proceed=True,  # Changed: Allow scan to continue
             )
 
     def _action_record_ingestion_decision(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
@@ -848,11 +910,13 @@ class HiddenGemScanner:
 
     def _action_compute_onchain_metrics(self, context: ScanContext) -> NodeOutcome:
         if context.protocol_metrics is None:
+            # Create empty onchain_metrics when protocol_metrics is missing
+            logger.warning("protocol_metrics is None, creating empty onchain_metrics")
+            context.onchain_metrics = {"current_tvl": 0.0, "tvl_trend": 0.0}
             return NodeOutcome(
-                status="failure",
-                summary="On-chain metrics missing",
-                data={},
-                proceed=False,
+                status="partial_success",
+                summary="Protocol metrics missing, using empty on-chain metrics",
+                data=context.onchain_metrics,
             )
         context.onchain_metrics = self._derive_onchain_metrics(context.protocol_metrics, context.config.unlocks)
         return NodeOutcome(
@@ -862,14 +926,13 @@ class HiddenGemScanner:
         )
 
     def _action_build_snapshot(self, context: ScanContext) -> NodeOutcome:
-        if context.market_chart is None or context.protocol_metrics is None:
-            return NodeOutcome(
-                status="failure",
-                summary="Cannot assemble snapshot without market and on-chain data",
-                data={},
-                proceed=False,
-            )
-        context.holders = self._extract_holder_count(context.contract_metadata or {}, context.protocol_metrics)
+        # Build snapshot with available data - handle missing data gracefully
+        if context.market_chart is None:
+            logger.warning("market_chart is None, using empty data for snapshot")
+        if context.protocol_metrics is None:
+            logger.warning("protocol_metrics is None, using empty data for snapshot")
+            
+        context.holders = self._extract_holder_count(context.contract_metadata or {}, context.protocol_metrics or {})
         combined_narratives = list(context.config.narratives)
         combined_narratives.extend(item.title for item in context.news_items[:3])
 
@@ -879,10 +942,10 @@ class HiddenGemScanner:
             if not context.price_series.empty
             else datetime.now(timezone.utc),
             price=float(context.price_series.iloc[-1]) if not context.price_series.empty else 0.0,
-            volume_24h=self._extract_volume(context.market_chart),
-            liquidity_usd=context.onchain_metrics.get("current_tvl", 0.0),
+            volume_24h=self._extract_volume(context.market_chart) if context.market_chart else 0.0,
+            liquidity_usd=context.onchain_metrics.get("current_tvl", 0.0) if context.onchain_metrics else 0.0,
             holders=context.holders,
-            onchain_metrics=context.onchain_metrics,
+            onchain_metrics=context.onchain_metrics if context.onchain_metrics else {},
             narratives=combined_narratives,
         )
         context.snapshot = snapshot
@@ -893,35 +956,55 @@ class HiddenGemScanner:
         )
 
     def _action_narrative_analysis(self, context: ScanContext) -> NodeOutcome:
-        context.narrative = self.narrative_analyzer.analyze(context.config.narratives)
-        base_narratives = list(context.config.narratives)
-        if context.news_items:
-            news_texts = [
-                f"{item.source}: {item.title}. {item.summary}"
-                if item.summary
-                else f"{item.source}: {item.title}"
-                for item in context.news_items
-            ]
-            base_narratives.extend(news_texts)
-        context.narrative = self.narrative_analyzer.analyze(base_narratives)
-        sentiment_label = self._sentiment_label(context.narrative.sentiment_score)
-        return NodeOutcome(
-            status="success",
-            summary=f"Narrative sentiment {sentiment_label} ({context.narrative.sentiment_score:.2f})",
-            data={
-                "sentiment": sentiment_label,
-                "sentiment_score": context.narrative.sentiment_score,
-                "momentum": context.narrative.momentum,
-            },
-        )
+        try:
+            context.narrative = self.narrative_analyzer.analyze(context.config.narratives)
+            base_narratives = list(context.config.narratives)
+            if context.news_items:
+                news_texts = [
+                    f"{item.source}: {item.title}. {item.summary}"
+                    if item.summary
+                    else f"{item.source}: {item.title}"
+                    for item in context.news_items
+                ]
+                base_narratives.extend(news_texts)
+            context.narrative = self.narrative_analyzer.analyze(base_narratives)
+            sentiment_label = self._sentiment_label(context.narrative.sentiment_score)
+            return NodeOutcome(
+                status="success",
+                summary=f"Narrative sentiment {sentiment_label} ({context.narrative.sentiment_score:.2f})",
+                data={
+                    "sentiment": sentiment_label,
+                    "sentiment_score": context.narrative.sentiment_score,
+                    "momentum": context.narrative.momentum,
+                },
+            )
+        except Exception as exc:
+            # Create default narrative when LLM fails (e.g., rate limits)
+            logger.warning(f"Could not perform narrative analysis: {exc}", exc_info=True)
+            from src.core.narrative import NarrativeInsight
+            context.narrative = NarrativeInsight(
+                sentiment_score=0.5,
+                momentum=0.5,
+                volatility=0.5,
+                meme_momentum=0.0,
+                themes=["Unable to analyze - LLM unavailable"],
+            )
+            return NodeOutcome(
+                status="partial_success",
+                summary=f"Narrative analysis unavailable, using neutral defaults: {exc}",
+                data={"sentiment": "neutral", "sentiment_score": 0.5, "error": str(exc)},
+            )
 
     def _action_contract_metrics(self, context: ScanContext) -> NodeOutcome:
         if context.contract_metadata is None:
+            # Create default safety report when contract metadata is missing
+            logger.warning("contract_metadata is None, creating default safety report")
+            context.contract_metrics = {"score": 0.5, "report": self._default_safety_report()}
+            context.safety_report = context.contract_metrics["report"]
             return NodeOutcome(
-                status="failure",
-                summary="Contract metadata missing",
-                data={},
-                proceed=False,
+                status="partial_success",
+                summary="Contract metadata missing, using default safety score 0.5",
+                data={"score": 0.5, "severity": context.safety_report.severity},
             )
         contract_metrics = self._contract_metrics(context.contract_metadata)
         context.contract_metrics = contract_metrics
@@ -1189,11 +1272,26 @@ class HiddenGemScanner:
         )
 
     def _action_build_artifact(self, context: ScanContext) -> NodeOutcome:
-        if context.gem_score is None or context.snapshot is None or context.narrative is None or context.safety_report is None:
+        missing_fields = []
+        if context.gem_score is None:
+            missing_fields.append("gem_score")
+        if context.snapshot is None:
+            missing_fields.append("snapshot")
+        if context.narrative is None:
+            missing_fields.append("narrative")
+        if context.safety_report is None:
+            missing_fields.append("safety_report")
+            
+        if missing_fields:
+            logger.error(
+                "artifact_build_failed_missing_data",
+                token=context.config.symbol,
+                missing_fields=missing_fields,
+            )
             return NodeOutcome(
                 status="failure",
-                summary="Missing data to build artifact",
-                data={},
+                summary=f"Missing data to build artifact: {', '.join(missing_fields)}",
+                data={"missing_fields": missing_fields},
                 proceed=False,
             )
         payload = self._build_artifact_payload(
@@ -1278,6 +1376,10 @@ class HiddenGemScanner:
             github_events=context.github_events,
             social_posts=context.social_posts,
             tokenomics_metrics=context.tokenomics_metrics,
+            # Phase 3: Derivatives & On-Chain Flow
+            derivatives_data=getattr(context, 'derivatives_data', {}),
+            onchain_alerts=getattr(context, 'onchain_alerts', []),
+            liquidation_spikes=getattr(context, 'liquidation_spikes', {}),
         )
         return NodeOutcome(
             status="success",
@@ -1305,6 +1407,67 @@ class HiddenGemScanner:
             summary="Automated watchlist intentionally human-in-the-loop",
             data={"scope": "Monitoring only"},
         )
+
+    # ------------------------------------------------------------------
+    # Phase 3: Derivatives and On-chain Flow Actions
+    # ------------------------------------------------------------------
+    def _action_fetch_derivatives_data(self, context: ScanContext) -> NodeOutcome:
+        if self.derivatives_aggregator is None:
+            return NodeOutcome(
+                status="skipped",
+                summary="Derivatives aggregator not configured",
+                data={},
+                proceed=True,
+            )
+        try:
+            snapshot = self.derivatives_aggregator.generate_snapshot(context.config.symbol)
+            context.derivatives_data = snapshot
+            context.liquidation_spikes = snapshot.get('liquidation_spikes', {})
+            
+            total_exchanges = len(snapshot.get('funding_rates', {}))
+            total_oi = sum(snapshot.get('open_interest', {}).values())
+            
+            return NodeOutcome(
+                status="success",
+                summary=f"Fetched derivatives data from {total_exchanges} exchanges",
+                data={
+                    "exchanges": total_exchanges,
+                    "total_open_interest": total_oi,
+                    "liquidation_spikes": len(context.liquidation_spikes),
+                },
+            )
+        except Exception as exc:
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to fetch derivatives data: {exc}",
+                data={"error": str(exc)},
+                proceed=True,  # Non-critical for MVP
+            )
+
+    def _action_scan_onchain_transfers(self, context: ScanContext) -> NodeOutcome:
+        if self.onchain_monitor is None:
+            return NodeOutcome(
+                status="skipped",
+                summary="On-chain monitor not configured",
+                data={},
+                proceed=True,
+            )
+        try:
+            alerts = self.onchain_monitor.scan_transfers(context.config.contract_address)
+            context.onchain_alerts = alerts
+            
+            return NodeOutcome(
+                status="success",
+                summary=f"Scanned on-chain transfers, found {len(alerts)} alerts",
+                data={"alerts": len(alerts)},
+            )
+        except Exception as exc:
+            return NodeOutcome(
+                status="failure",
+                summary=f"Failed to scan on-chain transfers: {exc}",
+                data={"error": str(exc)},
+                proceed=True,  # Non-critical for MVP
+            )
 
     # ------------------------------------------------------------------
     # Legacy helper methods shared by actions
@@ -1390,6 +1553,15 @@ class HiddenGemScanner:
             return 0.0
         latest = volumes[-1]
         return float(latest[1]) if len(latest) >= 2 else 0.0
+
+    def _default_safety_report(self) -> SafetyReport:
+        """Create a default safety report when contract metadata is unavailable."""
+        return SafetyReport(
+            score=0.5,
+            findings=["Contract verification status unknown"],
+            severity="unknown",
+            flags={"unverified": True},
+        )
 
     def _contract_metrics(self, contract_metadata: Dict[str, object]) -> Dict[str, object]:
         is_verified = str(contract_metadata.get("IsVerified", "false")).lower() == "true"

@@ -543,5 +543,5 @@ See `examples/feature_validation_example.py` for comprehensive examples:
 ## Related Documentation
 
 - [Feature Store Implementation](FEATURE_STORE_IMPLEMENTATION.md)
-- [Implementation Plan](../IMPLEMENTATION_PLAN_HIGH_PRIORITY.md)
-- [GitHub Issue #28](../GITHUB_ISSUES.md)
+- [Implementation Plan (High Priority)](status/high-priority/IMPLEMENTATION_PLAN_HIGH_PRIORITY.md)
+- [GitHub Issues Process](process/GITHUB_ISSUES.md)

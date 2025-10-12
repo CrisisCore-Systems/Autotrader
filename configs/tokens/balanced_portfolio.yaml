@@ -1,0 +1,117 @@
+# Balanced Portfolio Scan - Multi-Token Comparative Analysis
+# Purpose: Test GemScore across risk spectrum
+# Tokens: ENA (DeFi), ONDO (Institutional), PEPE (Meme), WLFI (High-Risk)
+
+scanner:
+  mode: "comparative"
+  data_sources:
+    - "coingecko"
+    - "dexscreener"
+    - "blockscout"
+    - "ethereum_rpc"
+    - "groq_narrative"
+
+scan_config:
+  scan_type: "portfolio"
+  comparison_mode: true
+  rank_tokens: true
+  
+tokens:
+  - name: "Ethena"
+    contract_address: "0x57e114B691Db790C35207b2e685D4A43181e6061"
+    token_id: "ethena"
+    symbol: "ENA"
+    chain: "ethereum"
+    category: "defi"
+    risk_tier: "medium"
+    
+  - name: "Ondo Finance"
+    contract_address: "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3"
+    token_id: "ondo-finance"
+    symbol: "ONDO"
+    chain: "ethereum"
+    category: "rwa"
+    risk_tier: "low"
+    
+  - name: "Pepe"
+    contract_address: "0x6982508145454Ce325dDbE47a25d4ec3d2311933"
+    token_id: "pepe"
+    symbol: "PEPE"
+    chain: "ethereum"
+    category: "meme"
+    risk_tier: "high"
+    safety_strict: true
+    
+  - name: "World Liberty Financial"
+    contract_address: "0x0Bf3820B5c8ed020ab3B192e77c56e10F3c3A988"
+    token_id: "world-liberty-financial"
+    symbol: "WLFI"
+    chain: "ethereum"
+    category: "test_case"
+    risk_tier: "very_high"
+    safety_strict: true
+
+scoring:
+  # Balanced weights for comparative analysis
+  weights:
+    S: 0.15  # Sentiment/Narrative
+    A: 0.20  # Accumulation
+    O: 0.15  # On-chain Activity
+    L: 0.10  # Liquidity Depth
+    T: 0.12  # Tokenomics Risk
+    C: 0.12  # Contract Safety
+    M: 0.08  # Meme Momentum
+    G: 0.08  # Community Growth
+
+  safety_gate:
+    enabled: true
+    min_liquidity_usd: 100000
+    max_holder_concentration: 0.50
+    max_unlock_30d: 0.10
+    require_verified_contract: true
+
+output:
+  format: "comparative_dashboard"
+  artifacts:
+    - "dashboard_html"
+    - "comparison_table"
+    - "ranking_analysis"
+    - "risk_matrix"
+    - "lore_capsule"
+  save_to: "reports/scans/balanced_portfolio/"
+  
+  comparison_metrics:
+    - "gem_score"
+    - "confidence"
+    - "liquidity_depth"
+    - "safety_rating"
+    - "narrative_strength"
+    - "meme_momentum"
+  
+execution:
+  tree_output: true
+  tree_format: "pretty"
+  confidence_threshold: 0.65
+  gem_score_threshold: 55
+  
+  # Parallel execution for efficiency
+  parallel_scans: true
+  max_workers: 4
+  
+alerts:
+  enabled: false
+  channels: []
+  
+analysis:
+  generate_insights:
+    - "relative_risk_assessment"
+    - "diversification_analysis"
+    - "correlation_matrix"
+    - "optimal_allocation_suggestion"
+  
+  expected_ranking:
+    # Predicted ranking (highest to lowest GemScore)
+    1: "ONDO"  # Expected: 75-82
+    2: "ENA"   # Expected: 72-78
+    3: "PEPE"  # Expected: 58-68
+    4: "WLFI"  # Expected: 45-62 (may flag)

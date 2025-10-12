@@ -8,6 +8,7 @@ from src.services.cache_policy import EnhancedCache, CachePolicyConfig, cached
 from src.services.circuit_breaker import (
     CircuitBreakerConfig,
     CircuitBreakerRegistry,
+    CircuitState,
     with_circuit_breaker,
 )
 from src.services.sla_monitor import SLAThresholds, SLARegistry, monitored
@@ -276,11 +277,11 @@ def get_system_health() -> dict[str, Any]:
     # Check SLAs
     unhealthy = SLA_REGISTRY.get_unhealthy_sources()
     for source_name, monitor in SLA_REGISTRY.get_all().items():
-        metrics = monitor.get_current_metrics()
+        metrics = monitor.get_metrics()
         health_status["data_sources"][source_name] = {
-            "status": monitor.get_status().value,
-            "latency_p95": metrics.latency_p95_seconds if metrics else None,
-            "success_rate": metrics.success_rate if metrics else None,
+            "status": metrics.status.value,
+            "latency_p95": metrics.latency_p95,
+            "success_rate": metrics.success_rate,
         }
 
     if unhealthy:
@@ -288,13 +289,13 @@ def get_system_health() -> dict[str, Any]:
 
     # Check circuit breakers
     for breaker_name, breaker in CIRCUIT_REGISTRY.get_all().items():
-        state = breaker.get_state()
+        state = breaker.state
         health_status["circuit_breakers"][breaker_name] = {
             "state": state.value,
             "failure_count": breaker._failure_count,
         }
 
-        if state.value == "OPEN":
+        if state == CircuitState.OPEN:
             health_status["overall_status"] = "DEGRADED"
 
     # Cache stats
@@ -308,14 +309,10 @@ def get_system_health() -> dict[str, Any]:
 def reset_all_monitors() -> None:
     """Reset all SLA monitors and circuit breakers (for testing)."""
     for monitor in SLA_REGISTRY.get_all().values():
-        monitor._latencies.clear()
-        monitor._successes.clear()
-        monitor._failures.clear()
+        monitor.reset()
 
     for breaker in CIRCUIT_REGISTRY.get_all().values():
-        breaker._state = breaker._state.__class__.CLOSED
-        breaker._failure_count = 0
-        breaker._failure_times.clear()
+        breaker.reset()
 
     ORDERBOOK_CACHE.clear()
     DEX_CACHE.clear()

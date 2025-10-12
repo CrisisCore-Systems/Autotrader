@@ -503,7 +503,7 @@ To maximize validation success:
 - **Pydantic Docs**: https://docs.pydantic.dev/
 - **JSON Schema**: https://json-schema.org/
 - **Groq API**: https://console.groq.com/docs
-- **Implementation Plan**: `IMPLEMENTATION_PLAN_HIGH_PRIORITY.md` (Issue #30)
+- **Implementation Plan**: `status-reports/plans/IMPLEMENTATION_PLAN_HIGH_PRIORITY.md` (Issue #30)
 
 ---
 

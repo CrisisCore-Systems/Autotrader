@@ -332,6 +332,11 @@ class SLARegistry:
         metrics = self.get_all_metrics()
         return [m for m in metrics if m.status != SLAStatus.HEALTHY]
 
+    def get_all(self) -> Dict[str, SLAMonitor]:
+        """Return all registered monitors keyed by source name."""
+
+        return self._monitors
+
 
 # Global registry instance
 _global_registry = SLARegistry()

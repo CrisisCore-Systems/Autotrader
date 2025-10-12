@@ -340,8 +340,8 @@ pip install pytest pytest-cov pytest-asyncio pytest-mock fastapi httpx psutil
 For issues or questions:
 - Check test output for detailed error messages
 - Review test documentation in each test file
-- Consult `TESTING_QUICK_REF.md` for common commands
-- See `TESTING_SUITE_COMPLETE.md` for implementation details
+- Consult `../../docs/status-reports/quick-reference/TESTING_QUICK_REF.md` for common commands
+- See `../../docs/status-reports/milestones/TESTING_SUITE_COMPLETE.md` for implementation details
 
 ---
 

@@ -9,7 +9,7 @@ on:
       - 'mkdocs.yml'
       - 'scripts/gen_*.py'
       - 'src/cli/manpage.py'
-      - 'config/metrics_registry.yaml'
+      - 'configs/metrics_registry.yaml'
   
   workflow_dispatch:  # Allow manual triggering
 

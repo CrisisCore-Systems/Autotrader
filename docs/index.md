@@ -144,7 +144,7 @@ Use `--print-effective-config` to see the final merged configuration with origin
 
 ### Metrics Registry
 
-All metrics are defined in `config/metrics_registry.yaml` with validation rules:
+All metrics are defined in `configs/metrics_registry.yaml` with validation rules:
 
 - **Pattern enforcement**: Counters end with `_total`, histograms indicate unit
 - **Label constraints**: Maximum 5 labels per metric

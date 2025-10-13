@@ -56,7 +56,7 @@ def generate_registry_md():
         "Complete reference for all metrics tracked by AutoTrader.",
         "",
         "!!! tip \"Auto-Generated\"",
-        "    This page is automatically generated from `config/metrics_registry.yaml`.",
+        "    This page is automatically generated from `configs/metrics_registry.yaml`.",
         "",
         "## Overview",
         "",

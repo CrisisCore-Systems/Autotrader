@@ -169,7 +169,7 @@ def test_alert_thresholds_config():
     """Test alert threshold configuration loading."""
     import yaml
     
-    config_path = Path("config/alert_thresholds.yaml")
+    config_path = Path("configs/alert_thresholds.yaml")
     
     if not config_path.exists():
         pytest.skip("Alert thresholds config not found")

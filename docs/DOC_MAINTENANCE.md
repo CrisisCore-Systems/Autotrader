@@ -41,7 +41,7 @@ docs/
 
 The following files are automatically generated and should NOT be edited manually:
 
-- `metrics/registry.md` – generated from `config/metrics_registry.yaml`
+- `metrics/registry.md` – generated from `configs/metrics_registry.yaml`
 - `metrics/validation.md` – generated from metrics validation rules
 
 To regenerate these files:

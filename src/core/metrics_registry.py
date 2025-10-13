@@ -29,8 +29,8 @@ class MetricsRegistry:
             registry_path: Path to metrics_registry.yaml
         """
         if registry_path is None:
-            # Default to config/metrics_registry.yaml
-            registry_path = Path(__file__).parent.parent / "config" / "metrics_registry.yaml"
+            # Default to configs/metrics_registry.yaml
+            registry_path = Path(__file__).parent.parent.parent / "configs" / "metrics_registry.yaml"
         
         self.registry_path = Path(registry_path)
         self._registry: Dict[str, Any] = {}

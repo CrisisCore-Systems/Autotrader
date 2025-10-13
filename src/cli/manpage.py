@@ -418,7 +418,7 @@ class ManpageGenerator:
             ("~/.config/autotrader/config.yaml", "User configuration file"),
             ("/etc/autotrader/config.yaml", "System-wide configuration file"),
             ("./config.yaml", "Project-local configuration file"),
-            ("config/metrics_registry.yaml", "Metrics definitions and validation rules"),
+            ("configs/metrics_registry.yaml", "Metrics definitions and validation rules"),
             ("~/.cache/autotrader/", "Cache directory for downloaded data"),
             ("/var/lock/autotrader.lock", "Lock file to prevent concurrent runs"),
         ]
@@ -438,7 +438,7 @@ class ManpageGenerator:
             ("~/.config/autotrader/config.yaml", "User configuration file"),
             ("/etc/autotrader/config.yaml", "System-wide configuration file"),
             ("./config.yaml", "Project-local configuration file"),
-            ("config/metrics_registry.yaml", "Metrics definitions and validation rules"),
+            ("configs/metrics_registry.yaml", "Metrics definitions and validation rules"),
             ("~/.cache/autotrader/", "Cache directory for downloaded data"),
             ("/var/lock/autotrader.lock", "Lock file to prevent concurrent runs"),
         ]

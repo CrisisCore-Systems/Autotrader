@@ -1,18 +1,45 @@
 # 📚 AutoTrader Documentation Index
 
-**Last Updated:** October 18, 2025  
-**Status:** All improvements documented
+**Last Updated:** October 20, 2025  
+**Status:** Phase 2 Validation In Progress (2/20 trades)
 
 ---
 
 ## 🎯 Quick Navigation
 
-### **For New Contributors**
-Start here → [`README.md`](README.md)
+### **🚀 START HERE (New Users)**
 
-### **Understanding Recent Changes**
-1. [`PROJECT_IMPROVEMENTS_SUMMARY.md`](PROJECT_IMPROVEMENTS_SUMMARY.md) - High-level overview of all 10 improvements
-2. [`IMPROVEMENTS_COMPLETED.md`](IMPROVEMENTS_COMPLETED.md) - Detailed technical documentation
+**Essential Reading** (5 minutes):
+1. [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) - 30-second overview
+2. [`README.md`](README.md) - Main project overview
+3. [`DAILY_SCHEDULE.md`](DAILY_SCHEDULE.md) - Visual workflow guide
+
+### **📊 For Operators (Daily Trading)**
+
+**Daily Operations** (30 minutes/day):
+1. [`TRADING_WORKFLOW_EXPLAINED.md`](TRADING_WORKFLOW_EXPLAINED.md) - Complete workflow explanation
+2. [`docs/OPERATOR_GUIDE.md`](docs/OPERATOR_GUIDE.md) - Daily operations manual
+3. [`PHASE2_VALIDATION_PLAN.md`](PHASE2_VALIDATION_PLAN.md) - Current validation plan
+4. [`NEXT_STEPS.md`](NEXT_STEPS.md) - Action items and priorities
+
+**Data & Verification**:
+5. [`DATA_FRESHNESS.md`](DATA_FRESHNESS.md) - Proof of fresh data every run
+6. [`PROJECT_STATUS.md`](PROJECT_STATUS.md) - Comprehensive status report
+
+**Understanding the System**:
+7. [`SCAN_VS_TRADE_MODES.md`](SCAN_VS_TRADE_MODES.md) - How system knows scanning vs trading
+8. [`MODE_SELECTION_CHEATSHEET.md`](MODE_SELECTION_CHEATSHEET.md) - Which script to run when
+
+### **🔧 For Developers**
+
+**Technical Documentation**:
+1. [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Broker architecture
+2. [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Agent design
+3. [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Trading strategy details
+
+**Historical Context**:
+4. [`PROJECT_IMPROVEMENTS_SUMMARY.md`](PROJECT_IMPROVEMENTS_SUMMARY.md) - All 10 improvements overview
+5. [`IMPROVEMENTS_COMPLETED.md`](IMPROVEMENTS_COMPLETED.md) - Detailed technical documentation
 
 ### **Specific Topics**
 

@@ -1,8 +1,8 @@
-# VoidBloom AutoTrader - Setup Verification Script
+# AutoTrader - Setup Verification Script
 # Run this to check if your environment is properly configured
 
 Write-Host "`n==================================" -ForegroundColor Cyan
-Write-Host "VoidBloom AutoTrader - Setup Check" -ForegroundColor Cyan
+Write-Host "AutoTrader - Setup Check" -ForegroundColor Cyan
 Write-Host "==================================`n" -ForegroundColor Cyan
 
 $projectRoot = "C:\Users\kay\Documents\Projects\AutoTrader\Autotrader"

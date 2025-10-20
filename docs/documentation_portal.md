@@ -1,6 +1,6 @@
 # Documentation Portal
 
-Welcome! This page consolidates the most useful documentation for the VoidBloom / CrisisCore Hidden Gem Scanner so you can jump straight to the guide you need. The sections are grouped by workflow and discipline. Each link points to an existing, maintained document inside this repository (or an external canonical reference when needed).
+Welcome! This page consolidates the most useful documentation for the CrisisCore AutoTrader Hidden Gem Scanner so you can jump straight to the guide you need. The sections are grouped by workflow and discipline. Each link points to an existing, maintained document inside this repository (or an external canonical reference when needed).
 
 > **Tip:** The system is production-ready with a fully functional "FREE" tier. Start with the **Start Here** section if this is your first visit in a while.
 

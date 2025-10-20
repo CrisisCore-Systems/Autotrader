@@ -19,7 +19,7 @@ Etherscan has deprecated their V1 API and migrated to V2. This guide explains th
 
 ## Current Status
 
-The VoidBloom scanner currently uses **graceful degradation** for Etherscan API failures:
+The AutoTrader scanner currently uses **graceful degradation** for Etherscan API failures:
 - Contract verification failures don't block scans
 - System continues with reduced security analysis features
 - All tokens scan successfully without contract data

@@ -26,7 +26,7 @@ def test_run_backtest_creates_reports(tmp_path: Path) -> None:
 
     summary = json.loads(summary_path.read_text())
     assert summary["config"]["k"] == 5
-    assert summary["metrics"]["precision_at_k"]["mean"] > 0.5
+    assert summary["metrics"]["gem_score"]["precision_at_k"]["mean"] > 0.5
 
     weights = json.loads(weights_path.read_text())
     assert weights["weights"]["technicals"] == 0.35

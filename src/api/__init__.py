@@ -1,3 +1,3 @@
-"""API package for the VoidBloom services."""
+"""API package for the AutoTrader services."""
 
 from .main import app  # noqa: F401

@@ -61,7 +61,6 @@ def test_hidden_gem_scanner_produces_artifact() -> None:
         coin_client=StubCoinGeckoClient(),
         defi_client=StubDefiLlamaClient(),
         etherscan_client=StubEtherscanClient(),
-        narrative_analyzer=NarrativeAnalyzer(),
         narrative_analyzer=NarrativeAnalyzer(client=narrative_stub),
         liquidity_threshold=50_000,
     )

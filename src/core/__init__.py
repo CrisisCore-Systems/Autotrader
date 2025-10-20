@@ -1,1 +1,1 @@
-"""Core modules for VoidBloom / CrisisCore."""
+"""Core modules for CrisisCore AutoTrader."""

@@ -1,5 +1,6 @@
 # Core Dependencies
 fastapi==0.110.0
+slowapi>=0.1.9  # API rate limiting
 httpx==0.27.0
 numpy==1.26.4
 pandas==2.2.0
@@ -40,3 +41,18 @@ ccxt.pro==4.2.0  # For WebSocket streaming
 # Visualization (Optional)
 matplotlib==3.8.0
 plotly==5.18.0
+
+# Trading Brokers (Optional - install as needed)
+# Interactive Brokers (Canada-compatible) - RECOMMENDED for Canadian residents
+ib_insync>=0.9.86     # Interactive Brokers (Global/Canada) - Primary integration
+
+# US Brokers (Not available to Canadian residents)
+# alpaca-py>=0.9.0    # Alpaca Markets API (US only - NOT for Canada)
+
+# Security: Updated 2025-10-18 after pip-audit scan
+pymongo>=4.15.3  # Fixed GHSA-m87m-mmvp-v9qm
+# ecdsa==0.19.1 - GHSA-wj6h-64fc-37mp has no fix (timing attack considered out of scope by maintainer)
+
+# Database Migrations
+alembic>=1.17.0
+sqlalchemy>=2.0.44

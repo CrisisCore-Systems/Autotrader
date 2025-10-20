@@ -1,4 +1,4 @@
-// VoidBloom Data Oracle v1 – Phase 1–2 Pipeline (TypeScript Implementation)
+// AutoTrader Data Oracle v1 – Phase 1–2 Pipeline (TypeScript Implementation)
 
 import { createClient } from '@supabase/supabase-js';
 import Parser from 'rss-parser';
@@ -129,7 +129,7 @@ async function fetchReddit(token: string) {
   const response = await fetch(
     `https://www.reddit.com/search.json?q=${encodeURIComponent(token)}&sort=new&limit=20`,
     {
-      headers: { 'User-Agent': 'VoidBloomBotTS/1.0' },
+      headers: { 'User-Agent': 'AutoTraderBotTS/1.0' },
     }
   );
   const json = await response.json();

@@ -68,7 +68,8 @@ services:
       context: ../
       dockerfile: Dockerfile
     image: autotrader-worker:latest
-    command: python -m src.core.worker
+    # TODO: Create src/core/worker.py or replace with actual worker entrypoint
+    command: python -m src.cli.main --help  # Placeholder until worker module is implemented
     env_file:
       - ../.env
     environment:
@@ -131,7 +132,7 @@ services:
     environment:
       POSTGRES_USER: crisiscore
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crisiscore}
-      POSTGRES_DB: voidbloom
+      POSTGRES_DB: autotrader
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.utf8"
     ports:
       - "5432:5432"
@@ -154,7 +155,7 @@ services:
     
     # Health check
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U crisiscore -d voidbloom"]
+      test: ["CMD-SHELL", "pg_isready -U crisiscore -d autotrader"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -359,7 +360,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
     environment:
-      DATA_SOURCE_NAME: "postgresql://crisiscore:${POSTGRES_PASSWORD:-crisiscore}@postgres:5432/voidbloom?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://crisiscore:${POSTGRES_PASSWORD:-crisiscore}@postgres:5432/autotrader?sslmode=disable"
     ports:
       - "9187:9187"
     restart: unless-stopped

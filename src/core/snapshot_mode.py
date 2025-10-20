@@ -96,7 +96,7 @@ class DataSnapshot:
             New snapshot instance.
         """
         if snapshot_id is None:
-            snapshot_id = f"{source}:{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            snapshot_id = f"{source.replace(':', '_')}__{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
         
         return cls(
             snapshot_id=snapshot_id,

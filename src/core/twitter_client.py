@@ -57,7 +57,7 @@ class TwitterClientV2(BaseClient):
 
         headers = {
             "Authorization": f"Bearer {self._bearer_token}",
-            "User-Agent": "VoidBloom-AutoTrader/1.0",
+            "User-Agent": "CrisisCore-AutoTrader/1.0",
         }
 
         session = client or httpx.Client(base_url=base_url, timeout=timeout, headers=headers)

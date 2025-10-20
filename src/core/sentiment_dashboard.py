@@ -482,7 +482,7 @@ class NewsSentimentDashboard:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>VoidBloom Crypto Sentiment Dashboard</title>
+            <title>AutoTrader Crypto Sentiment Dashboard</title>
             <style>
                 body {{
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -575,7 +575,7 @@ class NewsSentimentDashboard:
         </head>
         <body>
             <div class="dashboard">
-                <h1>VoidBloom Crypto Sentiment Dashboard</h1>
+                <h1>AutoTrader Crypto Sentiment Dashboard</h1>
                 <p>Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
                 
                 {summary_html}
@@ -601,7 +601,7 @@ class NewsSentimentDashboard:
                 {viz_html}
                 
                 <div class="footer">
-                    <p>VoidBloom / CrisisCore AutoTrader - News Sentiment Module</p>
+                    <p>CrisisCore AutoTrader - News Sentiment Module</p>
                     <p>Data sources: CryptoPanic, CoinDesk</p>
                 </div>
             </div>

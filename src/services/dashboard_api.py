@@ -1,4 +1,4 @@
-"""FastAPI application powering the VoidBloom dashboard."""
+"""FastAPI application powering the AutoTrader dashboard."""
 
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ if _forward_ref_evaluate is not None:
 # Initialize structured logging
 logger = get_logger(__name__)
 
-CONFIG_ENV_VAR = "VOIDBLOOM_CONFIG"
+CONFIG_ENV_VAR = "AUTOTRADER_CONFIG"
 DEFAULT_CONFIG_PATH = Path("configs/ten_tokens.yaml")
 
 
@@ -87,7 +87,7 @@ _scan_lock = asyncio.Lock()
 
 
 app = FastAPI(
-    title="VoidBloom Dashboard API",
+    title="AutoTrader Dashboard API",
     version="0.2.0",
     openapi_url="/api/openapi.json",
     docs_url="/api/docs",
@@ -488,7 +488,7 @@ def _serialize_detail(config: TokenConfig, result: ScanResult, tree: Dict[str, A
 
 @app.get("/")
 def root() -> Dict[str, str]:
-    return {"service": "VoidBloom Dashboard API"}
+    return {"service": "AutoTrader Dashboard API"}
 
 
 @app.get("/health")

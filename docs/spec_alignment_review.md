@@ -1,4 +1,4 @@
-# VoidBloom Data Oracle v1 – Spec Alignment Review
+# AutoTrader Data Oracle v1 – Spec Alignment Review
 
 ## Executive Summary
 - The repository delivers a focused "Hidden-Gem Scanner" pipeline that ingests CoinGecko price data, DefiLlama protocol metrics, and Etherscan contract metadata, then assembles a GemScore and markdown artifact per token via a Tree-of-Thought execution plan.【F:src/core/clients.py†L34-L105】【F:src/core/pipeline.py†L80-L199】【F:src/services/exporter.py†L195-L214】

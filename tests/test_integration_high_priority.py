@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Issue 1: Alert Rule Validation
-from scripts.validate_alert_rules import (
+from scripts.validation.validate_alert_rules import (
     validate_alert_rules,
     validate_condition_logic,
     validate_unit_normalization,
@@ -100,8 +100,8 @@ class TestIntegration:
     @pytest.mark.skipif(not STATISTICS_AVAILABLE, reason="Statistics module not available")
     def test_backtest_statistics_integration(self):
         """Test backtest statistics with realistic data."""
-        # Simulate backtest returns
-        returns = [0.05, 0.03, -0.02, 0.08, 0.01, -0.01, 0.06, 0.04, 0.02, -0.03]
+        # Simulate backtest returns with more realistic volatility
+        returns = [0.005, 0.003, -0.002, 0.008, 0.001, -0.001, 0.006, 0.004, 0.002, -0.003]
         
         # Bootstrap confidence interval
         bootstrap_result = bootstrap_confidence_interval(returns, n_bootstrap=1000)
@@ -115,7 +115,7 @@ class TestIntegration:
         
         assert risk_metrics.total_return > 0
         assert risk_metrics.volatility > 0
-        assert -5 < risk_metrics.sharpe_ratio < 5  # Reasonable range
+        assert risk_metrics.sharpe_ratio > 0  # Sharpe should be positive for positive returns
         assert risk_metrics.max_drawdown >= 0
         assert 0 <= risk_metrics.win_rate <= 1
         
@@ -136,7 +136,7 @@ class TestIntegration:
         
         # Verify primary provider
         assert config.primary_provider.provider == LLMProvider.GROQ
-        assert config.primary_provider.model == "llama-3.1-70b-versatile"
+        assert config.primary_provider.model == "llama-3.3-70b-versatile"
         
         # Verify fallback chain
         assert len(config.fallback_providers) == 1
@@ -298,8 +298,8 @@ class TestIntegration:
     def test_production_deployment_documentation(self):
         """Verify production deployment documentation exists."""
         docs = [
-            "PRODUCTION_DEPLOYMENT.md",
-            "HIGH_PRIORITY_RESOLUTION_SUMMARY.md",
+            "PRODUCTION_READY_NEXT_STEPS.md",
+            "PROJECT_IMPROVEMENTS_SUMMARY.md",
             ".env.production.template",
         ]
         

@@ -171,7 +171,7 @@ export default function App() {
     <div className="app-shell">
       <header className="header">
         <div className="header-content">
-          <h1>VoidBloom Oracle</h1>
+          <h1>AutoTrader Oracle</h1>
           <span className="timestamp">{new Date().toLocaleString()}</span>
         </div>
         

@@ -6,3 +6,12 @@ __pycache__/
 artifacts/*.db
 node_modules/
 dashboard/node_modules/
+
+# Telegram bot credentials
+configs/telegram.yaml
+configs/telegram_*.yaml
+
+# Broker credentials (SENSITIVE!)
+configs/broker_credentials.yaml
+configs/broker_*.yaml
+*_credentials.yaml

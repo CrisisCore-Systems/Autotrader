@@ -177,6 +177,11 @@ class RateAwareRequester:
         content = decoded.get("content", "").encode("latin1")
         status = int(decoded.get("status", 200))
         headers = decoded.get("headers", {})
+        
+        # Remove content-encoding header to prevent double decompression
+        # since httpx automatically decompresses responses
+        headers = {k: v for k, v in headers.items() if k.lower() != "content-encoding"}
+        
         request = httpx.Request(method, decoded.get("url", url))
         return httpx.Response(status, content=content, headers=headers, request=request)
 

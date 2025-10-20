@@ -4,7 +4,7 @@ This document describes the implementation of high-priority signal coverage blin
 
 ## Overview
 
-We've addressed three critical blind spots to enhance VoidBloom's signal coverage:
+We've addressed three critical blind spots to enhance AutoTrader's signal coverage:
 
 1. **CEX/DEX Order Book Depth** - Real-time liquidity and order flow analytics
 2. **Twitter API v2 Integration** - Enhanced social sentiment signals
@@ -470,4 +470,4 @@ All clients use the `CachePolicy` system with appropriate TTLs:
 
 **Status**: ✅ Implementation Complete
 **Last Updated**: October 7, 2025
-**Owner**: VoidBloom Engineering
+**Owner**: AutoTrader Engineering

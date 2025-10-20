@@ -23,6 +23,11 @@ class MarketSnapshot:
     onchain_metrics: Dict[str, float]
     narratives: List[str]
 
+    @property
+    def price_usd(self) -> float:
+        """Alias for price field to match schema expectations."""
+        return self.price
+
 
 def compute_time_series_features(price_series: pd.Series) -> Dict[str, float]:
     """Compute basic technical indicators on closing price data.

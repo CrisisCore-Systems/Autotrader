@@ -1,0 +1,171 @@
+# Paper Trading Configuration
+# ============================================================
+# PennyHunter Phase 3 - Alpaca Integration
+# ============================================================
+
+# Broker Configuration
+broker:
+  name: interactive_brokers  # IB is available in Canada
+  paper_trading: true
+
+  # Interactive Brokers Connection
+  # Make sure TWS or IB Gateway is running!
+  # Download from: https://www.interactivebrokers.ca/
+  host: 127.0.0.1
+  port: 7497  # Paper trading (7496 for live)
+  client_id: 1
+
+  # Note: IB Canada supports CAD and USD accounts
+  # Configure your paper trading account in TWS/Gateway# Trading Parameters
+trading:
+  # Starting capital
+  initial_capital: 25000
+  
+  # Position sizing
+  max_position_pct: 0.10      # 10% max per position
+  risk_per_trade_pct: 0.01    # 1% risk per trade
+  max_concurrent: 5           # Max 5 positions at once
+  
+  # Risk adjustments by regime
+  regime_adjustments:
+    NORMAL:
+      position_size: 1.0      # Full size
+      confidence_threshold: 5.5
+    HIGH_VIX:
+      position_size: 0.75     # 75% size
+      confidence_threshold: 6.5
+    STRESS:
+      position_size: 0.50     # 50% size
+      confidence_threshold: 7.5
+  
+  # Circuit breakers
+  daily_loss_limit_pct: 0.03  # Stop trading if -3% day
+  max_drawdown_pct: 0.15      # Alert if -15% drawdown
+  consecutive_loss_limit: 3   # Pause after 3 losses in row
+
+# Scanner Configuration
+scanner:
+  # Ticker universe
+  ticker_list: configs/tokens/pennyhunter_tickers.yaml
+  
+  # Gap requirements
+  min_gap_pct: 3.0           # Minimum 3% gap
+  min_volume: 100000         # Min 100k volume
+  min_price: 1.50            # Min $1.50 price
+  max_price: 20.00           # Max $20 price
+  
+  # Scan timing
+  scan_time: "08:30"         # 8:30 AM ET (pre-market)
+  market_open: "09:30"       # 9:30 AM ET
+  market_close: "16:00"      # 4:00 PM ET
+
+# Agent Configuration
+agents:
+  # Agent weighting
+  min_trades_for_weighting: 20  # Binary mode until 20 trades
+  min_consensus: 0.70           # 70% weighted approval needed
+  
+  # Individual agent settings
+  forecaster:
+    min_confidence: 5.5
+    min_confidence_highvix: 7.5
+  
+  risk_officer:
+    max_volatility: 0.15      # 15% max daily volatility
+    min_dollar_volume: 500000  # $500k min daily volume
+  
+  news_sentry:
+    sentiment_threshold: -0.3  # Veto if sentiment < -0.3
+    recency_hours: 24         # Check last 24hrs of news
+
+# Alert Configuration
+alerts:
+  enabled: true
+  
+  # Slack integration
+  slack:
+    enabled: false
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    channels:
+      signals: "#pennyhunter-signals"
+      trades: "#pennyhunter-trades"
+      alerts: "#pennyhunter-alerts"
+  
+  # Discord integration
+  discord:
+    enabled: false
+    webhook_url: ${DISCORD_WEBHOOK_URL}
+  
+  # Email notifications
+  email:
+    enabled: false
+    smtp_server: smtp.gmail.com
+    smtp_port: 587
+    from_address: ${EMAIL_FROM}
+    to_addresses:
+      - ${EMAIL_TO}
+    password: ${EMAIL_PASSWORD}
+  
+  # Alert triggers
+  triggers:
+    new_signal: true          # Alert on new signal found
+    trade_entry: true         # Alert on trade execution
+    trade_exit: true          # Alert on trade close
+    stop_hit: true            # Alert on stop loss
+    target_hit: true          # Alert on target hit
+    circuit_breaker: true     # Alert on circuit breaker
+    system_error: true        # Alert on errors
+
+# Database Configuration
+database:
+  agentic_db: reports/pennyhunter_agentic.db
+  memory_db: reports/pennyhunter_memory.db
+  
+  # Backup settings
+  backup_enabled: true
+  backup_frequency: daily
+  backup_path: reports/backups/
+
+# Logging Configuration
+logging:
+  level: INFO
+  
+  # Log files
+  files:
+    daily_scan: logs/daily_scan.log
+    trading: logs/trading.log
+    errors: logs/errors.log
+  
+  # Log rotation
+  max_size_mb: 10
+  backup_count: 30
+
+# Monitoring Configuration
+monitoring:
+  # Dashboard
+  dashboard_enabled: true
+  dashboard_port: 8501       # Streamlit dashboard
+  
+  # Performance tracking
+  track_agent_accuracy: true
+  track_regime_performance: true
+  track_ticker_performance: true
+  
+  # Weekly reports
+  generate_weekly_report: true
+  report_day: Sunday
+  report_time: "18:00"
+
+# Safety Limits
+safety:
+  # Prevent accidental live trading
+  require_confirmation: true
+  
+  # Max order value
+  max_order_value: 5000      # $5k max single order
+  
+  # Price deviation limit
+  max_price_deviation_pct: 0.05  # 5% max from expected price
+  
+  # Order expiration
+  order_timeout_minutes: 5   # Cancel unfilled orders after 5min

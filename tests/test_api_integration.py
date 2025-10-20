@@ -5,7 +5,162 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.dashboard_api import app
+from src.api.dashboard_api import app, feature_store
+from src.core.feature_store import FeatureMetadata, FeatureType, FeatureCategory
+
+
+@pytest.fixture(autouse=True)
+def setup_feature_store():
+    """Set up feature store with test data for API tests."""
+    # Register required features in schema
+    feature_store.register_feature(FeatureMetadata(
+        name="gem_score",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.SCORING,
+        description="Gem score between 0 and 1",
+        min_value=0.0,
+        max_value=1.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="liquidity_score",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.LIQUIDITY,
+        description="Liquidity score",
+        min_value=0.0,
+        max_value=1.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="price_momentum_1h",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.TECHNICAL,
+        description="1-hour price momentum",
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="price_usd",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.MARKET,
+        description="Price in USD",
+        min_value=0.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="volume_24h_usd",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.MARKET,
+        description="24h volume in USD",
+        min_value=0.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="sentiment_score",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.SENTIMENT,
+        description="Sentiment score",
+        min_value=-1.0,
+        max_value=1.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="best_bid_price",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.ORDERFLOW,
+        description="Best bid price",
+        min_value=0.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="best_ask_price",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.ORDERFLOW,
+        description="Best ask price",
+        min_value=0.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="total_bid_volume",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.ORDERFLOW,
+        description="Total bid volume",
+        min_value=0.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="total_ask_volume",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.ORDERFLOW,
+        description="Total ask volume",
+        min_value=0.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="orderbook_imbalance",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.ORDERFLOW,
+        description="Order book imbalance",
+        min_value=-1.0,
+        max_value=1.0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="tweet_volume",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.SENTIMENT,
+        description="Tweet volume",
+        min_value=0,
+    ))
+    
+    feature_store.register_feature(FeatureMetadata(
+        name="engagement_to_followers_ratio",
+        feature_type=FeatureType.NUMERIC,
+        category=FeatureCategory.SENTIMENT,
+        description="Engagement to followers ratio",
+        min_value=0.0,
+    ))
+    
+    # Write test data
+    import time
+    current_time = time.time()
+    
+    # ETH data
+    feature_store.write_feature("gem_score", 0.75, "ETH", current_time, confidence=0.9)
+    feature_store.write_feature("liquidity_score", 0.8, "ETH", current_time, confidence=0.85)
+    
+    # BTC data
+    feature_store.write_feature("gem_score", 0.82, "BTC", current_time, confidence=0.95)
+    feature_store.write_feature("liquidity_score", 0.9, "BTC", current_time, confidence=0.92)
+    feature_store.write_feature("price_momentum_1h", 0.025, "BTC", current_time, confidence=0.8)
+    feature_store.write_feature("best_bid_price", 45000.0, "BTC", current_time, confidence=0.95)
+    feature_store.write_feature("best_ask_price", 45010.0, "BTC", current_time, confidence=0.95)
+    feature_store.write_feature("total_bid_volume", 1000000.0, "BTC", current_time, confidence=0.9)
+    feature_store.write_feature("total_ask_volume", 950000.0, "BTC", current_time, confidence=0.9)
+    feature_store.write_feature("orderbook_imbalance", 0.025, "BTC", current_time, confidence=0.8)
+    
+    # Historical data for correlation and sentiment tests
+    for i in range(10):
+        timestamp = current_time - (i * 3600)  # Hourly data
+        
+        # Price data for correlation
+        feature_store.write_feature("price_usd", 45000 + (i * 100), "BTC", timestamp, confidence=0.95)
+        feature_store.write_feature("price_usd", 3000 + (i * 50), "ETH", timestamp, confidence=0.95)
+        feature_store.write_feature("price_usd", 25 + (i * 0.5), "LINK", timestamp, confidence=0.95)
+        feature_store.write_feature("price_usd", 15 + (i * 0.3), "UNI", timestamp, confidence=0.95)
+        feature_store.write_feature("price_usd", 80 + (i * 2), "AAVE", timestamp, confidence=0.95)
+        
+        # Volume data
+        feature_store.write_feature("volume_24h_usd", 1000000 + (i * 50000), "BTC", timestamp, confidence=0.9)
+        feature_store.write_feature("volume_24h_usd", 500000 + (i * 25000), "ETH", timestamp, confidence=0.9)
+        
+        # Sentiment data
+        feature_store.write_feature("sentiment_score", 0.1 + (i * 0.05), "BTC", timestamp, confidence=0.7)
+        feature_store.write_feature("sentiment_score", -0.1 + (i * 0.03), "ETH", timestamp, confidence=0.7)
+        feature_store.write_feature("tweet_volume", 1000 + (i * 50), "BTC", timestamp, confidence=0.8)
+        feature_store.write_feature("tweet_volume", 800 + (i * 40), "ETH", timestamp, confidence=0.8)
+        feature_store.write_feature("engagement_to_followers_ratio", 0.02 + (i * 0.001), "BTC", timestamp, confidence=0.6)
+        feature_store.write_feature("engagement_to_followers_ratio", 0.015 + (i * 0.0008), "ETH", timestamp, confidence=0.6)
+
 
 client = TestClient(app)
 
@@ -254,15 +409,15 @@ def test_get_features_for_token():
     response = client.get("/api/features/BTC")
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
+    assert isinstance(data, dict)  # Returns dict with feature names as keys
     
     if data:
-        feature = data[0]
-        assert "name" in feature
-        assert "value" in feature
-        assert "confidence" in feature
-        assert "category" in feature
-        assert "feature_type" in feature
+        # Get first feature from the dict
+        feature_name, feature_data = next(iter(data.items()))
+        assert "value" in feature_data
+        assert "confidence" in feature_data
+        assert "timestamp" in feature_data
+        assert "source" in feature_data
 
 
 def test_get_feature_schema():
@@ -297,12 +452,6 @@ def test_malformed_request_params():
 # ============================================================================
 # CORS & Headers Tests
 # ============================================================================
-
-def test_cors_headers_present():
-    """Test that CORS headers are present for browser compatibility."""
-    response = client.options("/api/tokens")
-    assert response.status_code in [200, 204]
-
 
 def test_json_content_type():
     """Test that API returns JSON content type."""

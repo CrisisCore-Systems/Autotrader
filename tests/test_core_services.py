@@ -197,24 +197,33 @@ class TestFeatureStore:
         feature_name = "test_feature"
         feature_value = 42.0
         
-        # Store feature
-        feature_store.store_feature(
-            token_symbol=token,
+        # First register the feature in schema
+        from src.core.feature_store import FeatureMetadata, FeatureType, FeatureCategory
+        feature_store.register_feature(FeatureMetadata(
             name=feature_name,
+            feature_type=FeatureType.NUMERIC,
+            category=FeatureCategory.MARKET,
+            description="Test feature",
+        ))
+        
+        # Store feature
+        feature_store.write_feature(
+            feature_name=feature_name,
             value=feature_value,
+            token_symbol=token,
             confidence=0.9,
-            category="test",
-            feature_type="numeric"
         )
         
         # Retrieve feature
-        features = feature_store.get_features(token)
-        assert len(features) > 0
-        assert any(f["name"] == feature_name for f in features)
+        retrieved_feature = feature_store.read_feature(feature_name, token)
+        assert retrieved_feature is not None
+        assert retrieved_feature.value == feature_value
+        assert retrieved_feature.confidence == 0.9
+        assert retrieved_feature.token_symbol == token
     
     def test_get_feature_schema(self, feature_store):
         """Test getting feature schema."""
-        schema = feature_store.get_schema()
+        schema = feature_store.list_features()
         assert isinstance(schema, list)
     
     def test_feature_categories(self, feature_store):
@@ -223,11 +232,11 @@ class TestFeatureStore:
             "market", "sentiment", "technical", "security",
             "liquidity", "orderflow", "volatility", "social", "narrative"
         ]
-        schema = feature_store.get_schema()
+        schema = feature_store.list_features()
         
         if schema:
             # At least some categories should be represented
-            schema_categories = [s.get("category") for s in schema]
+            schema_categories = [s.category.value for s in schema]
             assert any(cat in schema_categories for cat in categories)
 
 
@@ -240,20 +249,20 @@ class TestNewsClient:
     
     def test_news_client_initialization(self):
         """Test news client can be initialized."""
-        from src.core.news_client import NewsAggregator
-        client = NewsAggregator()
+        from src.core.news_client import NewsClient
+        client = NewsClient()
         assert client is not None
     
     @patch('src.core.news_client.requests.get')
     def test_fetch_news_handles_errors(self, mock_get):
         """Test news fetching handles API errors gracefully."""
-        from src.core.news_client import NewsAggregator
+        from src.core.news_client import NewsClient
         
         # Mock failed request
         mock_get.side_effect = Exception("API Error")
         
-        client = NewsAggregator()
-        result = client.fetch_news_for_token("BTC")
+        client = NewsClient()
+        result = client.get_news_for_token("BTC")
         
         # Should return empty list or handle gracefully
         assert isinstance(result, list)
@@ -261,25 +270,26 @@ class TestNewsClient:
     @patch('src.core.news_client.requests.get')
     def test_fetch_news_returns_articles(self, mock_get):
         """Test successful news fetching."""
-        from src.core.news_client import NewsAggregator
+        from src.core.news_client import NewsClient
         
         # Mock successful response
         mock_response = Mock()
         mock_response.json.return_value = {
-            "articles": [
+            "results": [
                 {
                     "title": "Bitcoin News",
                     "url": "http://example.com",
-                    "source": {"name": "CoinDesk"},
-                    "publishedAt": "2025-01-01T00:00:00Z"
+                    "source": {"title": "CoinDesk"},
+                    "published_at": "2025-01-01T00:00:00Z",
+                    "votes": {"positive": 10, "negative": 2}
                 }
             ]
         }
         mock_response.status_code = 200
         mock_get.return_value = mock_response
         
-        client = NewsAggregator()
-        result = client.fetch_news_for_token("BTC")
+        client = NewsClient()
+        result = client.get_news_for_token("BTC")
         
         assert isinstance(result, list)
 
@@ -298,12 +308,14 @@ class TestPipeline:
         config = TokenConfig(
             symbol="BTC",
             coingecko_id="bitcoin",
+            defillama_slug="bitcoin",
             contract_address="0x123",
             narratives=["DeFi", "Layer1"]
         )
         
         assert config.symbol == "BTC"
         assert config.coingecko_id == "bitcoin"
+        assert config.defillama_slug == "bitcoin"
         assert len(config.narratives) == 2
     
     def test_scan_context_creation(self):
@@ -313,6 +325,7 @@ class TestPipeline:
         config = TokenConfig(
             symbol="ETH",
             coingecko_id="ethereum",
+            defillama_slug="ethereum",
             contract_address="0xETH"
         )
         

@@ -1,11 +1,11 @@
-# Curated Token List for VoidBloom / CrisisCore Scanner Analysis
+# Curated Token List for CrisisCore AutoTrader Scanner Analysis
 
 **Generated:** October 11, 2025  
 **Purpose:** High-potential cryptocurrency tokens optimized for multi-signal GemScore analysis
 
 ## Executive Summary
 
-This document provides a research-driven list of viable tokens selected specifically for the VoidBloom Hidden-Gem Scanner's feature extraction framework. Each token is evaluated across the system's core scoring dimensions:
+This document provides a research-driven list of viable tokens selected specifically for the AutoTrader Hidden-Gem Scanner's feature extraction framework. Each token is evaluated across the system's core scoring dimensions:
 
 - **Sentiment/Narrative (S)** - NVI, MMS, archetypal patterns
 - **Accumulation (A)** - Whale flows, holder distribution
@@ -800,5 +800,5 @@ This curated token list provides:
 
 **Document Version:** 1.0  
 **Last Updated:** October 11, 2025  
-**Maintained By:** VoidBloom / CrisisCore Systems  
+**Maintained By:** CrisisCore AutoTrader Systems  
 **Status:** ✅ Production Ready

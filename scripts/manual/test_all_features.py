@@ -95,9 +95,9 @@ def test_all_features():
                     "Liquidity": result.market_snapshot is not None and result.market_snapshot.liquidity_usd > 0,
                     "GemScore": result.gem_score is not None and result.gem_score.score > 0,
                     "Final Score": result.final_score > 0,
-                    "Confidence": result.confidence > 0,
-                    "AI Narrative": result.narrative is not None and len(result.narrative) > 0,
-                    "Safety Check": result.safety is not None,
+                    "Confidence": result.gem_score is not None and result.gem_score.confidence > 0,
+                    "AI Narrative": result.narrative is not None and len(result.narrative.themes) > 0,
+                    "Safety Check": result.safety_report is not None,
                 }
                 
                 print(f"✅ {token_cfg.symbol} scan completed")
@@ -105,7 +105,7 @@ def test_all_features():
                 print(f"   Final Score: {result.final_score:.2f}")
                 print(f"   Price: ${result.market_snapshot.price_usd:.4f}")
                 print(f"   Liquidity: ${result.market_snapshot.liquidity_usd:,.0f}")
-                print(f"   Confidence: {result.confidence:.0f}%")
+                print(f"   Confidence: {result.gem_score.confidence:.0f}%")
                 print(f"   Flagged: {result.flag}")
                 
                 # Feature status
@@ -144,7 +144,7 @@ def test_all_features():
         print("\nToken Rankings (by Final Score):")
         sorted_tokens = sorted(results.items(), key=lambda x: x[1].final_score, reverse=True)
         for rank, (symbol, result) in enumerate(sorted_tokens, 1):
-            print(f"   {rank}. {symbol}: {result.final_score:.2f} (Gem: {result.gem_score.score:.2f}, Conf: {result.confidence:.0f}%)")
+            print(f"   {rank}. {symbol}: {result.final_score:.2f} (Gem: {result.gem_score.score:.2f}, Conf: {result.gem_score.confidence:.0f}%)")
         
         # Feature availability across all tokens
         print("\nFeature Availability:")
@@ -153,9 +153,9 @@ def test_all_features():
             ("Liquidity Data", lambda r: r.market_snapshot and r.market_snapshot.liquidity_usd > 0),
             ("GemScore Calculation", lambda r: r.gem_score and r.gem_score.score > 0),
             ("Final Score", lambda r: r.final_score > 0),
-            ("Confidence Score", lambda r: r.confidence > 0),
-            ("AI Narrative", lambda r: r.narrative and len(r.narrative) > 0),
-            ("Safety Analysis", lambda r: r.safety is not None),
+            ("Confidence Score", lambda r: r.gem_score and r.gem_score.confidence > 0),
+            ("AI Narrative", lambda r: r.narrative and len(r.narrative.themes) > 0),
+            ("Safety Analysis", lambda r: r.safety_report is not None),
         ]
         
         for feature_name, check_fn in feature_checks:

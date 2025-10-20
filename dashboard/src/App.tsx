@@ -76,7 +76,7 @@ export default function App() {
     <ToastProvider>
       <div className="app-shell">
         <header className="header">
-          <h1>VoidBloom Oracle</h1>
+          <h1>AutoTrader Oracle</h1>
           <span>{new Date().toLocaleString()}</span>
         </header>
 

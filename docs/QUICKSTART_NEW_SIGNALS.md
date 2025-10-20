@@ -2,7 +2,7 @@
 
 ## Overview
 
-VoidBloom now supports three new high-priority signal sources:
+AutoTrader now supports three new high-priority signal sources:
 1. **CEX/DEX Order Flow** - Real-time liquidity and market depth
 2. **Twitter API v2** - Enhanced social sentiment signals
 3. **Derivatives Metrics** - Funding rates and open interest

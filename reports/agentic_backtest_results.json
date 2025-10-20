@@ -1,0 +1,1474 @@
+{
+  "backtest_info": {
+    "start_date": "2019-01-01",
+    "end_date": "2025-10-18",
+    "confidence_threshold": 5.5,
+    "confidence_threshold_highvix": 7.5,
+    "run_timestamp": "2025-10-18T10:49:52.014985"
+  },
+  "metrics": {
+    "total_signals": 32,
+    "signals_after_forecaster": 32,
+    "signals_after_riskofficer": 32,
+    "signals_after_newssentry": 32,
+    "total_trades": 8,
+    "wins": 6,
+    "losses": 2,
+    "win_rate": 0.75,
+    "avg_return": 0.06250000000000006,
+    "avg_win": 0.10000000000000009,
+    "avg_loss": -0.050000000000000044,
+    "profit_factor": 6.0,
+    "avg_hold_days": 4.5,
+    "avg_confidence": 6.0,
+    "trades_normal": 8,
+    "trades_high_vix": 0,
+    "trades_spy_stress": 0,
+    "forecaster_vetoes": 0,
+    "riskofficer_vetoes": 0,
+    "newssentry_vetoes": 0,
+    "phase25_trades": 32,
+    "phase25_win_rate": 0.46875,
+    "improvement_pct": 60.0
+  },
+  "trades": [
+    {
+      "ticker": "COMP",
+      "entry_date": "2021-08-10",
+      "exit_date": "2021-08-17",
+      "entry_price": 16.6299991607666,
+      "exit_price": 15.798499202728271,
+      "stop_price": 15.798499202728271,
+      "target_price": 18.292999076843262,
+      "return_pct": -0.050000000000000044,
+      "hold_days": 7,
+      "hit_target": false,
+      "hit_stop": true,
+      "exit_reason": "STOP",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.08835074943636162,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "COMP",
+      "entry_date": "2024-05-09",
+      "exit_date": "2024-05-10",
+      "entry_price": 3.6600000858306885,
+      "exit_price": 4.0260000944137575,
+      "stop_price": 3.477000081539154,
+      "target_price": 4.0260000944137575,
+      "return_pct": 0.10000000000000009,
+      "hold_days": 1,
+      "hit_target": true,
+      "hit_stop": false,
+      "exit_reason": "TARGET",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.11585369443765815,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "COMP",
+      "entry_date": "2025-01-15",
+      "exit_date": "2025-01-24",
+      "entry_price": 6.369999885559082,
+      "exit_price": 7.006999874114991,
+      "stop_price": 6.051499891281128,
+      "target_price": 7.006999874114991,
+      "return_pct": 0.10000000000000009,
+      "hold_days": 9,
+      "hit_target": true,
+      "hit_stop": false,
+      "exit_reason": "TARGET",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.14157705603127232,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "COMP",
+      "entry_date": "2025-02-19",
+      "exit_date": "2025-02-20",
+      "entry_price": 8.529999732971191,
+      "exit_price": 9.382999706268311,
+      "stop_price": 8.103499746322631,
+      "target_price": 9.382999706268311,
+      "return_pct": 0.10000000000000009,
+      "hold_days": 1,
+      "hit_target": true,
+      "hit_stop": false,
+      "exit_reason": "TARGET",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.06892226974725778,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "INTR",
+      "entry_date": "2023-05-25",
+      "exit_date": "2023-06-01",
+      "entry_price": 2.3608584965927473,
+      "exit_price": 2.5969443462520223,
+      "stop_price": 2.24281557176311,
+      "target_price": 2.5969443462520223,
+      "return_pct": 0.10000000000000009,
+      "hold_days": 7,
+      "hit_target": true,
+      "hit_stop": false,
+      "exit_reason": "TARGET",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.05240182653873804,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "INTR",
+      "entry_date": "2023-08-14",
+      "exit_date": "2023-08-18",
+      "entry_price": 3.82047640798218,
+      "exit_price": 4.202524048780398,
+      "stop_price": 3.6294525875830708,
+      "target_price": 4.202524048780398,
+      "return_pct": 0.10000000000000009,
+      "hold_days": 4,
+      "hit_target": true,
+      "hit_stop": false,
+      "exit_reason": "TARGET",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.05978268033217108,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "INTR",
+      "entry_date": "2023-08-16",
+      "exit_date": "2023-08-17",
+      "entry_price": 4.124155241900639,
+      "exit_price": 3.917947479805607,
+      "stop_price": 3.917947479805607,
+      "target_price": 4.536570766090703,
+      "return_pct": -0.050000000000000044,
+      "hold_days": 1,
+      "hit_target": false,
+      "hit_stop": true,
+      "exit_reason": "STOP",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.0685279463946408,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    {
+      "ticker": "INTR",
+      "entry_date": "2025-08-06",
+      "exit_date": "2025-08-12",
+      "entry_price": 7.349999904632568,
+      "exit_price": 8.084999895095827,
+      "stop_price": 6.982499909400939,
+      "target_price": 8.084999895095827,
+      "return_pct": 0.10000000000000009,
+      "hold_days": 6,
+      "hit_target": true,
+      "hit_stop": false,
+      "exit_reason": "TARGET",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.12557422181894312,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    }
+  ],
+  "daily_logs": [
+    {
+      "date": "2020-08-03",
+      "ticker": "ADT",
+      "agent_results": {
+        "signal": "ADT",
+        "date": "2020-08-03",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Memory: Ejected: <35% win rate after 4 trades (1W/3L)"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2021-11-09",
+      "ticker": "ADT",
+      "agent_results": {
+        "signal": "ADT",
+        "date": "2021-11-09",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Memory: Ejected: <35% win rate after 4 trades (1W/3L)"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2022-09-06",
+      "ticker": "ADT",
+      "agent_results": {
+        "signal": "ADT",
+        "date": "2022-09-06",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Memory: Ejected: <35% win rate after 4 trades (1W/3L)"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2024-10-24",
+      "ticker": "ADT",
+      "agent_results": {
+        "signal": "ADT",
+        "date": "2024-10-24",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Memory: Ejected: <35% win rate after 4 trades (1W/3L)"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2025-02-27",
+      "ticker": "ADT",
+      "agent_results": {
+        "signal": "ADT",
+        "date": "2025-02-27",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Memory: Ejected: <35% win rate after 4 trades (1W/3L)"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2020-11-09",
+      "ticker": "SAN",
+      "agent_results": {
+        "signal": "SAN",
+        "date": "2020-11-09",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: forecaster)"
+      }
+    },
+    {
+      "date": "2021-05-13",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2021-05-13",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: forecaster)"
+      }
+    },
+    {
+      "date": "2021-08-10",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2021-08-10",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2022-05-13",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2022-05-13",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: forecaster)"
+      }
+    },
+    {
+      "date": "2023-05-10",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2023-05-10",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Gap too large (26.4%)"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2024-05-09",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2024-05-09",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2025-01-15",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2025-01-15",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2025-02-19",
+      "ticker": "COMP",
+      "agent_results": {
+        "signal": "COMP",
+        "date": "2025-02-19",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2022-06-24",
+      "ticker": "INTR",
+      "agent_results": {
+        "signal": "INTR",
+        "date": "2022-06-24",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: forecaster)"
+      }
+    },
+    {
+      "date": "2023-05-25",
+      "ticker": "INTR",
+      "agent_results": {
+        "signal": "INTR",
+        "date": "2023-05-25",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2023-08-14",
+      "ticker": "INTR",
+      "agent_results": {
+        "signal": "INTR",
+        "date": "2023-08-14",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2023-08-16",
+      "ticker": "INTR",
+      "agent_results": {
+        "signal": "INTR",
+        "date": "2023-08-16",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2025-08-06",
+      "ticker": "INTR",
+      "agent_results": {
+        "signal": "INTR",
+        "date": "2025-08-06",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": true,
+            "note": "Passed risk checks"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "APPROVED",
+        "consensus_score": 1.0,
+        "consensus_note": "Consensus 100.0% \u2265 threshold 100.0%"
+      }
+    },
+    {
+      "date": "2020-11-24",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2020-11-24",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2021-01-22",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2021-01-22",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2021-11-08",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2021-11-08",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2021-11-09",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2021-11-09",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2021-12-09",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2021-12-09",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2023-03-30",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2023-03-30",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2023-08-03",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2023-08-03",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2023-11-08",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2023-11-08",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2024-03-06",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2024-03-06",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2024-08-01",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2024-08-01",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2024-10-03",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2024-10-03",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2024-11-12",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2024-11-12",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    },
+    {
+      "date": "2025-05-06",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2025-05-06",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: high_vix"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": false,
+            "note": "Below confidence threshold"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.6666666666666666,
+        "consensus_note": "Consensus 66.7% < threshold (vetoed by: forecaster, riskofficer)"
+      }
+    },
+    {
+      "date": "2025-08-05",
+      "ticker": "EVGO",
+      "agent_results": {
+        "signal": "EVGO",
+        "date": "2025-08-05",
+        "agents": {
+          "sentinel": {
+            "approved": true,
+            "note": "Regime: normal"
+          },
+          "screener": {
+            "approved": true,
+            "note": "Historical signal"
+          },
+          "forecaster": {
+            "approved": true,
+            "confidence": 6.0,
+            "note": "Confidence: 6.0"
+          },
+          "riskofficer": {
+            "approved": false,
+            "note": "Base rate 41.5% < floor"
+          },
+          "newssentry": {
+            "approved": true,
+            "note": "No news veto"
+          },
+          "trader": {
+            "approved": true,
+            "note": "Action generated"
+          }
+        },
+        "final_decision": "VETOED_CONSENSUS",
+        "consensus_score": 0.8333333333333334,
+        "consensus_note": "Consensus 83.3% < threshold (vetoed by: riskofficer)"
+      }
+    }
+  ]
+}

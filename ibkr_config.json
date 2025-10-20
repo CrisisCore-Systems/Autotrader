@@ -1,0 +1,17 @@
+{
+  "ibkr": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": 1,
+    "account_id": "DU0071381",
+    "timeout": 60,
+    "readonly": false
+  },
+  "notes": {
+    "connection": "Paper trading setup - TWS running on localhost:7497",
+    "account": "IBKR Paper Trading Account DU0071381",
+    "security": "Ensure TWS API settings allow connections from this client ID",
+    "requirements": "Requires ib_insync library: pip install ib_insync"
+  }
+}

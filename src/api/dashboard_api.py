@@ -188,7 +188,7 @@ class SentimentTrend(BaseModel):
 # ============================================================================
 
 app = FastAPI(
-    title="VoidBloom Dashboard API",
+    title="AutoTrader Dashboard API",
     description="Enhanced API with anomaly detection, SLA monitoring, and advanced visualizations",
     version="2.0.0",
 )
@@ -447,7 +447,7 @@ def scan_token_full(symbol: str, coingecko_id: str, defillama_slug: str, address
 @app.get("/", tags=["Root"])
 def root():
     """Root endpoint."""
-    return {"status": "ok", "message": "VoidBloom Unified API is running"}
+    return {"status": "ok", "message": "AutoTrader Unified API is running"}
 
 
 @app.get("/api/tokens", response_model=List[TokenResponse], tags=["Scanner"])
@@ -666,15 +666,15 @@ async def get_sla_status() -> List[SLAStatus]:
     statuses = []
 
     for source_name, monitor in SLA_REGISTRY.get_all().items():
-        metrics = monitor.get_current_metrics()
-        status = monitor.get_status()
+        metrics = monitor.get_metrics()
+        status = monitor.get_metrics().status
 
         statuses.append(SLAStatus(
             source_name=source_name,
-            status=status.value,
-            latency_p50=metrics.latency_p50_seconds if metrics else None,
-            latency_p95=metrics.latency_p95_seconds if metrics else None,
-            latency_p99=metrics.latency_p99_seconds if metrics else None,
+            status=status.value.upper(),
+            latency_p50=metrics.latency_p50 if metrics else None,
+            latency_p95=metrics.latency_p95 if metrics else None,
+            latency_p99=metrics.latency_p99 if metrics else None,
             success_rate=metrics.success_rate if metrics else None,
             uptime_percentage=metrics.uptime_percentage if metrics else None,
         ))
@@ -694,7 +694,7 @@ async def get_circuit_breaker_status() -> List[CircuitBreakerStatus]:
     for breaker_name, breaker in CIRCUIT_REGISTRY.get_all().items():
         statuses.append(CircuitBreakerStatus(
             breaker_name=breaker_name,
-            state=breaker.get_state().value,
+            state=breaker.state.value.upper(),
             failure_count=breaker._failure_count,
         ))
 
@@ -882,6 +882,16 @@ async def get_sentiment_trend(token_symbol: str, hours: int = 24) -> SentimentTr
 # Feature Store Endpoints
 # ============================================================================
 
+@app.get("/api/features/schema", tags=["Feature Store"])
+async def get_feature_schema() -> List[Dict[str, Any]]:
+    """Get feature store schema.
+
+    Returns:
+        List of feature metadata
+    """
+    return [metadata.to_dict() for metadata in feature_store._schema.values()]
+
+
 @app.get("/api/features/{token_symbol}", tags=["Feature Store"])
 async def get_token_features(token_symbol: str) -> Dict[str, Any]:
     """Get all available features for a token.
@@ -909,16 +919,6 @@ async def get_token_features(token_symbol: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="No features found for token")
 
     return features
-
-
-@app.get("/api/features/schema", tags=["Feature Store"])
-async def get_feature_schema() -> List[Dict[str, Any]]:
-    """Get feature store schema.
-
-    Returns:
-        List of feature metadata
-    """
-    return [metadata.to_dict() for metadata in feature_store._schema.values()]
 
 
 # ============================================================================

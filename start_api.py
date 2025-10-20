@@ -1,4 +1,4 @@
-"""Start the VoidBloom Dashboard API server."""
+"""Start the AutoTrader Dashboard API server."""
 
 import sys
 from pathlib import Path
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     from src.api.main import app
     
     print("=" * 60)
-    print("VoidBloom Scanner API")
+    print("AutoTrader Scanner API")
     print("=" * 60)
     print()
     print("Starting server on http://127.0.0.1:8001")

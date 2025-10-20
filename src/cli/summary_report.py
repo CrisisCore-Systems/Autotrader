@@ -417,7 +417,7 @@ class SummaryReportGenerator:
         """Print report footer."""
         print("-" * 80)
         print(f"Generated: {timestamp}".center(80))
-        print("VoidBloom / CrisisCore Hidden-Gem Scanner".center(80))
+        print("CrisisCore AutoTrader Hidden-Gem Scanner".center(80))
         print("-" * 80)
     
     def _print_score_bar(

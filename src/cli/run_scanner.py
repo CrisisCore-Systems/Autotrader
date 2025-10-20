@@ -180,7 +180,7 @@ def run(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the VoidBloom Hidden-Gem Scanner")
+    parser = argparse.ArgumentParser(description="Run the AutoTrader Hidden-Gem Scanner")
     parser.add_argument("config", type=Path, help="Path to YAML configuration file")
     parser.add_argument(
         "--tree",

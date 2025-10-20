@@ -1,0 +1,169 @@
+# BounceHunter Configuration - Canadian TFSA
+# Conservative settings for tax-free savings accounts
+# Preserves contribution room with smaller position sizes
+
+# ============================================================================
+# AGENT SYSTEM CONFIGURATION
+# ============================================================================
+
+# Live trading toggle
+live_trading: false  # Set to true after paper trading validation
+
+# Risk controls
+risk_controls:
+  # Position sizing (conservative for TFSA)
+  size_pct_base: 0.008          # 0.8% base size (lower than aggressive 1.2%)
+  size_pct_high_vix: 0.004      # 0.4% in high VIX (50% reduction)
+  max_position_size_pct: 1.0    # 1.0% max per position
+  max_positions: 5              # Max 5 concurrent positions (preserve capital)
+  
+  # Drawdown limits (tighter for registered accounts)
+  daily_loss_limit_pct: 0.015   # 1.5% daily max loss
+  max_drawdown_pct: 0.08        # 8% max drawdown before pause
+  
+  # Performance thresholds
+  min_hit_rate: 0.40            # Eject tickers below 40% hit rate
+  min_sample_size: 10           # Need 10+ trades to calculate hit rate
+
+# Entry thresholds
+scanner:
+  # Ticker universe (Canadian + US stocks)
+  tickers:
+    - AAPL
+    - MSFT
+    - GOOGL
+    - TSLA
+    - NVDA
+    - META
+    - AMZN
+    - AMD
+    - NFLX
+    - DIS
+  
+  min_bcs: 0.68                 # Higher threshold (conservative, 68th percentile)
+  min_volume: 1_000_000         # 1M+ volume (liquid stocks only)
+  
+  blackouts:
+    earnings_days: 2            # Skip 2 days before earnings
+    
+  price_filters:
+    min_price: 10.0             # $10+ stocks
+    max_price: 500.0            # Under $500
+    
+  excluded_sectors:
+    - "Utilities"               # Low volatility
+    - "Real Estate"             # Interest rate sensitive
+
+# Exit rules
+exits:
+  profit_target_pct: 0.03       # 3% profit target
+  stop_loss_pct: 0.02           # 2% stop loss (1.5:1 R/R)
+  trailing_stop_pct: 0.015      # 1.5% trailing stop after breakeven
+  max_holding_days: 7           # Exit after 7 days max
+
+# Regime detection (VIX-based sizing)
+regime:
+  vix_high_threshold: 20.0      # VIX > 20 = high volatility
+  spy_dma_period: 200           # SPY 200-day moving average
+  
+  # Adjustments per regime
+  adjustments:
+    high_vix:
+      size_multiplier: 0.5      # 50% size in high VIX
+      min_bcs_adj: 0.05         # Raise BCS by 5% (0.68 → 0.73)
+    low_spy:
+      size_multiplier: 0.7      # 70% size when SPY weak
+      max_positions_adj: -2     # Reduce max positions by 2
+
+# ============================================================================
+# TELEGRAM NOTIFICATIONS (Optional)
+# ============================================================================
+telegram_bot:
+  enabled: false                # Set to true after testing
+  bot_token: "YOUR_BOT_TOKEN"
+  chat_id: "YOUR_CHAT_ID"
+  
+  # Notification settings
+  notify_on:
+    - "entry_signal"            # New buy signals
+    - "exit"                    # Position exits
+    - "veto"                    # Vetoed signals (learning opportunity)
+    - "daily_summary"           # End-of-day summary
+
+# ============================================================================
+# AGENT WEIGHTS (Conservative Learning)
+# ============================================================================
+agents:
+  sentiment:
+    enabled: true
+    veto_weight: 0.15           # Lower weight for sentiment vetos
+    
+  forecast:
+    enabled: true
+    confidence_threshold: 0.45  # Higher threshold for forecaster
+    
+  risk:
+    enabled: true
+    strict_mode: true           # Strict risk checks for TFSA
+    
+  news:
+    enabled: true
+    check_window_hours: 24      # Check last 24 hours of news
+
+# ============================================================================
+# MEMORY & LEARNING
+# ============================================================================
+memory:
+  database: "tfsa_memory.db"    # Separate DB for TFSA tracking
+  
+  learning:
+    enabled: true
+    update_frequency: "daily"   # Update hit rates daily
+    
+  audit:
+    frequency: "weekly"         # Run audit weekly
+    min_confidence_floor: 0.30  # Don't drop below 30% confidence
+
+# ============================================================================
+# NOTES FOR CANADIAN TFSA TRADERS
+# ============================================================================
+# 
+# TFSA Contribution Room (2025): $95,000 lifetime
+# 
+# Position Sizing Example (on $50k account):
+# - Base size: 0.8% = $400 per position
+# - High VIX: 0.4% = $200 per position
+# - Max 5 positions = $2,000 max exposure (4% of account)
+# 
+# Expected Performance (based on backtest):
+# - Hit rate: 55-60%
+# - Avg gain: 3%
+# - Avg loss: 2%
+# - Expectancy: 1.5% per trade
+# - Annual trades: ~80 (conservative)
+# - Expected annual return: ~10-15% (compounded)
+# 
+# Tax Advantages:
+# - All gains tax-free (inside TFSA)
+# - No capital gains reporting
+# - Can withdraw anytime (tax-free)
+# - Re-contribution room next year
+# 
+# Risk Management:
+# - Conservative 0.8% sizing preserves capital
+# - 5 position max avoids over-concentration
+# - Higher BCS threshold (0.68) reduces false signals
+# - Strict risk controls (RiskOfficer in strict_mode)
+# 
+# Recommended Broker:
+# - Questrade: Good for TFSA, $4.95-$9.95/trade
+# - IBKR: Best fees ($1/trade), but $10k minimum
+# 
+# Usage:
+# python -m bouncehunter.agentic_cli \
+#   --mode scan \
+#   --broker questrade \
+#   --broker-key "YOUR_REFRESH_TOKEN" \
+#   --config configs/canadian_tfsa.yaml
+# 
+# ============================================================================

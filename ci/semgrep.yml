@@ -51,14 +51,14 @@ rules:
   
   - id: hardcoded-private-key
     patterns:
-      - pattern-regex: '(private_key|privateKey|PRIVATE_KEY)\s*=\s*["\'][0-9a-fA-F]{64}["\']'
+      - pattern-regex: '(private_key|privateKey|PRIVATE_KEY)\s*=\s*["''][0-9a-fA-F]{64}["'']'
     message: Hardcoded private key detected - use secure key management
     severity: ERROR
     languages: [python, javascript, typescript]
     
   - id: api-key-in-code
     patterns:
-      - pattern-regex: '(GROQ_API_KEY|OPENAI_API_KEY|api_key)\s*=\s*["\'][a-zA-Z0-9_-]{20,}["\']'
+      - pattern-regex: '(GROQ_API_KEY|OPENAI_API_KEY|api_key)\s*=\s*["''][a-zA-Z0-9_-]{20,}["'']'
       - pattern-not-regex: '.*\$\{.*\}.*'
     message: API key hardcoded in source code - use environment variables
     severity: ERROR
@@ -489,7 +489,7 @@ rules:
       - metavariable-pattern:
           metavariable: $BYTES
           patterns:
-            - pattern-regex: 'b["\'][a-zA-Z0-9+/=]{16,}["\']'
+            - pattern-regex: 'b["''][a-zA-Z0-9+/=]{16,}["'']'
     message: Hardcoded cryptographic key - load from secure key management system
     severity: ERROR
     languages: [python]
@@ -556,7 +556,7 @@ rules:
       - metavariable-pattern:
           metavariable: $SECRET
           patterns:
-            - pattern-regex: '^["\'][a-zA-Z0-9]{1,16}["\']$'
+            - pattern-regex: '^["''][a-zA-Z0-9]{1,16}["'']$'
     message: Weak session secret key - use at least 32 bytes of random data
     severity: ERROR
     languages: [python]

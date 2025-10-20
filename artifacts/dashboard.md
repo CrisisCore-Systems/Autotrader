@@ -1,4 +1,4 @@
-# VoidBloom Daily Intelligence Dashboard
+# AutoTrader Daily Intelligence Dashboard
 
 _Generated: 2025-10-05T06:16:24Z_
 

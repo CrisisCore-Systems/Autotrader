@@ -4,4 +4,5 @@ default = src.core.pipeline:HiddenGemScanner
 [console_scripts]
 autotrader-backtest = pipeline.cli_backtest:cli_main
 autotrader-backtest-harness = backtest.harness:main
+autotrader-bouncehunter = src.bouncehunter.cli:main
 autotrader-scan = src.cli.main:cli_main

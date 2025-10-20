@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-This document describes the strict Pydantic/JSONSchema validation enforcement for all LLM outputs in the VoidBloom AutoTrader system. The implementation ensures **fail-fast behavior** with comprehensive logging for invalid payloads.
+This document describes the strict Pydantic/JSONSchema validation enforcement for all LLM outputs in the AutoTrader system. The implementation ensures **fail-fast behavior** with comprehensive logging for invalid payloads.
 
 ---
 

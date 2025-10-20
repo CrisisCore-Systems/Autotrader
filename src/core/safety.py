@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Any
 
 
 @dataclass
@@ -63,3 +63,51 @@ def apply_penalties(features: Dict[str, float], safety_report: SafetyReport, *, 
     if adjusted.get("UpcomingUnlockRisk", features.get("UpcomingUnlockRisk", 0.0)) >= 0.5:
         adjusted["TokenomicsRisk"] = min(adjusted.get("TokenomicsRisk", 1.0), 0.4)
     return adjusted
+
+
+class SafetyAnalyzer:
+    """Safety analyzer for contract analysis."""
+
+    def __init__(self):
+        """Initialize safety analyzer."""
+        pass
+
+    def analyze_contract(self, contract_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze contract safety.
+
+        Args:
+            contract_data: Contract data dictionary
+
+        Returns:
+            Analysis result with score, severity, and findings
+        """
+        # Extract findings from contract data
+        findings = {}
+
+        # Check if contract is verified
+        is_verified = str(contract_data.get("IsVerified", "false")).lower() == "true"
+        findings["unverified"] = not is_verified
+
+        # Check source code for dangerous patterns
+        source = str(contract_data.get("SourceCode", "")).lower()
+        abi = str(contract_data.get("ABI", "")).lower()
+
+        findings["owner_can_mint"] = "function mint" in source or "mint(" in abi
+        findings["owner_can_withdraw"] = "withdraw" in source or "withdraw" in abi
+
+        # Check for honeypot indicators
+        tags = str(contract_data.get("SecurityTag", "")).lower()
+        findings["honeypot"] = "honeypot" in tags
+
+        # Get severity
+        severity = str(contract_data.get("SecuritySeverity",
+                       contract_data.get("severity", "none"))).lower()
+
+        # Evaluate contract
+        report = evaluate_contract(findings, severity=severity)
+
+        return {
+            "score": report.score,
+            "severity": report.severity,
+            "findings": report.findings,
+        }

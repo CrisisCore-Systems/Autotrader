@@ -1,6 +1,6 @@
 # Signal Coverage Audit
 **Date**: October 7, 2025  
-**Purpose**: Map current data feeds against the desired universe and identify blind spots for VoidBloom
+**Purpose**: Map current data feeds against the desired universe and identify blind spots for AutoTrader
 
 ## Executive Summary
 This audit evaluates the completeness and quality of data ingestion across all signal categories to identify gaps that could limit alpha generation, increase latency, or miss critical risk events.
@@ -21,7 +21,7 @@ This audit evaluates the completeness and quality of data ingestion across all s
 | CoinTelegraph | ✅ Implemented | ~5 min | General crypto news |
 
 **Clients**: `NewsFeedClient`, `NewsAggregator`  
-**Storage**: SQLite FTS5 index in `artifacts/voidbloom.db`  
+**Storage**: SQLite FTS5 index in `artifacts/autotrader.db`  
 **Integration Point**: `src/services/news.py`, `src/core/news_pipeline.py`
 
 ### 1.2 Social Signals 🟡 PARTIAL
@@ -290,4 +290,4 @@ This audit evaluates the completeness and quality of data ingestion across all s
 
 **Document Status**: ✅ Complete  
 **Last Updated**: October 7, 2025  
-**Owner**: VoidBloom Engineering
+**Owner**: AutoTrader Engineering

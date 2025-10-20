@@ -1,4 +1,4 @@
-# VoidBloom Scanner - Feature Status Report
+# AutoTrader Scanner - Feature Status Report
 **Generated:** October 7, 2025  
 **Status:** ✅ All Systems Operational
 
@@ -6,7 +6,7 @@
 
 ## 🎯 System Overview
 
-The VoidBloom Hidden-Gem Scanner is **fully operational** with all core features working correctly. The system scans cryptocurrency tokens using AI-powered analysis, market data, and on-chain metrics to identify potential "hidden gem" investments.
+The AutoTrader Hidden-Gem Scanner is **fully operational** with all core features working correctly. The system scans cryptocurrency tokens using AI-powered analysis, market data, and on-chain metrics to identify potential "hidden gem" investments.
 
 ### Running Services
 - ✅ **Backend API**: http://127.0.0.1:8000 (FastAPI + Uvicorn)
@@ -300,7 +300,7 @@ All original objectives have been met:
 
 ## ✨ Summary
 
-The VoidBloom Scanner is **production-ready** with all core features operational. The system successfully:
+The AutoTrader Scanner is **production-ready** with all core features operational. The system successfully:
 
 - Scans 4 different token types (protocols, utility, meme coins)
 - Generates AI-powered narratives and scores

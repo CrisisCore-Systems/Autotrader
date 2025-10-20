@@ -473,3 +473,86 @@ def build_ml_ready_vector(
         "features": vector.features,
         "confidence_scores": vector.confidence_scores,
     }
+
+
+class FeatureTransformRegistry:
+    """Registry for feature transformation functions."""
+
+    def __init__(self) -> None:
+        """Initialize the transform registry."""
+        self._transforms: Dict[str, Callable] = {}
+        self._register_standard_transforms()
+
+    def _register_standard_transforms(self) -> None:
+        """Register standard transformation functions."""
+        import math
+
+        # Log transform
+        self._transforms["log"] = lambda x: math.log(x) if x > 0 else 0.0
+
+        # Normalization (min-max scaling)
+        self._transforms["normalize"] = lambda values: [
+            (v - min(values)) / (max(values) - min(values)) if max(values) != min(values) else 0.5
+            for v in values
+        ]
+
+        # Square root transform
+        self._transforms["sqrt"] = lambda x: math.sqrt(x) if x >= 0 else 0.0
+
+        # Exponential transform
+        self._transforms["exp"] = lambda x: math.exp(x)
+
+    def register_transform(self, name: str, transform_func: Callable) -> None:
+        """Register a custom transform function.
+
+        Args:
+            name: Transform name
+            transform_func: Function to apply
+        """
+        self._transforms[name] = transform_func
+
+    def list_transforms(self) -> List[str]:
+        """List all available transforms.
+
+        Returns:
+            List of transform names
+        """
+        return list(self._transforms.keys())
+
+    def log_transform(self, value: float) -> float:
+        """Apply logarithmic transform.
+
+        Args:
+            value: Input value
+
+        Returns:
+            Log-transformed value
+        """
+        return self._transforms["log"](value)
+
+    def normalize(self, values: List[float]) -> List[float]:
+        """Apply min-max normalization.
+
+        Args:
+            values: List of values to normalize
+
+        Returns:
+            Normalized values
+        """
+        return self._transforms["normalize"](values)
+
+    def apply_transform(self, name: str, *args, **kwargs) -> Any:
+        """Apply a registered transform.
+
+        Args:
+            name: Transform name
+            *args: Arguments for transform
+            **kwargs: Keyword arguments
+
+        Returns:
+            Transform result
+        """
+        if name not in self._transforms:
+            raise ValueError(f"Transform '{name}' not registered")
+
+        return self._transforms[name](*args, **kwargs)

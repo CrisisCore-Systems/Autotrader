@@ -7,7 +7,7 @@ import pytest
 from pathlib import Path
 from typing import Any, Dict
 
-from scripts.validate_alert_rules import (
+from scripts.validation.validate_alert_rules import (
     AlertRuleValidationError,
     validate_unit_normalization,
     validate_condition_logic,

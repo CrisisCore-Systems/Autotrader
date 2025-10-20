@@ -12,6 +12,30 @@ from src.core.http_manager import CachePolicy
 from src.core.rate_limit import RateLimit
 
 
+def create_client(exchange: str, **kwargs) -> BaseClient:
+    """Create an order flow client for the specified exchange.
+
+    Args:
+        exchange: Exchange name ('binance', 'bybit', 'dexscreener')
+        **kwargs: Additional arguments passed to client constructor
+
+    Returns:
+        Initialized client instance
+
+    Raises:
+        ValueError: If exchange is not supported
+    """
+    exchange = exchange.lower()
+    if exchange == "binance":
+        return BinanceClient(**kwargs)
+    elif exchange == "bybit":
+        return BybitClient(**kwargs)
+    elif exchange == "dexscreener":
+        return DexscreenerClient(**kwargs)
+    else:
+        raise ValueError(f"Unsupported exchange: {exchange}")
+
+
 class BinanceClient(BaseClient):
     """Client for Binance spot and futures market data.
 
@@ -57,6 +81,7 @@ class BinanceClient(BaseClient):
         )
         self._futures_base_url = futures_base_url
         self._api_key = api_key or os.getenv("BINANCE_API_KEY", "")
+        self.exchange_name = "binance"
 
     def fetch_order_book_depth(
         self,
@@ -184,6 +209,7 @@ class DexscreenerClient(BaseClient):
             session,
             rate_limits={"api.dexscreener.com": RateLimit(300, 60.0)},  # 300 requests per minute
         )
+        self.exchange_name = "dexscreener"
 
     def fetch_token_pairs(
         self,
@@ -283,6 +309,7 @@ class BybitClient(BaseClient):
             rate_limits={"api.bybit.com": RateLimit(600, 60.0)},  # 600 requests per minute
         )
         self._api_key = api_key or os.getenv("BYBIT_API_KEY", "")
+        self.exchange_name = "bybit"
 
     def fetch_order_book(
         self,

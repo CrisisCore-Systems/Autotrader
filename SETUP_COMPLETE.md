@@ -1,4 +1,4 @@
-# VoidBloom Dashboard - Setup Complete! 🎉
+# AutoTrader Dashboard - Setup Complete! 🎉
 
 **Date**: October 12, 2025  
 **Status**: ✅ **RUNNING**
@@ -259,6 +259,6 @@ Change colors in `dashboard/src/styles.css`:
 
 ---
 
-**Congratulations! Your VoidBloom Dashboard is now running with enterprise-grade UI/UX!** 🎊
+**Congratulations! Your AutoTrader Dashboard is now running with enterprise-grade UI/UX!** 🎊
 
 **Enjoy exploring your enhanced dashboard at http://localhost:5173** 🚀

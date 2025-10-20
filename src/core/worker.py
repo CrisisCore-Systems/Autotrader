@@ -18,7 +18,7 @@ from src.services.storage import IngestionStore
 from src.services.tokenomics import TokenSpec, TokenomicsAggregator
 
 
-DEFAULT_DB_PATH = Path("artifacts/voidbloom.db")
+DEFAULT_DB_PATH = Path("artifacts/autotrader.db")
 DEFAULT_CONFIG_PATH = Path("configs/ingestion.yaml")
 
 

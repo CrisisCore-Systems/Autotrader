@@ -19,7 +19,7 @@ except Exception:  # noqa: BLE001 - broad to tolerate optional import failures
     FastAPI = None  # type: ignore
     app = None
 else:  # pragma: no cover - exercised in integration environments
-    app = FastAPI(title="VoidBloom CrisisCore Exporter")
+    app = FastAPI(title="CrisisCore AutoTrader Exporter")
 
 
 def health() -> Dict[str, str]:
@@ -361,40 +361,37 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         "Flags:",
     ]
     flag_lines = [f"  - {flag}" for flag in flags]
+    header_lines.extend(flag_lines)
 
-    template = "\n".join(header_lines + flag_lines + ["---", "", "# Lore", lore, "", "# Data Snapshot"])
-    if snapshot:
-        template += "\n" + "\n".join(f"- {item}" for item in snapshot)
-    else:
-        template += "\n-"
+    # Use full implementation with all sections including news
+    momentum = payload.get("narrative_momentum")
+    sentiment = payload.get("narrative_sentiment", "unknown")
 
-    template += "\n\n# Action Notes"
-    if actions:
-        template += "\n" + "\n".join(f"- {note}" for note in actions)
-    else:
-        template += "\n-"
-    
-    # Sign the artifact with cryptographic signature
-    signer = get_signer()
-    signature = signer.sign_artifact(template, metadata={
-        "title": title,
-        "timestamp": timestamp,
-        "type": "markdown_artifact"
-    })
-    
-    # Append signature section
-    template += "\n\n---\n\n# Artifact Signature\n\n"
-    template += f"**Hash Algorithm:** {signature.hash_algorithm}\n\n"
-    template += f"**Content Hash (SHA-256):**\n```\n{signature.content_hash}\n```\n\n"
-    template += f"**HMAC Signature:**\n```\n{signature.hmac_signature}\n```\n\n"
-    template += f"**Signed At:** {signature.timestamp}\n"
+    market_rows = [
+        ("Price", payload.get("price")),
+        ("24h Volume", payload.get("volume_24h")),
+        ("Liquidity", payload.get("liquidity")),
+        ("Holders", payload.get("holders")),
+    ]
+    market_rows = [
+        (label, _format_number(value))
+        for label, value in market_rows
+        if value is not None
+    ]
 
-    return template
+    summary_lines = [
+        f"GemScore: {gem_score} (confidence {confidence})",
+        f"Final Score: {final_score}",
+        f"Flags: {', '.join(flags) if flags else 'None'}",
+        f"Narrative Sentiment: {sentiment}",
+    ]
+    if momentum is not None:
+        summary_lines.append(f"Narrative Momentum: {_format_number(momentum, precision=3)}")
 
     market_section_lines = _format_table(market_rows)
 
     narrative_section_lines = _make_bullet_list(
-        [f"**Sentiment:** {payload.get('narrative_sentiment', 'unknown')}"]
+        [f"**Sentiment:** {sentiment}"]
     )
     if momentum is not None:
         narrative_section_lines.append(
@@ -443,7 +440,24 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
             rendered.append("")
         rendered.extend(block)
 
-    return "\n".join(rendered)
+    template = "\n".join(rendered)
+    
+    # Sign the artifact with cryptographic signature
+    signer = get_signer()
+    signature = signer.sign_artifact(template, metadata={
+        "title": title,
+        "timestamp": timestamp,
+        "type": "markdown_artifact"
+    })
+    
+    # Append signature section
+    template += "\n\n---\n\n# Artifact Signature\n\n"
+    template += f"**Hash Algorithm:** {signature.hash_algorithm}\n\n"
+    template += f"**Content Hash (SHA-256):**\n```\n{signature.content_hash}\n```\n\n"
+    template += f"**HMAC Signature:**\n```\n{signature.hmac_signature}\n```\n\n"
+    template += f"**Signed At:** {signature.timestamp}\n"
+
+    return template
 
 
 def render_html_artifact(payload: Dict[str, object]) -> str:

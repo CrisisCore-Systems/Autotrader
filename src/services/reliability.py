@@ -269,20 +269,32 @@ def get_system_health() -> dict[str, Any]:
     """
     health_status = {
         "overall_status": "HEALTHY",
-        "data_sources": {},
+        "healthy_sources": [],
+        "degraded_sources": [],
+        "failed_sources": [],
         "circuit_breakers": {},
         "cache_stats": {},
     }
 
-    # Check SLAs
+    # Check SLAs and categorize sources
     unhealthy = SLA_REGISTRY.get_unhealthy_sources()
     for source_name, monitor in SLA_REGISTRY.get_all().items():
         metrics = monitor.get_metrics()
-        health_status["data_sources"][source_name] = {
-            "status": metrics.status.value,
+        status = metrics.status.value
+        
+        source_info = {
+            "name": source_name,
+            "status": status,
             "latency_p95": metrics.latency_p95,
             "success_rate": metrics.success_rate,
         }
+        
+        if status == "HEALTHY":
+            health_status["healthy_sources"].append(source_info)
+        elif status == "DEGRADED":
+            health_status["degraded_sources"].append(source_info)
+        elif status == "FAILED":
+            health_status["failed_sources"].append(source_info)
 
     if unhealthy:
         health_status["overall_status"] = "DEGRADED"

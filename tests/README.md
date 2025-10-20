@@ -1,6 +1,6 @@
-# VoidBloom Testing Suite 🧪
+# AutoTrader Testing Suite 🧪
 
-Comprehensive testing suite for the VoidBloom AutoTrader cryptocurrency analysis platform.
+Comprehensive testing suite for the AutoTrader cryptocurrency analysis platform.
 
 ## 📚 Test Organization
 

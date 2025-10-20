@@ -361,3 +361,148 @@ def cache_aside(
         return wrapper
 
     return decorator
+
+
+class CachePolicy:
+    """Simple cache policy with TTL and size limits."""
+
+    def __init__(self, name: str, ttl_seconds: float, max_size: int):
+        """Initialize cache policy.
+
+        Args:
+            name: Cache name
+            ttl_seconds: TTL in seconds
+            max_size: Maximum cache size
+        """
+        self.name = name
+        self.ttl_seconds = ttl_seconds
+        self._cache = EnhancedCache(
+            CachePolicyConfig(
+                default_ttl_seconds=ttl_seconds,
+                max_entries=max_size,
+            )
+        )
+
+    def set(self, key: str, value: Any) -> None:
+        """Set cache value.
+
+        Args:
+            key: Cache key
+            value: Value to cache
+        """
+        self._cache.set(key, value)
+
+    def get(self, key: str) -> Optional[Any]:
+        """Get cache value.
+
+        Args:
+            key: Cache key
+
+        Returns:
+            Cached value or None
+        """
+        return self._cache.get(key)
+
+    def invalidate(self, key: str) -> None:
+        """Invalidate cache entry.
+
+        Args:
+            key: Cache key
+        """
+        self._cache.invalidate(key)
+
+    def clear(self) -> None:
+        """Clear all cache entries."""
+        self._cache.clear()
+
+    def current_size(self) -> int:
+        """Get current cache size.
+
+        Returns:
+            Number of entries in cache
+        """
+        return len(self._cache._cache)
+
+
+class AdaptiveCachePolicy:
+    """Adaptive cache policy with dynamic TTL."""
+
+    def __init__(
+        self,
+        name: str,
+        base_ttl_seconds: float,
+        min_ttl_seconds: float,
+        max_ttl_seconds: float,
+    ):
+        """Initialize adaptive cache policy.
+
+        Args:
+            name: Cache name
+            base_ttl_seconds: Base TTL
+            min_ttl_seconds: Minimum TTL
+            max_ttl_seconds: Maximum TTL
+        """
+        self.name = name
+        self.base_ttl_seconds = base_ttl_seconds
+        self.min_ttl_seconds = min_ttl_seconds
+        self.max_ttl_seconds = max_ttl_seconds
+        self._current_default_ttl = base_ttl_seconds
+
+        self._cache = EnhancedCache(
+            CachePolicyConfig(
+                default_ttl_seconds=base_ttl_seconds,
+                min_ttl_seconds=min_ttl_seconds,
+                max_ttl_seconds=max_ttl_seconds,
+                enable_adaptive_ttl=True,
+            )
+        )
+
+    def set(self, key: str, value: Any) -> None:
+        """Set cache value.
+
+        Args:
+            key: Cache key
+            value: Value to cache
+        """
+        self._cache.set(key, value, ttl_seconds=self._current_default_ttl)
+
+    def get(self, key: str) -> Optional[Any]:
+        """Get cache value.
+
+        Args:
+            key: Cache key
+
+        Returns:
+            Cached value or None
+        """
+        result = self._cache.get(key)
+        
+        # Adapt default TTL based on hit/miss patterns
+        if result is not None:
+            # Hit: increase default TTL
+            self._current_default_ttl = min(
+                self._current_default_ttl * self._cache.config.ttl_multiplier_on_hit,
+                self.max_ttl_seconds,
+            )
+        else:
+            # Miss: decrease default TTL
+            self._current_default_ttl = max(
+                self._current_default_ttl * self._cache.config.ttl_multiplier_on_miss,
+                self.min_ttl_seconds,
+            )
+        
+        return result
+
+    def get_current_ttl(self, key: str) -> float:
+        """Get current TTL for a key.
+
+        Args:
+            key: Cache key
+
+        Returns:
+            Current TTL in seconds
+        """
+        entry = self._cache._cache.get(key)
+        if entry:
+            return entry.ttl_seconds
+        return self._current_default_ttl

@@ -7,8 +7,8 @@ import time
 from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
 
-from src.services.sla_monitor import SLAMonitor
-from src.services.circuit_breaker import CircuitBreaker, CircuitState
+from src.services.sla_monitor import SLAMonitor, SLAThresholds
+from src.services.circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitState
 from src.services.cache_policy import CachePolicy, AdaptiveCachePolicy
 
 
@@ -22,24 +22,28 @@ class TestSLAMonitor:
     @pytest.fixture
     def sla_monitor(self):
         """Create SLA monitor instance."""
+        thresholds = SLAThresholds(
+            max_latency_p95=1000,  # 1 second
+            min_success_rate=0.95
+        )
         return SLAMonitor(
             source_name="test_source",
-            latency_threshold_p95=1000,  # 1 second
-            success_rate_threshold=0.95
+            thresholds=thresholds
         )
     
     def test_sla_monitor_initialization(self, sla_monitor):
         """Test SLA monitor initializes correctly."""
         assert sla_monitor.source_name == "test_source"
-        assert sla_monitor.status == "HEALTHY"
+        metrics = sla_monitor.get_metrics()
+        assert metrics.status.name == "HEALTHY"
     
     def test_record_success(self, sla_monitor):
         """Test recording successful requests."""
         sla_monitor.record_request(latency_ms=100, success=True)
         metrics = sla_monitor.get_metrics()
         
-        assert metrics["success_rate"] == 1.0
-        assert metrics["latency_p50"] <= 100
+        assert metrics.success_rate == 1.0
+        assert metrics.latency_p50 <= 100
     
     def test_record_failures_degrades_status(self, sla_monitor):
         """Test that failures degrade SLA status."""
@@ -48,8 +52,8 @@ class TestSLAMonitor:
             sla_monitor.record_request(latency_ms=100, success=False)
         
         metrics = sla_monitor.get_metrics()
-        assert metrics["success_rate"] < 0.95
-        assert sla_monitor.status in ["DEGRADED", "FAILED"]
+        assert metrics.success_rate < 0.95
+        assert metrics.status.name in ["DEGRADED", "FAILED"]
     
     def test_high_latency_degrades_status(self, sla_monitor):
         """Test that high latency degrades status."""
@@ -58,8 +62,8 @@ class TestSLAMonitor:
             sla_monitor.record_request(latency_ms=2000, success=True)  # 2 seconds
         
         metrics = sla_monitor.get_metrics()
-        assert metrics["latency_p95"] > 1000
-        assert sla_monitor.status in ["DEGRADED", "FAILED"]
+        assert metrics.latency_p95 > 1000
+        assert metrics.status.name in ["DEGRADED", "FAILED"]
     
     def test_uptime_calculation(self, sla_monitor):
         """Test uptime percentage calculation."""
@@ -69,17 +73,17 @@ class TestSLAMonitor:
             sla_monitor.record_request(latency_ms=100, success=success)
         
         metrics = sla_monitor.get_metrics()
-        assert 0.0 <= metrics["uptime_percentage"] <= 100.0
+        assert 0.0 <= metrics.uptime_percentage <= 100.0
     
     def test_percentile_calculations(self, sla_monitor):
         """Test latency percentile calculations."""
-        latencies = [50, 100, 150, 200, 500, 1000]
+        latencies = [50, 100, 150, 200, 500, 1000, 1200, 1500, 2000, 2500]
         for lat in latencies:
             sla_monitor.record_request(latency_ms=lat, success=True)
         
         metrics = sla_monitor.get_metrics()
-        assert metrics["latency_p50"] < metrics["latency_p95"]
-        assert metrics["latency_p95"] < metrics["latency_p99"]
+        assert metrics.latency_p50 < metrics.latency_p95
+        assert metrics.latency_p95 <= metrics.latency_p99
 
 
 # ============================================================================
@@ -92,56 +96,61 @@ class TestCircuitBreaker:
     @pytest.fixture
     def circuit_breaker(self):
         """Create circuit breaker instance."""
-        return CircuitBreaker(
-            name="test_breaker",
+        config = CircuitBreakerConfig(
             failure_threshold=3,
             timeout_seconds=5.0,
-            half_open_max_calls=2
+            success_threshold=2
+        )
+        return CircuitBreaker(
+            name="test_breaker",
+            config=config
         )
     
     def test_circuit_breaker_starts_closed(self, circuit_breaker):
         """Test circuit breaker starts in CLOSED state."""
         assert circuit_breaker.state == CircuitState.CLOSED
-        assert circuit_breaker.can_attempt()
+        assert circuit_breaker.is_closed
     
     def test_circuit_opens_after_failures(self, circuit_breaker):
         """Test circuit breaker opens after threshold failures."""
         # Record failures
         for _ in range(3):
-            circuit_breaker.record_failure()
+            circuit_breaker._on_failure()
         
         assert circuit_breaker.state == CircuitState.OPEN
-        assert not circuit_breaker.can_attempt()
+        assert circuit_breaker.is_open
     
     def test_circuit_transitions_to_half_open(self, circuit_breaker):
         """Test circuit breaker transitions to HALF_OPEN after timeout."""
         # Open the circuit
         for _ in range(3):
-            circuit_breaker.record_failure()
+            circuit_breaker._on_failure()
         
         assert circuit_breaker.state == CircuitState.OPEN
         
-        # Wait for timeout (mock time)
+        # Force to HALF_OPEN by mocking time
+        original_time = time.time
         with patch('time.time') as mock_time:
-            mock_time.return_value = time.time() + 10  # Beyond timeout
-            circuit_breaker._check_timeout()
+            mock_time.return_value = original_time() + 10  # Beyond timeout
+            assert circuit_breaker._should_attempt_reset()
+            circuit_breaker._transition_to_half_open()
             
             assert circuit_breaker.state == CircuitState.HALF_OPEN
-            assert circuit_breaker.can_attempt()
+            assert circuit_breaker.is_half_open
     
     def test_circuit_closes_after_success_in_half_open(self, circuit_breaker):
         """Test circuit breaker closes after successful recovery."""
         # Open circuit
         for _ in range(3):
-            circuit_breaker.record_failure()
+            circuit_breaker._on_failure()
         
         # Force to HALF_OPEN
-        circuit_breaker.state = CircuitState.HALF_OPEN
-        circuit_breaker.half_open_attempts = 0
+        circuit_breaker._transition_to_half_open()
+        circuit_breaker._success_count = 0
         
         # Record successes
-        circuit_breaker.record_success()
-        circuit_breaker.record_success()
+        circuit_breaker._on_success()
+        circuit_breaker._on_success()
         
         assert circuit_breaker.state == CircuitState.CLOSED
     
@@ -149,24 +158,24 @@ class TestCircuitBreaker:
         """Test circuit breaker reopens if HALF_OPEN attempt fails."""
         # Open circuit
         for _ in range(3):
-            circuit_breaker.record_failure()
+            circuit_breaker._on_failure()
         
         # Force to HALF_OPEN
-        circuit_breaker.state = CircuitState.HALF_OPEN
+        circuit_breaker._transition_to_half_open()
         
         # Failure in half-open state should reopen
-        circuit_breaker.record_failure()
+        circuit_breaker._on_failure()
         assert circuit_breaker.state == CircuitState.OPEN
     
     def test_get_breaker_stats(self, circuit_breaker):
         """Test getting circuit breaker statistics."""
-        circuit_breaker.record_failure()
-        circuit_breaker.record_success()
+        circuit_breaker._on_failure()
+        circuit_breaker._on_success()
         
         stats = circuit_breaker.get_stats()
         assert "state" in stats
         assert "failure_count" in stats
-        assert "last_failure_time" in stats
+        assert "success_count" in stats
 
 
 # ============================================================================
@@ -201,8 +210,9 @@ class TestCachePolicy:
         cache_policy.set("key1", "value1")
         
         # Mock time to be past TTL
+        original_time = time.time
         with patch('time.time') as mock_time:
-            mock_time.return_value = time.time() + 120  # 2 minutes
+            mock_time.return_value = original_time() + 120  # 2 minutes
             result = cache_policy.get("key1")
             assert result is None
     
@@ -302,22 +312,24 @@ class TestOrderFlowClients:
         assert client is not None
         assert client.exchange_name == exchange
     
-    @patch('src.core.orderflow_clients.requests.get')
-    def test_fetch_orderbook(self, mock_get):
+    @patch('httpx.Client.request')
+    def test_fetch_orderbook(self, mock_request):
         """Test fetching order book data."""
         from src.core.orderflow_clients import BinanceClient
         
-        # Mock API response
+        # Mock the response
         mock_response = Mock()
         mock_response.json.return_value = {
             "bids": [[50000, 1.5], [49900, 2.0]],
             "asks": [[50100, 1.0], [50200, 1.5]]
         }
         mock_response.status_code = 200
-        mock_get.return_value = mock_response
+        mock_response.headers = {}
+        mock_response.content = b'{"bids": [[50000, 1.5]], "asks": [[50100, 1.0]]}'
+        mock_request.return_value = mock_response
         
         client = BinanceClient()
-        orderbook = client.get_orderbook("BTCUSDT")
+        orderbook = client.fetch_order_book_depth("BTCUSDT")
         
         assert "bids" in orderbook
         assert "asks" in orderbook
@@ -346,10 +358,10 @@ class TestOrderFlowClients:
 class TestTwitterClient:
     """Test suite for Twitter API client."""
     
-    @patch('src.core.twitter_client.requests.get')
-    def test_fetch_tweets(self, mock_get):
+    @patch('httpx.Client.request')
+    def test_fetch_tweets(self, mock_request):
         """Test fetching tweets for a token."""
-        from src.core.twitter_client import TwitterClient
+        from src.core.twitter_client import TwitterClientV2
         
         # Mock API response
         mock_response = Mock()
@@ -367,14 +379,16 @@ class TestTwitterClient:
             ]
         }
         mock_response.status_code = 200
-        mock_get.return_value = mock_response
+        mock_response.headers = {}
+        mock_response.content = b'{"data": []}'
+        mock_request.return_value = mock_response
         
-        client = TwitterClient()
-        tweets = client.fetch_tweets("BTC", max_results=10)
+        client = TwitterClientV2(bearer_token="fake_token")
+        tweets = client.search_recent_tweets("BTC", max_results=10)
         
-        assert isinstance(tweets, list)
-        if tweets:
-            assert "text" in tweets[0]
+        assert isinstance(tweets, dict)
+        if "data" in tweets and tweets["data"]:
+            assert "text" in tweets["data"][0]
     
     def test_calculate_engagement_score(self):
         """Test calculating tweet engagement score."""

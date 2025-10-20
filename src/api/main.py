@@ -1,4 +1,4 @@
-"""Entry point for the lightweight VoidBloom scanner API."""
+"""Entry point for the lightweight AutoTrader scanner API."""
 
 from __future__ import annotations
 
@@ -7,8 +7,11 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from .routes.tokens import router as tokens_router
 
@@ -19,16 +22,46 @@ logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 
-def _warn_missing_api_keys() -> None:
-    """Log warnings for missing upstream API keys."""
-    for key in ("GROQ_API_KEY", "ETHERSCAN_API_KEY", "COINGECKO_API_KEY"):
+def _check_required_api_keys() -> None:
+    """Validate that critical API keys are present, raise on missing keys."""
+    required_keys = {
+        "GROQ_API_KEY": "Required for LLM-powered narrative analysis",
+        "ETHERSCAN_API_KEY": "Required for contract verification and on-chain data",
+    }
+    
+    missing = []
+    for key, purpose in required_keys.items():
         if not os.environ.get(key):
-            LOGGER.warning("%s not set in environment variables", key)
+            missing.append(f"{key} ({purpose})")
+    
+    if missing:
+        error_msg = (
+            "CRITICAL: Missing required API keys:\n" +
+            "\n".join(f"  - {m}" for m in missing) +
+            "\n\nSet these environment variables before starting the API."
+        )
+        raise ValueError(error_msg)
 
 
-_warn_missing_api_keys()
+def _warn_optional_api_keys() -> None:
+    """Log warnings for optional API keys that enhance functionality."""
+    optional_keys = ["COINGECKO_API_KEY"]
+    for key in optional_keys:
+        if not os.environ.get(key):
+            LOGGER.warning("%s not set - using free tier with rate limits", key)
 
-app = FastAPI(title="VoidBloom API", version="1.0.0")
+
+_check_required_api_keys()
+_warn_optional_api_keys()
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI(title="AutoTrader API", version="1.0.0")
+
+# Add rate limit error handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,11 +75,13 @@ app.include_router(tokens_router, prefix="/api")
 
 
 @app.get("/")
-def root():
-    return {"status": "ok", "message": "VoidBloom API is running"}
+@limiter.limit("60/minute")
+def root(request: Request):
+    return {"status": "ok", "message": "AutoTrader API is running"}
 
 
 @app.get("/health")
-def health_check():
-    """Health check endpoint."""
+@limiter.limit("120/minute")
+def health_check(request: Request):
+    """Health check endpoint - higher rate limit for monitoring."""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat() + "Z"}

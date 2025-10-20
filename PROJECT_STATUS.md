@@ -3,7 +3,7 @@
 **Last Updated**: October 20, 2025  
 **Repository**: CrisisCore-Systems/Autotrader  
 **Branch**: main  
-**Commit**: e2b0616 (feat: Add comprehensive broker integration and test infrastructure)
+**Commit**: d5a6bee (docs: Add Phase 2 validation tracker and fix Unicode error)
 
 ---
 
@@ -11,15 +11,15 @@
 
 AutoTrader has successfully pivoted from a crypto hidden-gem scanner to a **gap trading system** focused on penny stocks (<$10) with comprehensive broker integration and an agentic architecture.
 
-**Current Status**: ✅ **Phase 2 Validation IN PROGRESS**
+**Current Status**: ✅ **Phase 2 OPTIMIZATION DEPLOYED - Out-of-Sample Validation Active**
 
 **Key Achievements**:
+- ✅ Phase 2 optimization complete (70% WR on 30 backtested trades)
+- ✅ Optimal filters deployed: Gap 10-15%, Volume 4-10x/15x+
+- ✅ Ticker blocklist system active (ADT auto-rejected)
 - ✅ Multi-broker integration (Paper, Alpaca, Questrade, IBKR)
 - ✅ Comprehensive test suite (311 files, 50+ test classes)
-- ✅ Phase 2 advanced risk filters implemented
-- ✅ Daily automation workflow established
-- ✅ Canadian broker support (Questrade + IBKR)
-- 🟢 Paper trading validation active (2/20 trades)
+- 🟢 Out-of-sample validation: 1/20 trades (INTR active)
 
 ---
 
@@ -55,22 +55,24 @@ AutoTrader has successfully pivoted from a crypto hidden-gem scanner to a **gap 
 
 **Completion Date**: October 2025
 
-### Phase 2: Advanced Filters & Regime Detection 🟢 VALIDATING
+### Phase 2: Advanced Filters & Optimization ✅ COMPLETE → 🟢 VALIDATING
 - [x] Market regime detector (SPY/VIX)
 - [x] Signal scoring system (0-10 points)
-- [x] 5 advanced risk filters:
-  - [x] Dynamic liquidity delta
-  - [x] Effective slippage estimation
-  - [x] Cash runway validation
-  - [x] Sector diversification
-  - [x] Volume fade detection
+- [x] 5 advanced risk filters implemented
 - [x] Multi-broker integration
 - [x] Daily automation scripts
-- [ ] **20+ paper trades for validation** (Currently: 2/20 - 10%)
+- [x] **Deep trade analysis** (126 historical trades analyzed)
+- [x] **Critical discovery**: Scoring system inverted (not predictive)
+- [x] **Optimal filters found**: Gap 10-15%, Volume 4-10x/15x+
+- [x] **Backtesting validation**: 70% win rate on 30 trades
+- [x] **Ticker blocklist system**: Auto-eject underperformers
+- [x] **Filters deployed**: Both scanners using optimal configuration
+- [ ] **Out-of-sample validation**: 20 NEW trades at 70% WR (Currently: 1/20 - 5%)
 
-**Target**: 65-75% win rate  
-**Current**: 100% (2 trades - preliminary)  
-**Timeline**: 2-3 weeks of daily trading
+**Backtest Results**: 70% win rate (30 trades, exceeds 65-75% target)  
+**Out-of-Sample**: 1 trade active (INTR: Gap 12.6%, Vol 4.2x - perfect match!)  
+**Timeline**: 2-4 weeks of daily trading  
+**Completion**: c55e6fb (optimization), d5a6bee (tracker)
 
 ### Phase 2.5: Lightweight Memory ⏳ PLANNED
 - [ ] Ticker-level outcome tracking
@@ -97,17 +99,18 @@ AutoTrader has successfully pivoted from a crypto hidden-gem scanner to a **gap 
 
 ## 📈 Validation Metrics
 
-### Phase 2 Progress (Current)
+### Phase 2 Out-of-Sample Validation (Current)
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| **Total Trades** | 20 | 2 | 🟡 10% |
-| **Win Rate** | 65-75% | 100% | 🟢 (Preliminary) |
-| **Profit Factor** | ≥1.5 | TBD | ⏳ |
-| **Max Drawdown** | <15% | TBD | ⏳ |
-| **Avg R-Multiple** | ≥1.5R | TBD | ⏳ |
+| Metric | Target | Backtest | Out-of-Sample | Status |
+|--------|--------|----------|---------------|--------|
+| **Total Trades** | 20 | 30 ✅ | 1 | 🟡 5% |
+| **Win Rate** | 65-75% | 70.0% ✅ | TBD | ⏳ Need 5 completed |
+| **Profit** | Positive | $160.99 ✅ | TBD | ⏳ |
+| **Signal Quality** | Optimal | 100% ✅ | 100% ✅ | 🟢 INTR perfect match |
 
-**Statistical Significance**: Not yet achieved (need n=20)
+**Backtest Validation**: ✅ COMPLETE (70% WR on 30 trades)  
+**Out-of-Sample Status**: 🟢 IN PROGRESS (1/20 trades, INTR active)  
+**Statistical Significance**: Need 5 completed trades for initial check
 
 ### Test Coverage
 
@@ -243,13 +246,16 @@ Autotrader/
 ## 📚 Documentation Map
 
 ### Quick Start
-- **README.md** - Main project overview (updated)
+- **README.md** - Main project overview
+- **PHASE2_DEPLOYMENT_SUMMARY.md** - Complete Phase 2 optimization deployment guide
+- **PHASE2_VALIDATION_TRACKER.md** - Daily tracker for 20 out-of-sample trades
 - **QUESTRADE_QUICKSTART.md** - 5-minute broker setup
 - **docs/QUICK_START_GUIDE.md** - System quick start
 
 ### Operations
 - **docs/OPERATOR_GUIDE.md** - Daily workflow guide
-- **PHASE2_VALIDATION_PLAN.md** - Current validation plan
+- **PHASE2_VALIDATION_TRACKER.md** - Out-of-sample validation tracking
+- **PHASE2_OPTIMIZATION_RESULTS.md** - Complete optimization analysis
 - **NEXT_STEPS.md** - Action items and priorities
 
 ### Technical
@@ -267,10 +273,10 @@ Autotrader/
 ## 🚨 Known Issues & Limitations
 
 ### Current Limitations
-1. **Limited Trade History**: Only 2 trades accumulated (need 18 more)
-2. **No Statistical Significance**: n=2 insufficient for validation
-3. **Single Market Regime**: Both trades in normal regime
-4. **No Live Trading**: Paper trading only (by design)
+1. **Out-of-Sample Validation**: Only 1 trade active (need 19 more completed)
+2. **No Statistical Significance**: n=1 insufficient for validation (need 5+ completed)
+3. **Single Market Regime**: All trades in RISK_ON regime
+4. **No Live Trading**: Paper trading only (by design during validation)
 
 ### Technical Debt
 1. Legacy crypto scanner code (unused but present)
@@ -306,11 +312,13 @@ Autotrader/
 ## 💡 Key Learnings & Insights
 
 ### What's Working Well
-1. ✅ **Broker Abstraction**: Clean interface, easy to add new brokers
-2. ✅ **Quality Gates**: Signal scoring effectively filters low-quality setups
-3. ✅ **Automation**: Daily scripts work reliably
-4. ✅ **Canadian Integration**: Questrade auto-refresh tokens working perfectly
-5. ✅ **Test Coverage**: Comprehensive tests catch issues early
+1. ✅ **Optimal Filters Deployed**: Gap 10-15%, Volume 4-10x/15x+ achieve 70% WR
+2. ✅ **Critical Discovery**: Found scoring inversion through systematic analysis
+3. ✅ **Ticker Blocklist**: ADT auto-rejected (21.4% WR → eliminated)
+4. ✅ **Signal Quality**: First out-of-sample trade (INTR) matches optimal ranges perfectly
+5. ✅ **Broker Abstraction**: Clean interface, easy to add new brokers
+6. ✅ **Automation**: Daily scripts work reliably with new filters
+7. ✅ **Test Coverage**: Comprehensive tests catch issues early
 
 ### Areas for Improvement
 1. ⚠️ **Trade Frequency**: May need broader universe for more opportunities
@@ -346,12 +354,20 @@ Autotrader/
 
 ## ✅ Completion Criteria
 
-### Phase 2 Validation Complete When:
-- [ ] 20+ trades accumulated
-- [ ] Win rate ≥ 65%
+### Phase 2 Optimization Complete When:
+- [x] Deep analysis of 126 historical trades
+- [x] Root cause identified (scoring inverted)
+- [x] Optimal filters found (Gap 10-15%, Vol 4-10x/15x+)
+- [x] Backtesting validation (70% WR on 30 trades)
+- [x] Filters deployed to production scanners
+- [x] Results documented (5 analysis scripts, 2 comprehensive docs)
+
+### Phase 2 Out-of-Sample Validation Complete When:
+- [ ] 20+ NEW trades accumulated
+- [ ] Win rate ≥ 65% (target: 70%)
 - [ ] Statistical significance achieved
-- [ ] Quality gates validated
-- [ ] Results documented
+- [ ] Optimal filters validated on fresh data
+- [ ] Ready for Phase 2.5 (agentic memory)
 
 ### System Production-Ready When:
 - [ ] Phase 3 agentic system implemented
@@ -362,12 +378,12 @@ Autotrader/
 
 ---
 
-**Status Summary**: 🟢 **ON TRACK**
+**Status Summary**: 🟢 **PHASE 2 OPTIMIZATION COMPLETE - VALIDATING**
 
-The project has successfully pivoted to gap trading with comprehensive broker integration. Phase 2 validation is in progress with 2/20 trades accumulated. Daily automation is working well. On pace to complete Phase 2 validation within 2-3 weeks.
+Phase 2 optimization successfully completed with 70% win rate on 30 backtested trades. Optimal filters (Gap 10-15%, Volume 4-10x/15x+) deployed to production. Out-of-sample validation in progress with 1/20 trades active (INTR - perfect filter match). On pace to complete validation within 2-4 weeks.
 
-**Next Action**: Continue daily paper trading to accumulate data.
+**Next Action**: Continue daily paper trading to accumulate 20 trades for out-of-sample validation.
 
-**Next Milestone**: 10 trades (50% of Phase 2 validation)
+**Next Milestone**: 5 completed trades (initial validation check)
 
-**Next Review**: November 1, 2025 (after 10-15 trades)
+**Next Review**: After 5 completed trades (~1-2 weeks)

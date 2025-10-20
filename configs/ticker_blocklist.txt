@@ -1,0 +1,10 @@
+# PennyHunter Ticker Blocklist
+# Auto-ejected tickers with consistently poor performance
+
+# Manually ejected (win rate < 40% after 10+ trades)
+- ADT  # 21.4% win rate (3W-11L) - consistently underperforms
+
+# Notes:
+# - Tickers are added here when they show consistent underperformance
+# - Criteria: <40% win rate after 10+ trades
+# - Review quarterly to see if patterns have changed

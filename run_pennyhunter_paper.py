@@ -38,11 +38,38 @@ from bouncehunter.advanced_filters import AdvancedRiskFilters
 from bouncehunter.pennyhunter_memory import PennyHunterMemory
 import yfinance as yf
 
+# Project root
+PROJECT_ROOT = Path(__file__).parent
+BLOCKLIST_FILE = PROJECT_ROOT / "configs" / "ticker_blocklist.txt"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def load_ticker_blocklist() -> set:
+    """Load ticker blocklist from configs/ticker_blocklist.txt"""
+    if not BLOCKLIST_FILE.exists():
+        return set()
+    
+    blocklist = set()
+    with open(BLOCKLIST_FILE, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                if line.startswith('-'):
+                    ticker = line.lstrip('- ').split('#')[0].strip()
+                    if ticker:
+                        blocklist.add(ticker.upper())
+                else:
+                    blocklist.add(line.upper())
+    
+    if blocklist:
+        logger.info(f"📋 Loaded blocklist: {sorted(blocklist)}")
+    
+    return blocklist
 
 
 class PennyHunterPaperTrader:
@@ -52,6 +79,9 @@ class PennyHunterPaperTrader:
         self.config = config
         self.account_size = account_size
         self.max_risk_per_trade = max_risk_per_trade
+        
+        # PHASE 2 OPTIMIZATION: Load ticker blocklist
+        self.ticker_blocklist = load_ticker_blocklist()
 
         # Initialize components
         self.broker = create_broker("paper", initial_cash=account_size)
@@ -127,12 +157,25 @@ class PennyHunterPaperTrader:
                     prev = hist.iloc[i-1]
 
                     gap_pct = (current['Open'] - prev['Close']) / prev['Close'] * 100
+                    avg_vol = hist['Volume'].iloc[max(0, i-10):i].mean()
+                    vol_spike = current['Volume'] / avg_vol if avg_vol > 0 else 1.0
+                    
+                    # PHASE 2 OPTIMIZATION: Check blocklist first
+                    if ticker in self.ticker_blocklist:
+                        logger.info(f"🚫 {ticker}: On blocklist (underperformer)")
+                        break
+                    
+                    # PHASE 2 OPTIMIZATION: Gap filter (10-15% sweet spot = 70% win rate)
+                    if gap_pct < 10 or gap_pct > 15:
+                        continue  # Skip this day, check next
+                    
+                    # PHASE 2 OPTIMIZATION: Volume filter (4-10x OR 15x+ = 70% win rate)  
+                    vol_ok = (4 <= vol_spike <= 10) or (vol_spike >= 15)
+                    if not vol_ok:
+                        continue  # Skip this day, check next
 
-                    if gap_pct >= 7:  # Lowered to 7% to find more signals for testing (was 15%)
-                        avg_vol = hist['Volume'].iloc[max(0, i-10):i].mean()
-                        vol_spike = current['Volume'] / avg_vol if avg_vol > 0 else 1.0
-
-                        # Score the signal (using Phase 1 signal scoring)
+                    if gap_pct >= 7:  # Keep this check for backward compatibility
+                        # Score the signal (for logging, not filtering)
                         score = self.scorer.score_runner_vwap(
                             ticker=ticker,
                             gap_pct=gap_pct,
@@ -146,22 +189,21 @@ class PennyHunterPaperTrader:
                             confirmation_bars=0
                         )
 
-                        if score.passed_threshold:
-                            signals.append({
-                                'ticker': ticker,
-                                'signal_type': 'runner_vwap',
-                                'price': current['Close'],
-                                'gap_pct': gap_pct,
-                                'vol_spike': vol_spike,
-                                'score': score.total_score,
-                                'components': score.components,
-                                'date': current.name.strftime('%Y-%m-%d'),
-                                'hist': hist  # Store for advanced filtering
-                            })
-                            logger.info(f"🟢 {ticker} ({current.name.strftime('%Y-%m-%d')}): Gap +{gap_pct:.1f}% | Vol {vol_spike:.1f}x | Score: {score.total_score:.1f}/10.0 ✅")
-                            break  # Only take first qualifying signal per ticker
-                        else:
-                            logger.info(f"⚪ {ticker} ({current.name.strftime('%Y-%m-%d')}): Gap +{gap_pct:.1f}% | Vol {vol_spike:.1f}x | Score: {score.total_score:.1f}/10.0 ❌ (threshold 7.0)")
+                        # PHASE 2 OPTIMIZATION: Accept all signals that pass gap/volume filters
+                        # Score is logged but NOT used for filtering (not predictive)
+                        signals.append({
+                            'ticker': ticker,
+                            'signal_type': 'runner_vwap',
+                            'price': current['Close'],
+                            'gap_pct': gap_pct,
+                            'vol_spike': vol_spike,
+                            'score': score.total_score,
+                            'components': score.components,
+                            'date': current.name.strftime('%Y-%m-%d'),
+                            'hist': hist  # Store for advanced filtering
+                        })
+                        logger.info(f"🟢 {ticker} ({current.name.strftime('%Y-%m-%d')}): Gap {gap_pct:.1f}%, Vol {vol_spike:.1f}x, Score {score.total_score:.1f}/10.0 ✅")
+                        break  # Only take first qualifying signal per ticker
 
             except Exception as e:
                 logger.error(f"{ticker}: Error scanning - {e}", exc_info=True)

@@ -29,11 +29,41 @@ from bouncehunter.penny_universe import PennyUniverse
 from bouncehunter.market_regime import MarketRegimeDetector
 from bouncehunter.signal_scoring import SignalScorer
 
+# Project root
+PROJECT_ROOT = Path(__file__).parent
+BLOCKLIST_FILE = PROJECT_ROOT / "configs" / "ticker_blocklist.txt"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def load_ticker_blocklist() -> set:
+    """Load ticker blocklist from configs/ticker_blocklist.txt"""
+    if not BLOCKLIST_FILE.exists():
+        return set()
+    
+    blocklist = set()
+    with open(BLOCKLIST_FILE, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Handle comment lines and YAML list format
+            if line and not line.startswith('#'):
+                if line.startswith('-'):
+                    # YAML list format: "- ADT  # comment"
+                    ticker = line.lstrip('- ').split('#')[0].strip()
+                    if ticker:
+                        blocklist.add(ticker.upper())
+                else:
+                    # Plain ticker format
+                    blocklist.add(line.upper())
+    
+    if blocklist:
+        logger.info(f"📋 Loaded blocklist: {sorted(blocklist)}")
+    
+    return blocklist
 
 
 def calculate_rsi(prices: pd.Series, period: int = 2) -> pd.Series:
@@ -211,6 +241,9 @@ def scan_pennies(tickers: list, config: dict) -> dict:
     # Initialize signal scorer
     min_score = config.get('signals', {}).get('runner_vwap', {}).get('min_signal_score', 7.0)
     scorer = SignalScorer(min_score_threshold=min_score)
+    
+    # Load ticker blocklist (Phase 2 optimization)
+    ticker_blocklist = load_ticker_blocklist()
 
     # Filter universe first
     universe = PennyUniverse(config['universe'])
@@ -219,12 +252,39 @@ def scan_pennies(tickers: list, config: dict) -> dict:
     logger.info(f"✅ {len(passed_tickers)} tickers passed universe filters")
 
     signals = []
+    
+    # PHASE 2 OPTIMIZATION COUNTERS
+    filtered_gap = 0
+    filtered_volume = 0
+    filtered_blocklist = 0
 
     for ticker in passed_tickers:
+        # PHASE 2 OPTIMIZATION: Check blocklist first
+        if ticker in ticker_blocklist:
+            logger.info(f"🚫 {ticker}: On blocklist (underperformer)")
+            filtered_blocklist += 1
+            continue
+        
         # Check for Runner VWAP setup
         runner = check_runner_setup(ticker, lookback_days=30)
         if runner['setup']:
-            # Phase 1: Score the signal
+            gap_pct = abs(runner['gap_pct'])
+            vol_spike = runner['vol_spike']
+            
+            # PHASE 2 OPTIMIZATION: Gap filter (10-15% sweet spot = 70% win rate)
+            if gap_pct < 10 or gap_pct > 15:
+                logger.info(f"⚪ {ticker}: Gap {gap_pct:.1f}% outside optimal range (10-15%)")
+                filtered_gap += 1
+                continue
+            
+            # PHASE 2 OPTIMIZATION: Volume filter (4-10x OR 15x+ = 70% win rate)
+            vol_ok = (4 <= vol_spike <= 10) or (vol_spike >= 15)
+            if not vol_ok:
+                logger.info(f"⚪ {ticker}: Volume {vol_spike:.1f}x outside optimal ranges (4-10x or 15x+)")
+                filtered_volume += 1
+                continue
+            
+            # Phase 1: Score the signal (for logging, not filtering)
             score = scorer.score_runner_vwap(
                 gap_pct=runner['gap_pct'],
                 volume_mult=runner['vol_spike'],
@@ -236,18 +296,19 @@ def scan_pennies(tickers: list, config: dict) -> dict:
                 confirmation_bars=0  # EOD scan can't verify this
             )
 
-            if score.passed_threshold:
-                signals.append({
-                    'ticker': ticker,
-                    'signal': runner['signal'],
-                    'price': runner['price'],
-                    'date': runner['date'],
-                    'score': score,
-                    'details': runner
-                })
-                logger.info(f"🟢 {ticker}: {runner['reason']} | Score: {score.total_score:.1f}/10.0 ✅")
-            else:
-                logger.info(f"⚪ {ticker}: {runner['reason']} | Score: {score.total_score:.1f}/10.0 ❌ (below threshold)")
+            # PHASE 2 OPTIMIZATION: Accept all signals that pass gap/volume filters
+            # Score is logged but NOT used for filtering (not predictive - see PHASE2_OPTIMIZATION_RESULTS.md)
+            signals.append({
+                'ticker': ticker,
+                'signal': runner['signal'],
+                'price': runner['price'],
+                'date': runner['date'],
+                'score': score,
+                'details': runner,
+                'gap_pct': gap_pct,
+                'vol_spike': vol_spike
+            })
+            logger.info(f"🟢 {ticker}: Gap {gap_pct:.1f}%, Vol {vol_spike:.1f}x, Score {score.total_score:.1f}/10.0 ✅")
 
         # Check for FRD Bounce setup
         frd = check_frd_setup(ticker, lookback_days=30)
@@ -277,6 +338,18 @@ def scan_pennies(tickers: list, config: dict) -> dict:
                 logger.info(f"🟡 {ticker}: {frd['reason']} | Score: {score.total_score:.1f}/10.0 ✅")
             else:
                 logger.info(f"⚪ {ticker}: {frd['reason']} | Score: {score.total_score:.1f}/10.0 ❌ (below threshold)")
+    
+    # PHASE 2 OPTIMIZATION: Log filter statistics
+    logger.info(f"\n{'='*70}")
+    logger.info(f"PHASE 2 FILTER STATISTICS")
+    logger.info(f"{'='*70}")
+    logger.info(f"Filtered by gap (10-15%): {filtered_gap}")
+    logger.info(f"Filtered by volume (4-10x/15x+): {filtered_volume}")
+    logger.info(f"Filtered by blocklist: {filtered_blocklist}")
+    logger.info(f"Total filtered: {filtered_gap + filtered_volume + filtered_blocklist}")
+    logger.info(f"Signals found: {len(signals)}")
+    logger.info(f"Expected win rate: 70% (validated on 30 historical trades)")
+    logger.info(f"{'='*70}\n")
 
     return {'regime': regime, 'signals': signals}
 

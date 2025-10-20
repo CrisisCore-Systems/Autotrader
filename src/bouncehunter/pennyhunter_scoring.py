@@ -32,7 +32,7 @@ class GemScorer:
     def __init__(self, config: BounceHunterConfig):
         self.config = config
         self.signal_scorer = SignalScorer(
-            min_score_threshold=getattr(config, 'min_score_threshold', 5.5),
+            min_score_threshold=getattr(config, 'min_score_threshold', 7.0),
             max_score=10.0
         )
         self._cache: Dict[str, Dict[str, Any]] = {}  # Ticker -> {date: data}

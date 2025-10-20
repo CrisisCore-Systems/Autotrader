@@ -448,14 +448,27 @@ def main():
     if args.tickers:
         tickers = [t.strip().upper() for t in args.tickers.split(',')]
     else:
-        # Use sample penny stocks for testing (Updated Oct 2025 - removed delisted)
-        # TODO: Integrate with screener API for production
-        tickers = [
-            'PLUG', 'SNDL', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'OCGN',
-            'SOS', 'CLSK', 'ANY', 'CTRM', 'SHIP', 'NCTY', 'EBON',
-            'BTBT', 'CAN', 'CLOV', 'EVGO', 'SPCE', 'SENS'
-        ]
-        logger.info(f"Using sample tickers (override with --tickers)")
+        # Load tickers from config file
+        ticker_file = config.get('universe', {}).get('ticker_file', 'configs/under10_tickers.txt')
+        ticker_path = Path(ticker_file)
+        
+        if ticker_path.exists():
+            tickers = []
+            with open(ticker_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip comments and empty lines
+                    if line and not line.startswith('#'):
+                        tickers.append(line.upper())
+            logger.info(f"📋 Loaded {len(tickers)} tickers from {ticker_file}")
+        else:
+            # Fallback to sample tickers if file not found
+            tickers = [
+                'PLUG', 'SNDL', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'OCGN',
+                'SOS', 'CLSK', 'ANY', 'CTRM', 'SHIP', 'NCTY', 'EBON',
+                'BTBT', 'CAN', 'CLOV', 'EVGO', 'SPCE', 'SENS'
+            ]
+            logger.warning(f"⚠️  Ticker file not found: {ticker_file}, using sample tickers")
 
     # Run scan with Phase 1 enhancements
     scan_result = scan_pennies(tickers, config)

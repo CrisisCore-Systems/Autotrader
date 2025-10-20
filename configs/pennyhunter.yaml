@@ -7,6 +7,9 @@ description: "Disciplined microcap trading ($200 starter account)"
 
 # ===== UNIVERSE FILTERS (Strict liquidity + quality) =====
 universe:
+  # Ticker list (validated by build_ticker_universe.py)
+  ticker_file: configs/under10_tickers.txt
+  
   exchanges: 
     - NASDAQ
     - NYSE

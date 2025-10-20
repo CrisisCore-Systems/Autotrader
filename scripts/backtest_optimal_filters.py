@@ -15,6 +15,22 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 CUMULATIVE_FILE = PROJECT_ROOT / "reports" / "pennyhunter_cumulative_history.json"
 BLOCKLIST_FILE = PROJECT_ROOT / "configs" / "ticker_blocklist.txt"
+TICKER_FILE = PROJECT_ROOT / "configs" / "under10_tickers.txt"
+
+
+def load_ticker_universe():
+    """Load ticker universe from config file."""
+    if not TICKER_FILE.exists():
+        print(f"⚠️  No ticker file found at {TICKER_FILE}, using all tickers")
+        return None
+    
+    with open(TICKER_FILE, 'r') as f:
+        tickers = set()
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                tickers.add(line.upper())
+        return tickers
 
 
 def load_blocklist():
@@ -45,7 +61,7 @@ def load_cumulative_history():
         return json.load(f)
 
 
-def backtest_optimal_filters(trades, gap_min, gap_max, vol_ranges, blocklist=None):
+def backtest_optimal_filters(trades, gap_min, gap_max, vol_ranges, blocklist=None, ticker_universe=None):
     """
     Test optimal filter combination.
     
@@ -55,6 +71,7 @@ def backtest_optimal_filters(trades, gap_min, gap_max, vol_ranges, blocklist=Non
         gap_max: Maximum gap %
         vol_ranges: List of (min, max) volume spike ranges (use None for no max)
         blocklist: Set of tickers to exclude
+        ticker_universe: Set of tickers to include (None = all)
     
     Returns:
         dict with results
@@ -66,8 +83,14 @@ def backtest_optimal_filters(trades, gap_min, gap_max, vol_ranges, blocklist=Non
     rejected_gap = 0
     rejected_volume = 0
     rejected_blocklist = 0
+    rejected_universe = 0
     
     for trade in trades:
+        # Check ticker universe
+        if ticker_universe is not None and trade['ticker'] not in ticker_universe:
+            rejected_universe += 1
+            continue
+        
         # Check blocklist
         if trade['ticker'] in blocklist:
             rejected_blocklist += 1
@@ -138,6 +161,7 @@ def backtest_optimal_filters(trades, gap_min, gap_max, vol_ranges, blocklist=Non
         'rejected_gap': rejected_gap,
         'rejected_volume': rejected_volume,
         'rejected_blocklist': rejected_blocklist,
+        'rejected_universe': rejected_universe,
         'trades': filtered_trades
     }
 
@@ -149,6 +173,7 @@ def main():
         return
     
     blocklist = load_blocklist()
+    ticker_universe = load_ticker_universe()
     trades = [t for t in history['trades'] if t.get('status') == 'closed']
     
     print(f"\n{'='*90}")
@@ -156,6 +181,10 @@ def main():
     print(f"{'='*90}\n")
     
     print(f"Total historical trades: {len(trades)}")
+    if ticker_universe:
+        print(f"Ticker universe: {len(ticker_universe)} tickers from configs/under10_tickers.txt")
+    else:
+        print(f"Ticker universe: All tickers (no filter)")
     print(f"Blocklist: {blocklist if blocklist else 'None'}\n")
     
     # Test different filter combinations
@@ -199,7 +228,8 @@ def main():
             gap_min=scenario['gap_min'],
             gap_max=scenario['gap_max'],
             vol_ranges=scenario['vol_ranges'],
-            blocklist=blocklist
+            blocklist=blocklist,
+            ticker_universe=ticker_universe
         )
         result['name'] = scenario['name']
         results.append(result)
@@ -248,10 +278,14 @@ def main():
     print(f"   Profit factor: {optimal['profit_factor']:.2f}\n")
     
     print(f"Rejected trades:")
+    if ticker_universe:
+        print(f"   Universe filter: {optimal['rejected_universe']}")
     print(f"   Gap filter: {optimal['rejected_gap']}")
     print(f"   Volume filter: {optimal['rejected_volume']}")
     print(f"   Blocklist: {optimal['rejected_blocklist']}")
     total_rejected = optimal['rejected_gap'] + optimal['rejected_volume'] + optimal['rejected_blocklist']
+    if ticker_universe:
+        total_rejected += optimal['rejected_universe']
     print(f"   Total rejected: {total_rejected}\n")
     
     # Phase 2 validation

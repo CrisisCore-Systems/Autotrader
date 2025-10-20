@@ -35,9 +35,10 @@ logger = logging.getLogger(__name__)
 
 # Curated list of penny stocks that are typically active
 # (This is a starting list - we'll validate each one)
+# Updated Oct 2025: Removed delisted tickers (NAKD, ZOM, TELL, GNUS)
 PENNY_CANDIDATES = [
     # Tech/Crypto
-    'SNDL', 'GEVO', 'PLUG', 'ATOS', 'TELL', 'OCGN',
+    'SNDL', 'GEVO', 'PLUG', 'ATOS', 'OCGN',
     # Shipping
     'SHIP', 'CTRM', 'EGLE', 'TOPS', 'GLBS', 'DSSI',
     # Energy/Battery
@@ -49,12 +50,14 @@ PENNY_CANDIDATES = [
     # Misc
     'MMAT', 'VEON', 'IMMP', 'SXTC', 'VKTX',
     'JAGX', 'IDEX', 'XELA', 'KOSS', 'WIMI',
-    # Recent movers (check if still active)
-    'SOFI', 'WISH', 'MILE', 'HITI', 'GNUS',
+    # Recent movers (validated Oct 2025)
+    'SOFI', 'WISH', 'MILE', 'HITI',
     'INUV', 'FAMI', 'BFRI', 'BRQS', 'KIRK',
-    # More recent
+    # Crypto miners & tech
     'BLNK', 'CHPT', 'CLSK', 'MARA', 'RIOT',
     'BTBT', 'WULF', 'SOUN', 'AITX', 'EBON',
+    # EV & Clean Energy
+    'CLOV', 'EVGO', 'SPCE',
 ]
 
 

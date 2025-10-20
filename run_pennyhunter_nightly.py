@@ -375,12 +375,12 @@ def main():
     if args.tickers:
         tickers = [t.strip().upper() for t in args.tickers.split(',')]
     else:
-        # Use sample penny stocks for testing
+        # Use sample penny stocks for testing (Updated Oct 2025 - removed delisted)
         # TODO: Integrate with screener API for production
         tickers = [
-            'PLUG', 'SNDL', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'NAKD',
-            'ZOM', 'OCGN', 'TELL', 'SOS', 'CLSK', 'ANY', 'GNUS',
-            'CTRM', 'SHIP', 'NCTY', 'EBON', 'BTBT', 'CAN'
+            'PLUG', 'SNDL', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'OCGN',
+            'SOS', 'CLSK', 'ANY', 'CTRM', 'SHIP', 'NCTY', 'EBON',
+            'BTBT', 'CAN', 'CLOV', 'EVGO', 'SPCE', 'SENS'
         ]
         logger.info(f"Using sample tickers (override with --tickers)")
 

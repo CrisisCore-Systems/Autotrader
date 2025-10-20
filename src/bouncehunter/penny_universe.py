@@ -296,10 +296,10 @@ def get_penny_candidates(
     # For now, return sample tickers for testing
     logger.warning("get_penny_candidates() using sample data - integrate screener API for production")
 
-    # Sample microcaps (replace with real screener)
+    # Sample microcaps (Updated Oct 2025 - removed delisted: NAKD, ZOM, TELL, GNUS)
     candidates = [
-        'SNDL', 'PLUG', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'CTRM', 'NAKD',
-        'ZOM', 'OCGN', 'SNDL', 'TELL', 'SOS', 'CLSK', 'ANY', 'GNUS'
+        'SNDL', 'PLUG', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'CTRM', 'OCGN',
+        'SOS', 'CLSK', 'ANY', 'CLOV', 'EVGO', 'SPCE', 'SENS', 'SOFI'
     ]
 
     return candidates

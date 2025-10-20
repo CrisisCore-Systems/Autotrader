@@ -1,18 +1,39 @@
-ADT
-SAN
+# PennyHunter Validated Ticker Universe
+# Generated: 2025-10-20 14:06:30
+# Criteria: $0.5-$10.0, 500,000+ volume, $1.0M+ dollar vol
+# Total: 34 tickers
+#
+BBAI
+BITF
+PLUG
+NIO
+BTBT
+TLRY
+RDW
 COMP
-INTR
-AHCO
-SNDL
+AMC
+ADT
+FCEL
+NVAX
+CGC
+SAN
+SPCE
 CLOV
 EVGO
-SENS
-SPCE
-PLUG
-MARA
-RIOT
 GEVO
-ATOS
+INTR
+KULR
+BLNK
+TWO
+SAVA
+ACB
+SNDL
 OCGN
-CLSK
-SOFI
+AHCO
+SENS
+CRON
+ATOS
+ANY
+OGI
+BNGO
+WKHS

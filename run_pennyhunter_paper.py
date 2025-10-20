@@ -438,7 +438,7 @@ class PennyHunterPaperTrader:
             print()
 
             if ejected:
-                print("❌ EJECTED TICKERS:")
+                print("EJECTED TICKERS:")
                 for stat in ejected:
                     print(f"   {stat.ticker}: {stat.win_rate*100:.1f}% WR ({stat.wins}W/{stat.losses}L)")
                     if stat.ejection_reason:
@@ -446,7 +446,7 @@ class PennyHunterPaperTrader:
                 print()
 
             if monitored:
-                print("👁️ MONITORED TICKERS (Underperforming - Watch Closely):")
+                print("MONITORED TICKERS (Underperforming - Watch Closely):")
                 for stat in monitored:
                     print(f"   {stat.ticker}: {stat.win_rate*100:.1f}% WR ({stat.wins}W/{stat.losses}L), P&L: ${stat.total_pnl:.2f}")
                 print()

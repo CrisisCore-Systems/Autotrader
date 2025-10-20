@@ -452,7 +452,7 @@ class PennyHunterPaperTrader:
                 print()
 
             if active:
-                print("✅ ACTIVE TICKERS:")
+                print("ACTIVE TICKERS:")
                 # Show top performers
                 active_sorted = sorted(active, key=lambda s: s.win_rate, reverse=True)[:5]
                 for stat in active_sorted:

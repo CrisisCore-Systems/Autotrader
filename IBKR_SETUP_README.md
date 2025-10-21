@@ -1,51 +1,285 @@
-# IBKR Paper Trading Setup for AutoTrader
+# IBKR Connection & Testing - Quick Access
 
-This guide will help you set up Interactive Brokers paper trading integration with AutoTrader.
+**Tactical tools to prove your TWS connection works end-to-end.**
 
-## ✅ Prerequisites
+---
 
-1. **IBKR Paper Trading Account**: You have account `DU0071381` (confirmed active)
-2. **TWS Software**: Trader Workstation installed and running
-3. **API Access**: TWS configured for API connections
-4. **Python Library**: `ib_insync` installed
+## 🔥 3-Step Validation (10 Minutes)
 
-## 🚀 Quick Start
+### Step 1: Configure TWS (5 min)
 
-### 1. Install Dependencies
-```bash
-pip install ib_insync
+1. Start TWS, log in to **Paper Trading** account
+2. **File → Global Configuration → API → Settings**
+   - ✅ Enable ActiveX and Socket Clients
+   - ❌ **Read-only API = OFF** (CRITICAL for orders)
+   - Port = **7497**
+   - Trusted IPs = **127.0.0.1**
+3. **Restart TWS**
+
+### Step 2: Run Smoke Test (2 min)
+
+```powershell
+cd Autotrader
+python scripts\ibkr_smoke_test.py
 ```
 
-### 2. Start TWS
-- Launch Trader Workstation
-- Log in with your paper trading account (DU0071381)
-- Ensure TWS is running on the default port (7497 for paper trading)
+**Should print:** `✅ SMOKE TEST PASSED`
 
-### 3. Enable API Connections
-In TWS:
-1. Go to `Configure` → `API` → `Settings`
-2. Check `Enable ActiveX and Socket Clients`
-3. Check `Allow connections from localhost only` (recommended for security)
-4. Set `Socket port: 7497` (should be default for paper trading)
-5. Click `OK`
+### Step 3: Verify in TWS (1 min)
 
-### 4. Test Connection
-```bash
-python test_ibkr_connection.py
+Check TWS for:
+- ✓ Status bar: "Accepted incoming connection from 127.0.0.1"
+- ✓ Mosaic: Test order appeared & canceled
+- ✓ Logs (View → Logs → API): Connection messages
+
+---
+
+## � Quick Commands
+
+```powershell
+# End-to-end smoke test (start here!)
+python scripts\ibkr_smoke_test.py
+
+# Test connection only
+python scripts\ibkr_connector.py --ping
+
+# Show account summary
+python scripts\ibkr_connector.py --account
+
+# Show positions
+python scripts\ibkr_connector.py --positions
+
+# Get quote (US or Canadian)
+python scripts\ibkr_connector.py --quote AAPL
+python scripts\ibkr_connector.py --quote SHOP.TO
+
+# Place test order (auto-cancels)
+python scripts\ibkr_connector.py --place-test
 ```
 
-You should see:
-```
-✅ AutoTrader imports successful
-✅ Broker created successfully
-✅ Account access successful
-Account Value: $XXXXXX.XX
+---
+
+## 📚 Documentation Hierarchy
+
+**Pick your path:**
+
+### 🏃 Fast Track (Want proof NOW)
+
+1. **[docs/IBKR_REFERENCE_CARD.md](docs/IBKR_REFERENCE_CARD.md)** ← **Print this!**
+   - One-page desk reference
+   - Port numbers, settings, error codes
+   - Quick troubleshooting
+
+2. **[scripts/README.md](scripts/README.md)**
+   - Script usage guide
+   - Testing workflow
+   - Common issues
+
+### 📖 Comprehensive Setup
+
+1. **[docs/IBKR_CONNECTION_QUICK_REF.md](docs/IBKR_CONNECTION_QUICK_REF.md)**
+   - Tactical TWS configuration
+   - Smoke test walkthrough
+   - Common blocker troubleshooting
+   - Error code reference
+
+2. **[docs/IBKR_SETUP_GUIDE.md](docs/IBKR_SETUP_GUIDE.md)**
+   - Full IBKR account setup
+   - TWS/Gateway installation
+   - Environment variables
+   - Canadian trading details
+   - Production deployment
+
+### 🍁 Canadian Integration
+
+1. **[docs/QUICK_START_CANADA.md](docs/QUICK_START_CANADA.md)**
+   - 10-minute setup
+   - Daily workflow
+   - Weekly monitoring
+
+2. **[docs/CANADIAN_MIGRATION_COMPLETE.md](docs/CANADIAN_MIGRATION_COMPLETE.md)**
+   - What changed from Alpaca
+   - All new components
+   - Testing status
+   - Next steps
+
+
+---
+
+## 🛠️ Available Tools
+
+### Connection Testing Tools
+
+| Tool | Purpose | Time |
+|------|---------|------|
+| `scripts/ibkr_smoke_test.py` | **Start here!** End-to-end validation | 30 sec |
+| `scripts/ibkr_connector.py` | Production CLI harness with utilities | Varies |
+| `scripts/test_yahoo_vix.py` | VIX provider test (no IBKR needed) | 10 sec |
+
+### Paper Trading Suite
+
+| Tool | Purpose | Time |
+|------|---------|------|
+| `scripts/test_paper_trading_ibkr.py` | Full 5-test validation suite | 2 min |
+| `scripts/run_pennyhunter_paper.py` | Deploy paper trading bot | Continuous |
+| `scripts/monitor_adjustments.py` | Monitor active positions | On-demand |
+
+---
+
+## 🚨 Quick Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| Connection refused | TWS not running or wrong port (use **7497** for paper) |
+| No connection message in TWS | Add **127.0.0.1** to Trusted IPs, restart TWS |
+| Orders ignored | Turn **OFF** "Read-only API" setting |
+| Client ID in use | Change `IBKR_CLIENT_ID` environment variable |
+| Firewall blocks | Allow `javaw.exe` and `TWS.exe` through firewall |
+
+---
+
+## 📊 Port Reference
+
+| Platform | Mode  | Port |
+|----------|-------|------|
+| TWS      | Paper | **7497** |
+| TWS      | Live  | 7496 |
+| Gateway  | Paper | 4002 |
+| Gateway  | Live  | 4001 |
+
+---
+
+## � Environment Variables
+
+```powershell
+# Default (TWS Paper)
+$env:IBKR_HOST="127.0.0.1"
+$env:IBKR_PORT="7497"
+$env:IBKR_CLIENT_ID="42"
+
+# Custom client ID (if clash)
+$env:IBKR_CLIENT_ID="99"
+
+# Gateway Paper (instead of TWS)
+$env:IBKR_PORT="4002"
 ```
 
-## 📁 Configuration Files
+---
 
-### `ibkr_config.json`
-Standalone JSON configuration for IBKR settings:
+## 🇨🇦 Canadian Stocks
+
+**Auto-detected by symbol suffix:**
+
+- **TSX:** `SHOP.TO` → CAD currency, TSE exchange
+- **TSXV:** `NUMI.V` → CAD currency, VENTURE exchange
+
+No special configuration needed!
+
+---
+
+## ✅ Success Checklist
+
+When smoke test passes, you should see:
+
+- [ ] Terminal: `✅ SMOKE TEST PASSED`
+- [ ] TWS Status: "Accepted incoming connection from 127.0.0.1"
+- [ ] TWS Mosaic: Test order appeared & canceled
+- [ ] TWS Logs (View → Logs → API): Connection messages visible
+- [ ] Account info retrieved
+- [ ] Market data working (AAPL quote)
+- [ ] Order placement working
+- [ ] Order cancellation working
+
+---
+
+## 🎯 Recommended Testing Flow
+
+### First Time Setup
+
+1. ✅ **Test Yahoo VIX** (proves dependencies work, no TWS needed)
+   ```powershell
+   python scripts\test_yahoo_vix.py
+   ```
+
+2. ✅ **Configure TWS** (see Step 1 above)
+
+3. ✅ **Run Smoke Test** (proves TWS connection works)
+   ```powershell
+   python scripts\ibkr_smoke_test.py
+   ```
+
+4. ✅ **Full Test Suite** (validates entire paper trading system)
+   ```powershell
+   python scripts\test_paper_trading_ibkr.py
+   ```
+
+5. ✅ **Deploy Bot** (start paper trading automation)
+   ```powershell
+   python scripts\run_pennyhunter_paper.py
+   ```
+
+### Daily Validation
+
+```powershell
+# Morning check
+python scripts\ibkr_connector.py --ping
+python scripts\ibkr_connector.py --positions
+
+# Monitor bot (if running)
+python scripts\monitor_adjustments.py
+```
+
+---
+
+## �📁 File Locations
+
+```
+Autotrader/
+├── scripts/
+│   ├── ibkr_smoke_test.py          ← Start here!
+│   ├── ibkr_connector.py           ← CLI utilities
+│   ├── test_yahoo_vix.py           ← VIX test (no IBKR)
+│   ├── test_paper_trading_ibkr.py  ← Full suite
+│   └── README.md                   ← Script guide
+├── docs/
+│   ├── IBKR_REFERENCE_CARD.md      ← Print this!
+│   ├── IBKR_CONNECTION_QUICK_REF.md
+│   ├── IBKR_SETUP_GUIDE.md
+│   ├── QUICK_START_CANADA.md
+│   └── CANADIAN_MIGRATION_COMPLETE.md
+└── logs/
+    └── ibkr_connector_YYYYMMDD.log
+```
+
+---
+
+## 🆘 Support Resources
+
+**Stuck?** Check in this order:
+
+1. **[docs/IBKR_REFERENCE_CARD.md](docs/IBKR_REFERENCE_CARD.md)** - Quick fixes
+2. **[docs/IBKR_CONNECTION_QUICK_REF.md](docs/IBKR_CONNECTION_QUICK_REF.md)** - Detailed troubleshooting
+3. **[scripts/README.md](scripts/README.md)** - Script-specific issues
+4. **Logs:** `logs/ibkr_connector_*.log`
+5. **TWS Logs:** View → Logs → API
+
+---
+
+## 🚀 Next Steps After Validation
+
+1. **Run full tests:** `python scripts\test_paper_trading_ibkr.py`
+2. **Deploy bot:** `python scripts\run_pennyhunter_paper.py`
+3. **Monitor daily:** `python scripts\ibkr_connector.py --positions`
+4. **Weekly reports:** `python scripts\generate_weekly_report.py`
+
+---
+
+## 📝 Legacy Configuration (Not Used by New Tools)
+
+The following configuration files were used by older broker integration code. The new Canadian migration uses direct IBKR integration via `ib_insync`:
+
+### `ibkr_config.json` (Legacy)
+Standalone JSON configuration for older IBKR integration:
 ```json
 {
   "ibkr": {
@@ -60,193 +294,12 @@ Standalone JSON configuration for IBKR settings:
 }
 ```
 
-### `configs/broker_credentials.yaml`
-Updated with your IBKR settings (already configured):
-```yaml
-ibkr:
-  enabled: true
-  host: "127.0.0.1"
-  port: 7497
-  client_id: 1
-  account_id: "DU0071381"
-  timeout: 60
-  readonly: false
-```
+**Note:** New Canadian migration tools use environment variables (see above) instead of config files for IBKR connection settings.
 
-## 🐍 Usage Examples
+---
 
-### Basic Connection
-```python
-from bouncehunter.broker import create_broker
+**🍁 CrisisCore AutoTrader - Canadian Markets Integration**  
+**Last Updated:** 2025-10-20
 
-# Using config file
-broker = create_broker("ibkr")
-
-# Or explicit parameters
-broker = create_broker("ibkr",
-    host="127.0.0.1",
-    port=7497,
-    client_id=1
-)
-```
-
-### Get Account Information
-```python
-account = broker.get_account()
-print(f"Cash: ${account.cash:,.2f}")
-print(f"Portfolio Value: ${account.portfolio_value:,.2f}")
-print(f"Positions: {len(account.positions)}")
-```
-
-### Get Positions
-```python
-positions = broker.get_positions()
-for pos in positions:
-    print(f"{pos.ticker}: {pos.shares} shares @ ${pos.avg_price:.2f}")
-```
-
-### Place Orders
-```python
-from bouncehunter.broker import OrderSide, OrderType
-
-# Market order
-order = broker.place_order(
-    ticker="AAPL",
-    side=OrderSide.BUY,
-    order_type=OrderType.MARKET,
-    quantity=10
-)
-
-# Bracket order (entry + stop loss + target)
-bracket = broker.place_bracket_order(
-    ticker="AAPL",
-    entry_side=OrderSide.BUY,
-    quantity=10,
-    entry_price=150.0,
-    stop_price=145.0,
-    target_price=160.0
-)
-```
-
-## 🔧 Advanced Configuration
-
-### Environment Variables (Production)
-Set these instead of config files:
-```bash
-# Windows PowerShell
-$env:IBKR_HOST="127.0.0.1"
-$env:IBKR_PORT="7497"
-$env:IBKR_CLIENT_ID="1"
-$env:IBKR_ACCOUNT_ID="DU0071381"
-
-# Linux/Mac
-export IBKR_HOST="127.0.0.1"
-export IBKR_PORT="7497"
-export IBKR_CLIENT_ID="1"
-export IBKR_ACCOUNT_ID="DU0071381"
-```
-
-### Multiple Client IDs
-If you need multiple connections, use different client IDs:
-```python
-broker1 = create_broker("ibkr", client_id=1)
-broker2 = create_broker("ibkr", client_id=2)
-```
-
-### Live Trading (When Ready)
-Switch to live trading by changing the port:
-```yaml
-ibkr:
-  enabled: true
-  host: "127.0.0.1"
-  port: 7496  # Live trading port
-  client_id: 1
-  account_id: "YOUR_LIVE_ACCOUNT"  # Your live account number
-```
-
-## 🧪 Testing
-
-### Run IBKR Tests
-```bash
-# Run all broker tests
-pytest tests/test_broker.py -v -k "ibkr"
-
-# Run specific IBKR test
-pytest tests/test_broker.py::TestIBKRBroker::test_get_account -v
-```
-
-### Integration Testing
-```bash
-# Test with other components
-pytest tests/test_e2e_workflows.py -v -k "ibkr"
-```
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**"ib_insync not installed"**
-```bash
-pip install ib_insync
-```
-
-**"Connection refused"**
-- Ensure TWS is running
-- Check port 7497 is not blocked by firewall
-- Verify API is enabled in TWS settings
-
-**"Client ID already in use"**
-- Change client_id in config (try 2, 3, etc.)
-- Or restart TWS to clear existing connections
-
-**"Account not found"**
-- Verify account number in config matches TWS
-- For paper trading, ensure you're logged into paper account
-
-**"No positions found"**
-- Normal for new paper accounts
-- Place a test order to create positions
-
-### Debug Mode
-Enable debug logging:
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-broker = create_broker("ibkr")
-```
-
-### TWS API Settings Checklist
-- [ ] Enable ActiveX and Socket Clients
-- [ ] Allow connections from localhost
-- [ ] Socket port set to 7497 (paper) or 7496 (live)
-- [ ] API logging enabled (optional, for debugging)
-
-## 📊 Features Supported
-
-- ✅ Account information retrieval
-- ✅ Position tracking
-- ✅ Market/Limit orders
-- ✅ Bracket orders (entry + stop + target)
-- ✅ Order status monitoring
-- ✅ Risk management checks
-- ✅ Connection management
-- ✅ Paper and live trading modes
-
-## 🔒 Security Notes
-
-- Never commit API credentials to version control
-- Use environment variables in production
-- Enable TWS API logging to monitor connections
-- Regularly rotate client IDs if needed
-- Consider IP restrictions for live trading accounts
-
-## 📞 Support
-
-If you encounter issues:
-1. Check TWS API logs: `C:\TWS API\log`
-2. Run the test script: `python test_ibkr_connection.py`
-3. Verify TWS settings match configuration
-4. Check that ib_insync is properly installed
-
-For IBKR-specific issues, consult the [IBKR API documentation](https://interactivebrokers.github.io/tws-api/) or their support forums.
+**Ready to validate your connection?**  
+Run: `python scripts\ibkr_smoke_test.py`

@@ -11,6 +11,7 @@ pipeline/__main__.py
 pipeline/cli_backtest.py
 src/__init__.py
 src/alerts/__init__.py
+src/alerts/backtest.py
 src/alerts/dispatcher.py
 src/alerts/engine.py
 src/alerts/models.py
@@ -138,6 +139,7 @@ src/security/__init__.py
 src/security/artifact_integrity.py
 src/security/prompt_validator.py
 tests/test_agentic.py
+tests/test_alert_backtest.py
 tests/test_alert_crud_api.py
 tests/test_alert_dispatcher.py
 tests/test_alert_rule_validation.py
@@ -156,6 +158,7 @@ tests/test_circuit_breaker_alerts.py
 tests/test_classification_metrics.py
 tests/test_cli_backtest_smoke.py
 tests/test_cli_run_scanner.py
+tests/test_compound_conditions.py
 tests/test_core_services.py
 tests/test_crypto_pnd_detector.py
 tests/test_dashboard_api.py
@@ -204,3 +207,4 @@ tests/test_summary_report.py
 tests/test_time_sliced_evaluation.py
 tests/test_trading_api.py
 tests/test_tree.py
+tests/test_yaml_rule_loading.py

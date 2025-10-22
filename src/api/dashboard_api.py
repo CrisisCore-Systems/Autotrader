@@ -1893,6 +1893,15 @@ async def health_check() -> Dict[str, str]:
     return {"status": "healthy", "version": "2.0.0"}
 
 
+# ============================================================================
+# Experiments Endpoints (Delegated to experiments router)
+# ============================================================================
+
+# Import and include experiments router
+from src.api.routes.experiments import router as experiments_router
+app.include_router(experiments_router, prefix="/api")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8001)

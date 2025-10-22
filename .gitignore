@@ -15,3 +15,11 @@ configs/telegram_*.yaml
 configs/broker_credentials.yaml
 configs/broker_*.yaml
 *_credentials.yaml
+
+# Experiment data (generated files)
+backtest_results/*.json
+execution_trees/*.json
+exports/*
+!backtest_results/.gitkeep
+!execution_trees/.gitkeep
+!exports/.gitkeep

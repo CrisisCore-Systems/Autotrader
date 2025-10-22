@@ -1,0 +1,62 @@
+.trading-workspace {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 24px;
+}
+
+.workspace-header {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.workspace-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.workspace-subtitle {
+  margin: 8px 0 0 0;
+  font-size: 16px;
+  color: #a0a0a0;
+}
+
+.workspace-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .workspace-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .trading-workspace {
+    padding: 16px;
+  }
+
+  .workspace-header h1 {
+    font-size: 24px;
+  }
+
+  .workspace-subtitle {
+    font-size: 14px;
+  }
+}

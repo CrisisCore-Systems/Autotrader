@@ -22,6 +22,8 @@ src/api/__init__.py
 src/api/dashboard_api.py
 src/api/main.py
 src/api/routes/__init__.py
+src/api/routes/experiments.py
+src/api/routes/health.py
 src/api/routes/tokens.py
 src/api/schemas/__init__.py
 src/api/schemas/token.py
@@ -137,6 +139,7 @@ tests/test_alert_rule_validation.py
 tests/test_alerting.py
 tests/test_alerts_engine.py
 tests/test_api_integration.py
+tests/test_api_startup.py
 tests/test_artifact_integrity.py
 tests/test_backtest_cli.py
 tests/test_backtest_statistics.py
@@ -152,12 +155,14 @@ tests/test_dev_deployment.py
 tests/test_e2e_workflows.py
 tests/test_enhanced_modules.py
 tests/test_experiment_tracker.py
+tests/test_experiments_workspace.py
 tests/test_exporter.py
 tests/test_extended_metrics.py
 tests/test_feature_validation.py
 tests/test_features.py
 tests/test_feedback.py
 tests/test_free_clients_integration.py
+tests/test_health_api.py
 tests/test_http_manager.py
 tests/test_ingestion_worker.py
 tests/test_integration_high_priority.py

@@ -1,0 +1,4 @@
+# Binary files - mark explicitly to avoid incorrect diffs
+*.db binary
+*.sqlite binary
+*.sqlite3 binary

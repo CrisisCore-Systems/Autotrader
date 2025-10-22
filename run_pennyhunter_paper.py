@@ -36,6 +36,8 @@ from bouncehunter.signal_scoring import SignalScorer
 from bouncehunter.penny_universe import PennyUniverse
 from bouncehunter.advanced_filters import AdvancedRiskFilters
 from bouncehunter.pennyhunter_memory import PennyHunterMemory
+from risk.regime_flip import RegimeFlip, RegimeInputs
+from metrics.pnl import PnLTracker
 import yfinance as yf
 
 # Project root
@@ -114,6 +116,20 @@ class PennyHunterPaperTrader:
         self.memory_enabled = config.get('memory', {}).get('enabled', True)
         logger.info(f"📊 Memory System: {'ENABLED' if self.memory_enabled else 'DISABLED'}")
 
+        # PHASE 2.5: RegimeFlip (optional hard regime gate)
+        regime_flip_config = config.get('guards', {}).get('regime_flip', {})
+        if regime_flip_config.get('enabled', False):
+            self.regime_flip = RegimeFlip(
+                vix_low=regime_flip_config.get('vix_low', 20.0),
+                breadth_min=regime_flip_config.get('breadth_min', 0.55),
+                volume_thrust_min=regime_flip_config.get('volume_thrust_min', 1.2),
+                ret_5d_min=regime_flip_config.get('ret_5d_min', 0.01),
+                require_confirmations=regime_flip_config.get('require_confirmations', 2)
+            )
+            logger.info(f"🔒 RegimeFlip: ENABLED (require {regime_flip_config.get('require_confirmations', 2)} confirmations)")
+        else:
+            self.regime_flip = None
+
         # Track trades
         self.trades_log = []
         self.active_positions = {}
@@ -131,6 +147,88 @@ class PennyHunterPaperTrader:
             logger.warning(f"⚠️ Reason: {regime.reason}")
 
         return regime.allow_penny_trading
+
+    def check_regime_flip(self) -> bool:
+        """
+        Check RegimeFlip gate (optional hard regime confirmation).
+        Returns True if trading allowed, False otherwise.
+        """
+        if not self.regime_flip:
+            return True  # Not enabled, allow trading
+
+        try:
+            # Fetch VIX data
+            vix_ticker = yf.Ticker("^VIX")
+            vix_hist = vix_ticker.history(period="5d")
+            if len(vix_hist) < 1:
+                logger.warning("⚠️ RegimeFlip: VIX data unavailable, allowing trade")
+                return True
+            
+            vix = vix_hist['Close'].iloc[-1]
+            vix_ma3 = vix_hist['Close'].tail(3).mean() if len(vix_hist) >= 3 else None
+
+            # Fetch SPY data for trend
+            spy_ticker = yf.Ticker("SPY")
+            spy_hist = spy_ticker.history(period="30d")
+            
+            spy_ma_fast = None
+            spy_ma_slow = None
+            spy_ret_5d = None
+            
+            if len(spy_hist) >= 20:
+                spy_ma_fast = spy_hist['Close'].tail(10).mean()
+                spy_ma_slow = spy_hist['Close'].tail(20).mean()
+            
+            if len(spy_hist) >= 5:
+                spy_ret_5d = (spy_hist['Close'].iloc[-1] / spy_hist['Close'].iloc[-5] - 1)
+
+            # Note: Breadth and adv/dec volume are optional and not easily available
+            # The gate will work with just VIX and trend data
+            inputs = RegimeInputs(
+                vix=vix,
+                vix_ma3=vix_ma3,
+                spy_ret_5d=spy_ret_5d,
+                spy_ma_fast=spy_ma_fast,
+                spy_ma_slow=spy_ma_slow,
+                breadth_above_20dma=None,  # Optional
+                adv_volume=None,  # Optional
+                dec_volume=None   # Optional
+            )
+
+            decision = self.regime_flip.decide(inputs)
+            logger.info(f"🔒 RegimeFlip: allow_long={decision.allow_long} reason={decision.reason}")
+
+            if not decision.allow_long:
+                logger.warning(f"⚠️ RegimeFlip BLOCKS trading: {decision.reason}")
+
+            return decision.allow_long
+
+        except Exception as e:
+            logger.error(f"RegimeFlip check failed: {e}", exc_info=True)
+            logger.warning("⚠️ RegimeFlip: Error occurred, allowing trade (fail-soft)")
+            return True
+
+    def dynamic_risk_per_trade(self, vix: float) -> float:
+        """
+        Scale risk per trade based on VIX volatility.
+        
+        Args:
+            vix: Current VIX level
+            
+        Returns:
+            Scaled risk amount
+        """
+        # Scale risk down when VIX is high
+        # Formula: max_risk * clamp(20 / max(10, vix), 0.5, 1.0)
+        scale_factor = 20.0 / max(10.0, vix)
+        scale_factor = max(0.5, min(1.0, scale_factor))
+        
+        scaled_risk = self.max_risk_per_trade * scale_factor
+        
+        if scale_factor < 1.0:
+            logger.info(f"📉 VIX={vix:.1f}: Scaling risk to ${scaled_risk:.2f} (factor={scale_factor:.2f})")
+        
+        return scaled_risk
 
     def scan_for_signals(self, tickers: List[str]) -> List[Dict]:
         """Scan tickers for high-scoring signals"""
@@ -503,6 +601,11 @@ def main():
     # Check market regime
     if not trader.check_market_regime():
         logger.warning("Market regime blocks penny trading - exiting")
+        sys.exit(1)
+
+    # Check RegimeFlip gate (if enabled)
+    if not trader.check_regime_flip():
+        logger.warning("RegimeFlip blocks penny trading - exiting")
         sys.exit(1)
 
     # Scan for signals

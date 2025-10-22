@@ -120,6 +120,31 @@ python -m src.bouncehunter.telegram_cli --config configs/telegram_pro.yaml
 
 ---
 
+## Data Dependencies & Offline Operation
+
+### Primary data feeds
+
+- **Price & volume history** – Pulled from Yahoo Finance via `yfinance` for each ticker when `BounceHunter.fit()` is called. This powers feature engineering (ATR, RSI2, Bollinger, ADV) and the walk-forward trainer.【F:src/bouncehunter/engine.py†L50-L156】
+- **Volatility regime (VIX)** – Queried from Yahoo Finance’s `^VIX` series and transformed into a rolling percentile cache that is reused across tickers.【F:src/bouncehunter/engine.py†L159-L182】
+- **Earnings calendars** – Retrieved from the Yahoo Finance ticker API to enforce blackout windows around scheduled earnings events.【F:src/bouncehunter/engine.py†L286-L305】
+
+### Offline cache checklist
+
+1. **Pre-fetch datasets on a connected host**:
+   ```bash
+   python scripts/cache_bouncehunter_data.py --output exports/bouncehunter_cache
+   ```
+   This captures training events, normalized OHLCV history, engineered feature tables, ticker-level earnings dates, and the VIX percentile series in CSV form that can be synced to an air-gapped workstation.【F:scripts/cache_bouncehunter_data.py†L24-L113】
+2. **Version the cache** – Commit the generated `metadata.json` alongside the CSV exports so operators know which universe, start date, and earnings policy were used when the cache was created.【F:scripts/cache_bouncehunter_data.py†L89-L106】
+3. **Share ancillary state** – Copy the latest `bouncehunter_memory.db` (optional, for agentic workflows) and any custom configs so the offline operator can reproduce alerts as they existed during capture.
+
+### Reproducible backtests
+
+- The walk-forward harness rebuilds models from the cached `TrainingArtifact` objects. When running in a limited-network environment, load the exported CSVs into a pandas DataFrame and feed them to `BounceHunterBacktester` to avoid live downloads while keeping feature calculations identical.【F:src/bouncehunter/backtest.py†L85-L113】
+- Store a canonical copy of `training_events.csv` alongside backtest reports; this file records exactly which bounce events were seen during fitting, making model comparisons reproducible even months later.【F:scripts/cache_bouncehunter_data.py†L95-L106】
+
+---
+
 ## Universe Management
 
 ### Current Default (Top 40 + Context ETFs)

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
 import numpy as np
 import pandas as pd
 
-from src.core.scoring import compute_gem_score
+from src.core.scoring import GemScoreResult, compute_gem_score
 from backtest.baseline_strategies import (
     BaselineResult,
     evaluate_all_baselines,
@@ -38,6 +38,16 @@ class TokenSnapshot:
     date: pd.Timestamp
     features: Dict[str, float]
     future_return_7d: float
+
+
+@dataclass
+class FlaggedAssetSummary:
+    """Snapshot of GemScore outputs for a selected asset."""
+
+    token: str
+    score: float
+    confidence: float
+    contributions: Dict[str, float]
 
 
 @dataclass
@@ -69,11 +79,12 @@ class BacktestResult:
     precision_at_k: float
     average_return_at_k: float
     flagged_assets: List[str]
+    flagged_details: List[FlaggedAssetSummary] = field(default_factory=list)
     baseline_results: Dict[str, BaselineResult] | None = None
     extended_metrics: ExtendedBacktestMetrics | None = None
     config: ExperimentConfig | None = None
     time_slices: List[TimeSlice] | None = None
-    
+
     def to_dict(self) -> Dict:
         """Convert result to dictionary for JSON export."""
         result_dict = {
@@ -81,7 +92,18 @@ class BacktestResult:
             "average_return_at_k": self.average_return_at_k,
             "flagged_assets": self.flagged_assets,
         }
-        
+
+        if self.flagged_details:
+            result_dict["flagged_details"] = [
+                {
+                    "token": detail.token,
+                    "score": detail.score,
+                    "confidence": detail.confidence,
+                    "contributions": detail.contributions,
+                }
+                for detail in self.flagged_details
+            ]
+
         if self.config:
             result_dict["config"] = self.config.to_dict()
         
@@ -237,15 +259,36 @@ def evaluate_time_sliced(
         )
     
     # Collect all flagged assets across time slices
-    all_flagged = []
+    flagged_counts: Dict[str, int] = {}
+    best_details: Dict[str, FlaggedAssetSummary] = {}
+    all_flagged: List[str] = []
     for ts in time_slices:
         all_flagged.extend(ts.result.flagged_assets)
+        for detail in ts.result.flagged_details:
+            flagged_counts[detail.token] = flagged_counts.get(detail.token, 0) + 1
+            current_best = best_details.get(detail.token)
+            if current_best is None or detail.score > current_best.score:
+                best_details[detail.token] = detail
     unique_flagged = list(dict.fromkeys(all_flagged))  # Preserve order, remove duplicates
-    
+    if flagged_counts:
+        # Re-rank by frequency and score to highlight consistent standouts
+        ranked = sorted(
+            flagged_counts.items(),
+            key=lambda item: (
+                -item[1],
+                -best_details[item[0]].score,
+                item[0],
+            ),
+        )
+        unique_flagged = [token for token, _ in ranked]
+
+    flagged_details = [best_details[token] for token in unique_flagged[:top_k] if token in best_details]
+
     return BacktestResult(
         precision_at_k=overall_precision,
         average_return_at_k=overall_return,
         flagged_assets=unique_flagged[:top_k],  # Return top K most frequently flagged
+        flagged_details=flagged_details,
         baseline_results=baseline_results,
         extended_metrics=extended_metrics_result,
         time_slices=time_slices,
@@ -276,19 +319,29 @@ def evaluate_period(
     snapshots_list = list(snapshots)
     
     # Evaluate GemScore strategy
-    scored = []
+    scored: List[tuple[TokenSnapshot, GemScoreResult]] = []
     for snapshot in snapshots_list:
         result = compute_gem_score(snapshot.features)
-        scored.append((snapshot, result.score))
+        scored.append((snapshot, result))
 
     # Sort with deterministic tie-breaking: primary=score (desc), secondary=token (asc)
-    scored.sort(key=lambda item: (-item[1], item[0].token))
+    scored.sort(key=lambda item: (-item[1].score, item[0].token))
     top_assets = scored[:top_k]
     flagged_returns = [snap.future_return_7d for snap, _ in top_assets]
     positives = [r for r in flagged_returns if r > 0]
 
     precision_at_k = len(positives) / max(1, top_k)
     average_return_at_k = float(pd.Series(flagged_returns).mean()) if flagged_returns else 0.0
+
+    flagged_details = [
+        FlaggedAssetSummary(
+            token=snapshot.token,
+            score=result.score,
+            confidence=result.confidence,
+            contributions={k: float(v) for k, v in result.contributions.items()},
+        )
+        for snapshot, result in top_assets
+    ]
 
     # Optionally evaluate baseline strategies
     baseline_results = None
@@ -299,7 +352,7 @@ def evaluate_period(
     extended_metrics_result = None
     if extended_metrics:
         # Prepare predictions array from all scored snapshots
-        predictions = np.array([score for _, score in scored])
+        predictions = np.array([result.score for _, result in scored])
         extended_metrics_result = calculate_extended_metrics(
             snapshots=snapshots_list,
             predictions=predictions,
@@ -312,6 +365,7 @@ def evaluate_period(
         precision_at_k=precision_at_k,
         average_return_at_k=average_return_at_k,
         flagged_assets=[snap.token for snap, _ in top_assets],
+        flagged_details=flagged_details,
         baseline_results=baseline_results,
         extended_metrics=extended_metrics_result,
         config=config,
@@ -382,7 +436,19 @@ def main() -> None:
     print("Precision@K:", round(result.precision_at_k, 3))
     print("Average Return@K:", round(result.average_return_at_k, 3))
     print("Flagged Assets:", ", ".join(result.flagged_assets[:10]))  # Show first 10
-    
+
+    if result.flagged_details:
+        print()
+        print("Top GemScore Candidates (score • confidence • strongest driver):")
+        for detail in result.flagged_details[: min(args.top_k, len(result.flagged_details))]:
+            top_driver = None
+            if detail.contributions:
+                top_driver = max(detail.contributions.items(), key=lambda item: item[1])
+            driver_str = f"{top_driver[0]}={top_driver[1]:.2f}" if top_driver else "n/a"
+            print(
+                f"  {detail.token}: {detail.score:.2f} • {detail.confidence:.2f} • {driver_str}"
+            )
+
     # Show time-sliced results if available
     if result.time_slices:
         print()

@@ -9,6 +9,14 @@ alerts.db
 node_modules/
 dashboard/node_modules/
 
+# Test and coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+*.xml
+coverage.xml
+
 # Telegram bot credentials
 configs/telegram.yaml
 configs/telegram_*.yaml

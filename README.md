@@ -253,6 +253,9 @@ for signal in signals:
 ### Test the System
 
 ```bash
+# Run core module tests (features, scoring, reliability)
+pytest tests/test_features.py tests/test_scoring.py tests/test_reliability_services.py -v
+
 # Run broker tests
 pytest tests/test_broker.py -v
 
@@ -261,7 +264,16 @@ pytest tests/test_bouncehunter_engine.py -v
 
 # Run comprehensive test suite
 pytest tests/test_broker.py tests/test_bouncehunter_engine.py tests/test_agentic.py -v
+
+# Run with coverage report
+pytest --cov=src --cov-report=term --cov-report=html
 ```
+
+**📊 Testing & CI Documentation**:
+- **Test Coverage Summary**: [`docs/TESTING_SUMMARY.md`](docs/TESTING_SUMMARY.md) - 36 core module tests
+- **CI Gating Setup**: [`docs/CI_GATING_SETUP.md`](docs/CI_GATING_SETUP.md) - Branch protection and quality gates
+
+The repository enforces quality gates via GitHub Actions with 80% coverage target, automatic linting, and type checking on all PRs.
 
 ### Tree-of-Thought Execution Trace
 

@@ -34,9 +34,11 @@
 ### **🔧 For Developers**
 
 **Technical Documentation**:
-1. [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Broker architecture
-2. [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Agent design
-3. [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Trading strategy details
+1. [`ARCHITECTURE.md`](ARCHITECTURE.md) - Complete system architecture and design
+2. [`FEATURE_CATALOG.md`](FEATURE_CATALOG.md) - Comprehensive feature inventory and data contracts
+3. [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Broker architecture
+4. [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Agent design
+5. [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Trading strategy details
 
 **Historical Context**:
 4. [`PROJECT_IMPROVEMENTS_SUMMARY.md`](docs/legacy/PROJECT_IMPROVEMENTS_SUMMARY.md) - All 10 improvements overview

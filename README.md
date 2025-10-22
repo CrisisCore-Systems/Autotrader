@@ -54,6 +54,8 @@ This repository contains the foundational blueprint and implementation for **Cri
 - **Quick Start**: [`QUESTRADE_QUICKSTART.md`](docs/legacy/QUESTRADE_QUICKSTART.md) - 5-minute setup
 
 **Architecture & Design**:
+- **System Architecture**: [`ARCHITECTURE.md`](ARCHITECTURE.md) - Complete system architecture, modules, and data flows
+- **Feature Catalog**: [`FEATURE_CATALOG.md`](FEATURE_CATALOG.md) - Complete feature inventory and data contracts
 - **Agentic System**: [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Multi-agent design
 - **Roadmap**: [`AGENTIC_ROADMAP_QUICK_REF.md`](docs/legacy/AGENTIC_ROADMAP_QUICK_REF.md) - Implementation phases
 - **Backtesting**: [`docs/PHASE_3_BACKTEST_RESULTS.md`](docs/PHASE_3_BACKTEST_RESULTS.md) - Strategy validation

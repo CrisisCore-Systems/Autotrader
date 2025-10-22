@@ -1,4 +1,6 @@
 import asyncio
+import math
+import pytest
 
 from src.crypto_pnd_detector.data.collectors.base import StaticSampleCollector
 from src.crypto_pnd_detector.data.preprocessing.feature_engineering import (
@@ -6,6 +8,11 @@ from src.crypto_pnd_detector.data.preprocessing.feature_engineering import (
     build_market_features,
     build_social_features,
     combine_features,
+)
+from src.crypto_pnd_detector.data.storage.feature_store import (
+    FeatureRecord,
+    InMemoryFeatureStore,
+    FeatureValidationError,
 )
 from src.crypto_pnd_detector.inference.realtime_pipeline import RealtimePumpDetector
 from src.crypto_pnd_detector.models.ensemble import ExplainablePumpDetector
@@ -95,3 +102,63 @@ def test_realtime_pipeline_flags_high_probability_events():
     assert detections[0].token_id == "XYZ"
     assert detections[0].prediction.probability >= 0.5
     assert detections[0].prediction.explanation
+
+
+def test_feature_store_rejects_nan_values():
+    """Test that feature store rejects NaN values to prevent model poisoning."""
+    store = InMemoryFeatureStore(enable_validation=True)
+    
+    # Valid record should work
+    valid_record = FeatureRecord(
+        token_id="TEST",
+        values={"momentum": 0.5, "volume_anomaly": 0.3}
+    )
+    store.put(valid_record)
+    
+    # Record with NaN should fail
+    invalid_record = FeatureRecord(
+        token_id="TEST2",
+        values={"momentum": float('nan'), "volume_anomaly": 0.3}
+    )
+    
+    with pytest.raises(FeatureValidationError) as exc_info:
+        store.put(invalid_record)
+    
+    assert "NaN" in str(exc_info.value)
+    assert "momentum" in str(exc_info.value)
+
+
+def test_feature_store_rejects_inf_values():
+    """Test that feature store rejects Inf values to prevent model poisoning."""
+    store = InMemoryFeatureStore(enable_validation=True)
+    
+    # Record with Inf should fail
+    invalid_record = FeatureRecord(
+        token_id="TEST",
+        values={"momentum": float('inf'), "volume_anomaly": 0.3}
+    )
+    
+    with pytest.raises(FeatureValidationError) as exc_info:
+        store.put(invalid_record)
+    
+    assert "Inf" in str(exc_info.value)
+    assert "momentum" in str(exc_info.value)
+
+
+def test_feature_store_validation_can_be_disabled():
+    """Test that validation can be disabled when needed."""
+    store = InMemoryFeatureStore(enable_validation=False)
+    
+    # Record with NaN should be accepted when validation is disabled
+    record = FeatureRecord(
+        token_id="TEST",
+        values={"momentum": float('nan'), "volume_anomaly": float('inf')}
+    )
+    
+    # Should not raise an exception
+    store.put(record)
+    
+    retrieved = store.get("TEST")
+    assert retrieved is not None
+    assert math.isnan(retrieved.values["momentum"])
+    assert math.isinf(retrieved.values["volume_anomaly"])

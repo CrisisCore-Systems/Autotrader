@@ -41,6 +41,7 @@ autotrader-backtest-harness = "backtest.harness:main"
 autotrader-scan = "src.cli.main:cli_main"
 autotrader-bouncehunter = "src.bouncehunter.cli:main"
 autotrader-telegram-bot = "src.bouncehunter.telegram_cli:main"
+autotrader-metrics = "src.services.metrics_server:main"
 
 [project.entry-points."autotrader.strategies"]
 default = "src.core.pipeline:HiddenGemScanner"

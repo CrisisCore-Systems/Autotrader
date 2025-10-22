@@ -118,6 +118,15 @@ guards:
     vix_medium_threshold: 25            # VIX 20-25 = acceptable
     cache_minutes: 15                   # Cache regime data for 15min
   
+  # PHASE 2.5: RegimeFlip (hard regime gate with confirmations)
+  regime_flip:
+    enabled: false                      # OPTIONAL: Enable RegimeFlip gating (disabled by default)
+    vix_low: 20                         # VIX threshold for volatility calming
+    breadth_min: 0.55                   # Minimum breadth (% above 20DMA)
+    volume_thrust_min: 1.2              # Minimum adv/dec volume ratio
+    ret_5d_min: 0.01                    # Minimum 5-day SPY return for trend
+    require_confirmations: 2            # Require N confirmations to allow trading
+  
   # Corporate events
   earnings_window_days: 1               # Skip within 1 day of earnings
   skip_offering_news: true              # Skip ATM/direct offerings (24-48h)

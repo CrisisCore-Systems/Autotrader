@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from bouncehunter.penny_universe import PennyUniverse
 from bouncehunter.market_regime import MarketRegimeDetector
 from bouncehunter.signal_scoring import SignalScorer
+from risk.regime_flip import RegimeFlip, RegimeInputs
 
 # Project root
 PROJECT_ROOT = Path(__file__).parent
@@ -237,6 +238,65 @@ def scan_pennies(tickers: list, config: dict) -> dict:
     else:
         regime = None
         logger.info("ℹ️  Market regime checking disabled")
+
+    # PHASE 2.5: Check RegimeFlip gate (optional hard regime confirmation)
+    regime_flip_config = config.get('guards', {}).get('regime_flip', {})
+    if regime_flip_config.get('enabled', False):
+        regime_flip = RegimeFlip(
+            vix_low=regime_flip_config.get('vix_low', 20.0),
+            breadth_min=regime_flip_config.get('breadth_min', 0.55),
+            volume_thrust_min=regime_flip_config.get('volume_thrust_min', 1.2),
+            ret_5d_min=regime_flip_config.get('ret_5d_min', 0.01),
+            require_confirmations=regime_flip_config.get('require_confirmations', 2)
+        )
+        
+        try:
+            # Fetch VIX data
+            vix_ticker = yf.Ticker("^VIX")
+            vix_hist = vix_ticker.history(period="5d")
+            
+            if len(vix_hist) >= 1:
+                vix = vix_hist['Close'].iloc[-1]
+                vix_ma3 = vix_hist['Close'].tail(3).mean() if len(vix_hist) >= 3 else None
+
+                # Fetch SPY data for trend
+                spy_ticker = yf.Ticker("SPY")
+                spy_hist = spy_ticker.history(period="30d")
+                
+                spy_ma_fast = None
+                spy_ma_slow = None
+                spy_ret_5d = None
+                
+                if len(spy_hist) >= 20:
+                    spy_ma_fast = spy_hist['Close'].tail(10).mean()
+                    spy_ma_slow = spy_hist['Close'].tail(20).mean()
+                
+                if len(spy_hist) >= 5:
+                    spy_ret_5d = (spy_hist['Close'].iloc[-1] / spy_hist['Close'].iloc[-5] - 1)
+
+                # Note: Breadth and adv/dec volume are optional
+                inputs = RegimeInputs(
+                    vix=vix,
+                    vix_ma3=vix_ma3,
+                    spy_ret_5d=spy_ret_5d,
+                    spy_ma_fast=spy_ma_fast,
+                    spy_ma_slow=spy_ma_slow,
+                    breadth_above_20dma=None,  # Optional
+                    adv_volume=None,  # Optional
+                    dec_volume=None   # Optional
+                )
+
+                decision = regime_flip.decide(inputs)
+                logger.info(f"🔒 RegimeFlip: allow_long={decision.allow_long} reason={decision.reason}")
+
+                if not decision.allow_long:
+                    logger.warning(f"⚠️  RegimeFlip BLOCKS trading: {decision.reason}")
+                    return {'regime': regime, 'regime_flip': decision, 'signals': []}
+            else:
+                logger.warning("⚠️  RegimeFlip: VIX data unavailable, allowing scan")
+        except Exception as e:
+            logger.error(f"RegimeFlip check failed: {e}", exc_info=True)
+            logger.warning("⚠️  RegimeFlip: Error occurred, allowing scan (fail-soft)")
 
     # Initialize signal scorer
     min_score = config.get('signals', {}).get('runner_vwap', {}).get('min_signal_score', 7.0)

@@ -6,27 +6,74 @@ This repository uses GitHub Actions to automatically run tests and enforce quali
 
 ## Current CI Workflows
 
-### tests-and-coverage.yml
+### ci.yml - Main CI Pipeline
 
-Located at `.github/workflows/tests-and-coverage.yml`, this workflow runs on every push to `main` and on all pull requests.
+Located at `.github/workflows/ci.yml`, this is the primary CI workflow that runs on every push to `main`/`develop` and on all pull requests.
 
 #### Jobs
 
-1. **test** - Runs the full test suite with coverage
-   - Installs Python 3.11 and dependencies
+1. **test** - Runs the full test suite with coverage across multiple Python versions
+   - Matrix strategy: Python 3.11, 3.12, 3.13
+   - Installs dependencies from requirements.txt and requirements-dev.txt
+   - Initializes test databases (if script exists)
    - Runs pytest with coverage reporting
    - Enforces 80% minimum code coverage threshold
-   - Uploads coverage reports as artifacts
+   - Uploads coverage to Codecov (Python 3.11 only)
 
 2. **lint** - Runs code quality checks
-   - Runs ruff for code style checking
+   - Runs black for code formatting
+   - Runs isort for import sorting
+   - Runs flake8 for linting
    - Runs mypy for type checking
-   - Runs pylint with minimum score of 8.0
 
-3. **quality-gate** - Final gate that checks all previous jobs
-   - Requires both `test` and `lint` jobs to pass
-   - Fails if either job fails
+3. **security** - Runs security scans
+   - Runs Bandit for Python security issues
+   - Runs pip-audit for dependency vulnerabilities
+   - Runs safety check for known vulnerabilities
+   - Runs Semgrep for additional security patterns
+
+4. **quality-gate** - Final gate that checks all previous jobs
+   - Requires test, lint, and security jobs to pass
+   - Fails if any job fails
+   - Generates a summary of results
    - This is the job that should be required for PR merging
+
+### tests-and-coverage.yml (Legacy)
+
+The original test workflow is maintained for backward compatibility. New features should use `ci.yml`.
+
+### integration.yml - Integration Tests
+
+Located at `.github/workflows/integration.yml`, this workflow runs integration tests.
+
+#### Triggers
+- Pull requests to main branch
+- Daily scheduled runs at 2 AM UTC
+
+#### Jobs
+
+1. **integration** - Runs integration tests
+   - Runs tests in tests/integration/ directory (if exists)
+   - Runs broker integration tests
+   - Uploads test results as artifacts
+
+### performance.yml - Performance Tests
+
+Located at `.github/workflows/performance.yml`, this workflow runs performance tests when triggered.
+
+#### Triggers
+- Pull requests labeled with `performance`
+
+#### Jobs
+
+1. **performance** - Runs performance benchmarks
+   - Runs pytest-benchmark tests
+   - Starts API and runs load tests with Locust (if available)
+   - Uploads performance results
+
+### security-scan.yml - Comprehensive Security Scanning
+
+Located at `.github/workflows/security-scan.yml`, this workflow provides comprehensive security scanning.
 
 ## Setting Up Branch Protection
 
@@ -78,15 +125,37 @@ Before pushing code, run tests locally to catch issues early:
 
 ```bash
 # Install dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 # Run tests with coverage
-pytest --cov=src --cov-report=term --cov-report=html
+pytest --cov=src --cov-report=term --cov-report=html --cov-fail-under=80
 
 # View coverage report
 open htmlcov/index.html  # On macOS
 # or
 xdg-open htmlcov/index.html  # On Linux
+```
+
+### Running Individual CI Checks Locally
+
+```bash
+# Format checking
+black --check src/ tests/
+
+# Import sorting
+isort --check-only src/ tests/
+
+# Linting
+flake8 src/ tests/ --max-line-length=120
+
+# Type checking
+mypy src/ --ignore-missing-imports --exclude "src/legacy/"
+
+# Security scanning
+bandit -r src/ -f json -o bandit-report.json
+pip-audit --requirement requirements.txt --desc
+safety check
 ```
 
 ## Core Module Test Coverage
@@ -170,28 +239,68 @@ pytest --cov=src --cov-report=term-missing | grep "TOTAL"
 
 ### Lint Failures
 
-- Run ruff locally: `ruff check src/`
-- Run mypy locally: `mypy src/ --strict --ignore-missing-imports`
-- Run pylint locally: `pylint src/ --fail-under=8.0`
+- Run black locally: `black --check src/ tests/`
+- Run isort locally: `isort --check-only src/ tests/`
+- Run flake8 locally: `flake8 src/ tests/ --max-line-length=120`
+- Run mypy locally: `mypy src/ --ignore-missing-imports --exclude "src/legacy/"`
 
 ## Quality Gate Status
 
 The quality gate ensures:
-- ✅ All tests pass
+- ✅ All tests pass (Python 3.11, 3.12, 3.13)
 - ✅ Coverage meets threshold (≥80%)
-- ✅ Code style checks pass (ruff)
+- ✅ Code formatting is consistent (black)
+- ✅ Import sorting is correct (isort)
+- ✅ Code passes linting (flake8)
 - ✅ Type checking passes (mypy)
-- ✅ Code quality score meets threshold (pylint ≥8.0)
+- ✅ Security scans pass (bandit, pip-audit, safety, semgrep)
 
 When all checks pass, you'll see: **✅ Quality gate passed**
 
 When checks fail, you'll see: **❌ Quality gate failed** with details about which job failed.
 
+## CI/CD Pipeline Features
+
+### Implemented Features
+- ✅ Multi-version Python testing (3.11, 3.12, 3.13)
+- ✅ Automated code coverage reporting with Codecov
+- ✅ Code formatting and linting checks
+- ✅ Type checking with mypy
+- ✅ Security scanning (Bandit, pip-audit, safety, Semgrep)
+- ✅ Integration tests (scheduled and on-demand)
+- ✅ Performance tests (on-demand with label trigger)
+- ✅ Dependency caching for faster builds
+- ✅ Workflow concurrency control
+- ✅ Comprehensive security scanning (secrets, vulnerabilities, SBOM)
+
+### CI Optimization
+- **Caching**: pip packages are cached to speed up builds
+- **Concurrency**: In-progress runs are cancelled when new commits are pushed
+- **Matrix builds**: Tests run in parallel across Python versions
+- **Conditional jobs**: Performance tests only run when labeled
+
+### Coverage Reporting
+- Coverage reports are uploaded to Codecov for tracking trends
+- XML and terminal reports generated for each test run
+- 80% minimum coverage threshold enforced
+- Coverage data available as workflow artifacts
+
+## CI Skip for Documentation Changes
+
+For documentation-only changes that don't require full CI:
+
+Add `[skip ci]` to commit message:
+```bash
+git commit -m "docs: update README [skip ci]"
+```
+
 ## Future Enhancements
 
 Consider adding:
-- Integration tests for end-to-end workflows
-- Performance benchmarking tests
-- Security scanning (already exists in `security-scan.yml`)
+- ✅ Integration tests for end-to-end workflows (IMPLEMENTED)
+- ✅ Performance benchmarking tests (IMPLEMENTED)
+- ✅ Security scanning (IMPLEMENTED via security-scan.yml)
 - Mutation testing to verify test quality
 - Automatic coverage trend reports
+- Deployment workflows for staging/production
+- Docker image building and publishing

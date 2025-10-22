@@ -163,7 +163,18 @@ python -m venv .venv-1
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Initialize development databases
+python scripts/db/init_dev_databases.py
 ```
+
+**Database Setup**: The system uses SQLite databases for agent memory and experiment tracking. These databases are NOT committed to version control and must be initialized locally:
+
+- **bouncehunter_memory.db**: Agent memory for trading signals and outcomes
+- **test_memory.db**: Test database with same structure
+- **experiments.sqlite**: Experiment configuration tracking
+
+Run `python scripts/db/init_dev_databases.py` to create empty databases with the correct schema. Database migrations are managed via Alembic in the `migrations/` directory.
 
 ### Set Up Broker Credentials
 

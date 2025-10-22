@@ -10,6 +10,8 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 from src.core.pipeline import HiddenGemScanner, ScanContext, TokenConfig
 from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient
+from src.core.free_clients import BlockscoutClient, EthereumRPCClient
+from src.core.orderflow_clients import DexscreenerClient
 
 from ..utils.tree import serialize_tree_node
 from .cache import TokenCache
@@ -41,10 +43,29 @@ class TokenScannerService:
         # BUGFIX: Create a NEW scanner instance for each scan to avoid state pollution
         # The old singleton pattern was causing all tokens to share the same scan results
         LOGGER.info("Creating fresh HiddenGemScanner instance to avoid state pollution")
+        etherscan_key = os.environ.get("ETHERSCAN_API_KEY")
+        sanitized_key = etherscan_key.strip() if etherscan_key and etherscan_key.strip() else None
+
+        dex_client = DexscreenerClient()
+        blockscout_client = None
+        rpc_client = None
+        etherscan_client = None
+
+        if sanitized_key:
+            LOGGER.info("Using Etherscan client with configured API key")
+            etherscan_client = EtherscanClient(api_key=sanitized_key)
+        else:
+            LOGGER.info("No Etherscan API key detected; using free Blockscout + RPC clients")
+            blockscout_client = BlockscoutClient()
+            rpc_client = EthereumRPCClient()
+
         return HiddenGemScanner(
             coin_client=CoinGeckoClient(),
             defi_client=DefiLlamaClient(),
-            etherscan_client=EtherscanClient(api_key=os.environ.get("ETHERSCAN_API_KEY", "")),
+            etherscan_client=etherscan_client,
+            dex_client=dex_client,
+            blockscout_client=blockscout_client,
+            rpc_client=rpc_client,
         )
 
     def _build_context(self, symbol: str, coingecko_id: str, defillama_slug: str, address: str) -> ScanContext:

@@ -81,8 +81,8 @@ class DriftStatistics:
             "test_name": self.test_name,
             "statistic": float(self.statistic),
             "p_value": float(self.p_value),
-            "threshold": self.threshold,
-            "is_drifted": self.is_drifted,
+            "threshold": float(self.threshold),
+            "is_drifted": bool(self.is_drifted),
             "severity": self.severity.value,
             "description": self.description,
         }

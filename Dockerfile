@@ -1,5 +1,12 @@
 # Multi-stage production Dockerfile for AutoTrader
 # Optimized for security, size, and reproducibility
+# Security features:
+# - Multi-stage build (separates build from runtime)
+# - Non-root user (UID 1000)
+# - Minimal base image (slim-bookworm)
+# - No unnecessary packages in final image
+# - Pinned base image versions for reproducibility
+# - Health check for container monitoring
 
 # === Stage 1: Builder ===
 FROM python:3.11-slim-bookworm AS builder
@@ -10,7 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Create non-root user for build
 RUN useradd --create-home --shell /bin/bash builder
@@ -27,14 +35,18 @@ RUN pip install --user --no-cache-dir --upgrade pip setuptools wheel && \
 # === Stage 2: Runtime ===
 FROM python:3.11-slim-bookworm AS runtime
 
-# Install runtime dependencies only
+# Security: Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Create non-root user
+# Security: Create non-root user with explicit UID
 RUN useradd --create-home --shell /bin/bash --uid 1000 autotrader
+
+# Security: Set secure default umask
+RUN echo "umask 027" >> /home/autotrader/.bashrc
 
 # Copy Python packages from builder
 COPY --from=builder /home/builder/.local /home/autotrader/.local

@@ -208,6 +208,80 @@ class TechnicalPatternResponse(BaseModel):
     }
 
 
+class OnchainActivityResponse(BaseModel):
+    """Schema for on-chain activity forensic analysis."""
+    
+    accumulation_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Net smart-money accumulation signal (0=distribution, 1=strong accumulation)"
+    )
+    
+    top_wallet_pct: float = Field(
+        ...,
+        ge=0.0,
+        le=100.0,
+        description="Percentage of supply held by top 5 wallets"
+    )
+    
+    tx_size_skew: Literal["small", "medium", "large"] = Field(
+        ...,
+        description="Dominant transaction cohort size"
+    )
+    
+    suspicious_patterns: List[str] = Field(
+        default_factory=list,
+        max_length=5,
+        description="Concrete anomalies (wash trading, sandwich attacks, etc.)"
+    )
+    
+    notes: str = Field(
+        ...,
+        min_length=10,
+        max_length=320,
+        description="Context and interpretation (≤2 sentences)"
+    )
+    
+    @field_validator("suspicious_patterns")
+    @classmethod
+    def validate_suspicious_patterns(cls, v: List[str]) -> List[str]:
+        """Ensure all list items are non-empty strings with max length."""
+        if not isinstance(v, list):
+            raise ValueError("Must be a list of strings")
+        
+        cleaned = []
+        for item in v:
+            if not isinstance(item, str):
+                raise ValueError(f"Expected string, got {type(item).__name__}")
+            stripped = item.strip()
+            if stripped:
+                if len(stripped) > 128:
+                    raise ValueError(f"Pattern description too long: {len(stripped)} > 128")
+                cleaned.append(stripped)
+        
+        return cleaned
+    
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str) -> str:
+        """Ensure notes is meaningful content."""
+        if not v or not v.strip():
+            raise ValueError("Notes cannot be empty")
+        
+        stripped = v.strip()
+        if len(stripped) < 10:
+            raise ValueError("Notes must be at least 10 characters")
+        
+        return stripped
+    
+    model_config = {
+        "extra": "forbid",
+        "str_strip_whitespace": True,
+        "validate_assignment": True,
+    }
+
+
 def validate_llm_response(
     raw_response: str,
     schema: type[BaseModel],

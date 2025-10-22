@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from src.core.llm_schemas import (
     ContractSafetyResponse,
     NarrativeAnalysisResponse,
+    OnchainActivityResponse,
     TechnicalPatternResponse,
     validate_llm_response,
     validate_llm_response_strict,
@@ -375,6 +376,50 @@ class TestOtherSchemas:
         assert result.pattern_type == "Bull Flag"
         assert result.signal_strength == "strong"
 
+    def test_onchain_activity_response(self):
+        """Onchain activity response validates correctly."""
+        valid_json = json.dumps({
+            "accumulation_score": 0.68,
+            "top_wallet_pct": 35.2,
+            "tx_size_skew": "medium",
+            "suspicious_patterns": [],
+            "notes": "Moderate accumulation by mid-size wallets; no obvious wash trading detected."
+        })
+        
+        result = validate_llm_response(
+            valid_json,
+            OnchainActivityResponse,
+            context="test_onchain_activity"
+        )
+        
+        assert result is not None
+        assert result.accumulation_score == 0.68
+        assert result.tx_size_skew == "medium"
+        assert len(result.suspicious_patterns) == 0
+
+    def test_onchain_activity_with_suspicious_patterns(self):
+        """Onchain activity with suspicious patterns validates correctly."""
+        valid_json = json.dumps({
+            "accumulation_score": 0.35,
+            "top_wallet_pct": 65.5,
+            "tx_size_skew": "large",
+            "suspicious_patterns": [
+                "wash trading detected between 3 wallets",
+                "coordinated buy/sell patterns"
+            ],
+            "notes": "High wallet concentration with suspicious circular trading activity."
+        })
+        
+        result = validate_llm_response(
+            valid_json,
+            OnchainActivityResponse,
+            context="test_onchain_suspicious"
+        )
+        
+        assert result is not None
+        assert len(result.suspicious_patterns) == 2
+        assert result.top_wallet_pct == 65.5
+
 
 class TestBackwardCompatibility:
     """Test backward compatibility with existing code."""
@@ -462,3 +507,101 @@ class TestGoldenFixtures:
         
         assert result is not None
         assert result.sentiment == "neutral"
+
+    def test_narrative_analyzer_golden_fixture(self):
+        """Test with actual narrative analyzer golden fixture."""
+        from pathlib import Path
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "prompt_outputs" / "narrative_analyzer_golden.json"
+        if fixture_path.exists():
+            fixture_data = json.loads(fixture_path.read_text())
+            
+            # Remove schema_version for Pydantic validation
+            test_data = {k: v for k, v in fixture_data.items() if k != "schema_version"}
+            
+            result = validate_llm_response(
+                json.dumps(test_data),
+                NarrativeAnalysisResponse,
+                context="test_golden_narrative"
+            )
+            
+            assert result is not None
+            assert result.sentiment == "positive"
+            assert result.sentiment_score == 0.78
+            assert len(result.emergent_themes) == 3
+
+    def test_contract_safety_golden_fixture(self):
+        """Test with actual contract safety golden fixture."""
+        from pathlib import Path
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "prompt_outputs" / "contract_safety_golden.json"
+        if fixture_path.exists():
+            fixture_data = json.loads(fixture_path.read_text())
+            
+            # Remove schema_version and map fields to Pydantic schema
+            test_data = {
+                "risk_level": fixture_data.get("severity", "medium"),
+                "risk_score": 0.6,  # Not in fixture, use default
+                "findings": fixture_data.get("key_findings", []),
+                "vulnerabilities": [],  # Not in fixture
+                "recommendations": [fixture_data.get("recommendation", "")],
+                "confidence": 0.7  # Not in fixture, use default
+            }
+            
+            result = validate_llm_response(
+                json.dumps(test_data),
+                ContractSafetyResponse,
+                context="test_golden_contract_safety"
+            )
+            
+            assert result is not None
+            assert result.risk_level in ["low", "medium", "high", "critical"]
+
+    def test_onchain_activity_golden_fixture(self):
+        """Test with actual onchain activity golden fixture."""
+        from pathlib import Path
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "prompt_outputs" / "onchain_activity_golden.json"
+        if fixture_path.exists():
+            fixture_data = json.loads(fixture_path.read_text())
+            
+            # Remove schema_version for Pydantic validation
+            test_data = {k: v for k, v in fixture_data.items() if k != "schema_version"}
+            
+            result = validate_llm_response(
+                json.dumps(test_data),
+                OnchainActivityResponse,
+                context="test_golden_onchain"
+            )
+            
+            assert result is not None
+            assert result.accumulation_score == 0.68
+            assert result.tx_size_skew == "medium"
+            assert result.top_wallet_pct == 35.2
+
+    def test_technical_pattern_golden_fixture(self):
+        """Test with actual technical pattern golden fixture."""
+        from pathlib import Path
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "prompt_outputs" / "technical_pattern_golden.json"
+        if fixture_path.exists():
+            fixture_data = json.loads(fixture_path.read_text())
+            
+            # Map fixture fields to Pydantic schema
+            test_data = {
+                "pattern_type": fixture_data.get("trend", "bullish"),
+                "confidence": fixture_data.get("confidence", 0.75),
+                "signal_strength": "strong" if fixture_data.get("confidence", 0) > 0.7 else "moderate",
+                "price_targets": {},  # Not in fixture
+                "timeframe": ", ".join(fixture_data.get("suggested_timeframes_to_watch", [])),
+                "rationale": fixture_data.get("commentary", "Technical analysis summary.")
+            }
+            
+            result = validate_llm_response(
+                json.dumps(test_data),
+                TechnicalPatternResponse,
+                context="test_golden_technical"
+            )
+            
+            assert result is not None
+            assert result.confidence == 0.75

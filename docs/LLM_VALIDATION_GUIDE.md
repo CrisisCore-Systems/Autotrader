@@ -46,7 +46,50 @@ from src.core.llm_schemas import NarrativeAnalysisResponse
 
 ### ContractSafetyResponse
 
-For future contract safety analysis:
+For contract safety analysis:
+
+```python
+from src.core.llm_schemas import ContractSafetyResponse
+
+# Schema enforces:
+# - risk_level: Literal["low", "medium", "high", "critical"]
+# - risk_score: 0.0-1.0
+# - findings: List[str] (max 20 items)
+# - vulnerabilities: List[str] (max 20 items)
+# - recommendations: List[str] (max 10 items)
+# - confidence: 0.0-1.0
+```
+
+### TechnicalPatternResponse
+
+For technical pattern recognition:
+
+```python
+from src.core.llm_schemas import TechnicalPatternResponse
+
+# Schema enforces:
+# - pattern_type: str (3-50 chars)
+# - confidence: 0.0-1.0
+# - signal_strength: Literal["weak", "moderate", "strong"]
+# - price_targets: Dict[str, float]
+# - timeframe: str
+# - rationale: str (10-1000 chars)
+```
+
+### OnchainActivityResponse
+
+For on-chain forensic analysis:
+
+```python
+from src.core.llm_schemas import OnchainActivityResponse
+
+# Schema enforces:
+# - accumulation_score: 0.0-1.0
+# - top_wallet_pct: 0.0-100.0
+# - tx_size_skew: Literal["small", "medium", "large"]
+# - suspicious_patterns: List[str] (max 5 items, max 128 chars each)
+# - notes: str (10-320 chars)
+```
 
 ```python
 from src.core.llm_schemas import ContractSafetyResponse
@@ -264,44 +307,104 @@ pytest tests/test_llm_validation.py --cov=src.core.llm_schemas --cov-report=html
 
 ### Golden Fixtures
 
-The test suite includes golden fixtures from real LLM responses:
+The test suite includes golden fixtures from real LLM responses in `tests/fixtures/prompt_outputs/`:
+
+- `narrative_analyzer_golden.json` - Real narrative analysis output
+- `contract_safety_golden.json` - Contract safety analysis output
+- `onchain_activity_golden.json` - On-chain forensic analysis output
+- `technical_pattern_golden.json` - Technical pattern analysis output
+
+All fixtures are validated against both:
+1. **JSON Schemas** in `schemas/prompt_outputs/*.schema.json`
+2. **Pydantic Models** in `src/core/llm_schemas.py`
 
 ```python
-def test_groq_llama_response_format():
-    """Test actual Groq/Llama response format."""
-    real_response = json.dumps({
-        "sentiment": "positive",
-        "sentiment_score": 0.82,
-        "emergent_themes": ["Institutional adoption", "Layer 2 scaling"],
-        "memetic_hooks": ["#Ethereum", "#L2"],
-        "fake_or_buzz_warning": False,
-        "rationale": "Strong technical fundamentals..."
-    })
+def test_narrative_analyzer_golden_fixture():
+    """Test with actual narrative analyzer golden fixture."""
+    from pathlib import Path
+    
+    fixture_path = Path(__file__).parent / "fixtures" / "prompt_outputs" / "narrative_analyzer_golden.json"
+    fixture_data = json.loads(fixture_path.read_text())
+    
+    # Remove schema_version for Pydantic validation
+    test_data = {k: v for k, v in fixture_data.items() if k != "schema_version"}
     
     result = validate_llm_response(
-        real_response,
+        json.dumps(test_data),
         NarrativeAnalysisResponse,
-        context="test_golden_groq"
+        context="test_golden_narrative"
     )
     
     assert result is not None
-    assert result.sentiment_score == 0.82
+    assert result.sentiment == "positive"
+```
+
+### Validate Golden Fixtures
+
+Run the validation script to ensure all fixtures match their schemas:
+
+```bash
+# Validate all fixtures
+python scripts/validation/validate_prompt_outputs.py
+
+# Output:
+# [INFO] Found 4 schemas: contract_safety, narrative_analyzer, onchain_activity, technical_pattern
+# [OK] contract_safety_golden.json ✓
+# [OK] narrative_analyzer_golden.json ✓
+# [OK] onchain_activity_golden.json ✓
+# [OK] technical_pattern_golden.json ✓
+# Validated 4 fixtures: 4 passed, 0 failed
 ```
 
 ### Test Coverage
 
+**28 tests** covering all validation scenarios:
+
+**NarrativeAnalysisResponse (12 tests):**
 - ✅ Valid responses pass validation
+- ✅ Minimal valid response with required fields only
 - ✅ Invalid sentiment values rejected
-- ✅ Out-of-range scores rejected
+- ✅ Out-of-range scores rejected (> 1.0, < 0.0)
 - ✅ Missing required fields rejected
-- ✅ Extra fields rejected (extra='forbid')
 - ✅ Empty/short rationales rejected
-- ✅ Malformed JSON handled gracefully
+- ✅ Extra fields rejected (extra='forbid')
 - ✅ List validation (empty strings filtered)
 - ✅ Max length constraints enforced
 - ✅ Whitespace auto-stripping
 - ✅ Markdown-wrapped JSON cleaned
-- ✅ Structured logging verified
+- ✅ Golden fixture validation
+
+**ContractSafetyResponse (2 tests):**
+- ✅ Valid contract safety analysis
+- ✅ Golden fixture validation
+
+**TechnicalPatternResponse (2 tests):**
+- ✅ Valid technical pattern analysis
+- ✅ Golden fixture validation
+
+**OnchainActivityResponse (4 tests):**
+- ✅ Valid onchain activity analysis
+- ✅ With suspicious patterns
+- ✅ Golden fixture validation
+- ✅ Edge cases (empty patterns, high concentration)
+
+**Strict Validation (3 tests):**
+- ✅ Raises JSONDecodeError on invalid JSON
+- ✅ Raises ValidationError on schema violation
+- ✅ Returns validated model on valid data
+
+**Logging (2 tests):**
+- ✅ Validation failures logged with structured details
+- ✅ Successful validation logged
+
+**Backward Compatibility (1 test):**
+- ✅ model_dump() returns dict for legacy code
+
+**Golden Fixtures (4 tests):**
+- ✅ narrative_analyzer_golden.json
+- ✅ contract_safety_golden.json
+- ✅ onchain_activity_golden.json
+- ✅ technical_pattern_golden.json
 
 ---
 

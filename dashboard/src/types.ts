@@ -1,3 +1,29 @@
+export interface DataSourceInfo {
+  source_name: string;
+  last_updated: string;
+  data_age_seconds: number;
+  freshness_level: 'fresh' | 'recent' | 'stale' | 'outdated';
+  is_free: boolean;
+  update_frequency_seconds?: number;
+}
+
+export interface ProvenanceInfo {
+  artifact_id?: string;
+  data_sources: string[];
+  pipeline_version?: string;
+  created_at?: string;
+  clickable_links?: Record<string, string>;
+}
+
+export interface EvidencePanel {
+  title: string;
+  confidence: number;
+  freshness: string;
+  source: string;
+  is_free: boolean;
+  data: any;
+}
+
 export interface TokenSummary {
   symbol: string;
   final_score: number;
@@ -10,6 +36,8 @@ export interface TokenSummary {
   narrative_momentum: number;
   sentiment_score: number;
   updated_at: string;
+  provenance?: ProvenanceInfo;
+  freshness?: Record<string, DataSourceInfo>;
 }
 
 export interface ExecutionTreeNode {
@@ -71,4 +99,5 @@ export interface TokenDetail extends TokenSummary {
     html: string;
   };
   tree: ExecutionTreeNode;
+  evidence_panels?: Record<string, EvidencePanel>;
 }

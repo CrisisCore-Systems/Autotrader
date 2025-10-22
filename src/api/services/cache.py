@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Dict, Optional
 
 from ..schemas.token import TokenCacheEntry, TokenSummary
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _parse_iso_timestamp(value: str) -> datetime:
@@ -55,7 +59,11 @@ class TokenCache:
             "timestamp": timestamp,
         }
         normalized_symbol = symbol.upper()
-        print(f"[CACHE PUT] Storing token {normalized_symbol} with symbol in detail: {detail.get('symbol')}")
+        LOGGER.debug(
+            "cache_store symbol=%s detail_symbol=%s",
+            normalized_symbol,
+            detail.get("symbol"),
+        )
         self._entries[normalized_symbol] = entry
         return entry
 
@@ -63,7 +71,12 @@ class TokenCache:
         """Return a cache entry for ``symbol`` if still valid."""
         normalized_symbol = symbol.upper()
         entry = self._entries.get(normalized_symbol)
-        print(f"[CACHE GET] Requesting {normalized_symbol}, found: {entry is not None}, cache keys: {list(self._entries.keys())}")
+        LOGGER.debug(
+            "cache_lookup symbol=%s hit=%s keys=%s",
+            normalized_symbol,
+            entry is not None,
+            list(self._entries.keys()),
+        )
         if not entry:
             return None
 

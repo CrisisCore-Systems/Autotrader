@@ -119,7 +119,7 @@ def test_scanner_uses_free_clients_when_no_etherscan_key(monkeypatch):
     monkeypatch.delenv("ETHERSCAN_API_KEY", raising=False)
 
     service = TokenScannerService()
-    scanner = service._ensure_scanner()
+    scanner = service._create_scanner()
 
     assert scanner.etherscan_client is None
     assert isinstance(scanner.blockscout_client, BlockscoutClient)

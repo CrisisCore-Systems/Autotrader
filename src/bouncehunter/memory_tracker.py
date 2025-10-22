@@ -364,6 +364,156 @@ class MemoryTracker:
             self.update_ticker_performance(ticker)
         
         return len(tickers)
+    
+    def get_quality_stats(self, quality: str) -> Dict:
+        """
+        Get statistics for a specific signal quality tier.
+        
+        Phase 2.5 Dashboard Support - Returns aggregated stats for
+        perfect/good/marginal/poor signals.
+        
+        Args:
+            quality: 'perfect', 'good', 'marginal', or 'poor'
+        
+        Returns:
+            Dict with total_signals, total_wins, win_rate
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                # Check if signal_quality table exists
+                cursor = conn.execute("""
+                    SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name='signal_quality'
+                """)
+                
+                if not cursor.fetchone():
+                    # Table doesn't exist yet - return zeros
+                    return {
+                        'total_signals': 0,
+                        'total_wins': 0,
+                        'win_rate': 0
+                    }
+                
+                # Join signal_quality with outcomes to get win/loss data
+                cursor = conn.execute("""
+                    SELECT 
+                        COUNT(*) as total_signals,
+                        SUM(CASE WHEN o.return_pct > 0 THEN 1 ELSE 0 END) as total_wins
+                    FROM signal_quality sq
+                    JOIN fills f ON sq.signal_id = f.signal_id
+                    JOIN outcomes o ON f.fill_id = o.fill_id
+                    WHERE sq.quality = ?
+                """, (quality,))
+                
+                row = cursor.fetchone()
+                
+                if row and row[0]:
+                    total = row[0] or 0
+                    wins = row[1] or 0
+                    return {
+                        'total_signals': total,
+                        'total_wins': wins,
+                        'win_rate': (wins / total * 100) if total > 0 else 0
+                    }
+                
+                return {
+                    'total_signals': 0,
+                    'total_wins': 0,
+                    'win_rate': 0
+                }
+                
+        except Exception as e:
+            print(f"Error in get_quality_stats: {e}")
+            return {
+                'total_signals': 0,
+                'total_wins': 0,
+                'win_rate': 0
+            }
+    
+    def classify_signal_quality(self, signal: Dict) -> str:
+        """
+        Classify a signal into quality tiers for Phase 2.5.
+        
+        Args:
+            signal: Dict with gap_pct, volume_ratio, regime
+        
+        Returns:
+            'perfect', 'good', 'marginal', or 'poor'
+        """
+        gap_pct = signal.get('gap_pct', 0)
+        volume_ratio = signal.get('volume_ratio', 0)
+        regime = signal.get('regime', 'normal')
+        
+        # Perfect: 10-15% gap, 4-10x vol, normal regime
+        if (10 <= gap_pct <= 15 and 
+            4 <= volume_ratio <= 10 and 
+            regime == 'normal'):
+            return 'perfect'
+        
+        # Good: One metric slightly outside optimal
+        good_conditions = 0
+        if 8 <= gap_pct <= 17:
+            good_conditions += 1
+        if volume_ratio >= 3:
+            good_conditions += 1
+        if regime == 'normal':
+            good_conditions += 1
+        
+        if good_conditions >= 2:
+            return 'good'
+        
+        # Marginal: Some red flags but tradeable
+        if gap_pct >= 5 and volume_ratio >= 2:
+            return 'marginal'
+        
+        # Poor: Multiple failures
+        return 'poor'
+    
+    def record_signal(self, signal_id: str, signal: Dict, quality: str):
+        """
+        Record a new signal for Phase 2.5 tracking.
+        
+        Note: Current schema doesn't have signal_tracking table.
+        This is a placeholder for future integration.
+        
+        Args:
+            signal_id: Unique signal identifier
+            signal: Signal data dict
+            quality: Quality classification
+        """
+        # Placeholder - would insert into signal_tracking table
+        # For now, just pass (signals tracked via fills table)
+        pass
+    
+    def update_after_trade(self, signal_id: str, outcome: str, return_pct: float):
+        """
+        Update memory system after a trade closes.
+        
+        Note: Current schema tracks via fills/outcomes tables.
+        This is a placeholder for signal_tracking integration.
+        
+        Args:
+            signal_id: Signal identifier
+            outcome: 'win' or 'loss'
+            return_pct: Return percentage
+        """
+        # Placeholder - would update signal_tracking table
+        # For now, ticker_performance updates happen via update_ticker_performance()
+        pass
+    
+    def get_regime_correlation(self) -> Dict:
+        """
+        Get win rates by regime for Phase 2.5 dashboard.
+        
+        Returns:
+            Dict with normal_wr, highvix_wr stats
+        """
+        # Placeholder - would query signal_tracking by regime
+        # For now, return empty stats
+        return {
+            'normal': {'total': 0, 'wins': 0, 'wr': 0},
+            'highvix': {'total': 0, 'wins': 0, 'wr': 0}
+        }
 
 
 def risk_flag(gap_pct: float, volume_ratio: float) -> Optional[str]:

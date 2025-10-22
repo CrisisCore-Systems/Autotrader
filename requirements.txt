@@ -42,9 +42,10 @@ ccxt.pro==4.2.0  # For WebSocket streaming
 matplotlib==3.8.0
 plotly==5.18.0
 
-# Trading Brokers (Optional - install as needed)
+# Trading Brokers & Market Data (Canadian-Friendly)
 # Interactive Brokers (Canada-compatible) - RECOMMENDED for Canadian residents
-ib_insync>=0.9.86     # Interactive Brokers (Global/Canada) - Primary integration
+ib_insync>=0.9.86     # Interactive Brokers API wrapper (Global/Canada)
+yfinance>=0.2.38      # Yahoo Finance for VIX and market data (free, no API key)
 
 # US Brokers (Not available to Canadian residents)
 # alpaca-py>=0.9.0    # Alpaca Markets API (US only - NOT for Canada)

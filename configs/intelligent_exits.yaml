@@ -1,0 +1,278 @@
+# ============================================================
+# Intelligent Exits Configuration - Production Template
+# ============================================================
+# Phase 6 Complete: Intelligent adjustment system with:
+# - VIX-based volatility adjustments
+# - Time-of-day decay adjustments  
+# - Market regime (SPY) adjustments
+# - Symbol-specific learning
+# ============================================================
+
+# ===== TIER EXIT CONFIGURATION =====
+tier1:
+  enabled: true
+  profit_threshold_pct: 5.0           # Base target: +5%
+  exit_percentage: 30.0               # Sell 30% of position
+  time_window_start: "15:50"          # 3:50 PM ET
+  time_window_end: "15:55"            # 3:55 PM ET
+  min_trading_days: 1
+  max_trading_days: 1
+  min_shares_remaining: 5
+  min_position_size: 10
+
+tier2:
+  enabled: true
+  profit_threshold_min_pct: 8.0       # Base target range: 8-10%
+  profit_threshold_max_pct: 10.0
+  exit_percentage: 40.0               # Sell 40% of position
+  min_trading_days: 2                 # Day 2+ only (PDT rule)
+  volume_spike_threshold: 2.0         # Require 2x volume spike
+  max_spread_pct: 2.0                 # Max 2% spread
+  cooldown_minutes: 30                # 30min cooldown between tier2 exits
+  min_shares_remaining: 5
+  min_position_size: 10
+
+tier3:
+  enabled: false                      # Not implemented yet
+  trail_stop_pct: 3.0
+  activate_after: "tier1_or_tier2"
+
+# ===== INTELLIGENT ADJUSTMENTS =====
+adjustments:
+  enabled: true                       # Master switch for intelligent adjustments
+  
+  # Volatility adjustments (VIX-based)
+  volatility:
+    enabled: true
+    vix_low_threshold: 15             # VIX < 15 = LOW volatility
+    vix_normal_threshold: 20          # VIX 15-20 = NORMAL volatility
+    vix_high_threshold: 30            # VIX 20-30 = HIGH volatility
+                                      # VIX > 30 = EXTREME volatility
+    
+    # Adjustment ranges (percentage points added to base target)
+    tier1_adjustment_low: 0.5         # +0.5% in LOW VIX (tighten exits)
+    tier1_adjustment_normal: 0.0      # No change in NORMAL VIX
+    tier1_adjustment_high: -1.0       # -1.0% in HIGH VIX (widen exits)
+    tier1_adjustment_extreme: -2.0    # -2.0% in EXTREME VIX
+    
+    tier2_adjustment_low: 1.0         # +1.0% in LOW VIX
+    tier2_adjustment_normal: 0.0      # No change
+    tier2_adjustment_high: -1.5       # -1.5% in HIGH VIX
+    tier2_adjustment_extreme: -3.0    # -3.0% in EXTREME VIX
+    
+    # VIX data provider settings
+    cache_ttl_seconds: 300            # 5-minute cache (VIX updates slowly)
+    fallback_vix: 20.0                # Default if VIX unavailable
+  
+  # Time-of-day adjustments
+  time_decay:
+    enabled: true
+    
+    # Market hours (ET)
+    market_open: "09:30"
+    market_close: "16:00"
+    
+    # Decay curve parameters
+    # Linear decay from 0% at open to max_decay% at close
+    tier1_max_decay_pct: -1.5         # Max -1.5% adjustment at close
+    tier2_max_decay_pct: -2.0         # Max -2.0% adjustment at close
+    
+    # Example: At 1 PM (3.5 hours into 6.5-hour day):
+    # - Progress = 3.5 / 6.5 = 53.8%
+    # - Tier1 adjustment = 0% + (53.8% × -1.5%) = -0.81%
+    # - Tier2 adjustment = 0% + (53.8% × -2.0%) = -1.08%
+  
+  # Market regime adjustments (SPY-based)
+  regime:
+    enabled: true
+    
+    # SPY SMA crossover settings
+    spy_symbol: "SPY"
+    short_window: 20                  # 20-period SMA
+    long_window: 50                   # 50-period SMA
+    sideways_threshold_pct: 0.5       # ±0.5% spread = SIDEWAYS
+    
+    # BULL regime: SPY 20 SMA > 50 SMA by +0.5%
+    # BEAR regime: SPY 20 SMA < 50 SMA by -0.5%
+    # SIDEWAYS regime: SPY SMAs within ±0.5%
+    
+    # Adjustment ranges (percentage points)
+    tier1_adjustment_bull: -0.5       # -0.5% in BULL (widen targets, let winners run)
+    tier1_adjustment_bear: 1.0        # +1.0% in BEAR (tighten targets, take profits faster)
+    tier1_adjustment_sideways: 0.0    # No change in SIDEWAYS
+    
+    tier2_adjustment_bull: -1.0       # -1.0% in BULL
+    tier2_adjustment_bear: 1.5        # +1.5% in BEAR
+    tier2_adjustment_sideways: 0.0    # No change
+    
+    # Cache settings (updated daily pre-market)
+    cache_ttl_hours: 24               # 24-hour cache (regime changes slowly)
+    fallback_regime: "SIDEWAYS"       # Default if SPY data unavailable
+  
+  # Symbol-specific learning
+  symbol_learning:
+    enabled: true
+    
+    # Learning parameters
+    min_exits_for_adjustment: 5       # Need 5 exits before adjusting
+    win_rate_threshold: 0.60          # 60% win rate = good
+    adjustment_magnitude_pct: 0.5     # ±0.5% adjustment per symbol
+    
+    # Win = exit at target or better
+    # Loss = exit below target (stop loss, time stop, etc.)
+    
+    # Example: AAPL has 70% win rate (7/10 exits hit target)
+    # -> Apply -0.5% adjustment (widen targets, let AAPL run)
+    # Example: TSLA has 40% win rate (4/10 exits hit target)
+    # -> Apply +0.5% adjustment (tighten targets, take profits faster)
+    
+    # Persistence
+    persistence_enabled: true
+    persistence_file: "reports/symbol_adjustments.json"
+    save_interval_seconds: 300        # Save every 5 minutes
+    max_symbols_tracked: 500          # Track up to 500 symbols
+  
+  # Adjustment combination
+  combination:
+    # Adjustments are additive:
+    # Final Target = Base Target + Vol Adj + Time Adj + Regime Adj + Symbol Adj
+    
+    # Safety limits (prevent extreme adjustments)
+    tier1_min_target_pct: 2.0         # Never go below 2%
+    tier1_max_target_pct: 8.0         # Never exceed 8%
+    tier2_min_target_pct: 5.0         # Never go below 5%
+    tier2_max_target_pct: 15.0        # Never exceed 15%
+    
+    # Round adjustments to nearest 0.1%
+    round_to_decimal_places: 1
+
+# ===== VIX DATA PROVIDER =====
+vix_provider:
+  provider_type: "alpaca"             # "alpaca", "mock", or "fallback"
+  
+  # Alpaca settings (if using AlpacaVIXProvider)
+  alpaca:
+    api_key: ${ALPACA_API_KEY}        # Set via environment variable
+    api_secret: ${ALPACA_API_SECRET}  # Set via environment variable
+    base_url: "https://paper-api.alpaca.markets"  # Paper trading URL
+    
+  # Mock settings (for testing/backtesting)
+  mock:
+    fixed_vix: 20.0                   # Fixed VIX value for testing
+  
+  # Fallback settings
+  fallback:
+    primary_provider: "alpaca"
+    default_vix: 20.0                 # Use if primary fails
+
+# ===== REGIME DETECTOR =====
+regime_detector:
+  detector_type: "spy"                # "spy" or "mock"
+  
+  # SPY detector settings
+  spy:
+    price_provider: "alpaca"          # Use same provider as VIX
+    symbol: "SPY"
+    short_window: 20
+    long_window: 50
+    sideways_threshold_pct: 0.5
+    cache_ttl_hours: 24
+    
+  # Mock settings (for testing)
+  mock:
+    fixed_regime: "SIDEWAYS"          # "BULL", "BEAR", or "SIDEWAYS"
+
+# ===== MONITORING =====
+monitoring:
+  poll_interval_seconds: 300          # Check positions every 5 minutes
+  max_positions_per_cycle: 20         # Process up to 20 positions per cycle
+  api_timeout_seconds: 10             # 10-second API timeout
+  max_retries: 3                      # Retry failed API calls 3 times
+  circuit_breaker_threshold: 3        # Stop after 3 consecutive errors
+  enable_caching: true                # Cache market data
+  cache_ttl_seconds: 60               # 1-minute data cache
+
+# ===== SAFETY CONTROLS =====
+safety:
+  max_exits_per_cycle: 3              # Max 3 exits per monitoring cycle
+  min_position_size_shares: 10        # Min 10 shares to process
+  max_daily_exits: 10                 # Max 10 exits per day
+  require_volume_confirmation: true   # Require volume spike for tier2
+  dry_run_mode: false                 # Set true to log only (no actual exits)
+  
+  # Adjustment safety checks
+  validate_adjustments: true          # Validate adjustment calculations
+  log_adjustment_details: true        # Log all adjustment decisions
+  alert_on_extreme_adjustments: true  # Alert if adjustments exceed ±3%
+
+# ===== LOGGING =====
+logging:
+  level: INFO                         # DEBUG, INFO, WARNING, ERROR
+  log_adjustments: true               # Log all adjustment calculations
+  log_tier_decisions: true            # Log tier exit decisions
+  log_vix_updates: true               # Log VIX data fetches
+  log_regime_updates: true            # Log regime changes
+  log_symbol_learning: true           # Log symbol adjustment updates
+  
+  # Log files
+  adjustment_log: "logs/adjustments.log"
+  tier_exit_log: "logs/tier_exits.log"
+  symbol_learning_log: "logs/symbol_learning.log"
+
+# ===== ALERTS =====
+alerts:
+  enabled: true
+  
+  # Alert on significant events
+  alert_on_regime_change: true        # Alert when regime changes
+  alert_on_high_vix: true             # Alert when VIX > 30
+  alert_on_extreme_adjustment: true   # Alert when adjustment > ±3%
+  alert_on_symbol_eject: true         # Alert when symbol ejected (low win rate)
+  
+  # Alert channels (configure in main system config)
+  channels:
+    - telegram
+    - slack
+    - discord
+
+# ===== PERFORMANCE TRACKING =====
+performance:
+  track_adjustment_effectiveness: true  # Track if adjustments improve results
+  track_regime_performance: true        # Track win rate by regime
+  track_vix_performance: true           # Track win rate by VIX level
+  track_symbol_performance: true        # Track win rate by symbol
+  
+  # Reporting
+  generate_daily_report: true
+  generate_weekly_report: true
+  report_path: "reports/adjustment_performance/"
+
+# ===== EXAMPLE ADJUSTMENT SCENARIOS =====
+# These are for documentation only - not parsed by system
+examples:
+  scenario_1:
+    description: "LOW VIX, BULL regime, morning"
+    base_tier1_target: 5.0
+    vix_adjustment: 0.5               # LOW VIX
+    time_adjustment: -0.2             # 10 AM (1 hour in, minimal decay)
+    regime_adjustment: -0.5           # BULL regime
+    symbol_adjustment: 0.0            # No history yet
+    final_target: 4.8                 # 5.0 + 0.5 - 0.2 - 0.5 + 0.0
+    
+  scenario_2:
+    description: "HIGH VIX, BEAR regime, late afternoon"
+    base_tier1_target: 5.0
+    vix_adjustment: -1.0              # HIGH VIX
+    time_adjustment: -1.2             # 3 PM (5.5 hours in, 85% decay)
+    regime_adjustment: 1.0            # BEAR regime
+    symbol_adjustment: 0.5            # Symbol has low win rate
+    final_target: 4.3                 # 5.0 - 1.0 - 1.2 + 1.0 + 0.5
+    
+  scenario_3:
+    description: "EXTREME VIX, SIDEWAYS regime, midday"
+    base_tier1_target: 5.0
+    vix_adjustment: -2.0              # EXTREME VIX
+    time_adjustment: -0.8             # 12:30 PM (3 hours in, 46% decay)
+    regime_adjustment: 0.0            # SIDEWAYS regime
+    symbol_adjustment: -0.5           # Symbol has high win rate
+    final_target: 2.0                 # 5.0 - 2.0 - 0.8 + 0.0 - 0.5 = 1.7 -> clamped to min 2.0

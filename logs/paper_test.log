@@ -1,0 +1,1062 @@
+2025-10-20 19:28:40,546 - __main__ - INFO - ================================================================================
+2025-10-20 19:28:40,547 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:28:40,548 - __main__ - INFO - Timestamp: 2025-10-20T19:28:40.547974
+2025-10-20 19:28:40,548 - __main__ - INFO - ================================================================================
+2025-10-20 19:28:40,548 - __main__ - INFO - ================================================================================
+2025-10-20 19:28:40,549 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:28:40,549 - __main__ - INFO - ================================================================================
+2025-10-20 19:28:40,631 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:28:40,631 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:28:40,631 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:28:40,632 - __main__ - INFO - 
+2025-10-20 19:28:40,632 - __main__ - INFO - ================================================================================
+2025-10-20 19:28:40,632 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:28:40,633 - __main__ - INFO - ================================================================================
+2025-10-20 19:28:40,645 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:28:40,651 - __main__ - ERROR - 
+2025-10-20 19:28:40,653 - __main__ - ERROR - ================================================================================
+2025-10-20 19:28:40,654 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:28:40,655 - __main__ - ERROR - ================================================================================
+2025-10-20 19:28:40,656 - __main__ - ERROR - Error: MockVIXProvider.__init__() got an unexpected keyword argument 'default_vix'
+2025-10-20 19:28:40,657 - __main__ - ERROR - 
+2025-10-20 19:28:40,657 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:28:40,658 - __main__ - ERROR - ================================================================================
+2025-10-20 19:30:46,971 - __main__ - INFO - ================================================================================
+2025-10-20 19:30:46,974 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:30:46,974 - __main__ - INFO - Timestamp: 2025-10-20T19:30:46.974793
+2025-10-20 19:30:46,975 - __main__ - INFO - ================================================================================
+2025-10-20 19:30:46,976 - __main__ - INFO - ================================================================================
+2025-10-20 19:30:46,977 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:30:46,978 - __main__ - INFO - ================================================================================
+2025-10-20 19:30:47,023 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:30:47,024 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:30:47,024 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:30:47,025 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:30:47,025 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:30:47,026 - __main__ - INFO - 
+2025-10-20 19:30:47,027 - __main__ - INFO - ================================================================================
+2025-10-20 19:30:47,029 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:30:47,029 - __main__ - INFO - ================================================================================
+2025-10-20 19:30:47,030 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:30:47,031 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:30:47,032 - __main__ - ERROR - [X] VIX provider test failed: 'MockVIXProvider' object has no attribute 'get_current_vix'
+2025-10-20 19:30:47,034 - __main__ - ERROR - 
+2025-10-20 19:30:47,035 - __main__ - ERROR - ================================================================================
+2025-10-20 19:30:47,036 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:30:47,038 - __main__ - ERROR - ================================================================================
+2025-10-20 19:30:47,039 - __main__ - ERROR - Error: 'MockVIXProvider' object has no attribute 'get_current_vix'
+2025-10-20 19:30:47,040 - __main__ - ERROR - 
+2025-10-20 19:30:47,041 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:30:47,042 - __main__ - ERROR - ================================================================================
+2025-10-20 19:31:09,989 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:09,990 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:31:09,990 - __main__ - INFO - Timestamp: 2025-10-20T19:31:09.990620
+2025-10-20 19:31:09,991 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:09,991 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:09,991 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:31:09,991 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:10,023 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:31:10,023 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:31:10,024 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:31:10,024 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:31:10,025 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:31:10,025 - __main__ - INFO - 
+2025-10-20 19:31:10,026 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:10,026 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:31:10,027 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:10,027 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:31:10,028 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:31:10,028 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:31:10,028 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:31:10,029 - __main__ - INFO - 
+2025-10-20 19:31:10,029 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:10,030 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:31:10,030 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:10,030 - __main__ - WARNING - [!] Using MockRegimeDetector (no Alpaca credentials)
+2025-10-20 19:31:10,031 - __main__ - ERROR - [X] Regime detector test failed: 'str' object has no attribute 'value'
+2025-10-20 19:31:10,031 - __main__ - ERROR - 
+2025-10-20 19:31:10,032 - __main__ - ERROR - ================================================================================
+2025-10-20 19:31:10,035 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:31:10,035 - __main__ - ERROR - ================================================================================
+2025-10-20 19:31:10,036 - __main__ - ERROR - Error: 'str' object has no attribute 'value'
+2025-10-20 19:31:10,036 - __main__ - ERROR - 
+2025-10-20 19:31:10,037 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:31:10,038 - __main__ - ERROR - ================================================================================
+2025-10-20 19:31:44,813 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,814 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:31:44,815 - __main__ - INFO - Timestamp: 2025-10-20T19:31:44.815458
+2025-10-20 19:31:44,816 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,816 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,816 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:31:44,817 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,840 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:31:44,841 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:31:44,841 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:31:44,842 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:31:44,842 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:31:44,843 - __main__ - INFO - 
+2025-10-20 19:31:44,843 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,844 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:31:44,844 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,845 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:31:44,845 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:31:44,847 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:31:44,848 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:31:44,848 - __main__ - INFO - 
+2025-10-20 19:31:44,849 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,849 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:31:44,850 - __main__ - INFO - ================================================================================
+2025-10-20 19:31:44,854 - __main__ - ERROR - [X] Regime detector test failed: No module named 'bouncehunter.exits.market_conditions'
+2025-10-20 19:31:44,855 - __main__ - ERROR - 
+2025-10-20 19:31:44,855 - __main__ - ERROR - ================================================================================
+2025-10-20 19:31:44,856 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:31:44,856 - __main__ - ERROR - ================================================================================
+2025-10-20 19:31:44,857 - __main__ - ERROR - Error: No module named 'bouncehunter.exits.market_conditions'
+2025-10-20 19:31:44,857 - __main__ - ERROR - 
+2025-10-20 19:31:44,858 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:31:44,858 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:02,275 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,276 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:33:02,276 - __main__ - INFO - Timestamp: 2025-10-20T19:33:02.276441
+2025-10-20 19:33:02,276 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,277 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,277 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:33:02,278 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,299 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:33:02,300 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:33:02,300 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:33:02,300 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:33:02,301 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:33:02,301 - __main__ - INFO - 
+2025-10-20 19:33:02,301 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,302 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:33:02,302 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,302 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:33:02,302 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:33:02,303 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:33:02,303 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:33:02,303 - __main__ - INFO - 
+2025-10-20 19:33:02,303 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,304 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:33:02,304 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:02,304 - __main__ - WARNING - [!] Using MockRegimeDetector (no Alpaca credentials)
+2025-10-20 19:33:02,305 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 19:33:02,305 - __main__ - INFO - [OK] Market regime detected: BULL
+2025-10-20 19:33:02,306 - __main__ - INFO -   SMA50: 450.00
+2025-10-20 19:33:02,308 - __main__ - ERROR - [X] Regime detector test failed: Unknown format code 'f' for object of type 'str'
+2025-10-20 19:33:02,309 - __main__ - ERROR - 
+2025-10-20 19:33:02,309 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:02,310 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:33:02,310 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:02,311 - __main__ - ERROR - Error: Unknown format code 'f' for object of type 'str'
+2025-10-20 19:33:02,312 - __main__ - ERROR - 
+2025-10-20 19:33:02,313 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:33:02,314 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:19,139 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,139 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:33:19,140 - __main__ - INFO - Timestamp: 2025-10-20T19:33:19.140162
+2025-10-20 19:33:19,140 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,140 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,140 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:33:19,141 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,153 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:33:19,153 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:33:19,153 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:33:19,153 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:33:19,154 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:33:19,154 - __main__ - INFO - 
+2025-10-20 19:33:19,154 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,154 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:33:19,155 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,155 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:33:19,155 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:33:19,156 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:33:19,156 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:33:19,156 - __main__ - INFO - 
+2025-10-20 19:33:19,156 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,156 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:33:19,156 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,157 - __main__ - WARNING - [!] Using MockRegimeDetector (no Alpaca credentials)
+2025-10-20 19:33:19,157 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 19:33:19,157 - __main__ - INFO - [OK] Market regime detected: BULL
+2025-10-20 19:33:19,157 - __main__ - INFO -   SMA50: 450.00
+2025-10-20 19:33:19,157 - __main__ - INFO -   SMA200: N/A
+2025-10-20 19:33:19,158 - __main__ - INFO -   Spread: 0.00%
+2025-10-20 19:33:19,158 - __main__ - INFO - 
+2025-10-20 19:33:19,158 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,158 - __main__ - INFO - TEST 4: Adjustment Calculation
+2025-10-20 19:33:19,159 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:19,159 - __main__ - ERROR - [X] Adjustment calculation failed: MarketConditions.__init__() got an unexpected keyword argument 'vix'
+2025-10-20 19:33:19,159 - __main__ - ERROR - 
+2025-10-20 19:33:19,159 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:19,159 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:33:19,160 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:19,160 - __main__ - ERROR - Error: MarketConditions.__init__() got an unexpected keyword argument 'vix'
+2025-10-20 19:33:19,160 - __main__ - ERROR - 
+2025-10-20 19:33:19,160 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:33:19,160 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:43,135 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,137 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:33:43,137 - __main__ - INFO - Timestamp: 2025-10-20T19:33:43.137806
+2025-10-20 19:33:43,138 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,138 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,139 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:33:43,139 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,186 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:33:43,188 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:33:43,189 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:33:43,190 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:33:43,191 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:33:43,191 - __main__ - INFO - 
+2025-10-20 19:33:43,192 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,192 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:33:43,192 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,193 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:33:43,193 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:33:43,194 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:33:43,195 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:33:43,195 - __main__ - INFO - 
+2025-10-20 19:33:43,196 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,196 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:33:43,196 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,197 - __main__ - WARNING - [!] Using MockRegimeDetector (no Alpaca credentials)
+2025-10-20 19:33:43,197 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 19:33:43,198 - __main__ - INFO - [OK] Market regime detected: BULL
+2025-10-20 19:33:43,198 - __main__ - INFO -   SMA50: 450.00
+2025-10-20 19:33:43,199 - __main__ - INFO -   SMA200: N/A
+2025-10-20 19:33:43,199 - __main__ - INFO -   Spread: 0.00%
+2025-10-20 19:33:43,199 - __main__ - INFO - 
+2025-10-20 19:33:43,200 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,200 - __main__ - INFO - TEST 4: Adjustment Calculation
+2025-10-20 19:33:43,201 - __main__ - INFO - ================================================================================
+2025-10-20 19:33:43,201 - __main__ - INFO - [OK] Market conditions: VIX=20.00 (HIGH), Regime=BULL
+2025-10-20 19:33:43,202 - __main__ - ERROR - [X] Adjustment calculation failed: AdjustmentCalculator.adjust_tier1_target() got an unexpected keyword argument 'market_conditions'
+2025-10-20 19:33:43,206 - __main__ - ERROR - 
+2025-10-20 19:33:43,207 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:43,208 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:33:43,208 - __main__ - ERROR - ================================================================================
+2025-10-20 19:33:43,209 - __main__ - ERROR - Error: AdjustmentCalculator.adjust_tier1_target() got an unexpected keyword argument 'market_conditions'
+2025-10-20 19:33:43,210 - __main__ - ERROR - 
+2025-10-20 19:33:43,210 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:33:43,211 - __main__ - ERROR - ================================================================================
+2025-10-20 19:34:13,875 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,876 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:34:13,876 - __main__ - INFO - Timestamp: 2025-10-20T19:34:13.876302
+2025-10-20 19:34:13,876 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,876 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,877 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:34:13,877 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,893 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:34:13,894 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:34:13,894 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:34:13,894 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:34:13,894 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:34:13,895 - __main__ - INFO - 
+2025-10-20 19:34:13,895 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,895 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:34:13,895 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,896 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:34:13,896 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:34:13,896 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:34:13,896 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:34:13,897 - __main__ - INFO - 
+2025-10-20 19:34:13,897 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,897 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:34:13,897 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,897 - __main__ - WARNING - [!] Using MockRegimeDetector (no Alpaca credentials)
+2025-10-20 19:34:13,898 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 19:34:13,898 - __main__ - INFO - [OK] Market regime detected: BULL
+2025-10-20 19:34:13,898 - __main__ - INFO -   SMA50: 450.00
+2025-10-20 19:34:13,898 - __main__ - INFO -   SMA200: N/A
+2025-10-20 19:34:13,900 - __main__ - INFO -   Spread: 0.00%
+2025-10-20 19:34:13,900 - __main__ - INFO - 
+2025-10-20 19:34:13,900 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,901 - __main__ - INFO - TEST 4: Adjustment Calculation
+2025-10-20 19:34:13,901 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:13,901 - __main__ - INFO - [OK] Market conditions: VIX=20.00 (HIGH), Regime=BULL
+2025-10-20 19:34:13,902 - __main__ - INFO - [OK] Adjustment calculation successful
+2025-10-20 19:34:13,902 - __main__ - INFO -   Base target: 5.0%
+2025-10-20 19:34:13,902 - __main__ - INFO -   Adjusted target: 5.50%
+2025-10-20 19:34:13,902 - __main__ - INFO -   Total adjustment: +0.50%
+2025-10-20 19:34:13,902 - __main__ - INFO - 
+2025-10-20 19:34:13,903 - __main__ - INFO -   Breakdown:
+2025-10-20 19:34:13,903 - __main__ - INFO -     base_target: +5.00%
+2025-10-20 19:34:13,903 - __main__ - INFO -     volatility_adjustment: -1.00%
+2025-10-20 19:34:13,903 - __main__ - INFO -     time_adjustment: +0.50%
+2025-10-20 19:34:13,903 - __main__ - INFO -     regime_adjustment: +1.00%
+2025-10-20 19:34:13,904 - __main__ - INFO -     final_target: +5.50%
+2025-10-20 19:34:13,904 - __main__ - ERROR - [X] Adjustment calculation failed: Unknown format code 'f' for object of type 'str'
+2025-10-20 19:34:13,904 - __main__ - ERROR - 
+2025-10-20 19:34:13,904 - __main__ - ERROR - ================================================================================
+2025-10-20 19:34:13,904 - __main__ - ERROR - TEST FAILED
+2025-10-20 19:34:13,905 - __main__ - ERROR - ================================================================================
+2025-10-20 19:34:13,905 - __main__ - ERROR - Error: Unknown format code 'f' for object of type 'str'
+2025-10-20 19:34:13,905 - __main__ - ERROR - 
+2025-10-20 19:34:13,905 - __main__ - ERROR - Please fix the issues above before deploying paper trading.
+2025-10-20 19:34:13,905 - __main__ - ERROR - ================================================================================
+2025-10-20 19:34:36,972 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,973 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System
+2025-10-20 19:34:36,973 - __main__ - INFO - Timestamp: 2025-10-20T19:34:36.973704
+2025-10-20 19:34:36,974 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,974 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,974 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 19:34:36,974 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,988 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 19:34:36,989 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 19:34:36,990 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 19:34:36,990 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 19:34:36,991 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 19:34:36,991 - __main__ - INFO - 
+2025-10-20 19:34:36,992 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,992 - __main__ - INFO - TEST 2: VIX Data Provider
+2025-10-20 19:34:36,993 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,993 - __main__ - WARNING - [!] Alpaca credentials not found in environment
+2025-10-20 19:34:36,993 - __main__ - INFO -   Using MockVIXProvider for testing
+2025-10-20 19:34:36,993 - __main__ - INFO - [OK] VIX data retrieved: 20.00
+2025-10-20 19:34:36,994 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 19:34:36,994 - __main__ - INFO - 
+2025-10-20 19:34:36,994 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,994 - __main__ - INFO - TEST 3: Market Regime Detector
+2025-10-20 19:34:36,994 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,995 - __main__ - WARNING - [!] Using MockRegimeDetector (no Alpaca credentials)
+2025-10-20 19:34:36,995 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 19:34:36,995 - __main__ - INFO - [OK] Market regime detected: BULL
+2025-10-20 19:34:36,996 - __main__ - INFO -   SMA50: 450.00
+2025-10-20 19:34:36,996 - __main__ - INFO -   SMA200: N/A
+2025-10-20 19:34:36,996 - __main__ - INFO -   Spread: 0.00%
+2025-10-20 19:34:36,996 - __main__ - INFO - 
+2025-10-20 19:34:36,997 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,997 - __main__ - INFO - TEST 4: Adjustment Calculation
+2025-10-20 19:34:36,997 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:36,997 - __main__ - INFO - [OK] Market conditions: VIX=20.00 (HIGH), Regime=BULL
+2025-10-20 19:34:36,998 - __main__ - INFO - [OK] Adjustment calculation successful
+2025-10-20 19:34:36,998 - __main__ - INFO -   Base target: 5.0%
+2025-10-20 19:34:36,998 - __main__ - INFO -   Adjusted target: 5.50%
+2025-10-20 19:34:36,998 - __main__ - INFO -   Total adjustment: +0.50%
+2025-10-20 19:34:36,998 - __main__ - INFO - 
+2025-10-20 19:34:36,999 - __main__ - INFO -   Breakdown:
+2025-10-20 19:34:36,999 - __main__ - INFO -     base_target: +5.00%
+2025-10-20 19:34:36,999 - __main__ - INFO -     volatility_adjustment: -1.00%
+2025-10-20 19:34:36,999 - __main__ - INFO -     time_adjustment: +0.50%
+2025-10-20 19:34:36,999 - __main__ - INFO -     regime_adjustment: +1.00%
+2025-10-20 19:34:37,000 - __main__ - INFO -     final_target: +5.50%
+2025-10-20 19:34:37,000 - __main__ - INFO -     volatility_level: HIGH
+2025-10-20 19:34:37,000 - __main__ - INFO -     time_period: MIDDAY
+2025-10-20 19:34:37,000 - __main__ - INFO -     market_regime: BULL
+2025-10-20 19:34:37,001 - __main__ - INFO - 
+2025-10-20 19:34:37,001 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:37,001 - __main__ - INFO - TEST SUMMARY
+2025-10-20 19:34:37,001 - __main__ - INFO - ================================================================================
+2025-10-20 19:34:37,001 - __main__ - INFO - [OK] All tests passed successfully!
+2025-10-20 19:34:37,002 - __main__ - INFO - 
+2025-10-20 19:34:37,002 - __main__ - INFO - Next Steps:
+2025-10-20 19:34:37,002 - __main__ - INFO - 1. Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables
+2025-10-20 19:34:37,003 - __main__ - INFO - 2. Review logs/paper_test.log for detailed output
+2025-10-20 19:34:37,003 - __main__ - INFO - 3. Customize configs/my_paper_config.yaml if needed
+2025-10-20 19:34:37,003 - __main__ - INFO - 4. Run the paper trading bot: python scripts/run_pennyhunter_paper.py
+2025-10-20 19:34:37,003 - __main__ - INFO - 
+2025-10-20 19:34:37,003 - __main__ - INFO - Paper trading system is READY for deployment!
+2025-10-20 19:34:37,004 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,932 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,933 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System (IBKR + Yahoo)
+2025-10-20 21:36:39,934 - __main__ - INFO - Timestamp: 2025-10-20T21:36:39.934112
+2025-10-20 21:36:39,934 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,934 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,935 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 21:36:39,935 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,958 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 21:36:39,959 - __main__ - INFO - [OK] Broker configured: IBKR
+2025-10-20 21:36:39,959 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 21:36:39,959 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 21:36:39,960 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 21:36:39,960 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 21:36:39,960 - __main__ - INFO - 
+2025-10-20 21:36:39,960 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,960 - __main__ - INFO - TEST 2: Broker Connectivity (IBKR)
+2025-10-20 21:36:39,960 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:39,974 - __main__ - INFO -   IBKR Host: 127.0.0.1
+2025-10-20 21:36:39,975 - __main__ - INFO -   IBKR Port: 7497 (TWS paper)
+2025-10-20 21:36:39,975 - __main__ - INFO -   Client ID: 42
+2025-10-20 21:36:39,975 - __main__ - INFO -   Paper Mode: True
+2025-10-20 21:36:39,975 - src.core.brokers - INFO - Initializing broker: ibkr
+2025-10-20 21:36:40,026 - asyncio - DEBUG - Using proactor: IocpProactor
+2025-10-20 21:36:40,141 - __main__ - WARNING - [!] IBKR connection failed: invalid literal for int() with base 10: '${IBKR_PORT}'
+2025-10-20 21:36:40,141 - __main__ - INFO -   This is OK if TWS/Gateway is not running
+2025-10-20 21:36:40,141 - __main__ - INFO -   To enable IBKR:
+2025-10-20 21:36:40,141 - __main__ - INFO -     1. Start IBKR TWS or IB Gateway
+2025-10-20 21:36:40,141 - __main__ - INFO -     2. Login to Paper account
+2025-10-20 21:36:40,142 - __main__ - INFO -     3. Enable API in settings
+2025-10-20 21:36:40,142 - __main__ - INFO -     4. Set environment variables:
+2025-10-20 21:36:40,142 - __main__ - INFO -        $env:IBKR_HOST='127.0.0.1'
+2025-10-20 21:36:40,142 - __main__ - INFO -        $env:IBKR_PORT='7497'
+2025-10-20 21:36:40,142 - __main__ - INFO -        $env:IBKR_CLIENT_ID='42'
+2025-10-20 21:36:40,143 - __main__ - INFO -        $env:USE_PAPER='1'
+2025-10-20 21:36:40,143 - src.core.brokers.ibkr_client - ERROR - Error during disconnect: 'IBKRClient' object has no attribute 'ib'
+2025-10-20 21:36:40,143 - __main__ - INFO - 
+2025-10-20 21:36:40,143 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:40,143 - __main__ - INFO - TEST 3: VIX Data Provider (Yahoo Finance)
+2025-10-20 21:36:40,144 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:40,144 - __main__ - INFO - [OK] Using Yahoo Finance for VIX data (free)
+2025-10-20 21:36:40,144 - src.core.providers.vix.yahoo_vix_provider - INFO - Yahoo VIX provider initialized (thresholds: LOW<15.0, NORMAL<25.0, HIGH<35.0)
+2025-10-20 21:36:40,144 - yfinance - DEBUG - Entering history()
+2025-10-20 21:36:40,146 - peewee - DEBUG - ('CREATE TABLE IF NOT EXISTS "_tz_kv" ("key" VARCHAR(255) NOT NULL PRIMARY KEY, "value" VARCHAR(255)) WITHOUT ROWID', [])
+2025-10-20 21:36:40,147 - peewee - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_tz_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['^VIX', 1, 0])
+2025-10-20 21:36:40,200 - yfinance - DEBUG -  Entering history()
+2025-10-20 21:36:40,201 - yfinance - DEBUG - ^VIX: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:36:40,201 - yfinance - DEBUG -   Entering get()
+2025-10-20 21:36:40,201 - yfinance - DEBUG -    Entering _make_request()
+2025-10-20 21:36:40,201 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/^VIX
+2025-10-20 21:36:40,202 - yfinance - DEBUG - params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:36:40,202 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-10-20 21:36:40,202 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-10-20 21:36:40,202 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-10-20 21:36:40,202 - yfinance - DEBUG -       Entering _get_cookie_basic()
+2025-10-20 21:36:40,203 - yfinance - DEBUG -        Entering _load_cookie_curlCffi()
+2025-10-20 21:36:40,205 - peewee - DEBUG - ('CREATE TABLE IF NOT EXISTS "_cookieschema" ("strategy" VARCHAR(255) NOT NULL PRIMARY KEY, "fetch_date" DATETIME NOT NULL, "cookie_bytes" BLOB NOT NULL) WITHOUT ROWID', [])
+2025-10-20 21:36:40,205 - peewee - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['curlCffi', 1, 0])
+2025-10-20 21:36:40,206 - yfinance - DEBUG -        Exiting _load_cookie_curlCffi()
+2025-10-20 21:36:40,206 - yfinance - DEBUG - reusing persistent cookie
+2025-10-20 21:36:40,206 - yfinance - DEBUG -       Exiting _get_cookie_basic()
+2025-10-20 21:36:40,206 - yfinance - DEBUG -       Entering _get_crumb_basic()
+2025-10-20 21:36:40,206 - yfinance - DEBUG -        Entering _get_cookie_basic()
+2025-10-20 21:36:40,207 - yfinance - DEBUG - reusing cookie
+2025-10-20 21:36:40,207 - yfinance - DEBUG -        Exiting _get_cookie_basic()
+2025-10-20 21:36:41,188 - yfinance - DEBUG - crumb = 'p.pfkeHFLCN'
+2025-10-20 21:36:41,188 - yfinance - DEBUG -       Exiting _get_crumb_basic()
+2025-10-20 21:36:41,189 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-10-20 21:36:41,189 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-10-20 21:36:42,171 - yfinance - DEBUG - response code=200
+2025-10-20 21:36:42,171 - yfinance - DEBUG -    Exiting _make_request()
+2025-10-20 21:36:42,172 - yfinance - DEBUG -   Exiting get()
+2025-10-20 21:36:42,179 - yfinance - DEBUG - ^VIX: yfinance received OHLC data: 2025-10-20 07:15:00 -> 2025-10-20 20:15:00
+2025-10-20 21:36:42,198 - yfinance - DEBUG - ^VIX: OHLC after cleaning: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:36:42,206 - yfinance - DEBUG - ^VIX: OHLC after combining events: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:36:42,221 - yfinance - DEBUG - ^VIX: yfinance returning OHLC: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:36:42,222 - yfinance - DEBUG -  Exiting history()
+2025-10-20 21:36:42,222 - yfinance - DEBUG - Exiting history()
+2025-10-20 21:36:42,223 - __main__ - INFO - [OK] Yahoo Finance API accessible
+2025-10-20 21:36:42,223 - yfinance - DEBUG - Entering history()
+2025-10-20 21:36:42,224 - yfinance - DEBUG -  Entering history()
+2025-10-20 21:36:42,224 - yfinance - DEBUG - ^VIX: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:36:42,225 - yfinance - DEBUG -   Entering get()
+2025-10-20 21:36:42,225 - yfinance - DEBUG -    Entering _make_request()
+2025-10-20 21:36:42,226 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/^VIX
+2025-10-20 21:36:42,231 - yfinance - DEBUG - params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:36:42,232 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-10-20 21:36:42,233 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-10-20 21:36:42,234 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-10-20 21:36:42,235 - yfinance - DEBUG -       Entering _get_cookie_basic()
+2025-10-20 21:36:42,236 - yfinance - DEBUG - reusing cookie
+2025-10-20 21:36:42,236 - yfinance - DEBUG -       Exiting _get_cookie_basic()
+2025-10-20 21:36:42,237 - yfinance - DEBUG -       Entering _get_crumb_basic()
+2025-10-20 21:36:42,238 - yfinance - DEBUG - reusing crumb
+2025-10-20 21:36:42,238 - yfinance - DEBUG -       Exiting _get_crumb_basic()
+2025-10-20 21:36:42,239 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-10-20 21:36:42,240 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-10-20 21:36:42,425 - yfinance - DEBUG - response code=200
+2025-10-20 21:36:42,426 - yfinance - DEBUG -    Exiting _make_request()
+2025-10-20 21:36:42,426 - yfinance - DEBUG -   Exiting get()
+2025-10-20 21:36:42,430 - yfinance - DEBUG - ^VIX: yfinance received OHLC data: 2025-10-20 07:15:00 -> 2025-10-20 20:15:00
+2025-10-20 21:36:42,438 - yfinance - DEBUG - ^VIX: OHLC after cleaning: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:36:42,442 - yfinance - DEBUG - ^VIX: OHLC after combining events: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:36:42,453 - yfinance - DEBUG - ^VIX: yfinance returning OHLC: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:36:42,454 - yfinance - DEBUG -  Exiting history()
+2025-10-20 21:36:42,455 - yfinance - DEBUG - Exiting history()
+2025-10-20 21:36:42,456 - src.core.providers.vix.yahoo_vix_provider - DEBUG - VIX retrieved: 18.23 (NORMAL)
+2025-10-20 21:36:42,456 - __main__ - INFO - [OK] VIX data retrieved: 18.23
+2025-10-20 21:36:42,457 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 21:36:42,457 - __main__ - INFO - 
+2025-10-20 21:36:42,457 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:42,457 - __main__ - INFO - TEST 4: Market Regime Detector
+2025-10-20 21:36:42,458 - __main__ - INFO - ================================================================================
+2025-10-20 21:36:42,458 - __main__ - WARNING - [!] Using MockRegimeDetector (Yahoo SPY detector coming soon)
+2025-10-20 21:36:42,458 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 21:36:42,459 - __main__ - ERROR - [X] Regime detector test failed: 'MockRegimeDetector' object has no attribute 'get_regime'
+2025-10-20 21:36:42,459 - __main__ - ERROR - Tests failed: 'MockRegimeDetector' object has no attribute 'get_regime'
+Traceback (most recent call last):
+  File "C:\Users\kay\Documents\Projects\AutoTrader\Autotrader\scripts\test_paper_trading_ibkr.py", line 309, in main
+    regime_detector = test_regime_detector()
+  File "C:\Users\kay\Documents\Projects\AutoTrader\Autotrader\scripts\test_paper_trading_ibkr.py", line 215, in test_regime_detector
+    regime = detector.get_regime()
+             ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MockRegimeDetector' object has no attribute 'get_regime'. Did you mean: 'set_regime'?
+2025-10-20 21:41:25,614 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:25,615 - __main__ - INFO - PAPER TRADING VALIDATION - Intelligent Adjustments System (IBKR + Yahoo)
+2025-10-20 21:41:25,616 - __main__ - INFO - Timestamp: 2025-10-20T21:41:25.616048
+2025-10-20 21:41:25,616 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:25,616 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:25,616 - __main__ - INFO - TEST 1: Configuration Loading
+2025-10-20 21:41:25,617 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:25,653 - __main__ - INFO - [OK] Configuration loaded successfully
+2025-10-20 21:41:25,654 - __main__ - INFO - [OK] Broker configured: IBKR
+2025-10-20 21:41:25,654 - __main__ - INFO - [OK] Intelligent adjustments ENABLED
+2025-10-20 21:41:25,654 - __main__ - INFO -   Volatility adjustments: LOW=0.3%, HIGH=-0.8%
+2025-10-20 21:41:25,655 - __main__ - INFO -   Time decay: max=-1.0% over Noneh
+2025-10-20 21:41:25,655 - __main__ - INFO -   Regime adjustments: BULL=-0.3%, BEAR=0.8%
+2025-10-20 21:41:25,656 - __main__ - INFO - 
+2025-10-20 21:41:25,656 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:25,657 - __main__ - INFO - TEST 2: Broker Connectivity (IBKR)
+2025-10-20 21:41:25,657 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:25,676 - __main__ - INFO -   IBKR Host: 127.0.0.1
+2025-10-20 21:41:25,677 - __main__ - INFO -   IBKR Port: 7497 (TWS paper)
+2025-10-20 21:41:25,677 - __main__ - INFO -   Client ID: 42
+2025-10-20 21:41:25,678 - __main__ - INFO -   Paper Mode: True
+2025-10-20 21:41:25,678 - src.core.brokers - INFO - Initializing broker: ibkr
+2025-10-20 21:41:25,688 - asyncio - DEBUG - Using proactor: IocpProactor
+2025-10-20 21:41:25,832 - src.core.brokers.ibkr_client - INFO - Initializing IBKR client: host=127.0.0.1, port=7497, client_id=42, paper=True
+2025-10-20 21:41:25,876 - ib_insync.client - INFO - Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:41:25,877 - ib_insync.client - INFO - Connected
+2025-10-20 21:41:25,881 - ib_insync.client - DEBUG - <<< 176,20251020 21:41:24 PST
+2025-10-20 21:41:25,882 - ib_insync.client - DEBUG - >>> 71,2,42,
+2025-10-20 21:41:25,883 - ib_insync.client - INFO - Logged on to server version 176
+2025-10-20 21:41:25,885 - ib_insync.client - DEBUG - <<< 15,1,DUO071381
+2025-10-20 21:41:25,886 - ib_insync.client - DEBUG - <<< 9,1,1
+2025-10-20 21:41:25,888 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:cafarm,
+2025-10-20 21:41:25,888 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:41:25,889 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:hfarm,
+2025-10-20 21:41:25,890 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:41:25,890 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:eufarmnj,
+2025-10-20 21:41:25,891 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:41:25,891 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:cashfarm,
+2025-10-20 21:41:25,892 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:41:25,892 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:usfuture,
+2025-10-20 21:41:25,892 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:41:25,892 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:jfarm,
+2025-10-20 21:41:25,893 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:41:25,893 - ib_insync.client - INFO - API connection ready
+2025-10-20 21:41:25,893 - ib_insync.client - DEBUG - >>> 61,1
+2025-10-20 21:41:25,894 - ib_insync.client - DEBUG - >>> 5,1
+2025-10-20 21:41:25,894 - ib_insync.client - DEBUG - >>> 99,0
+2025-10-20 21:41:25,894 - ib_insync.client - DEBUG - >>> 6,2,1,DUO071381
+2025-10-20 21:41:25,895 - ib_insync.client - DEBUG - >>> 76,1,1,DUO071381,,0
+2025-10-20 21:41:25,896 - ib_insync.client - DEBUG - <<< 4,2,-1,2104,Market data farm connection is OK:usfarm,
+2025-10-20 21:41:25,896 - ib_insync.wrapper - INFO - Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:41:25,896 - ib_insync.client - DEBUG - <<< 4,2,-1,2106,HMDS data farm connection is OK:euhmds,
+2025-10-20 21:41:25,897 - ib_insync.wrapper - INFO - Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:41:25,897 - ib_insync.client - DEBUG - <<< 4,2,-1,2106,HMDS data farm connection is OK:fundfarm,
+2025-10-20 21:41:25,898 - ib_insync.wrapper - INFO - Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:41:25,899 - ib_insync.client - DEBUG - <<< 4,2,-1,2106,HMDS data farm connection is OK:ushmds,
+2025-10-20 21:41:25,899 - ib_insync.wrapper - INFO - Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:41:25,900 - ib_insync.client - DEBUG - <<< 4,2,-1,2158,Sec-def data farm connection is OK:secdefil,
+2025-10-20 21:41:25,900 - ib_insync.wrapper - INFO - Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:41:25,901 - ib_insync.client - DEBUG - <<< 61,3,DUO071381,265598,AAPL,STK,,0.0,,,NASDAQ,USD,AAPL,NMS,1,254.33
+2025-10-20 21:41:25,901 - ib_insync.wrapper - INFO - position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:41:25,902 - ib_insync.client - DEBUG - <<< 62,1
+2025-10-20 21:41:25,903 - ib_insync.client - DEBUG - <<< 53,1
+2025-10-20 21:41:25,905 - ib_insync.client - DEBUG - <<< 101,265598,AAPL,STK,,0,?,,SMART,USD,AAPL,NMS,BUY,1,LMT,75.0,0.0,DAY,,DUO071381,,0,,680983163,0,0,0,,,,,,,,,,,0,,-1,,,,,,2147483647,0,0,,3,0,,0,None,,0,0,0,,0,0,,,,0,0,0,2147483647,2147483647,,,,IB,0,0,,0,Cancelled,0,0,0,76.0,1.7976931348623157E308,0,1,0,,0,2147483647,0,Not an insider or substantial shareholder,0,0,9223372036854775807,20251021 00:28:46 US/Eastern,Cancelled by Trader,,,,,
+2025-10-20 21:41:25,906 - ib_insync.client - DEBUG - <<< 102
+2025-10-20 21:41:26,017 - ib_insync.client - DEBUG - <<< 6,2,AccountCode,DUO071381,,DUO071381
+2025-10-20 21:41:26,018 - ib_insync.client - DEBUG - <<< 6,2,AccountOrGroup,DUO071381,BASE,DUO071381
+2025-10-20 21:41:26,018 - ib_insync.client - DEBUG - <<< 6,2,AccountOrGroup,DUO071381,CAD,DUO071381
+2025-10-20 21:41:26,019 - ib_insync.client - DEBUG - <<< 6,2,AccountOrGroup,DUO071381,USD,DUO071381
+2025-10-20 21:41:26,020 - ib_insync.client - DEBUG - <<< 6,2,AccountReady,true,,DUO071381
+2025-10-20 21:41:26,020 - ib_insync.client - DEBUG - <<< 6,2,AccountType,INDIVIDUAL,,DUO071381
+2025-10-20 21:41:26,021 - ib_insync.client - DEBUG - <<< 6,2,AccruedCash,0.00,BASE,DUO071381
+2025-10-20 21:41:26,021 - ib_insync.client - DEBUG - <<< 6,2,AccruedCash,0.00,CAD,DUO071381
+2025-10-20 21:41:26,021 - ib_insync.client - DEBUG - <<< 6,2,AccruedCash,0.00,USD,DUO071381
+2025-10-20 21:41:26,022 - ib_insync.client - DEBUG - <<< 6,2,AccruedCash-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,022 - ib_insync.client - DEBUG - <<< 6,2,AccruedCash-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,023 - ib_insync.client - DEBUG - <<< 6,2,AccruedDividend,0.00,CAD,DUO071381
+2025-10-20 21:41:26,023 - ib_insync.client - DEBUG - <<< 6,2,AccruedDividend-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,023 - ib_insync.client - DEBUG - <<< 6,2,AccruedDividend-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,024 - ib_insync.client - DEBUG - <<< 6,2,AvailableFunds,99889.82,CAD,DUO071381
+2025-10-20 21:41:26,024 - ib_insync.client - DEBUG - <<< 6,2,AvailableFunds-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,025 - ib_insync.client - DEBUG - <<< 6,2,AvailableFunds-S,99889.82,CAD,DUO071381
+2025-10-20 21:41:26,025 - ib_insync.client - DEBUG - <<< 6,2,Billable,0.00,CAD,DUO071381
+2025-10-20 21:41:26,025 - ib_insync.client - DEBUG - <<< 6,2,Billable-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,025 - ib_insync.client - DEBUG - <<< 6,2,Billable-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,026 - ib_insync.client - DEBUG - <<< 6,2,BuyingPower,332966.08,CAD,DUO071381
+2025-10-20 21:41:26,026 - ib_insync.client - DEBUG - <<< 6,2,CashBalance,99642.6226,BASE,DUO071381
+2025-10-20 21:41:26,026 - ib_insync.client - DEBUG - <<< 6,2,CashBalance,100000.00,CAD,DUO071381
+2025-10-20 21:41:26,026 - ib_insync.client - DEBUG - <<< 6,2,CashBalance,-254.33,USD,DUO071381
+2025-10-20 21:41:26,027 - ib_insync.client - DEBUG - <<< 6,2,ColumnPrio-P,5,,DUO071381
+2025-10-20 21:41:26,027 - ib_insync.client - DEBUG - <<< 6,2,ColumnPrio-S,1,,DUO071381
+2025-10-20 21:41:26,027 - ib_insync.client - DEBUG - <<< 6,2,CorporateBondValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,028 - ib_insync.client - DEBUG - <<< 6,2,CorporateBondValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,028 - ib_insync.client - DEBUG - <<< 6,2,CorporateBondValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,028 - ib_insync.client - DEBUG - <<< 6,2,Cryptocurrency,0.00,BASE,DUO071381
+2025-10-20 21:41:26,029 - ib_insync.client - DEBUG - <<< 6,2,Cryptocurrency,0.00,CAD,DUO071381
+2025-10-20 21:41:26,029 - ib_insync.client - DEBUG - <<< 6,2,Cryptocurrency,0.00,USD,DUO071381
+2025-10-20 21:41:26,029 - ib_insync.client - DEBUG - <<< 6,2,Currency,BASE,BASE,DUO071381
+2025-10-20 21:41:26,030 - ib_insync.client - DEBUG - <<< 6,2,Currency,CAD,CAD,DUO071381
+2025-10-20 21:41:26,031 - ib_insync.client - DEBUG - <<< 6,2,Currency,USD,USD,DUO071381
+2025-10-20 21:41:26,033 - ib_insync.client - DEBUG - <<< 6,2,Cushion,0.998893,,DUO071381
+2025-10-20 21:41:26,034 - ib_insync.client - DEBUG - <<< 6,2,EquityWithLoanValue,100011.59,CAD,DUO071381
+2025-10-20 21:41:26,035 - ib_insync.client - DEBUG - <<< 6,2,EquityWithLoanValue-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,035 - ib_insync.client - DEBUG - <<< 6,2,EquityWithLoanValue-S,100011.59,CAD,DUO071381
+2025-10-20 21:41:26,035 - ib_insync.client - DEBUG - <<< 6,2,ExcessLiquidity,99900.92,CAD,DUO071381
+2025-10-20 21:41:26,036 - ib_insync.client - DEBUG - <<< 6,2,ExcessLiquidity-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,036 - ib_insync.client - DEBUG - <<< 6,2,ExcessLiquidity-S,99900.92,CAD,DUO071381
+2025-10-20 21:41:26,036 - ib_insync.client - DEBUG - <<< 6,2,ExchangeRate,1.00,BASE,DUO071381
+2025-10-20 21:41:26,037 - ib_insync.client - DEBUG - <<< 6,2,ExchangeRate,1.00,CAD,DUO071381
+2025-10-20 21:41:26,037 - ib_insync.client - DEBUG - <<< 6,2,ExchangeRate,1.4048007,USD,DUO071381
+2025-10-20 21:41:26,037 - ib_insync.client - DEBUG - <<< 6,2,FullAvailableFunds,99889.82,CAD,DUO071381
+2025-10-20 21:41:26,037 - ib_insync.client - DEBUG - <<< 6,2,FullAvailableFunds-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,038 - ib_insync.client - DEBUG - <<< 6,2,FullAvailableFunds-S,99889.82,CAD,DUO071381
+2025-10-20 21:41:26,038 - ib_insync.client - DEBUG - <<< 6,2,FullExcessLiquidity,99900.92,CAD,DUO071381
+2025-10-20 21:41:26,038 - ib_insync.client - DEBUG - <<< 6,2,FullExcessLiquidity-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,038 - ib_insync.client - DEBUG - <<< 6,2,FullExcessLiquidity-S,99900.92,CAD,DUO071381
+2025-10-20 21:41:26,039 - ib_insync.client - DEBUG - <<< 6,2,FullInitMarginReq,121.78,CAD,DUO071381
+2025-10-20 21:41:26,039 - ib_insync.client - DEBUG - <<< 6,2,FullInitMarginReq-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,039 - ib_insync.client - DEBUG - <<< 6,2,FullInitMarginReq-S,121.78,CAD,DUO071381
+2025-10-20 21:41:26,040 - ib_insync.client - DEBUG - <<< 6,2,FullMaintMarginReq,110.71,CAD,DUO071381
+2025-10-20 21:41:26,040 - ib_insync.client - DEBUG - <<< 6,2,FullMaintMarginReq-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,040 - ib_insync.client - DEBUG - <<< 6,2,FullMaintMarginReq-S,110.71,CAD,DUO071381
+2025-10-20 21:41:26,041 - ib_insync.client - DEBUG - <<< 6,2,FundValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,041 - ib_insync.client - DEBUG - <<< 6,2,FundValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,041 - ib_insync.client - DEBUG - <<< 6,2,FundValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,041 - ib_insync.client - DEBUG - <<< 6,2,FutureOptionValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,042 - ib_insync.client - DEBUG - <<< 6,2,FutureOptionValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,042 - ib_insync.client - DEBUG - <<< 6,2,FutureOptionValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,042 - ib_insync.client - DEBUG - <<< 6,2,FuturesPNL,0.00,BASE,DUO071381
+2025-10-20 21:41:26,043 - ib_insync.client - DEBUG - <<< 6,2,FuturesPNL,0.00,CAD,DUO071381
+2025-10-20 21:41:26,044 - ib_insync.client - DEBUG - <<< 6,2,FuturesPNL,0.00,USD,DUO071381
+2025-10-20 21:41:26,045 - ib_insync.client - DEBUG - <<< 6,2,FxCashBalance,0.00,BASE,DUO071381
+2025-10-20 21:41:26,045 - ib_insync.client - DEBUG - <<< 6,2,FxCashBalance,0.00,CAD,DUO071381
+2025-10-20 21:41:26,046 - ib_insync.client - DEBUG - <<< 6,2,FxCashBalance,0.00,USD,DUO071381
+2025-10-20 21:41:26,046 - ib_insync.client - DEBUG - <<< 6,2,GrossPositionValue,369.00,CAD,DUO071381
+2025-10-20 21:41:26,047 - ib_insync.client - DEBUG - <<< 6,2,GrossPositionValue-S,369.00,CAD,DUO071381
+2025-10-20 21:41:26,047 - ib_insync.client - DEBUG - <<< 6,2,Guarantee,0.00,CAD,DUO071381
+2025-10-20 21:41:26,052 - ib_insync.client - DEBUG - <<< 6,2,Guarantee-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,052 - ib_insync.client - DEBUG - <<< 6,2,Guarantee-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,053 - ib_insync.client - DEBUG - <<< 6,2,IncentiveCoupons,0.00,CAD,DUO071381
+2025-10-20 21:41:26,053 - ib_insync.client - DEBUG - <<< 6,2,IncentiveCoupons-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,054 - ib_insync.client - DEBUG - <<< 6,2,IncentiveCoupons-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,054 - ib_insync.client - DEBUG - <<< 6,2,IndianStockHaircut,0.00,CAD,DUO071381
+2025-10-20 21:41:26,055 - ib_insync.client - DEBUG - <<< 6,2,IndianStockHaircut-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,055 - ib_insync.client - DEBUG - <<< 6,2,IndianStockHaircut-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,055 - ib_insync.client - DEBUG - <<< 6,2,InitMarginReq,121.78,CAD,DUO071381
+2025-10-20 21:41:26,056 - ib_insync.client - DEBUG - <<< 6,2,InitMarginReq-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,056 - ib_insync.client - DEBUG - <<< 6,2,InitMarginReq-S,121.78,CAD,DUO071381
+2025-10-20 21:41:26,056 - ib_insync.client - DEBUG - <<< 6,2,IssuerOptionValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,056 - ib_insync.client - DEBUG - <<< 6,2,IssuerOptionValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,057 - ib_insync.client - DEBUG - <<< 6,2,IssuerOptionValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,057 - ib_insync.client - DEBUG - <<< 6,2,Leverage-S,0.00,,DUO071381
+2025-10-20 21:41:26,058 - ib_insync.client - DEBUG - <<< 6,2,LookAheadAvailableFunds,99889.82,CAD,DUO071381
+2025-10-20 21:41:26,058 - ib_insync.client - DEBUG - <<< 6,2,LookAheadAvailableFunds-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,059 - ib_insync.client - DEBUG - <<< 6,2,LookAheadAvailableFunds-S,99889.82,CAD,DUO071381
+2025-10-20 21:41:26,059 - ib_insync.client - DEBUG - <<< 6,2,LookAheadExcessLiquidity,99900.92,CAD,DUO071381
+2025-10-20 21:41:26,059 - ib_insync.client - DEBUG - <<< 6,2,LookAheadExcessLiquidity-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,060 - ib_insync.client - DEBUG - <<< 6,2,LookAheadExcessLiquidity-S,99900.92,CAD,DUO071381
+2025-10-20 21:41:26,060 - ib_insync.client - DEBUG - <<< 6,2,LookAheadInitMarginReq,121.78,CAD,DUO071381
+2025-10-20 21:41:26,060 - ib_insync.client - DEBUG - <<< 6,2,LookAheadInitMarginReq-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,060 - ib_insync.client - DEBUG - <<< 6,2,LookAheadInitMarginReq-S,121.78,CAD,DUO071381
+2025-10-20 21:41:26,061 - ib_insync.client - DEBUG - <<< 6,2,LookAheadMaintMarginReq,110.71,CAD,DUO071381
+2025-10-20 21:41:26,061 - ib_insync.client - DEBUG - <<< 6,2,LookAheadMaintMarginReq-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,061 - ib_insync.client - DEBUG - <<< 6,2,LookAheadMaintMarginReq-S,110.71,CAD,DUO071381
+2025-10-20 21:41:26,061 - ib_insync.client - DEBUG - <<< 6,2,LookAheadNextChange,1761053400,,DUO071381
+2025-10-20 21:41:26,062 - ib_insync.client - DEBUG - <<< 6,2,MaintMarginReq,110.71,CAD,DUO071381
+2025-10-20 21:41:26,062 - ib_insync.client - DEBUG - <<< 6,2,MaintMarginReq-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,062 - ib_insync.client - DEBUG - <<< 6,2,MaintMarginReq-S,110.71,CAD,DUO071381
+2025-10-20 21:41:26,062 - ib_insync.client - DEBUG - <<< 6,2,MoneyMarketFundValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,063 - ib_insync.client - DEBUG - <<< 6,2,MoneyMarketFundValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,063 - ib_insync.client - DEBUG - <<< 6,2,MoneyMarketFundValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,063 - ib_insync.client - DEBUG - <<< 6,2,MutualFundValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,064 - ib_insync.client - DEBUG - <<< 6,2,MutualFundValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,065 - ib_insync.client - DEBUG - <<< 6,2,MutualFundValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,065 - ib_insync.client - DEBUG - <<< 6,2,NLVAndMarginInReview,false,,DUO071381
+2025-10-20 21:41:26,066 - ib_insync.client - DEBUG - <<< 6,2,NetDividend,0.00,BASE,DUO071381
+2025-10-20 21:41:26,067 - ib_insync.client - DEBUG - <<< 6,2,NetDividend,0.00,CAD,DUO071381
+2025-10-20 21:41:26,067 - ib_insync.client - DEBUG - <<< 6,2,NetDividend,0.00,USD,DUO071381
+2025-10-20 21:41:26,068 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidation,100011.62,CAD,DUO071381
+2025-10-20 21:41:26,068 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidation-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,068 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidation-S,100011.62,CAD,DUO071381
+2025-10-20 21:41:26,069 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidationByCurrency,100011.6208,BASE,DUO071381
+2025-10-20 21:41:26,069 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidationByCurrency,100000.00,CAD,DUO071381
+2025-10-20 21:41:26,069 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidationByCurrency,8.27,USD,DUO071381
+2025-10-20 21:41:26,070 - ib_insync.client - DEBUG - <<< 6,2,NetLiquidationUncertainty,0.03,CAD,DUO071381
+2025-10-20 21:41:26,070 - ib_insync.client - DEBUG - <<< 6,2,OptionMarketValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,070 - ib_insync.client - DEBUG - <<< 6,2,OptionMarketValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,070 - ib_insync.client - DEBUG - <<< 6,2,OptionMarketValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,071 - ib_insync.client - DEBUG - <<< 6,2,PASharesValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,071 - ib_insync.client - DEBUG - <<< 6,2,PASharesValue-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,071 - ib_insync.client - DEBUG - <<< 6,2,PASharesValue-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,071 - ib_insync.client - DEBUG - <<< 6,2,PhysicalCertificateValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,072 - ib_insync.client - DEBUG - <<< 6,2,PhysicalCertificateValue-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,072 - ib_insync.client - DEBUG - <<< 6,2,PhysicalCertificateValue-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,072 - ib_insync.client - DEBUG - <<< 6,2,PostExpirationExcess,0.00,CAD,DUO071381
+2025-10-20 21:41:26,073 - ib_insync.client - DEBUG - <<< 6,2,PostExpirationExcess-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,073 - ib_insync.client - DEBUG - <<< 6,2,PostExpirationExcess-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,073 - ib_insync.client - DEBUG - <<< 6,2,PostExpirationMargin,0.00,CAD,DUO071381
+2025-10-20 21:41:26,074 - ib_insync.client - DEBUG - <<< 6,2,PostExpirationMargin-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,074 - ib_insync.client - DEBUG - <<< 6,2,PostExpirationMargin-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,074 - ib_insync.client - DEBUG - <<< 6,2,RealCurrency,BASE,BASE,DUO071381
+2025-10-20 21:41:26,074 - ib_insync.client - DEBUG - <<< 6,2,RealCurrency,CAD,CAD,DUO071381
+2025-10-20 21:41:26,075 - ib_insync.client - DEBUG - <<< 6,2,RealCurrency,USD,USD,DUO071381
+2025-10-20 21:41:26,075 - ib_insync.client - DEBUG - <<< 6,2,RealizedPnL,0.00,BASE,DUO071381
+2025-10-20 21:41:26,075 - ib_insync.client - DEBUG - <<< 6,2,RealizedPnL,0.00,CAD,DUO071381
+2025-10-20 21:41:26,076 - ib_insync.client - DEBUG - <<< 6,2,RealizedPnL,0.00,USD,DUO071381
+2025-10-20 21:41:26,076 - ib_insync.client - DEBUG - <<< 6,2,SegmentTitle-P,Crypto at Paxos,,DUO071381
+2025-10-20 21:41:26,076 - ib_insync.client - DEBUG - <<< 6,2,SegmentTitle-S,Securities,,DUO071381
+2025-10-20 21:41:26,077 - ib_insync.client - DEBUG - <<< 6,2,SettledCashByDate,20251021:-254.33,,DUO071381
+2025-10-20 21:41:26,077 - ib_insync.client - DEBUG - <<< 6,2,SettledCashByDate-P,20251021:0,,DUO071381
+2025-10-20 21:41:26,077 - ib_insync.client - DEBUG - <<< 6,2,SettledCashByDate-S,20251021:-254.33,,DUO071381
+2025-10-20 21:41:26,078 - ib_insync.client - DEBUG - <<< 6,2,StockMarketValue,369.00,BASE,DUO071381
+2025-10-20 21:41:26,078 - ib_insync.client - DEBUG - <<< 6,2,StockMarketValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,078 - ib_insync.client - DEBUG - <<< 6,2,StockMarketValue,262.60,USD,DUO071381
+2025-10-20 21:41:26,079 - ib_insync.client - DEBUG - <<< 6,2,TBillValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,079 - ib_insync.client - DEBUG - <<< 6,2,TBillValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,080 - ib_insync.client - DEBUG - <<< 6,2,TBillValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,080 - ib_insync.client - DEBUG - <<< 6,2,TBondValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,084 - ib_insync.client - DEBUG - <<< 6,2,TBondValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,085 - ib_insync.client - DEBUG - <<< 6,2,TBondValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,085 - ib_insync.client - DEBUG - <<< 6,2,TotalCashBalance,99642.6226,BASE,DUO071381
+2025-10-20 21:41:26,086 - ib_insync.client - DEBUG - <<< 6,2,TotalCashBalance,100000.00,CAD,DUO071381
+2025-10-20 21:41:26,086 - ib_insync.client - DEBUG - <<< 6,2,TotalCashBalance,-254.33,USD,DUO071381
+2025-10-20 21:41:26,087 - ib_insync.client - DEBUG - <<< 6,2,TotalCashValue,99642.62,CAD,DUO071381
+2025-10-20 21:41:26,087 - ib_insync.client - DEBUG - <<< 6,2,TotalCashValue-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,088 - ib_insync.client - DEBUG - <<< 6,2,TotalCashValue-S,99642.62,CAD,DUO071381
+2025-10-20 21:41:26,088 - ib_insync.client - DEBUG - <<< 6,2,TotalDebitCardPendingCharges,0.00,CAD,DUO071381
+2025-10-20 21:41:26,088 - ib_insync.client - DEBUG - <<< 6,2,TotalDebitCardPendingCharges-P,0.00,CAD,DUO071381
+2025-10-20 21:41:26,089 - ib_insync.client - DEBUG - <<< 6,2,TotalDebitCardPendingCharges-S,0.00,CAD,DUO071381
+2025-10-20 21:41:26,089 - ib_insync.client - DEBUG - <<< 6,2,TradingType-S,STKNOPT,,DUO071381
+2025-10-20 21:41:26,090 - ib_insync.client - DEBUG - <<< 6,2,UnrealizedPnL,11.62,BASE,DUO071381
+2025-10-20 21:41:26,091 - ib_insync.client - DEBUG - <<< 6,2,UnrealizedPnL,0.00,CAD,DUO071381
+2025-10-20 21:41:26,091 - ib_insync.client - DEBUG - <<< 6,2,UnrealizedPnL,8.27,USD,DUO071381
+2025-10-20 21:41:26,092 - ib_insync.client - DEBUG - <<< 6,2,WarrantValue,0.00,BASE,DUO071381
+2025-10-20 21:41:26,092 - ib_insync.client - DEBUG - <<< 6,2,WarrantValue,0.00,CAD,DUO071381
+2025-10-20 21:41:26,092 - ib_insync.client - DEBUG - <<< 6,2,WarrantValue,0.00,USD,DUO071381
+2025-10-20 21:41:26,093 - ib_insync.client - DEBUG - <<< 7,8,265598,AAPL,STK,,0,0,,NASDAQ,USD,AAPL,NMS,1,262.6000061,262.6,254.33,8.27,0.0,DUO071381
+2025-10-20 21:41:26,093 - ib_insync.wrapper - INFO - updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:41:26,093 - ib_insync.client - DEBUG - <<< 8,1,21:39
+2025-10-20 21:41:26,094 - ib_insync.client - DEBUG - <<< 8,1,21:39
+2025-10-20 21:41:26,094 - ib_insync.client - DEBUG - <<< 54,1,DUO071381
+2025-10-20 21:41:26,101 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccountCode,DUO071381,
+2025-10-20 21:41:26,102 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccountReady,true,
+2025-10-20 21:41:26,103 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccountType,INDIVIDUAL,
+2025-10-20 21:41:26,103 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedCash,0.00,CAD
+2025-10-20 21:41:26,104 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedCash-P,0.00,CAD
+2025-10-20 21:41:26,104 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedCash-S,0.00,CAD
+2025-10-20 21:41:26,105 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedDividend,0.00,CAD
+2025-10-20 21:41:26,106 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedDividend-P,0.00,CAD
+2025-10-20 21:41:26,106 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedDividend-S,0.00,CAD
+2025-10-20 21:41:26,107 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AvailableFunds,99889.82,CAD
+2025-10-20 21:41:26,108 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AvailableFunds-P,0.00,CAD
+2025-10-20 21:41:26,108 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AvailableFunds-S,99889.82,CAD
+2025-10-20 21:41:26,109 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Billable,0.00,CAD
+2025-10-20 21:41:26,110 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Billable-P,0.00,CAD
+2025-10-20 21:41:26,110 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Billable-S,0.00,CAD
+2025-10-20 21:41:26,111 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,BuyingPower,332966.08,CAD
+2025-10-20 21:41:26,111 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ColumnPrio-P,5,
+2025-10-20 21:41:26,111 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ColumnPrio-S,1,
+2025-10-20 21:41:26,112 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Cushion,0.998893,
+2025-10-20 21:41:26,112 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,EquityWithLoanValue,100011.59,CAD
+2025-10-20 21:41:26,112 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,EquityWithLoanValue-P,0.00,CAD
+2025-10-20 21:41:26,113 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,EquityWithLoanValue-S,100011.59,CAD
+2025-10-20 21:41:26,113 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ExcessLiquidity,99900.92,CAD
+2025-10-20 21:41:26,114 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ExcessLiquidity-P,0.00,CAD
+2025-10-20 21:41:26,116 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ExcessLiquidity-S,99900.92,CAD
+2025-10-20 21:41:26,117 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullAvailableFunds,99889.82,CAD
+2025-10-20 21:41:26,117 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullAvailableFunds-P,0.00,CAD
+2025-10-20 21:41:26,118 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullAvailableFunds-S,99889.82,CAD
+2025-10-20 21:41:26,118 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullExcessLiquidity,99900.92,CAD
+2025-10-20 21:41:26,118 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullExcessLiquidity-P,0.00,CAD
+2025-10-20 21:41:26,119 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullExcessLiquidity-S,99900.92,CAD
+2025-10-20 21:41:26,119 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullInitMarginReq,121.78,CAD
+2025-10-20 21:41:26,119 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullInitMarginReq-P,0.00,CAD
+2025-10-20 21:41:26,120 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullInitMarginReq-S,121.78,CAD
+2025-10-20 21:41:26,120 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullMaintMarginReq,110.71,CAD
+2025-10-20 21:41:26,120 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullMaintMarginReq-P,0.00,CAD
+2025-10-20 21:41:26,120 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FullMaintMarginReq-S,110.71,CAD
+2025-10-20 21:41:26,121 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,GrossPositionValue,369.00,CAD
+2025-10-20 21:41:26,121 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,GrossPositionValue-S,369.00,CAD
+2025-10-20 21:41:26,121 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Guarantee,0.00,CAD
+2025-10-20 21:41:26,122 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Guarantee-P,0.00,CAD
+2025-10-20 21:41:26,122 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Guarantee-S,0.00,CAD
+2025-10-20 21:41:26,122 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IncentiveCoupons,0.00,CAD
+2025-10-20 21:41:26,123 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IncentiveCoupons-P,0.00,CAD
+2025-10-20 21:41:26,123 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IncentiveCoupons-S,0.00,CAD
+2025-10-20 21:41:26,123 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IndianStockHaircut,0.00,CAD
+2025-10-20 21:41:26,123 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IndianStockHaircut-P,0.00,CAD
+2025-10-20 21:41:26,124 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IndianStockHaircut-S,0.00,CAD
+2025-10-20 21:41:26,124 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,InitMarginReq,121.78,CAD
+2025-10-20 21:41:26,124 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,InitMarginReq-P,0.00,CAD
+2025-10-20 21:41:26,125 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,InitMarginReq-S,121.78,CAD
+2025-10-20 21:41:26,125 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Leverage-S,0.00,
+2025-10-20 21:41:26,125 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadAvailableFunds,99889.82,CAD
+2025-10-20 21:41:26,126 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadAvailableFunds-P,0.00,CAD
+2025-10-20 21:41:26,126 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadAvailableFunds-S,99889.82,CAD
+2025-10-20 21:41:26,126 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadExcessLiquidity,99900.92,CAD
+2025-10-20 21:41:26,127 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadExcessLiquidity-P,0.00,CAD
+2025-10-20 21:41:26,127 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadExcessLiquidity-S,99900.92,CAD
+2025-10-20 21:41:26,127 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadInitMarginReq,121.78,CAD
+2025-10-20 21:41:26,128 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadInitMarginReq-P,0.00,CAD
+2025-10-20 21:41:26,128 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadInitMarginReq-S,121.78,CAD
+2025-10-20 21:41:26,129 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadMaintMarginReq,110.71,CAD
+2025-10-20 21:41:26,129 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadMaintMarginReq-P,0.00,CAD
+2025-10-20 21:41:26,129 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadMaintMarginReq-S,110.71,CAD
+2025-10-20 21:41:26,130 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,LookAheadNextChange,1761053400,
+2025-10-20 21:41:26,130 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MaintMarginReq,110.71,CAD
+2025-10-20 21:41:26,130 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MaintMarginReq-P,0.00,CAD
+2025-10-20 21:41:26,134 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MaintMarginReq-S,110.71,CAD
+2025-10-20 21:41:26,135 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NLVAndMarginInReview,false,
+2025-10-20 21:41:26,135 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidation,100011.62,CAD
+2025-10-20 21:41:26,136 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidation-P,0.00,CAD
+2025-10-20 21:41:26,136 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidation-S,100011.62,CAD
+2025-10-20 21:41:26,137 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidationUncertainty,0.03,CAD
+2025-10-20 21:41:26,137 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PASharesValue,0.00,CAD
+2025-10-20 21:41:26,137 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PASharesValue-P,0.00,CAD
+2025-10-20 21:41:26,138 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PASharesValue-S,0.00,CAD
+2025-10-20 21:41:26,138 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PhysicalCertificateValue,0.00,CAD
+2025-10-20 21:41:26,139 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PhysicalCertificateValue-P,0.00,CAD
+2025-10-20 21:41:26,139 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PhysicalCertificateValue-S,0.00,CAD
+2025-10-20 21:41:26,140 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PostExpirationExcess,0.00,CAD
+2025-10-20 21:41:26,140 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PostExpirationExcess-P,0.00,CAD
+2025-10-20 21:41:26,141 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PostExpirationExcess-S,0.00,CAD
+2025-10-20 21:41:26,142 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PostExpirationMargin,0.00,CAD
+2025-10-20 21:41:26,142 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PostExpirationMargin-P,0.00,CAD
+2025-10-20 21:41:26,143 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,PostExpirationMargin-S,0.00,CAD
+2025-10-20 21:41:26,143 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,SegmentTitle-P,Crypto at Paxos,
+2025-10-20 21:41:26,144 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,SegmentTitle-S,Securities,
+2025-10-20 21:41:26,145 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,SettledCashByDate,20251021:-254.33,
+2025-10-20 21:41:26,146 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,SettledCashByDate-P,20251021:0,
+2025-10-20 21:41:26,147 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,SettledCashByDate-S,20251021:-254.33,
+2025-10-20 21:41:26,147 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalCashValue,99642.62,CAD
+2025-10-20 21:41:26,149 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalCashValue-P,0.00,CAD
+2025-10-20 21:41:26,150 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalCashValue-S,99642.62,CAD
+2025-10-20 21:41:26,151 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalDebitCardPendingCharges,0.00,CAD
+2025-10-20 21:41:26,152 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalDebitCardPendingCharges-P,0.00,CAD
+2025-10-20 21:41:26,152 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalDebitCardPendingCharges-S,0.00,CAD
+2025-10-20 21:41:26,153 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TradingType-S,STKNOPT,
+2025-10-20 21:41:26,154 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Currency,CAD,CAD
+2025-10-20 21:41:26,154 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,CashBalance,100000.00,CAD
+2025-10-20 21:41:26,154 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalCashBalance,100000.00,CAD
+2025-10-20 21:41:26,154 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedCash,0.00,CAD
+2025-10-20 21:41:26,155 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,StockMarketValue,0.00,CAD
+2025-10-20 21:41:26,155 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,OptionMarketValue,0.00,CAD
+2025-10-20 21:41:26,156 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FutureOptionValue,0.00,CAD
+2025-10-20 21:41:26,157 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FuturesPNL,0.00,CAD
+2025-10-20 21:41:26,157 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidationByCurrency,100000.00,CAD
+2025-10-20 21:41:26,158 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,UnrealizedPnL,0.00,CAD
+2025-10-20 21:41:26,159 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,RealizedPnL,0.00,CAD
+2025-10-20 21:41:26,159 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ExchangeRate,1.00,CAD
+2025-10-20 21:41:26,160 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FundValue,0.00,CAD
+2025-10-20 21:41:26,160 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetDividend,0.00,CAD
+2025-10-20 21:41:26,160 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MutualFundValue,0.00,CAD
+2025-10-20 21:41:26,161 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MoneyMarketFundValue,0.00,CAD
+2025-10-20 21:41:26,161 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,CorporateBondValue,0.00,CAD
+2025-10-20 21:41:26,161 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TBondValue,0.00,CAD
+2025-10-20 21:41:26,162 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TBillValue,0.00,CAD
+2025-10-20 21:41:26,162 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,WarrantValue,0.00,CAD
+2025-10-20 21:41:26,163 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FxCashBalance,0.00,CAD
+2025-10-20 21:41:26,163 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccountOrGroup,DUO071381,CAD
+2025-10-20 21:41:26,163 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,RealCurrency,CAD,CAD
+2025-10-20 21:41:26,164 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IssuerOptionValue,0.00,CAD
+2025-10-20 21:41:26,165 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Cryptocurrency,0.00,CAD
+2025-10-20 21:41:26,166 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Currency,USD,USD
+2025-10-20 21:41:26,166 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,CashBalance,-254.33,USD
+2025-10-20 21:41:26,168 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalCashBalance,-254.33,USD
+2025-10-20 21:41:26,169 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedCash,0.00,USD
+2025-10-20 21:41:26,170 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,StockMarketValue,262.60,USD
+2025-10-20 21:41:26,170 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,OptionMarketValue,0.00,USD
+2025-10-20 21:41:26,171 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FutureOptionValue,0.00,USD
+2025-10-20 21:41:26,171 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FuturesPNL,0.00,USD
+2025-10-20 21:41:26,172 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidationByCurrency,8.27,USD
+2025-10-20 21:41:26,173 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,UnrealizedPnL,8.27,USD
+2025-10-20 21:41:26,173 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,RealizedPnL,0.00,USD
+2025-10-20 21:41:26,174 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ExchangeRate,1.4048007,USD
+2025-10-20 21:41:26,174 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FundValue,0.00,USD
+2025-10-20 21:41:26,174 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetDividend,0.00,USD
+2025-10-20 21:41:26,175 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MutualFundValue,0.00,USD
+2025-10-20 21:41:26,175 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MoneyMarketFundValue,0.00,USD
+2025-10-20 21:41:26,175 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,CorporateBondValue,0.00,USD
+2025-10-20 21:41:26,176 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TBondValue,0.00,USD
+2025-10-20 21:41:26,176 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TBillValue,0.00,USD
+2025-10-20 21:41:26,176 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,WarrantValue,0.00,USD
+2025-10-20 21:41:26,177 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FxCashBalance,0.00,USD
+2025-10-20 21:41:26,177 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccountOrGroup,DUO071381,USD
+2025-10-20 21:41:26,177 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,RealCurrency,USD,USD
+2025-10-20 21:41:26,178 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IssuerOptionValue,0.00,USD
+2025-10-20 21:41:26,178 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Cryptocurrency,0.00,USD
+2025-10-20 21:41:26,179 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Currency,BASE,BASE
+2025-10-20 21:41:26,179 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,CashBalance,99642.6226,BASE
+2025-10-20 21:41:26,180 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TotalCashBalance,99642.6226,BASE
+2025-10-20 21:41:26,180 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccruedCash,0.00,BASE
+2025-10-20 21:41:26,180 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,StockMarketValue,369.00,BASE
+2025-10-20 21:41:26,182 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,OptionMarketValue,0.00,BASE
+2025-10-20 21:41:26,182 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FutureOptionValue,0.00,BASE
+2025-10-20 21:41:26,183 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FuturesPNL,0.00,BASE
+2025-10-20 21:41:26,184 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetLiquidationByCurrency,100011.6208,BASE
+2025-10-20 21:41:26,184 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,UnrealizedPnL,11.62,BASE
+2025-10-20 21:41:26,184 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,RealizedPnL,0.00,BASE
+2025-10-20 21:41:26,184 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,ExchangeRate,1.00,BASE
+2025-10-20 21:41:26,185 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FundValue,0.00,BASE
+2025-10-20 21:41:26,185 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,NetDividend,0.00,BASE
+2025-10-20 21:41:26,185 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MutualFundValue,0.00,BASE
+2025-10-20 21:41:26,185 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,MoneyMarketFundValue,0.00,BASE
+2025-10-20 21:41:26,186 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,CorporateBondValue,0.00,BASE
+2025-10-20 21:41:26,186 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TBondValue,0.00,BASE
+2025-10-20 21:41:26,186 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,TBillValue,0.00,BASE
+2025-10-20 21:41:26,187 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,WarrantValue,0.00,BASE
+2025-10-20 21:41:26,187 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,FxCashBalance,0.00,BASE
+2025-10-20 21:41:26,187 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,AccountOrGroup,DUO071381,BASE
+2025-10-20 21:41:26,187 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,RealCurrency,BASE,BASE
+2025-10-20 21:41:26,188 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,IssuerOptionValue,0.00,BASE
+2025-10-20 21:41:26,188 - ib_insync.client - DEBUG - <<< 73,1,1,DUO071381,,Cryptocurrency,0.00,BASE
+2025-10-20 21:41:26,188 - ib_insync.client - DEBUG - <<< 74,1,1
+2025-10-20 21:41:26,189 - ib_insync.client - DEBUG - >>> 7,3,2,0,,,,,,
+2025-10-20 21:41:26,194 - ib_insync.client - DEBUG - <<< 11,2,4,265598,AAPL,STK,,0.0,,,BYX,USD,AAPL,,00012ec5.68f61bb4.01.01,20251020 05:30:52 US/Eastern,DUO071381,BYX,BOT,1,253.33,647627216,7,0,1,253.33,,,,,2
+2025-10-20 21:41:26,201 - ib_insync.wrapper - INFO - execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:41:26,202 - ib_insync.client - DEBUG - <<< 55,1,2
+2025-10-20 21:41:26,202 - ib_insync.ib - INFO - Synchronization complete
+2025-10-20 21:41:26,203 - src.core.brokers.ibkr_client - INFO - Successfully connected to IBKR
+2025-10-20 21:41:26,204 - __main__ - INFO - [OK] Connected to IBKR successfully
+2025-10-20 21:41:26,204 - src.core.brokers.ibkr_client - ERROR - Failed to get account info: could not convert string to float: 'DUO071381'
+2025-10-20 21:41:26,205 - __main__ - INFO -   Account equity: $0.00
+2025-10-20 21:41:26,205 - __main__ - INFO -   Buying power: $0.00
+2025-10-20 21:41:26,207 - ib_insync.client - DEBUG - >>> 9,8,3,0,AAPL,STK,,0.0,,,SMART,,USD,,,0,,,
+2025-10-20 21:41:26,671 - ib_insync.client - DEBUG - <<< 10,3,AAPL,STK,,0,,SMART,USD,AAPL,NMS,NMS,265598,0.01,,ACTIVETIM,AD,ADDONT,ADJUST,ALERT,ALGO,ALLOC,AON,AVGCOST,BASKET,BENCHPX,CASHQTY,COND,CONDORDER,DARKONLY,DARKPOLL,DAY,DEACT,DEACTDIS,DEACTEOD,DIS,DUR,GAT,GTC,GTD,GTT,HID,IBKRATS,ICE,IMB,IOC,LIT,LMT,LOC,MIDPX,MIT,MKT,MOC,MTL,NGCOMB,NODARK,NONALGO,OCA,OPG,OPGREROUT,PEGBENCH,PEGMID,POSTATS,POSTONLY,PREOPGRTH,PRICECHK,REL,REL2MID,RELPCTOFS,RPI,RTH,SCALE,SCALEODD,SCALERST,SIZECHK,SMARTSTG,SNAPMID,SNAPMKT,SNAPREL,STP,STPLMT,SWEEP,TRAIL,TRAILLIT,TRAILLMT,TRAILMIT,WHATIF,SMART,AMEX,NYSE,CBOE,PHLX,ISE,CHX,ARCA,NASDAQ,DRCTEDGE,BEX,BATS,EDGEA,BYX,IEX,EDGX,FOXRIVER,PEARL,NYSENAT,LTSE,MEMX,IBEOS,OVERNIGHT,TPLUS0,PSX,T24X,1,0,APPLE INC,NASDAQ,,Technology,Computers,Computers,US/Eastern,20251020:0400-20251020:2000;20251021:0400-20251021:2000;20251022:0400-20251022:2000;20251023:0400-20251023:2000;20251024:0400-20251024:2000,20251020:0930-20251020:1600;20251021:0930-20251021:1600;20251022:0930-20251022:1600;20251023:0930-20251023:1600;20251024:0930-20251024:1600,,,1,ISIN,US0378331005,1,,,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,,COMMON,0.0001,0.0001,100
+2025-10-20 21:41:26,672 - ib_insync.client - DEBUG - <<< 52,1,3
+2025-10-20 21:41:26,674 - ib_insync.client - DEBUG - >>> 1,11,4,265598,AAPL,STK,,0.0,,,SMART,NASDAQ,USD,AAPL,NMS,0,,0,0,
+2025-10-20 21:41:26,676 - ib_insync.client - DEBUG - <<< 81,4,0.01,9c0001,1
+2025-10-20 21:41:26,677 - ib_insync.client - DEBUG - <<< 4,2,4,10089,Requested market data requires additional subscription for API. See link in 'Market Data Connections' dialog for more details.AAPL NASDAQ.NMS/TOP/ALL,
+2025-10-20 21:41:26,678 - ib_insync.wrapper - ERROR - Error 10089, reqId 4: Requested market data requires additional subscription for API. See link in 'Market Data Connections' dialog for more details.AAPL NASDAQ.NMS/TOP/ALL, contract: Stock(conId=265598, symbol='AAPL', exchange='SMART', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS')
+2025-10-20 21:41:27,281 - src.core.brokers.ibkr_client - ERROR - Failed to get quote for AAPL: cannot convert float NaN to integer
+2025-10-20 21:41:27,282 - ib_insync.ib - INFO - Disconnecting from 127.0.0.1:7497, 232 B sent in 10 messages, 19.1 kB received in 373 messages, session time 1.45 s.
+2025-10-20 21:41:27,282 - ib_insync.client - INFO - Disconnecting
+2025-10-20 21:41:27,283 - src.core.brokers.ibkr_client - INFO - Disconnected from IBKR
+2025-10-20 21:41:27,284 - __main__ - INFO - 
+2025-10-20 21:41:27,284 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:27,284 - __main__ - INFO - TEST 3: VIX Data Provider (Yahoo Finance)
+2025-10-20 21:41:27,285 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:27,285 - __main__ - INFO - [OK] Using Yahoo Finance for VIX data (free)
+2025-10-20 21:41:27,286 - src.core.providers.vix.yahoo_vix_provider - INFO - Yahoo VIX provider initialized (thresholds: LOW<15.0, NORMAL<25.0, HIGH<35.0)
+2025-10-20 21:41:27,286 - yfinance - DEBUG - Entering history()
+2025-10-20 21:41:27,289 - peewee - DEBUG - ('CREATE TABLE IF NOT EXISTS "_tz_kv" ("key" VARCHAR(255) NOT NULL PRIMARY KEY, "value" VARCHAR(255)) WITHOUT ROWID', [])
+2025-10-20 21:41:27,290 - peewee - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_tz_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['^VIX', 1, 0])
+2025-10-20 21:41:27,371 - yfinance - DEBUG -  Entering history()
+2025-10-20 21:41:27,372 - yfinance - DEBUG - ^VIX: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:41:27,373 - yfinance - DEBUG -   Entering get()
+2025-10-20 21:41:27,376 - yfinance - DEBUG -    Entering _make_request()
+2025-10-20 21:41:27,377 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/^VIX
+2025-10-20 21:41:27,377 - yfinance - DEBUG - params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:41:27,377 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-10-20 21:41:27,378 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-10-20 21:41:27,378 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-10-20 21:41:27,378 - yfinance - DEBUG -       Entering _get_cookie_basic()
+2025-10-20 21:41:27,379 - yfinance - DEBUG -        Entering _load_cookie_curlCffi()
+2025-10-20 21:41:27,383 - peewee - DEBUG - ('CREATE TABLE IF NOT EXISTS "_cookieschema" ("strategy" VARCHAR(255) NOT NULL PRIMARY KEY, "fetch_date" DATETIME NOT NULL, "cookie_bytes" BLOB NOT NULL) WITHOUT ROWID', [])
+2025-10-20 21:41:27,384 - peewee - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['curlCffi', 1, 0])
+2025-10-20 21:41:27,385 - yfinance - DEBUG -        Exiting _load_cookie_curlCffi()
+2025-10-20 21:41:27,385 - yfinance - DEBUG - reusing persistent cookie
+2025-10-20 21:41:27,386 - yfinance - DEBUG -       Exiting _get_cookie_basic()
+2025-10-20 21:41:27,386 - yfinance - DEBUG -       Entering _get_crumb_basic()
+2025-10-20 21:41:27,386 - yfinance - DEBUG -        Entering _get_cookie_basic()
+2025-10-20 21:41:27,387 - yfinance - DEBUG - reusing cookie
+2025-10-20 21:41:27,387 - yfinance - DEBUG -        Exiting _get_cookie_basic()
+2025-10-20 21:41:28,340 - yfinance - DEBUG - crumb = 'p.pfkeHFLCN'
+2025-10-20 21:41:28,340 - yfinance - DEBUG -       Exiting _get_crumb_basic()
+2025-10-20 21:41:28,341 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-10-20 21:41:28,341 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-10-20 21:41:29,336 - yfinance - DEBUG - response code=200
+2025-10-20 21:41:29,337 - yfinance - DEBUG -    Exiting _make_request()
+2025-10-20 21:41:29,337 - yfinance - DEBUG -   Exiting get()
+2025-10-20 21:41:29,343 - yfinance - DEBUG - ^VIX: yfinance received OHLC data: 2025-10-20 07:15:00 -> 2025-10-20 20:15:00
+2025-10-20 21:41:29,355 - yfinance - DEBUG - ^VIX: OHLC after cleaning: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:29,360 - yfinance - DEBUG - ^VIX: OHLC after combining events: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:29,366 - yfinance - DEBUG - ^VIX: yfinance returning OHLC: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:29,367 - yfinance - DEBUG -  Exiting history()
+2025-10-20 21:41:29,367 - yfinance - DEBUG - Exiting history()
+2025-10-20 21:41:29,367 - __main__ - INFO - [OK] Yahoo Finance API accessible
+2025-10-20 21:41:29,368 - yfinance - DEBUG - Entering history()
+2025-10-20 21:41:29,368 - yfinance - DEBUG -  Entering history()
+2025-10-20 21:41:29,369 - yfinance - DEBUG - ^VIX: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:41:29,369 - yfinance - DEBUG -   Entering get()
+2025-10-20 21:41:29,370 - yfinance - DEBUG -    Entering _make_request()
+2025-10-20 21:41:29,370 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/^VIX
+2025-10-20 21:41:29,370 - yfinance - DEBUG - params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:41:29,371 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-10-20 21:41:29,371 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-10-20 21:41:29,371 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-10-20 21:41:29,372 - yfinance - DEBUG -       Entering _get_cookie_basic()
+2025-10-20 21:41:29,373 - yfinance - DEBUG - reusing cookie
+2025-10-20 21:41:29,373 - yfinance - DEBUG -       Exiting _get_cookie_basic()
+2025-10-20 21:41:29,374 - yfinance - DEBUG -       Entering _get_crumb_basic()
+2025-10-20 21:41:29,374 - yfinance - DEBUG - reusing crumb
+2025-10-20 21:41:29,374 - yfinance - DEBUG -       Exiting _get_crumb_basic()
+2025-10-20 21:41:29,374 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-10-20 21:41:29,374 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-10-20 21:41:29,690 - yfinance - DEBUG - response code=200
+2025-10-20 21:41:29,691 - yfinance - DEBUG -    Exiting _make_request()
+2025-10-20 21:41:29,691 - yfinance - DEBUG -   Exiting get()
+2025-10-20 21:41:29,694 - yfinance - DEBUG - ^VIX: yfinance received OHLC data: 2025-10-20 07:15:00 -> 2025-10-20 20:15:00
+2025-10-20 21:41:29,703 - yfinance - DEBUG - ^VIX: OHLC after cleaning: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:29,707 - yfinance - DEBUG - ^VIX: OHLC after combining events: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:29,713 - yfinance - DEBUG - ^VIX: yfinance returning OHLC: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:29,713 - yfinance - DEBUG -  Exiting history()
+2025-10-20 21:41:29,714 - yfinance - DEBUG - Exiting history()
+2025-10-20 21:41:29,714 - src.core.providers.vix.yahoo_vix_provider - DEBUG - VIX retrieved: 18.23 (NORMAL)
+2025-10-20 21:41:29,715 - __main__ - INFO - [OK] VIX data retrieved: 18.23
+2025-10-20 21:41:29,715 - __main__ - INFO -   VIX Regime: NORMAL
+2025-10-20 21:41:29,715 - __main__ - INFO - 
+2025-10-20 21:41:29,715 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:29,715 - __main__ - INFO - TEST 4: Market Regime Detector
+2025-10-20 21:41:29,715 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:29,716 - __main__ - WARNING - [!] Using MockRegimeDetector (Yahoo SPY detector coming soon)
+2025-10-20 21:41:29,716 - bouncehunter.data.regime_detector - DEBUG - Mock regime detector initialized: BULL
+2025-10-20 21:41:29,716 - __main__ - INFO - [OK] Market regime detected: BULL
+2025-10-20 21:41:29,716 - __main__ - INFO -   20-day SMA: $450.00
+2025-10-20 21:41:29,717 - __main__ - INFO -   50-day SMA: $450.00
+2025-10-20 21:41:29,717 - __main__ - INFO -   Spread: 0.00%
+2025-10-20 21:41:29,717 - __main__ - INFO - 
+2025-10-20 21:41:29,717 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:29,717 - __main__ - INFO - TEST 5: Adjustment Calculation
+2025-10-20 21:41:29,718 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:29,718 - yfinance - DEBUG - Entering history()
+2025-10-20 21:41:29,718 - yfinance - DEBUG -  Entering history()
+2025-10-20 21:41:29,719 - yfinance - DEBUG - ^VIX: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:41:29,719 - yfinance - DEBUG -   Entering get()
+2025-10-20 21:41:29,719 - yfinance - DEBUG -    Entering _make_request()
+2025-10-20 21:41:29,720 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/^VIX
+2025-10-20 21:41:29,720 - yfinance - DEBUG - params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-10-20 21:41:29,720 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-10-20 21:41:29,721 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-10-20 21:41:29,721 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-10-20 21:41:29,722 - yfinance - DEBUG -       Entering _get_cookie_basic()
+2025-10-20 21:41:29,722 - yfinance - DEBUG - reusing cookie
+2025-10-20 21:41:29,722 - yfinance - DEBUG -       Exiting _get_cookie_basic()
+2025-10-20 21:41:29,723 - yfinance - DEBUG -       Entering _get_crumb_basic()
+2025-10-20 21:41:29,723 - yfinance - DEBUG - reusing crumb
+2025-10-20 21:41:29,723 - yfinance - DEBUG -       Exiting _get_crumb_basic()
+2025-10-20 21:41:29,724 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-10-20 21:41:29,724 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-10-20 21:41:30,037 - yfinance - DEBUG - response code=200
+2025-10-20 21:41:30,037 - yfinance - DEBUG -    Exiting _make_request()
+2025-10-20 21:41:30,037 - yfinance - DEBUG -   Exiting get()
+2025-10-20 21:41:30,041 - yfinance - DEBUG - ^VIX: yfinance received OHLC data: 2025-10-20 07:15:00 -> 2025-10-20 20:15:00
+2025-10-20 21:41:30,048 - yfinance - DEBUG - ^VIX: OHLC after cleaning: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:30,050 - yfinance - DEBUG - ^VIX: OHLC after combining events: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:30,064 - yfinance - DEBUG - ^VIX: yfinance returning OHLC: 2025-10-20 02:15:00-05:00 -> 2025-10-20 15:14:00-05:00
+2025-10-20 21:41:30,064 - yfinance - DEBUG -  Exiting history()
+2025-10-20 21:41:30,065 - yfinance - DEBUG - Exiting history()
+2025-10-20 21:41:30,065 - src.core.providers.vix.yahoo_vix_provider - DEBUG - VIX retrieved: 18.23 (NORMAL)
+2025-10-20 21:41:30,066 - __main__ - INFO - [OK] Market conditions: VIX=18.23 (NORMAL), Regime=BULL
+2025-10-20 21:41:30,066 - __main__ - INFO - [OK] Adjustment calculation successful
+2025-10-20 21:41:30,066 - __main__ - INFO -   Base target: 5.0%
+2025-10-20 21:41:30,067 - __main__ - INFO -   Adjusted target: 6.50%
+2025-10-20 21:41:30,067 - __main__ - INFO -   Total adjustment: +1.50%
+2025-10-20 21:41:30,067 - __main__ - INFO - 
+2025-10-20 21:41:30,067 - __main__ - INFO -   Breakdown:
+2025-10-20 21:41:30,068 - __main__ - INFO -     base_target: +5.00%
+2025-10-20 21:41:30,069 - __main__ - INFO -     volatility_adjustment: +0.00%
+2025-10-20 21:41:30,069 - __main__ - INFO -     time_adjustment: +0.50%
+2025-10-20 21:41:30,069 - __main__ - INFO -     regime_adjustment: +1.00%
+2025-10-20 21:41:30,070 - __main__ - INFO -     final_target: +6.50%
+2025-10-20 21:41:30,070 - __main__ - INFO -     volatility_level: NORMAL
+2025-10-20 21:41:30,071 - __main__ - INFO -     time_period: MIDDAY
+2025-10-20 21:41:30,072 - __main__ - INFO -     market_regime: BULL
+2025-10-20 21:41:30,072 - __main__ - INFO - 
+2025-10-20 21:41:30,072 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:30,073 - __main__ - INFO - TEST SUMMARY
+2025-10-20 21:41:30,073 - __main__ - INFO - ================================================================================
+2025-10-20 21:41:30,074 - __main__ - INFO - [OK] All tests passed successfully!
+2025-10-20 21:41:30,075 - __main__ - INFO - 
+2025-10-20 21:41:30,077 - __main__ - INFO - Next Steps:
+2025-10-20 21:41:30,077 - __main__ - INFO - 1. Review logs/paper_test.log for detailed output
+2025-10-20 21:41:30,078 - __main__ - INFO - 2. Customize configs/my_paper_config.yaml if needed
+2025-10-20 21:41:30,078 - __main__ - INFO - 3. Run the paper trading bot: python scripts/run_pennyhunter_paper.py
+2025-10-20 21:41:30,079 - __main__ - INFO - 4. Monitor with: python scripts/monitor_adjustments.py
+2025-10-20 21:41:30,079 - __main__ - INFO - 5. Weekly reports: python scripts/generate_weekly_report.py
+2025-10-20 21:41:30,079 - __main__ - INFO - 
+2025-10-20 21:41:30,080 - __main__ - INFO - Paper trading system is READY for deployment!
+2025-10-20 21:41:30,080 - __main__ - INFO - ================================================================================

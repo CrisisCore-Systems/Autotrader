@@ -1,7 +1,7 @@
 {
   "first_trade_date": "2025-10-18T01:55:58.813219",
-  "last_updated": "2025-10-18T08:55:06.466968",
-  "total_sessions": 7,
+  "last_updated": "2025-10-20T14:28:32.943032",
+  "total_sessions": 8,
   "trades": [
     {
       "session_id": 1,
@@ -2813,6 +2813,30 @@
       "status": "closed",
       "session_id": 7,
       "source": "backtest"
+    },
+    {
+      "session_id": 8,
+      "date": "2025-10-20T14:28:32.943032",
+      "type": "session_marker"
+    },
+    {
+      "ticker": "INTR",
+      "entry_time": "2025-10-20T14:28:32.807220",
+      "entry_price": 7.460000038146973,
+      "shares": 13,
+      "stop_loss": 7.0870000362396235,
+      "take_profit": 8.206000041961671,
+      "signal_type": "runner_vwap",
+      "score": 6.0,
+      "gap_pct": 12.557422181894312,
+      "vol_mult": 0,
+      "status": "active",
+      "orders": {
+        "entry": "PAPER-1",
+        "stop": "PAPER-2",
+        "target": "PAPER-3"
+      },
+      "session_id": 8
     }
   ],
   "metadata": {

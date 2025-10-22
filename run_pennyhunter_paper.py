@@ -21,6 +21,7 @@ Usage:
 import sys
 import argparse
 import logging
+import json
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict
@@ -36,11 +37,13 @@ from bouncehunter.signal_scoring import SignalScorer
 from bouncehunter.penny_universe import PennyUniverse
 from bouncehunter.advanced_filters import AdvancedRiskFilters
 from bouncehunter.pennyhunter_memory import PennyHunterMemory
+from bouncehunter.memory_tracker import MemoryTracker  # Phase 2.5
 import yfinance as yf
 
 # Project root
 PROJECT_ROOT = Path(__file__).parent
 BLOCKLIST_FILE = PROJECT_ROOT / "configs" / "ticker_blocklist.txt"
+STATUS_FILE = PROJECT_ROOT / "reports" / "scanner_status.json"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -113,6 +116,11 @@ class PennyHunterPaperTrader:
         self.memory = PennyHunterMemory()
         self.memory_enabled = config.get('memory', {}).get('enabled', True)
         logger.info(f"📊 Memory System: {'ENABLED' if self.memory_enabled else 'DISABLED'}")
+
+        # NEW: Phase 2.5 Advanced Memory Tracker
+        db_path = PROJECT_ROOT / "bouncehunter_memory.db"
+        self.memory_tracker = MemoryTracker(str(db_path))
+        logger.info(f"🧠 Phase 2.5 Memory Tracker initialized: {db_path}")
 
         # Track trades
         self.trades_log = []
@@ -191,7 +199,12 @@ class PennyHunterPaperTrader:
 
                         # PHASE 2 OPTIMIZATION: Accept all signals that pass gap/volume filters
                         # Score is logged but NOT used for filtering (not predictive)
-                        signals.append({
+                        
+                        # Phase 2.5: Generate unique signal ID
+                        signal_id = f"{ticker}_{current.name.strftime('%Y%m%d_%H%M%S')}"
+                        
+                        signal_data = {
+                            'signal_id': signal_id,
                             'ticker': ticker,
                             'signal_type': 'runner_vwap',
                             'price': current['Close'],
@@ -201,8 +214,18 @@ class PennyHunterPaperTrader:
                             'components': score.components,
                             'date': current.name.strftime('%Y-%m-%d'),
                             'hist': hist  # Store for advanced filtering
+                        }
+                        
+                        # Phase 2.5: Classify and record signal quality
+                        quality = self.memory_tracker.classify_signal_quality({
+                            'gap_pct': gap_pct,
+                            'volume_ratio': vol_spike,
+                            'regime': 'normal'  # Will be set from regime detector
                         })
-                        logger.info(f"🟢 {ticker} ({current.name.strftime('%Y-%m-%d')}): Gap {gap_pct:.1f}%, Vol {vol_spike:.1f}x, Score {score.total_score:.1f}/10.0 ✅")
+                        self.memory_tracker.record_signal(signal_id, signal_data, quality)
+                        logger.info(f"🟢 {ticker} ({current.name.strftime('%Y-%m-%d')}): Gap {gap_pct:.1f}%, Vol {vol_spike:.1f}x, Score {score.total_score:.1f}/10.0, Quality: {quality.upper()} ✅")
+                        
+                        signals.append(signal_data)
                         break  # Only take first qualifying signal per ticker
 
             except Exception as e:
@@ -308,6 +331,7 @@ class PennyHunterPaperTrader:
             # Track the trade
             trade = {
                 'ticker': ticker,
+                'signal_id': signal.get('signal_id'),  # Phase 2.5: Link to signal
                 'entry_time': datetime.now().isoformat(),
                 'entry_price': entry_price,
                 'shares': shares,
@@ -341,12 +365,24 @@ class PennyHunterPaperTrader:
             pnl = trade.get('pnl', 0)
             trade_date = trade.get('exit_time', datetime.now().isoformat())
 
+            # Original memory system
             self.memory.record_trade_outcome(
                 ticker=trade['ticker'],
                 won=won,
                 pnl=pnl,
                 trade_date=trade_date
             )
+
+            # Phase 2.5: Update memory tracker with outcome
+            if 'signal_id' in trade and trade['signal_id']:
+                return_pct = (pnl / (trade['entry_price'] * trade['shares'])) * 100
+                outcome = 'win' if won else 'loss'
+                self.memory_tracker.update_after_trade(
+                    signal_id=trade['signal_id'],
+                    outcome=outcome,
+                    return_pct=return_pct
+                )
+                logger.info(f"🧠 Phase 2.5: Updated signal {trade['signal_id']} - {outcome.upper()} ({return_pct:+.1f}%)")
 
             status = "WIN ✅" if won else "LOSS ❌"
             logger.info(f"📝 Memory updated: {trade['ticker']} {status} ${pnl:.2f}")

@@ -21,3 +21,14 @@ export async function fetchTokenDetail(symbol: string): Promise<TokenDetail> {
   const response = await fetch(`${API_BASE}/tokens/${encodeURIComponent(symbol)}`);
   return handleResponse<TokenDetail>(response);
 }
+
+// Health and observability endpoints
+export async function fetchSLAStatus(): Promise<any[]> {
+  const response = await fetch(`${API_BASE}/health/sla`);
+  return handleResponse<any[]>(response);
+}
+
+export async function fetchCircuitBreakers(): Promise<any[]> {
+  const response = await fetch(`${API_BASE}/health/circuit-breakers`);
+  return handleResponse<any[]>(response);
+}

@@ -1379,6 +1379,507 @@ async def get_all_summaries() -> List[Dict[str, Any]]:
 
 
 # ============================================================================
+# Trading Endpoints (BounceHunter/PennyHunter)
+# ============================================================================
+
+@app.get("/api/trading/regime", tags=["Trading"])
+async def get_market_regime() -> Dict[str, Any]:
+    """Get current market regime for penny trading decisions.
+    
+    Returns:
+        Market regime data including SPY/VIX status and trading permission
+    """
+    from src.bouncehunter.market_regime import MarketRegimeDetector
+    
+    try:
+        detector = MarketRegimeDetector()
+        regime = detector.get_regime()
+        
+        return {
+            "timestamp": regime.timestamp.isoformat(),
+            "regime": regime.regime,
+            "spy_price": regime.spy_price,
+            "spy_ma200": regime.spy_ma200,
+            "spy_above_ma": regime.spy_above_ma,
+            "spy_day_change_pct": regime.spy_day_change_pct,
+            "vix_level": regime.vix_level,
+            "vix_regime": regime.vix_regime,
+            "allow_penny_trading": regime.allow_penny_trading,
+            "reason": regime.reason,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching market regime: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch market regime: {str(e)}")
+
+
+@app.get("/api/trading/phase2-progress", tags=["Trading"])
+async def get_phase2_progress() -> Dict[str, Any]:
+    """Get Phase 2 validation progress tracker.
+    
+    Returns:
+        Current progress toward 20-trade validation goal
+    """
+    from src.bouncehunter.pennyhunter_memory import PennyHunterMemory
+    from pathlib import Path
+    import json
+    
+    try:
+        memory = PennyHunterMemory()
+        
+        # Load cumulative history if exists
+        cumulative_file = Path(__file__).parent.parent.parent / "reports" / "pennyhunter_cumulative_history.json"
+        
+        trades_completed = 0
+        win_rate = 0.0
+        total_pnl = 0.0
+        active_trades = 0
+        
+        if cumulative_file.exists():
+            with open(cumulative_file, 'r') as f:
+                data = json.load(f)
+                trades = data.get('trades', [])
+                
+                # Count completed trades
+                for trade in trades:
+                    if trade.get('status') == 'completed':
+                        trades_completed += 1
+                        if trade.get('pnl', 0) > 0:
+                            win_rate += 1
+                        total_pnl += trade.get('pnl', 0)
+                    elif trade.get('status') == 'active':
+                        active_trades += 1
+                
+                if trades_completed > 0:
+                    win_rate = (win_rate / trades_completed) * 100
+        
+        # Phase 2 targets
+        target_trades = 20
+        target_win_rate_min = 65.0
+        target_win_rate_max = 75.0
+        
+        progress_pct = (trades_completed / target_trades) * 100 if target_trades > 0 else 0
+        
+        # Status determination
+        if trades_completed < target_trades:
+            status = "in_progress"
+        elif win_rate >= target_win_rate_min:
+            status = "success"
+        else:
+            status = "needs_review"
+        
+        return {
+            "phase": "Phase 2",
+            "status": status,
+            "trades_completed": trades_completed,
+            "trades_target": target_trades,
+            "progress_pct": round(progress_pct, 1),
+            "win_rate": round(win_rate, 1),
+            "win_rate_target_min": target_win_rate_min,
+            "win_rate_target_max": target_win_rate_max,
+            "total_pnl": round(total_pnl, 2),
+            "active_trades": active_trades,
+            "baseline_win_rate": 50.0,  # Pre-Phase 2 baseline
+        }
+    except Exception as e:
+        logger.error(f"Error fetching Phase 2 progress: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Phase 2 progress: {str(e)}")
+
+
+@app.get("/api/trading/signals", tags=["Trading"])
+async def get_trading_signals(
+    min_quality: float = 5.5,
+    include_filters: bool = True,
+) -> List[Dict[str, Any]]:
+    """Get filtered trading signals queue.
+    
+    Args:
+        min_quality: Minimum quality score (0-10 scale)
+        include_filters: Include advanced filter pass/fail details
+    
+    Returns:
+        List of signals that passed quality gates
+    """
+    from src.bouncehunter.pennyhunter_scanner import GapScanner
+    from src.bouncehunter.signal_scoring import SignalScorer
+    from src.bouncehunter.advanced_filters import AdvancedFilterEngine
+    
+    try:
+        # Default ticker universe
+        tickers = ["INTR", "ADT", "SAN", "COMP", "CLOV", "EVGO"]
+        
+        scanner = GapScanner()
+        scorer = SignalScorer()
+        filter_engine = AdvancedFilterEngine() if include_filters else None
+        
+        # Scan for gaps
+        raw_signals = scanner.scan(tickers)
+        
+        # Score and filter signals
+        scored_signals = []
+        for signal in raw_signals:
+            # Score the signal
+            score_result = scorer.score_signal(signal)
+            
+            # Apply quality gate
+            if score_result['total_score'] < min_quality:
+                continue
+            
+            # Apply advanced filters if requested
+            filter_results = {}
+            passes_filters = True
+            
+            if include_filters and filter_engine:
+                filter_results = filter_engine.evaluate_all(signal)
+                passes_filters = filter_results.get('overall_pass', True)
+            
+            if not passes_filters:
+                continue
+            
+            # Build response
+            scored_signals.append({
+                "ticker": signal.get('ticker'),
+                "gap_pct": signal.get('gap_pct', 0),
+                "volume": signal.get('volume', 0),
+                "market_cap": signal.get('market_cap', 0),
+                "quality_score": score_result['total_score'],
+                "score_breakdown": score_result.get('breakdown', {}),
+                "entry_price": signal.get('entry_price', signal.get('current_price', 0)),
+                "stop_price": signal.get('stop_price', 0),
+                "target_price": signal.get('target_price', 0),
+                "risk_reward": signal.get('risk_reward', 0),
+                "filter_results": filter_results if include_filters else None,
+                "timestamp": datetime.now().isoformat(),
+            })
+        
+        # Sort by quality score descending
+        scored_signals.sort(key=lambda x: x['quality_score'], reverse=True)
+        
+        return scored_signals
+        
+    except Exception as e:
+        logger.error(f"Error fetching trading signals: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch signals: {str(e)}")
+
+
+@app.post("/api/trading/paper-order", tags=["Trading"])
+async def place_paper_order(order_request: Dict[str, Any]) -> Dict[str, Any]:
+    """Place a paper trade order with two-step confirmation.
+    
+    Args:
+        order_request: Order details including ticker, quantity, prices, confirmation
+    
+    Returns:
+        Order confirmation with bracket order IDs
+    """
+    from src.bouncehunter.broker import create_broker, OrderSide
+    
+    try:
+        # Validate required fields
+        ticker = order_request.get('ticker')
+        quantity = order_request.get('quantity')
+        entry_price = order_request.get('entry_price')
+        stop_price = order_request.get('stop_price')
+        target_price = order_request.get('target_price')
+        confirmed = order_request.get('confirmed', False)
+        
+        if not all([ticker, quantity, entry_price, stop_price, target_price]):
+            raise HTTPException(status_code=400, detail="Missing required order fields")
+        
+        # Two-step confirmation
+        if not confirmed:
+            return {
+                "status": "confirmation_required",
+                "message": "Please confirm order placement",
+                "order_preview": {
+                    "ticker": ticker,
+                    "quantity": quantity,
+                    "entry_price": entry_price,
+                    "stop_price": stop_price,
+                    "target_price": target_price,
+                    "risk_amount": (entry_price - stop_price) * quantity,
+                    "profit_target": (target_price - entry_price) * quantity,
+                    "risk_reward_ratio": (target_price - entry_price) / (entry_price - stop_price) if entry_price > stop_price else 0,
+                }
+            }
+        
+        # Create paper broker
+        broker = create_broker("paper", initial_cash=100000.0)
+        
+        # Place bracket order
+        bracket = broker.place_bracket_order(
+            ticker=ticker,
+            quantity=quantity,
+            entry_price=entry_price,
+            stop_price=stop_price,
+            target_price=target_price,
+        )
+        
+        return {
+            "status": "success",
+            "message": f"Paper order placed for {ticker}",
+            "entry_order_id": bracket['entry'].order_id,
+            "stop_order_id": bracket['stop'].order_id,
+            "target_order_id": bracket['target'].order_id,
+            "timestamp": datetime.now().isoformat(),
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error placing paper order: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to place order: {str(e)}")
+
+
+@app.get("/api/trading/positions", tags=["Trading"])
+async def get_positions() -> List[Dict[str, Any]]:
+    """Get current positions with P&L and exposure.
+    
+    Returns:
+        List of active positions with real-time P&L
+    """
+    from src.bouncehunter.broker import create_broker
+    
+    try:
+        broker = create_broker("paper")
+        positions = broker.get_positions()
+        
+        # Calculate total exposure
+        total_exposure = sum(p.market_value for p in positions)
+        
+        return [{
+            "ticker": p.ticker,
+            "shares": p.shares,
+            "avg_price": p.avg_price,
+            "current_price": p.current_price,
+            "market_value": p.market_value,
+            "unrealized_pnl": p.unrealized_pnl,
+            "unrealized_pnl_pct": p.unrealized_pnl_pct,
+            "exposure_pct": (p.market_value / total_exposure * 100) if total_exposure > 0 else 0,
+        } for p in positions]
+        
+    except Exception as e:
+        logger.error(f"Error fetching positions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch positions: {str(e)}")
+
+
+@app.get("/api/trading/orders", tags=["Trading"])
+async def get_orders(
+    status_filter: Optional[str] = None,
+    limit: int = 50,
+) -> List[Dict[str, Any]]:
+    """Get all orders with status tracking.
+    
+    Args:
+        status_filter: Filter by status (pending, submitted, filled, cancelled)
+        limit: Maximum number of orders to return
+    
+    Returns:
+        List of orders with status and timestamps
+    """
+    from src.bouncehunter.broker import create_broker
+    
+    try:
+        broker = create_broker("paper")
+        
+        # Get all orders (PaperBroker stores orders in memory)
+        if hasattr(broker, 'orders'):
+            all_orders = list(broker.orders.values())
+            
+            # Apply status filter
+            if status_filter:
+                all_orders = [o for o in all_orders if o.status.value.lower() == status_filter.lower()]
+            
+            # Sort by submitted_at descending
+            all_orders.sort(key=lambda o: o.submitted_at or "", reverse=True)
+            
+            # Limit results
+            all_orders = all_orders[:limit]
+            
+            return [{
+                "order_id": o.order_id,
+                "ticker": o.ticker,
+                "side": o.side.value,
+                "order_type": o.order_type.value,
+                "quantity": o.quantity,
+                "filled_qty": o.filled_qty,
+                "limit_price": o.limit_price,
+                "stop_price": o.stop_price,
+                "filled_price": o.filled_price,
+                "status": o.status.value,
+                "submitted_at": o.submitted_at,
+                "filled_at": o.filled_at,
+            } for o in all_orders]
+        
+        return []
+        
+    except Exception as e:
+        logger.error(f"Error fetching orders: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch orders: {str(e)}")
+
+
+@app.get("/api/trading/broker-status", tags=["Trading"])
+async def get_broker_status() -> Dict[str, Any]:
+    """Get broker connectivity status for all supported brokers.
+    
+    Returns:
+        Connection status for Paper, Alpaca, Questrade, IBKR
+    """
+    from src.bouncehunter.broker import create_broker
+    
+    brokers_status = {}
+    
+    # Check Paper broker (always available)
+    try:
+        paper_broker = create_broker("paper")
+        account = paper_broker.get_account()
+        brokers_status["paper"] = {
+            "name": "Paper Trading",
+            "connected": True,
+            "status": "online",
+            "account_value": account.portfolio_value,
+            "cash": account.cash,
+        }
+    except Exception as e:
+        brokers_status["paper"] = {
+            "name": "Paper Trading",
+            "connected": False,
+            "status": "error",
+            "error": str(e),
+        }
+    
+    # Check Alpaca (if configured)
+    try:
+        alpaca_broker = create_broker("alpaca")
+        account = alpaca_broker.get_account()
+        brokers_status["alpaca"] = {
+            "name": "Alpaca Markets",
+            "connected": True,
+            "status": "online",
+            "account_value": account.portfolio_value,
+            "cash": account.cash,
+        }
+    except Exception as e:
+        brokers_status["alpaca"] = {
+            "name": "Alpaca Markets",
+            "connected": False,
+            "status": "not_configured",
+            "error": str(e),
+        }
+    
+    # Check Questrade (if configured)
+    try:
+        questrade_broker = create_broker("questrade")
+        account = questrade_broker.get_account()
+        brokers_status["questrade"] = {
+            "name": "Questrade",
+            "connected": True,
+            "status": "online",
+            "account_value": account.portfolio_value,
+            "cash": account.cash,
+        }
+    except Exception as e:
+        brokers_status["questrade"] = {
+            "name": "Questrade",
+            "connected": False,
+            "status": "not_configured",
+            "error": str(e),
+        }
+    
+    # Check IBKR (if configured)
+    try:
+        ibkr_broker = create_broker("ibkr")
+        account = ibkr_broker.get_account()
+        brokers_status["ibkr"] = {
+            "name": "Interactive Brokers",
+            "connected": True,
+            "status": "online",
+            "account_value": account.portfolio_value,
+            "cash": account.cash,
+        }
+    except Exception as e:
+        brokers_status["ibkr"] = {
+            "name": "Interactive Brokers",
+            "connected": False,
+            "status": "not_configured",
+            "error": str(e),
+        }
+    
+    return brokers_status
+
+
+@app.post("/api/trading/validate", tags=["Trading"])
+async def mark_trade_for_validation(validation_request: Dict[str, Any]) -> Dict[str, str]:
+    """Mark a trade for Phase 2 validation tracking.
+    
+    Args:
+        validation_request: Trade details including ticker, outcome, pnl
+    
+    Returns:
+        Validation confirmation
+    """
+    from src.bouncehunter.pennyhunter_memory import PennyHunterMemory
+    from pathlib import Path
+    import json
+    
+    try:
+        ticker = validation_request.get('ticker')
+        outcome = validation_request.get('outcome')  # 'win' or 'loss'
+        pnl = validation_request.get('pnl', 0.0)
+        notes = validation_request.get('notes', '')
+        
+        if not all([ticker, outcome]):
+            raise HTTPException(status_code=400, detail="Missing required validation fields")
+        
+        # Record in memory system
+        memory = PennyHunterMemory()
+        memory.record_trade_outcome(
+            ticker=ticker,
+            win=(outcome == 'win'),
+            pnl=pnl,
+            trade_date=datetime.now().strftime('%Y-%m-%d')
+        )
+        
+        # Also append to cumulative history
+        cumulative_file = Path(__file__).parent.parent.parent / "reports" / "pennyhunter_cumulative_history.json"
+        
+        trade_record = {
+            "ticker": ticker,
+            "outcome": outcome,
+            "pnl": pnl,
+            "notes": notes,
+            "status": "completed",
+            "validated_at": datetime.now().isoformat(),
+        }
+        
+        # Load existing history
+        if cumulative_file.exists():
+            with open(cumulative_file, 'r') as f:
+                data = json.load(f)
+        else:
+            data = {"trades": []}
+        
+        # Append new trade
+        data["trades"].append(trade_record)
+        
+        # Save updated history
+        cumulative_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(cumulative_file, 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        return {
+            "status": "success",
+            "message": f"Trade validated: {ticker} ({outcome})",
+            "ticker": ticker,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error marking trade for validation: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to validate trade: {str(e)}")
+
+
+# ============================================================================
 # Health Check
 # ============================================================================
 

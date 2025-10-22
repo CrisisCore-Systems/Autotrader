@@ -19,6 +19,12 @@ from typing import Dict, List, Optional, Protocol
 import numpy as np
 import pandas as pd
 from scipy import stats
+from sklearn.metrics import (
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve,
+    average_precision_score,
+)
 
 
 class TokenSnapshot(Protocol):
@@ -27,6 +33,41 @@ class TokenSnapshot(Protocol):
     token: str
     features: Dict[str, float]
     future_return_7d: float
+
+
+@dataclass
+class ClassificationMetrics:
+    """Classification-based metrics (ROC/AUC, PR curves).
+    
+    These metrics treat the prediction task as binary classification:
+    predicting whether returns will be positive or negative.
+    """
+    
+    # ROC metrics
+    roc_auc: float  # Area under ROC curve
+    roc_curve_fpr: np.ndarray  # False positive rates
+    roc_curve_tpr: np.ndarray  # True positive rates
+    roc_curve_thresholds: np.ndarray  # Decision thresholds
+    
+    # Precision-Recall metrics
+    pr_auc: float  # Area under PR curve (Average Precision)
+    pr_curve_precision: np.ndarray  # Precision values
+    pr_curve_recall: np.ndarray  # Recall values
+    pr_curve_thresholds: np.ndarray  # Decision thresholds
+    
+    # Additional metrics
+    baseline_accuracy: float  # Majority class baseline
+    sample_size: int
+    
+    def to_dict(self) -> Dict[str, any]:
+        """Convert to dictionary (excluding curve arrays for JSON serialization)."""
+        return {
+            'roc_auc': self.roc_auc,
+            'pr_auc': self.pr_auc,
+            'baseline_accuracy': self.baseline_accuracy,
+            'sample_size': self.sample_size,
+            # Curve data omitted for brevity - can be stored separately if needed
+        }
 
 
 @dataclass
@@ -119,10 +160,11 @@ class RiskMetrics:
 
 @dataclass
 class ExtendedBacktestMetrics:
-    """Comprehensive backtest metrics combining IC and risk metrics."""
+    """Comprehensive backtest metrics combining IC, risk, and classification metrics."""
     
     ic_metrics: ICMetrics
     risk_metrics: RiskMetrics
+    classification_metrics: Optional[ClassificationMetrics] = None
     baseline_comparisons: Optional[Dict[str, Dict[str, float]]] = None
     metadata: Dict[str, any] = field(default_factory=dict)
     
@@ -132,6 +174,9 @@ class ExtendedBacktestMetrics:
             'ic_metrics': self.ic_metrics.to_dict(),
             'risk_metrics': self.risk_metrics.to_dict(),
         }
+        
+        if self.classification_metrics:
+            result['classification_metrics'] = self.classification_metrics.to_dict()
         
         if self.baseline_comparisons:
             result['baseline_comparisons'] = self.baseline_comparisons
@@ -183,6 +228,17 @@ class ExtendedBacktestMetrics:
                     f"(Return / MaxDrawdown)")
         lines.append(f"  Win Rate:       {self.risk_metrics.win_rate:>8.2%}")
         lines.append(f"  Profit Factor:  {self.risk_metrics.profit_factor:>8.4f}")
+        
+        # Classification Metrics
+        if self.classification_metrics:
+            lines.append("\n📊 CLASSIFICATION METRICS (ROC/PR)")
+            lines.append("-" * 70)
+            lines.append(f"  ROC AUC:        {self.classification_metrics.roc_auc:>8.4f}  "
+                        f"(Binary Classification)")
+            lines.append(f"  PR AUC:         {self.classification_metrics.pr_auc:>8.4f}  "
+                        f"(Average Precision)")
+            lines.append(f"  Baseline Acc:   {self.classification_metrics.baseline_accuracy:>8.2%}  "
+                        f"(Majority Class)")
         
         # Baseline Comparisons
         if self.baseline_comparisons:
@@ -376,6 +432,86 @@ def calculate_risk_metrics(
     )
 
 
+def calculate_classification_metrics(
+    predictions: np.ndarray,
+    actuals: np.ndarray,
+) -> ClassificationMetrics:
+    """Calculate classification-based metrics (ROC/AUC, PR curves).
+    
+    Treats the prediction as binary classification: predicting whether
+    returns will be positive (1) or non-positive (0).
+    
+    Args:
+        predictions: Array of predicted scores/rankings
+        actuals: Array of actual returns
+    
+    Returns:
+        ClassificationMetrics with ROC/AUC and PR curve data
+    """
+    # Remove NaN values
+    mask = ~(np.isnan(predictions) | np.isnan(actuals))
+    predictions = predictions[mask]
+    actuals = actuals[mask]
+    
+    if len(predictions) < 2:
+        # Not enough data for classification metrics
+        return ClassificationMetrics(
+            roc_auc=0.5,
+            roc_curve_fpr=np.array([0.0, 1.0]),
+            roc_curve_tpr=np.array([0.0, 1.0]),
+            roc_curve_thresholds=np.array([0.0, 0.0]),
+            pr_auc=0.0,
+            pr_curve_precision=np.array([0.0]),
+            pr_curve_recall=np.array([1.0]),
+            pr_curve_thresholds=np.array([0.0]),
+            baseline_accuracy=0.5,
+            sample_size=len(predictions),
+        )
+    
+    # Convert returns to binary labels (positive return = 1, else = 0)
+    y_true = (actuals > 0).astype(int)
+    
+    # Baseline accuracy (majority class)
+    baseline_accuracy = max(np.mean(y_true), 1 - np.mean(y_true))
+    
+    # Check if we have both classes
+    if len(np.unique(y_true)) < 2:
+        # Only one class present - return default metrics
+        return ClassificationMetrics(
+            roc_auc=0.5,
+            roc_curve_fpr=np.array([0.0, 1.0]),
+            roc_curve_tpr=np.array([0.0, 1.0]),
+            roc_curve_thresholds=np.array([0.0, 0.0]),
+            pr_auc=baseline_accuracy,
+            pr_curve_precision=np.array([baseline_accuracy]),
+            pr_curve_recall=np.array([1.0]),
+            pr_curve_thresholds=np.array([0.0]),
+            baseline_accuracy=baseline_accuracy,
+            sample_size=len(predictions),
+        )
+    
+    # Calculate ROC curve and AUC
+    fpr, tpr, roc_thresholds = roc_curve(y_true, predictions)
+    roc_auc = roc_auc_score(y_true, predictions)
+    
+    # Calculate Precision-Recall curve and AUC
+    precision, recall, pr_thresholds = precision_recall_curve(y_true, predictions)
+    pr_auc = average_precision_score(y_true, predictions)
+    
+    return ClassificationMetrics(
+        roc_auc=roc_auc,
+        roc_curve_fpr=fpr,
+        roc_curve_tpr=tpr,
+        roc_curve_thresholds=roc_thresholds,
+        pr_auc=pr_auc,
+        pr_curve_precision=precision,
+        pr_curve_recall=recall,
+        pr_curve_thresholds=pr_thresholds,
+        baseline_accuracy=baseline_accuracy,
+        sample_size=len(predictions),
+    )
+
+
 def calculate_extended_metrics(
     snapshots: List[TokenSnapshot],
     predictions: np.ndarray,
@@ -383,6 +519,7 @@ def calculate_extended_metrics(
     risk_free_rate: float = 0.0,
     periods_per_year: int = 52,
     periods: Optional[List[int]] = None,
+    include_classification: bool = True,
 ) -> ExtendedBacktestMetrics:
     """Calculate comprehensive backtest metrics.
     
@@ -393,9 +530,10 @@ def calculate_extended_metrics(
         risk_free_rate: Risk-free rate for ratio calculations
         periods_per_year: Number of periods per year for annualization
         periods: Optional period indices for multi-period IC
+        include_classification: Whether to calculate ROC/AUC and PR metrics
     
     Returns:
-        ExtendedBacktestMetrics with IC and risk metrics
+        ExtendedBacktestMetrics with IC, risk, and classification metrics
     """
     if len(snapshots) != len(predictions):
         raise ValueError("Snapshots and predictions must have same length")
@@ -421,6 +559,11 @@ def calculate_extended_metrics(
         periods_per_year=periods_per_year
     )
     
+    # Calculate classification metrics (ROC/AUC, PR curves)
+    classification_metrics = None
+    if include_classification:
+        classification_metrics = calculate_classification_metrics(predictions, actuals)
+    
     # Metadata
     metadata = {
         'total_snapshots': len(snapshots),
@@ -428,11 +571,13 @@ def calculate_extended_metrics(
         'top_k': top_k,
         'risk_free_rate': risk_free_rate,
         'periods_per_year': periods_per_year,
+        'include_classification': include_classification,
     }
     
     return ExtendedBacktestMetrics(
         ic_metrics=ic_metrics,
         risk_metrics=risk_metrics,
+        classification_metrics=classification_metrics,
         metadata=metadata,
     )
 

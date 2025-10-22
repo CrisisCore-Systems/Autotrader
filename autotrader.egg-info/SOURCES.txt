@@ -162,6 +162,7 @@ tests/test_experiments_workspace.py
 tests/test_exporter.py
 tests/test_extended_metrics.py
 tests/test_feature_validation.py
+tests/test_feature_validation_integration.py
 tests/test_features.py
 tests/test_feedback.py
 tests/test_free_clients_integration.py
@@ -177,6 +178,7 @@ tests/test_medium_priority_enhancements.py
 tests/test_narrative.py
 tests/test_news.py
 tests/test_notification_features.py
+tests/test_observability.py
 tests/test_performance.py
 tests/test_phase3_integration.py
 tests/test_pipeline.py

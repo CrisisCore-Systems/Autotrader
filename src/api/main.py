@@ -24,32 +24,33 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _check_required_api_keys() -> None:
-    """Validate that critical API keys are present, raise on missing keys."""
+    """Warn when critical API keys are missing so the app can degrade gracefully."""
     required_keys = {
-        "GROQ_API_KEY": "Required for LLM-powered narrative analysis",
-        "ETHERSCAN_API_KEY": "Required for contract verification and on-chain data",
+        "GROQ_API_KEY": (
+            "LLM-powered narrative analysis is disabled until this key is provided."
+        ),
+        "ETHERSCAN_API_KEY": (
+            "Smart contract verification and on-chain data lookups are unavailable "
+            "without this key."
+        ),
     }
-    
-    missing = []
-    for key, purpose in required_keys.items():
+
+    for key, guidance in required_keys.items():
         if not os.environ.get(key):
-            missing.append(f"{key} ({purpose})")
-    
-    if missing:
-        error_msg = (
-            "CRITICAL: Missing required API keys:\n" +
-            "\n".join(f"  - {m}" for m in missing) +
-            "\n\nSet these environment variables before starting the API."
-        )
-        raise ValueError(error_msg)
+            LOGGER.warning("%s is not set. %s", key, guidance)
 
 
 def _warn_optional_api_keys() -> None:
     """Log warnings for optional API keys that enhance functionality."""
-    optional_keys = ["COINGECKO_API_KEY"]
-    for key in optional_keys:
+    optional_keys = {
+        "COINGECKO_API_KEY": (
+            "Falling back to the public CoinGecko endpoints which have stricter rate "
+            "limits."
+        ),
+    }
+    for key, guidance in optional_keys.items():
         if not os.environ.get(key):
-            LOGGER.warning("%s not set - using free tier with rate limits", key)
+            LOGGER.warning("%s is not set. %s", key, guidance)
 
 
 _check_required_api_keys()

@@ -1070,10 +1070,51 @@ See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentat
 ### Implementation Details
 - **[SIMPLIFICATION_COMPLETE.md](SIMPLIFICATION_COMPLETE.md)** - Recent simplifications (NEW)
 
-## �🛡️ Security & Quality Gates
+## 🛡️ Security & Quality Gates
+
+### Automated Security Scanning
 
 Continuous security scanning and coverage enforcement ship with the repo:
 
-- `tests-and-coverage` workflow blocks merges below 75% coverage and publishes the XML artifact.
-- `security-scan` workflow runs Semgrep, Bandit, and pip-audit on every push and each morning UTC.
-- The new `Makefile` recipes (`security`, `coverage`, `sbom`) provide local mirrors of the CI guardrails.
+- **Test Coverage**: `tests-and-coverage` workflow blocks merges below 75% coverage
+- **Security Scans**: `security-scan` workflow runs Semgrep, Bandit, and pip-audit on every push and daily
+- **Secret Detection**: TruffleHog and Gitleaks scan for exposed credentials
+- **Dependency Updates**: Dependabot automatically creates PRs for security patches (weekly)
+- **Container Security**: Trivy scans Docker images for vulnerabilities
+- **SBOM Generation**: Software Bill of Materials tracked for compliance
+- **Local Testing**: `Makefile` recipes (`security`, `coverage`, `sbom`) mirror CI guardrails
+
+### Security Documentation
+
+- **[SECURITY.md](SECURITY.md)** - Security policy, vulnerability reporting, best practices
+- **[docs/DOCKER_SECURITY.md](docs/DOCKER_SECURITY.md)** - Container security hardening guide
+- **[docs/SECRET_ROTATION.md](docs/SECRET_ROTATION.md)** - API key and credential rotation procedures
+
+### Key Security Features
+
+**Secrets Management**:
+- ✅ Environment variable-based configuration (no hardcoded secrets)
+- ✅ Pre-commit hooks detect secrets before commit
+- ✅ Quarterly rotation schedule for all API keys
+- ✅ Emergency rotation procedures documented
+
+**Dependency Security**:
+- ✅ Automated vulnerability scanning with pip-audit
+- ✅ Weekly Dependabot PRs for security updates
+- ✅ License compliance checking (no GPL/AGPL)
+- ✅ Supply chain attack prevention rules
+
+**Docker Hardening**:
+- ✅ Multi-stage builds (build vs runtime separation)
+- ✅ Non-root user (UID 1000)
+- ✅ Minimal base image (slim-bookworm)
+- ✅ Read-only filesystem support
+- ✅ Security options configured (no-new-privileges, dropped capabilities)
+
+**Code Security**:
+- ✅ 100+ custom Semgrep rules (injection, crypto, secrets, supply chain)
+- ✅ Bandit Python security scanning
+- ✅ Type checking with mypy
+- ✅ SARIF output to GitHub Security tab
+
+See [SECURITY.md](SECURITY.md) for complete security posture documentation.

@@ -189,11 +189,14 @@ def test_get_system_health_reports_expected_sections() -> None:
     assert binance_quote("SOL") == {"symbol": "SOL"}
 
     health = get_system_health()
-    # Updated to match new health response structure
-    assert set(health.keys()) == {"overall_status", "healthy_sources", "degraded_sources", "failed_sources", "circuit_breakers", "cache_stats"}
+    # Updated to match new health response structure with per_exchange_degradation
+    assert set(health.keys()) == {"overall_status", "healthy_sources", "degraded_sources", "failed_sources", "circuit_breakers", "cache_stats", "per_exchange_degradation"}
     # Check that required sections exist
     assert "orderbook" in health["cache_stats"]
     assert "binance_api" in health["circuit_breakers"]
+    # Verify per-exchange degradation is included
+    assert "per_exchange_degradation" in health
+    assert isinstance(health["per_exchange_degradation"], dict)
     # Verify that binance_quote was registered and appears in health check
     all_sources = health["healthy_sources"] + health["degraded_sources"] + health["failed_sources"]
     # Note: binance_quote will be registered with the SLA monitor

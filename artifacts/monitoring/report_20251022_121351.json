@@ -1,0 +1,392 @@
+{
+  "timestamp": "2025-10-22T12:13:51.860356+00:00",
+  "features_monitored": 5,
+  "features_drifted": 5,
+  "features_stale": 2,
+  "sla_violations": 5,
+  "feature_health": {
+    "gem_score": {
+      "feature_name": "gem_score",
+      "drift_detected": true,
+      "drift_severity": "critical",
+      "freshness_level": "recent",
+      "data_age_seconds": 1200.002034,
+      "sla_violated": true,
+      "last_updated": "2025-10-22T11:53:51.860345"
+    },
+    "liquidity_usd": {
+      "feature_name": "liquidity_usd",
+      "drift_detected": true,
+      "drift_severity": "critical",
+      "freshness_level": "recent",
+      "data_age_seconds": 900.00389,
+      "sla_violated": true,
+      "last_updated": "2025-10-22T11:58:51.860345"
+    },
+    "holder_count": {
+      "feature_name": "holder_count",
+      "drift_detected": true,
+      "drift_severity": "critical",
+      "freshness_level": "stale",
+      "data_age_seconds": 10800.006499,
+      "sla_violated": true,
+      "last_updated": "2025-10-22T09:13:51.860345"
+    },
+    "safety_score": {
+      "feature_name": "safety_score",
+      "drift_detected": true,
+      "drift_severity": "critical",
+      "freshness_level": "recent",
+      "data_age_seconds": 1500.008708,
+      "sla_violated": true,
+      "last_updated": "2025-10-22T11:48:51.860345"
+    },
+    "price_volatility": {
+      "feature_name": "price_volatility",
+      "drift_detected": true,
+      "drift_severity": "critical",
+      "freshness_level": "stale",
+      "data_age_seconds": 7200.011108,
+      "sla_violated": true,
+      "last_updated": "2025-10-22T10:13:51.860345"
+    }
+  },
+  "drift_reports": [
+    {
+      "timestamp": "2025-10-22T12:13:51.862270+00:00",
+      "metric_type": "feature_distribution",
+      "metric_name": "gem_score",
+      "drift_detected": true,
+      "severity": "critical",
+      "statistics": [
+        {
+          "test_name": "Kolmogorov-Smirnov",
+          "statistic": 0.34,
+          "p_value": 1.3578821841275993e-17,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "KS statistic: 0.3400, p-value: 0.0000"
+        },
+        {
+          "test_name": "Population Stability Index",
+          "statistic": 0.5740977396118028,
+          "p_value": 0.0,
+          "threshold": 0.2,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "PSI: 0.5741"
+        },
+        {
+          "test_name": "Chi-Square",
+          "statistic": 1587.3568931339576,
+          "p_value": 0.0,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "Chi-square: 1587.3569, p-value: 0.0000"
+        },
+        {
+          "test_name": "KL Divergence",
+          "statistic": 0.38339600782641825,
+          "p_value": 0.0,
+          "threshold": 0.3,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "KL divergence: 0.3834"
+        }
+      ],
+      "baseline_stats": {
+        "mean": 59.734239980096696,
+        "std": 15.172795500781943,
+        "min": 5.5177554154749515,
+        "max": 100.0,
+        "median": 59.763440673653676,
+        "q25": 49.262086410736245,
+        "q75": 70.02619398111047
+      },
+      "current_stats": {
+        "mean": 46.88403941420143,
+        "std": 18.273388663084898,
+        "min": 0.0,
+        "max": 91.26694916290676,
+        "median": 47.769985970083965
+      },
+      "recommendations": [
+        "Feature 'gem_score' shows significant drift",
+        "Consider retraining the model with recent data",
+        "URGENT: Drift severity is high - immediate action required"
+      ]
+    },
+    {
+      "timestamp": "2025-10-22T12:13:51.864128+00:00",
+      "metric_type": "feature_distribution",
+      "metric_name": "liquidity_usd",
+      "drift_detected": true,
+      "severity": "critical",
+      "statistics": [
+        {
+          "test_name": "Kolmogorov-Smirnov",
+          "statistic": 0.202,
+          "p_value": 2.071519977230646e-06,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "medium",
+          "description": "KS statistic: 0.2020, p-value: 0.0000"
+        },
+        {
+          "test_name": "Population Stability Index",
+          "statistic": 0.2679182996281734,
+          "p_value": 0.0,
+          "threshold": 0.2,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "PSI: 0.2679"
+        },
+        {
+          "test_name": "Chi-Square",
+          "statistic": 124.81791686808607,
+          "p_value": 1.3756136092308972e-22,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "Chi-square: 124.8179, p-value: 0.0000"
+        },
+        {
+          "test_name": "KL Divergence",
+          "statistic": 0.03164644868544416,
+          "p_value": 0.0,
+          "threshold": 0.3,
+          "is_drifted": false,
+          "severity": "none",
+          "description": "KL divergence: 0.0316"
+        }
+      ],
+      "baseline_stats": {
+        "mean": 140608.44490322686,
+        "std": 524443.8504439426,
+        "min": 38.40629810331283,
+        "max": 9374727.31369074,
+        "median": 21978.56934535787,
+        "q25": 5421.784247832473,
+        "q75": 82483.53102067059
+      },
+      "current_stats": {
+        "mean": 150126.594828147,
+        "std": 551756.4322855411,
+        "min": 4.413450185853132,
+        "max": 5131778.804033646,
+        "median": 7611.107253860316
+      },
+      "recommendations": [
+        "Feature 'liquidity_usd' shows significant drift",
+        "Consider retraining the model with recent data",
+        "URGENT: Drift severity is high - immediate action required"
+      ]
+    },
+    {
+      "timestamp": "2025-10-22T12:13:51.866734+00:00",
+      "metric_type": "feature_distribution",
+      "metric_name": "holder_count",
+      "drift_detected": true,
+      "severity": "critical",
+      "statistics": [
+        {
+          "test_name": "Kolmogorov-Smirnov",
+          "statistic": 1.0,
+          "p_value": 9.993903877849196e-234,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "KS statistic: 1.0000, p-value: 0.0000"
+        },
+        {
+          "test_name": "Population Stability Index",
+          "statistic": 20.727771042049376,
+          "p_value": 0.0,
+          "threshold": 0.2,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "PSI: 20.7278"
+        },
+        {
+          "test_name": "Chi-Square",
+          "statistic": 457261.4379623883,
+          "p_value": 0.0,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "Chi-square: 457261.4380, p-value: 0.0000"
+        },
+        {
+          "test_name": "KL Divergence",
+          "statistic": 29.05220508239754,
+          "p_value": 0.0,
+          "threshold": 0.3,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "KL divergence: 29.0522"
+        }
+      ],
+      "baseline_stats": {
+        "mean": 500.885,
+        "std": 22.51128106083703,
+        "min": 430.0,
+        "max": 574.0,
+        "median": 500.0,
+        "q25": 484.0,
+        "q75": 516.0
+      },
+      "current_stats": {
+        "mean": 300.1,
+        "std": 17.986939706353606,
+        "min": 247.0,
+        "max": 349.0,
+        "median": 298.0
+      },
+      "recommendations": [
+        "Feature 'holder_count' shows significant drift",
+        "Consider retraining the model with recent data",
+        "URGENT: Drift severity is high - immediate action required"
+      ]
+    },
+    {
+      "timestamp": "2025-10-22T12:13:51.868950+00:00",
+      "metric_type": "feature_distribution",
+      "metric_name": "safety_score",
+      "drift_detected": true,
+      "severity": "critical",
+      "statistics": [
+        {
+          "test_name": "Kolmogorov-Smirnov",
+          "statistic": 0.428,
+          "p_value": 5.252593743644006e-28,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "KS statistic: 0.4280, p-value: 0.0000"
+        },
+        {
+          "test_name": "Population Stability Index",
+          "statistic": 1.072786644405608,
+          "p_value": 0.0,
+          "threshold": 0.2,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "PSI: 1.0728"
+        },
+        {
+          "test_name": "Chi-Square",
+          "statistic": 2809.830552451278,
+          "p_value": 0.0,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "Chi-square: 2809.8306, p-value: 0.0000"
+        },
+        {
+          "test_name": "KL Divergence",
+          "statistic": 0.6955308683532985,
+          "p_value": 0.0,
+          "threshold": 0.3,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "KL divergence: 0.6955"
+        }
+      ],
+      "baseline_stats": {
+        "mean": 0.7065290277409183,
+        "std": 0.15843728159755943,
+        "min": 0.16220726188288628,
+        "max": 0.9892929408269762,
+        "median": 0.7225112523661907,
+        "q25": 0.6009061913956344,
+        "q75": 0.8329612106163338
+      },
+      "current_stats": {
+        "mean": 0.5092146633581486,
+        "std": 0.18882012263219855,
+        "min": 0.0971475789311158,
+        "max": 0.9536126635855581,
+        "median": 0.49042029903236084
+      },
+      "recommendations": [
+        "Feature 'safety_score' shows significant drift",
+        "Consider retraining the model with recent data",
+        "URGENT: Drift severity is high - immediate action required"
+      ]
+    },
+    {
+      "timestamp": "2025-10-22T12:13:51.871332+00:00",
+      "metric_type": "feature_distribution",
+      "metric_name": "price_volatility",
+      "drift_detected": true,
+      "severity": "critical",
+      "statistics": [
+        {
+          "test_name": "Kolmogorov-Smirnov",
+          "statistic": 0.533,
+          "p_value": 3.500186323230518e-44,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "KS statistic: 0.5330, p-value: 0.0000"
+        },
+        {
+          "test_name": "Population Stability Index",
+          "statistic": 1.4788021512422365,
+          "p_value": 0.0,
+          "threshold": 0.2,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "PSI: 1.4788"
+        },
+        {
+          "test_name": "Chi-Square",
+          "statistic": 6311.45342185373,
+          "p_value": 0.0,
+          "threshold": 0.05,
+          "is_drifted": true,
+          "severity": "high",
+          "description": "Chi-square: 6311.4534, p-value: 0.0000"
+        },
+        {
+          "test_name": "KL Divergence",
+          "statistic": 2.008044351091923,
+          "p_value": 0.0,
+          "threshold": 0.3,
+          "is_drifted": true,
+          "severity": "critical",
+          "description": "KL divergence: 2.0080"
+        }
+      ],
+      "baseline_stats": {
+        "mean": 3.8994513968106355,
+        "std": 2.7163282102923327,
+        "min": 0.22270394215345848,
+        "max": 22.045027387678765,
+        "median": 3.331853945412857,
+        "q25": 1.924627482446155,
+        "q75": 5.233226982301772
+      },
+      "current_stats": {
+        "mean": 8.855626834350254,
+        "std": 4.9688746889515265,
+        "min": 0.8300699980328439,
+        "max": 25.908227251863927,
+        "median": 7.8031264979284085
+      },
+      "recommendations": [
+        "Feature 'price_volatility' shows significant drift",
+        "Consider retraining the model with recent data",
+        "URGENT: Drift severity is high - immediate action required"
+      ]
+    }
+  ],
+  "recommendations": [
+    "5/5 features show drift - consider model retraining",
+    "5 SLA violation(s) detected - check data pipeline health",
+    "CRITICAL: 2 critical feature(s) violating SLA - immediate action required",
+    "2 feature(s) have stale data - verify data source connectivity"
+  ]
+}

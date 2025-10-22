@@ -33,3 +33,7 @@ exports/*
 !backtest_results/.gitkeep
 !execution_trees/.gitkeep
 !exports/.gitkeep
+
+# Monitoring artifacts (generated files)
+artifacts/monitoring/*.json
+artifacts/baselines/*.json

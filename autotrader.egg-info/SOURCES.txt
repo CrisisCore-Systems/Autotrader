@@ -144,11 +144,13 @@ tests/test_alerts_engine.py
 tests/test_api_integration.py
 tests/test_api_startup.py
 tests/test_artifact_integrity.py
+tests/test_backoff.py
 tests/test_backtest_cli.py
 tests/test_backtest_statistics.py
 tests/test_baseline_strategies.py
 tests/test_bouncehunter_engine.py
 tests/test_broker.py
+tests/test_circuit_breaker_alerts.py
 tests/test_classification_metrics.py
 tests/test_cli_backtest_smoke.py
 tests/test_cli_run_scanner.py
@@ -157,7 +159,9 @@ tests/test_crypto_pnd_detector.py
 tests/test_dashboard_api.py
 tests/test_dev_deployment.py
 tests/test_e2e_workflows.py
+tests/test_enhanced_health_endpoints.py
 tests/test_enhanced_modules.py
+tests/test_enhanced_reliability.py
 tests/test_experiment_tracker.py
 tests/test_experiments_workspace.py
 tests/test_exporter.py

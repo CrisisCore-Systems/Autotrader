@@ -17,6 +17,7 @@ from slowapi.util import get_remote_address
 from .routes.tokens import router as tokens_router
 from .routes.health import router as health_router
 from .routes.experiments import router as experiments_router
+from .routes.monitoring import router as monitoring_router
 
 # Import observability components
 from src.core.logging_config import setup_structured_logging, get_logger
@@ -164,6 +165,7 @@ async def logging_and_metrics_middleware(request: Request, call_next):
 app.include_router(tokens_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(experiments_router, prefix="/api")
+app.include_router(monitoring_router, prefix="/api")
 
 
 @app.get("/")

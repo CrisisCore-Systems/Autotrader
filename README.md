@@ -4,7 +4,7 @@
 
 
 
-The documentation set has moved under [`docs/`](docs/).**🆓 Now 100% FREE** - Zero API keys required with FREE data sources!
+The documentation set has moved under [`docs/`](docs/), with legacy quick-reference files now archived in [`docs/legacy/`](docs/legacy/README.md).**🆓 Now 100% FREE** - Zero API keys required with FREE data sources!
 
 
 
@@ -47,20 +47,20 @@ This repository contains the foundational blueprint and implementation for **Cri
 - **Getting Started**: [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Complete PennyHunter guide
 - **Operator Manual**: [`docs/OPERATOR_GUIDE.md`](docs/OPERATOR_GUIDE.md) - Daily operations
 - **Broker Setup**: 
-  - [`QUESTRADE_SETUP.md`](QUESTRADE_SETUP.md) - Canadian broker integration
-  - [`IBKR_SETUP_README.md`](IBKR_SETUP_README.md) - Interactive Brokers setup
+  - [`QUESTRADE_SETUP.md`](docs/legacy/QUESTRADE_SETUP.md) - Canadian broker integration
+  - [`IBKR_SETUP_README.md`](docs/legacy/IBKR_SETUP_README.md) - Interactive Brokers setup
   - [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Multi-broker architecture
-- **Phase 2 Status**: [`PHASE2_VALIDATION_PLAN.md`](PHASE2_VALIDATION_PLAN.md) - Current validation progress
-- **Quick Start**: [`QUESTRADE_QUICKSTART.md`](QUESTRADE_QUICKSTART.md) - 5-minute setup
+- **Phase 2 Status**: [`PHASE2_VALIDATION_PLAN.md`](docs/legacy/PHASE2_VALIDATION_PLAN.md) - Current validation progress
+- **Quick Start**: [`QUESTRADE_QUICKSTART.md`](docs/legacy/QUESTRADE_QUICKSTART.md) - 5-minute setup
 
 **Architecture & Design**:
 - **Agentic System**: [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Multi-agent design
-- **Roadmap**: [`AGENTIC_ROADMAP_QUICK_REF.md`](AGENTIC_ROADMAP_QUICK_REF.md) - Implementation phases
+- **Roadmap**: [`AGENTIC_ROADMAP_QUICK_REF.md`](docs/legacy/AGENTIC_ROADMAP_QUICK_REF.md) - Implementation phases
 - **Backtesting**: [`docs/PHASE_3_BACKTEST_RESULTS.md`](docs/PHASE_3_BACKTEST_RESULTS.md) - Strategy validation
 
 **Legacy Documentation** (Hidden-Gem Scanner):
 - **Project Overview**: [`docs/overview/PROJECT_OVERVIEW.md`](docs/overview/PROJECT_OVERVIEW.md)
-- **Quick Reference**: [`NEXT_SESSION_GUIDE.md`](NEXT_SESSION_GUIDE.md)
+- **Quick Reference**: [`NEXT_SESSION_GUIDE.md`](docs/legacy/NEXT_SESSION_GUIDE.md)
 - **Navigation**: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
 
 ### 💰 **Cost Savings**
@@ -97,7 +97,7 @@ This repository contains the foundational blueprint and implementation for **Cri
 - **🗄️ Database**: Alembic migrations system
 - **🛡️ API Protection**: Rate limiting (10-120/min)
 
-**See [`BROKER_INTEGRATION_COMPLETE.md`](BROKER_INTEGRATION_COMPLETE.md) and [`PHASE2_VALIDATION_PLAN.md`](PHASE2_VALIDATION_PLAN.md) for complete details**
+**See [`BROKER_INTEGRATION_COMPLETE.md`](docs/legacy/BROKER_INTEGRATION_COMPLETE.md) and [`PHASE2_VALIDATION_PLAN.md`](docs/legacy/PHASE2_VALIDATION_PLAN.md) for complete details**
 
 ## System Overview
 
@@ -181,7 +181,7 @@ questrade:
   practice_account: true  # Use practice account first!
 ```
 
-See [`QUESTRADE_SETUP.md`](QUESTRADE_SETUP.md) for detailed setup instructions.
+See [`QUESTRADE_SETUP.md`](docs/legacy/QUESTRADE_SETUP.md) for detailed setup instructions.
 
 ### Run Phase 2 Validation
 
@@ -1011,7 +1011,7 @@ See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentat
 
 ### Quick References
 - **[PROVENANCE_QUICK_REF.md](PROVENANCE_QUICK_REF.md)** - Provenance patterns
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - General quick reference
+- **[QUICK_REFERENCE.md](docs/legacy/QUICK_REFERENCE.md)** - General quick reference
 - **[docs/EXPERIMENT_TRACKING_QUICK_REF.md](docs/EXPERIMENT_TRACKING_QUICK_REF.md)** - Experiment tracking
 
 ### Implementation Details

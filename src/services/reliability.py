@@ -12,6 +12,8 @@ from src.services.circuit_breaker import (
     with_circuit_breaker,
 )
 from src.services.sla_monitor import SLAThresholds, SLARegistry, monitored
+from src.services.backoff import BackoffConfig, with_backoff
+from src.services.circuit_breaker_alerts import get_alert_manager
 
 
 # ============================================================================
@@ -44,11 +46,17 @@ TWITTER_THRESHOLDS.max_consecutive_failures = 3
 # Circuit Breaker Configurations
 # ============================================================================
 
+# Get alert manager for circuit breaker hooks
+_alert_manager = get_alert_manager()
+
 # CEX APIs: fail fast
 CEX_CIRCUIT_CONFIG = CircuitBreakerConfig(
     failure_threshold=5,
     timeout_seconds=30.0,
     success_threshold=2,
+    on_open=_alert_manager.create_open_hook(),
+    on_half_open=_alert_manager.create_half_open_hook(),
+    on_close=_alert_manager.create_close_hook(),
 )
 
 # DEX APIs: more tolerant
@@ -56,6 +64,9 @@ DEX_CIRCUIT_CONFIG = CircuitBreakerConfig(
     failure_threshold=10,
     timeout_seconds=60.0,
     success_threshold=3,
+    on_open=_alert_manager.create_open_hook(),
+    on_half_open=_alert_manager.create_half_open_hook(),
+    on_close=_alert_manager.create_close_hook(),
 )
 
 # Twitter API: very tolerant (rate limits)
@@ -63,6 +74,9 @@ TWITTER_CIRCUIT_CONFIG = CircuitBreakerConfig(
     failure_threshold=3,
     timeout_seconds=120.0,
     success_threshold=1,
+    on_open=_alert_manager.create_open_hook(),
+    on_half_open=_alert_manager.create_half_open_hook(),
+    on_close=_alert_manager.create_close_hook(),
 )
 
 
@@ -150,6 +164,38 @@ SLA_REGISTRY, CIRCUIT_REGISTRY = initialize_monitoring()
 ORDERBOOK_CACHE = EnhancedCache(ORDERBOOK_CACHE_CONFIG)
 DEX_CACHE = EnhancedCache(DEX_CACHE_CONFIG)
 TWITTER_CACHE = EnhancedCache(TWITTER_CACHE_CONFIG)
+
+
+# ============================================================================
+# Backoff Configurations
+# ============================================================================
+
+# CEX backoff: aggressive retries
+CEX_BACKOFF_CONFIG = BackoffConfig(
+    initial_delay=0.5,
+    max_delay=10.0,
+    multiplier=2.0,
+    max_attempts=3,
+    jitter=True,
+)
+
+# DEX backoff: more patient retries
+DEX_BACKOFF_CONFIG = BackoffConfig(
+    initial_delay=1.0,
+    max_delay=30.0,
+    multiplier=2.0,
+    max_attempts=4,
+    jitter=True,
+)
+
+# Twitter backoff: very patient (rate limits)
+TWITTER_BACKOFF_CONFIG = BackoffConfig(
+    initial_delay=2.0,
+    max_delay=60.0,
+    multiplier=2.0,
+    max_attempts=3,
+    jitter=True,
+)
 
 
 # ============================================================================
@@ -274,6 +320,7 @@ def get_system_health() -> dict[str, Any]:
         "failed_sources": [],
         "circuit_breakers": {},
         "cache_stats": {},
+        "per_exchange_degradation": {},
     }
 
     # Check SLAs and categorize sources
@@ -315,7 +362,105 @@ def get_system_health() -> dict[str, Any]:
     health_status["cache_stats"]["dex"] = DEX_CACHE.get_stats()
     health_status["cache_stats"]["twitter"] = TWITTER_CACHE.get_stats()
 
+    # Per-exchange degradation tracking
+    health_status["per_exchange_degradation"] = get_exchange_degradation()
+
     return health_status
+
+
+def get_exchange_degradation() -> dict[str, Any]:
+    """Get per-exchange degradation status and metrics.
+
+    Returns:
+        Dictionary mapping exchange names to their degradation metrics
+    """
+    exchange_status = {}
+
+    # Group sources by exchange
+    exchange_sources = {
+        "binance": ["binance_orderbook", "binance_futures"],
+        "bybit": ["bybit_derivatives"],
+        "dexscreener": ["dexscreener"],
+        "twitter": ["twitter_search", "twitter_lookup"],
+    }
+
+    for exchange_name, source_names in exchange_sources.items():
+        exchange_metrics = {
+            "exchange": exchange_name,
+            "overall_status": "HEALTHY",
+            "sources": [],
+            "avg_latency_p95": 0.0,
+            "avg_success_rate": 0.0,
+            "circuit_breaker_state": "CLOSED",
+            "degradation_score": 0.0,  # 0 = healthy, 1 = completely degraded
+        }
+
+        source_count = 0
+        total_latency = 0.0
+        total_success_rate = 0.0
+        degraded_sources = 0
+        failed_sources = 0
+
+        for source_name in source_names:
+            monitor = SLA_REGISTRY.get_monitor(source_name)
+            if monitor:
+                metrics = monitor.get_metrics()
+                status = metrics.status.value
+
+                exchange_metrics["sources"].append({
+                    "name": source_name,
+                    "status": status,
+                    "latency_p95": metrics.latency_p95,
+                    "success_rate": metrics.success_rate,
+                })
+
+                total_latency += metrics.latency_p95 or 0.0
+                total_success_rate += metrics.success_rate or 0.0
+                source_count += 1
+
+                if status == "DEGRADED":
+                    degraded_sources += 1
+                elif status == "FAILED":
+                    failed_sources += 1
+
+        # Calculate averages
+        if source_count > 0:
+            exchange_metrics["avg_latency_p95"] = total_latency / source_count
+            exchange_metrics["avg_success_rate"] = total_success_rate / source_count
+
+        # Determine overall exchange status
+        if failed_sources > 0:
+            exchange_metrics["overall_status"] = "FAILED"
+        elif degraded_sources > 0:
+            exchange_metrics["overall_status"] = "DEGRADED"
+
+        # Check circuit breaker for this exchange
+        breaker_name = f"{exchange_name}_api"
+        breaker = CIRCUIT_REGISTRY.get(breaker_name)
+        if breaker:
+            exchange_metrics["circuit_breaker_state"] = breaker.state.value
+            if breaker.state != CircuitState.CLOSED:
+                exchange_metrics["overall_status"] = "DEGRADED"
+
+        # Calculate degradation score (0-1)
+        # Factors: failed sources, degraded sources, circuit breaker state, success rate
+        degradation_score = 0.0
+        if source_count > 0:
+            degradation_score += (failed_sources / source_count) * 0.5
+            degradation_score += (degraded_sources / source_count) * 0.3
+            if breaker and breaker.state == CircuitState.OPEN:
+                degradation_score += 0.2
+            elif breaker and breaker.state == CircuitState.HALF_OPEN:
+                degradation_score += 0.1
+            # Factor in success rate
+            if exchange_metrics["avg_success_rate"] < 0.95:
+                degradation_score += (1 - exchange_metrics["avg_success_rate"]) * 0.1
+
+        exchange_metrics["degradation_score"] = min(degradation_score, 1.0)
+
+        exchange_status[exchange_name] = exchange_metrics
+
+    return exchange_status
 
 
 def reset_all_monitors() -> None:

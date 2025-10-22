@@ -149,6 +149,7 @@ tests/test_backtest_statistics.py
 tests/test_baseline_strategies.py
 tests/test_bouncehunter_engine.py
 tests/test_broker.py
+tests/test_classification_metrics.py
 tests/test_cli_backtest_smoke.py
 tests/test_cli_run_scanner.py
 tests/test_core_services.py
@@ -193,5 +194,6 @@ tests/test_score_explainer_integration.py
 tests/test_scoring.py
 tests/test_smoke.py
 tests/test_summary_report.py
+tests/test_time_sliced_evaluation.py
 tests/test_trading_api.py
 tests/test_tree.py

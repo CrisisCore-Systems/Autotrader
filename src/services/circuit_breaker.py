@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar, List
 
 from functools import wraps
 
@@ -36,6 +36,11 @@ class CircuitBreakerConfig:
 
     # Expected exceptions to count as failures
     expected_exceptions: tuple = (Exception,)
+
+    # Alert hooks for state transitions
+    on_open: Optional[Callable[[str], None]] = None
+    on_half_open: Optional[Callable[[str], None]] = None
+    on_close: Optional[Callable[[str], None]] = None
 
 
 class CircuitBreakerError(Exception):
@@ -134,6 +139,13 @@ class CircuitBreaker:
         self._state = CircuitState.HALF_OPEN
         self._success_count = 0
         print(f"Circuit breaker '{self.name}' transitioned to HALF_OPEN")
+        
+        # Call alert hook if configured
+        if self.config.on_half_open:
+            try:
+                self.config.on_half_open(self.name)
+            except Exception as e:
+                print(f"Error calling on_half_open hook for '{self.name}': {e}")
 
     def _on_success(self) -> None:
         """Handle successful call."""
@@ -180,6 +192,13 @@ class CircuitBreaker:
         print(
             f"Circuit breaker '{self.name}' OPENED after {self._failure_count} failures"
         )
+        
+        # Call alert hook if configured
+        if self.config.on_open:
+            try:
+                self.config.on_open(self.name)
+            except Exception as e:
+                print(f"Error calling on_open hook for '{self.name}': {e}")
 
     def _transition_to_closed(self) -> None:
         """Transition to CLOSED state."""
@@ -189,6 +208,13 @@ class CircuitBreaker:
         self._failure_times.clear()
         self._opened_at = None
         print(f"Circuit breaker '{self.name}' CLOSED - service recovered")
+        
+        # Call alert hook if configured
+        if self.config.on_close:
+            try:
+                self.config.on_close(self.name)
+            except Exception as e:
+                print(f"Error calling on_close hook for '{self.name}': {e}")
 
     def reset(self) -> None:
         """Manually reset circuit breaker to CLOSED state."""

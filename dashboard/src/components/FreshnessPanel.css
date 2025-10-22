@@ -1,0 +1,143 @@
+.freshness-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.freshness-panel.loading,
+.freshness-panel.error {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.freshness-panel.error {
+  color: #ef4444;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.refresh-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #e5e7eb;
+}
+
+.freshness-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.freshness-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.freshness-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.freshness-card.fresh {
+  border-left: 4px solid #10b981;
+}
+
+.freshness-card.recent {
+  border-left: 4px solid #3b82f6;
+}
+
+.freshness-card.stale {
+  border-left: 4px solid #f59e0b;
+}
+
+.freshness-card.outdated {
+  border-left: 4px solid #ef4444;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.source-name {
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.free-badge {
+  background: #10b981;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.freshness-indicator {
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.metric .label {
+  color: #6b7280;
+}
+
+.metric .value {
+  font-weight: 500;
+  color: #111827;
+}
+
+.panel-footer {
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  text-align: right;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #6b7280;
+}

@@ -14,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from .routes.tokens import router as tokens_router
+from .routes.health import router as health_router
 
 # Load environment variables from .env file (if present)
 load_dotenv()
@@ -72,6 +73,7 @@ app.add_middleware(
 )
 
 app.include_router(tokens_router, prefix="/api")
+app.include_router(health_router, prefix="/api")
 
 
 @app.get("/")

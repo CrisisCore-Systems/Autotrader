@@ -12,6 +12,15 @@ from urllib.parse import urlparse
 import httpx
 
 from src.core.rate_limit import RateLimit, RateLimiter
+from src.core.logging_config import get_logger
+from src.core.metrics import (
+    record_data_source_request,
+    record_data_source_latency,
+    record_data_source_error,
+    record_cache_hit,
+    record_cache_miss,
+)
+from src.core.tracing import trace_operation, add_span_attributes
 
 try:  # pragma: no cover - optional dependency
     import redis
@@ -90,6 +99,7 @@ class RateAwareRequester:
         self._max_retries = max(0, int(max_retries))
         self._backoff_factor = max(0.5, float(backoff_factor))
         self._backoff_max = max(1.0, float(backoff_max))
+        self._logger = get_logger(__name__)
 
     def request(
         self,
@@ -101,53 +111,189 @@ class RateAwareRequester:
     ) -> httpx.Response:
         method_upper = method.upper()
         absolute_url = self._absolute_url(url)
-        limiter = self._limiter_for(absolute_url)
-        cache_key = None
-        use_cache = method_upper == "GET" and cache_policy is not None
-        if use_cache:
-            cache_key = cache_policy.cache_key or self._build_cache_key(method_upper, absolute_url, kwargs)
-            cached = self._cache.get(cache_key)
-            if cached is not None:
-                return self._response_from_cache(method_upper, absolute_url, cached)
+        parsed_url = urlparse(absolute_url)
+        source = parsed_url.netloc or "unknown"
+        endpoint = parsed_url.path or "/"
+        
+        # Start tracing the request
+        with trace_operation(
+            "http_request",
+            attributes={
+                "http.method": method_upper,
+                "http.url": absolute_url,
+                "http.source": source,
+            }
+        ) as span:
+            start_time = time.time()
+            limiter = self._limiter_for(absolute_url)
+            cache_key = None
+            use_cache = method_upper == "GET" and cache_policy is not None
+            
+            # Check cache
+            if use_cache:
+                cache_key = cache_policy.cache_key or self._build_cache_key(method_upper, absolute_url, kwargs)
+                cached = self._cache.get(cache_key)
+                if cached is not None:
+                    duration = time.time() - start_time
+                    record_cache_hit(source, endpoint)
+                    record_data_source_latency(source, endpoint, duration)
+                    add_span_attributes(cache_hit=True)
+                    self._logger.debug(
+                        "http_request_cache_hit",
+                        method=method_upper,
+                        url=absolute_url,
+                        source=source,
+                        endpoint=endpoint,
+                        duration_seconds=duration,
+                    )
+                    return self._response_from_cache(method_upper, absolute_url, cached)
+                else:
+                    record_cache_miss(source, endpoint)
+                    add_span_attributes(cache_hit=False)
 
-        attempt = 0
-        while True:
-            if limiter:
-                sleep_for = limiter.acquire()
-                if sleep_for > 0:
-                    time.sleep(sleep_for)
-            try:
-                response = self._client.request(method_upper, url, **kwargs)
-            except httpx.HTTPError:
-                if attempt >= self._max_retries:
-                    raise
-                self._sleep_backoff(attempt)
-                attempt += 1
-                continue
+            attempt = 0
+            last_error = None
+            
+            while True:
+                if limiter:
+                    sleep_for = limiter.acquire()
+                    if sleep_for > 0:
+                        self._logger.debug(
+                            "rate_limit_sleep",
+                            source=source,
+                            sleep_seconds=sleep_for,
+                        )
+                        time.sleep(sleep_for)
+                
+                try:
+                    response = self._client.request(method_upper, url, **kwargs)
+                except httpx.HTTPError as e:
+                    last_error = e
+                    error_type = type(e).__name__
+                    
+                    if attempt >= self._max_retries:
+                        duration = time.time() - start_time
+                        record_data_source_error(source, endpoint, error_type)
+                        record_data_source_request(source, endpoint, "error")
+                        record_data_source_latency(source, endpoint, duration)
+                        add_span_attributes(
+                            error=True,
+                            error_type=error_type,
+                            attempts=attempt + 1,
+                        )
+                        self._logger.error(
+                            "http_request_failed",
+                            method=method_upper,
+                            url=absolute_url,
+                            source=source,
+                            endpoint=endpoint,
+                            error_type=error_type,
+                            attempts=attempt + 1,
+                            duration_seconds=duration,
+                            exc_info=e,
+                        )
+                        raise
+                    
+                    self._logger.warning(
+                        "http_request_retry",
+                        method=method_upper,
+                        url=absolute_url,
+                        source=source,
+                        error_type=error_type,
+                        attempt=attempt + 1,
+                        max_retries=self._max_retries,
+                    )
+                    self._sleep_backoff(attempt)
+                    attempt += 1
+                    continue
 
-            if response.status_code in {429, 500, 502, 503, 504}:
-                if attempt >= self._max_retries:
-                    response.raise_for_status()
-                retry_after = self._retry_after_seconds(response)
-                backoff = max(retry_after, self._backoff_delay(attempt))
-                time.sleep(min(backoff, self._backoff_max))
-                attempt += 1
-                continue
+                if response.status_code in {429, 500, 502, 503, 504}:
+                    if attempt >= self._max_retries:
+                        duration = time.time() - start_time
+                        error_type = f"http_{response.status_code}"
+                        record_data_source_error(source, endpoint, error_type)
+                        record_data_source_request(source, endpoint, "error")
+                        record_data_source_latency(source, endpoint, duration)
+                        add_span_attributes(
+                            error=True,
+                            error_type=error_type,
+                            http_status_code=response.status_code,
+                            attempts=attempt + 1,
+                        )
+                        self._logger.error(
+                            "http_request_failed_status",
+                            method=method_upper,
+                            url=absolute_url,
+                            source=source,
+                            endpoint=endpoint,
+                            status_code=response.status_code,
+                            attempts=attempt + 1,
+                            duration_seconds=duration,
+                        )
+                        response.raise_for_status()
+                    
+                    retry_after = self._retry_after_seconds(response)
+                    backoff = max(retry_after, self._backoff_delay(attempt))
+                    sleep_time = min(backoff, self._backoff_max)
+                    
+                    self._logger.warning(
+                        "http_request_retry_status",
+                        method=method_upper,
+                        url=absolute_url,
+                        source=source,
+                        status_code=response.status_code,
+                        attempt=attempt + 1,
+                        retry_after_seconds=sleep_time,
+                    )
+                    time.sleep(sleep_time)
+                    attempt += 1
+                    continue
 
-            response.raise_for_status()
-            if use_cache and cache_key:
-                ttl = cache_policy.ttl_seconds if cache_policy else 0.0
-                if ttl > 0:
-                    payload = json.dumps(
-                        {
-                            "status": response.status_code,
-                            "headers": dict(response.headers),
-                            "content": response.content.decode("latin1"),
-                            "url": absolute_url,
-                        }
-                    ).encode("utf-8")
-                    self._cache.set(cache_key, payload, ttl)
-            return response
+                # Success
+                response.raise_for_status()
+                duration = time.time() - start_time
+                
+                # Record metrics
+                record_data_source_request(source, endpoint, "success")
+                record_data_source_latency(source, endpoint, duration)
+                add_span_attributes(
+                    http_status_code=response.status_code,
+                    attempts=attempt + 1,
+                    response_size_bytes=len(response.content),
+                )
+                
+                self._logger.info(
+                    "http_request_success",
+                    method=method_upper,
+                    url=absolute_url,
+                    source=source,
+                    endpoint=endpoint,
+                    status_code=response.status_code,
+                    duration_seconds=duration,
+                    attempts=attempt + 1,
+                    response_size_bytes=len(response.content),
+                )
+                
+                # Cache the response if applicable
+                if use_cache and cache_key:
+                    ttl = cache_policy.ttl_seconds if cache_policy else 0.0
+                    if ttl > 0:
+                        payload = json.dumps(
+                            {
+                                "status": response.status_code,
+                                "headers": dict(response.headers),
+                                "content": response.content.decode("latin1"),
+                                "url": absolute_url,
+                            }
+                        ).encode("utf-8")
+                        self._cache.set(cache_key, payload, ttl)
+                        self._logger.debug(
+                            "http_response_cached",
+                            url=absolute_url,
+                            ttl_seconds=ttl,
+                        )
+                
+                return response
 
     def _limiter_for(self, url: str) -> RateLimiter | None:
         host = urlparse(url).netloc or ""

@@ -1,5 +1,9 @@
 # AutoTrader Documentation
 
+[![CI Pipeline](https://github.com/CrisisCore-Systems/Autotrader/workflows/CI%20Pipeline/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/CrisisCore-Systems/Autotrader/workflows/security-scan/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/security-scan.yml)
+[![codecov](https://codecov.io/gh/CrisisCore-Systems/Autotrader/branch/main/graph/badge.svg)](https://codecov.io/gh/CrisisCore-Systems/Autotrader)
+
 ## CrisisCore AutoTrader - Hidden-Gem Scanner
 
 

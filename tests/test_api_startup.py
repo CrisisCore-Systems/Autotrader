@@ -103,13 +103,17 @@ def test_app_initializes_without_required_keys(monkeypatch, caplog):
     fake_tokens_module.router = object()
     fake_health_module = types.ModuleType("src.api.routes.health")
     fake_health_module.router = object()
+    fake_experiments_module = types.ModuleType("src.api.routes.experiments")
+    fake_experiments_module.router = object()
 
     fake_routes_pkg.tokens = fake_tokens_module
     fake_routes_pkg.health = fake_health_module
+    fake_routes_pkg.experiments = fake_experiments_module
 
     monkeypatch.setitem(sys.modules, "src.api.routes", fake_routes_pkg)
     monkeypatch.setitem(sys.modules, "src.api.routes.tokens", fake_tokens_module)
     monkeypatch.setitem(sys.modules, "src.api.routes.health", fake_health_module)
+    monkeypatch.setitem(sys.modules, "src.api.routes.experiments", fake_experiments_module)
     sys.modules.pop(module_name, None)
 
     with caplog.at_level(logging.WARNING):

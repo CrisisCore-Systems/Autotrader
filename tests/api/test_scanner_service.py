@@ -11,6 +11,31 @@ import importlib
 
 import pytest
 
+# Provide light-weight httpx stub so client imports do not require optional dependency
+if "httpx" not in sys.modules:  # pragma: no cover - guard for stripped environments
+    httpx_stub = types.ModuleType("httpx")
+
+    class _HttpxClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, *_, **__):
+            pass
+
+        def close(self):
+            return None
+
+    httpx_stub.Client = _HttpxClient
+    sys.modules["httpx"] = httpx_stub
+
+if "pydantic" not in sys.modules:  # pragma: no cover - guard for stripped environments
+    pydantic_stub = types.ModuleType("pydantic")
+
+    class _BaseModel:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
+    pydantic_stub.BaseModel = _BaseModel
+    sys.modules["pydantic"] = pydantic_stub
+
 # Provide a minimal stub for optional dependencies imported at module load
 if "dotenv" not in sys.modules:  # pragma: no cover - guard for test environment
     dotenv_stub = types.ModuleType("dotenv")
@@ -85,6 +110,12 @@ except Exception:  # noqa: BLE001 - broad to handle optional dependency errors
 
         def _build_execution_tree(self, context):  # pragma: no cover - overridden in tests
             raise NotImplementedError
+
+        def scan_with_tree(self, config):  # pragma: no cover - simple orchestration helper
+            context = ScanContext(config)
+            tree = self._build_execution_tree(context)
+            tree.run(context)
+            return context.result, tree
 
     pipeline_stub.HiddenGemScanner = HiddenGemScanner
     pipeline_stub.ScanContext = ScanContext

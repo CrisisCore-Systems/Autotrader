@@ -1,0 +1,234 @@
+.runboard {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: #e0e0e0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
+}
+
+.runboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.runboard-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.session-date {
+  font-size: 14px;
+  color: #a0a0a0;
+}
+
+.runboard-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Market Regime Card */
+.regime-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.regime-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.regime-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.regime-indicator {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  text-transform: uppercase;
+}
+
+.trading-status {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.trading-status.allowed {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.trading-status.blocked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.regime-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.regime-metrics .metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.regime-metrics .label {
+  font-size: 12px;
+  color: #a0a0a0;
+  text-transform: uppercase;
+}
+
+.regime-metrics .value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.regime-metrics .sublabel {
+  font-size: 12px;
+  color: #a0a0a0;
+}
+
+.regime-reason {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  font-size: 13px;
+  color: #d0d0d0;
+  border-left: 3px solid #3b82f6;
+}
+
+/* Phase 2 Progress Card */
+.phase2-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.phase2-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.progress-bar-container {
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.5s ease, background-color 0.3s ease;
+  border-radius: 12px;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.phase2-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metric-box {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.metric-target {
+  font-size: 11px;
+  color: #808080;
+}
+
+/* Loading and Error States */
+.runboard.loading,
+.runboard.error {
+  text-align: center;
+  padding: 48px 24px;
+  color: #a0a0a0;
+}
+
+.runboard.error {
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .runboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .phase2-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .runboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .regime-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .phase2-metrics {
+    grid-template-columns: 1fr;
+  }
+}

@@ -17,21 +17,21 @@ permissions:
 jobs:
   integration:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name: Run integration tests
         env:
           TEST_MODE: integration
@@ -44,14 +44,14 @@ jobs:
           else
             echo "No integration tests directory found, skipping..."
           fi
-      
+
       - name: Run broker integration tests (mocked)
         run: |
           pytest tests/test_broker.py \
             tests/test_bouncehunter_engine.py \
             tests/test_agentic.py \
             -v || echo "Some integration tests not found, continuing..."
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

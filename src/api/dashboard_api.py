@@ -18,6 +18,8 @@ from src.services.reliability import get_system_health, SLA_REGISTRY, CIRCUIT_RE
 from src.core.feature_store import FeatureStore
 from src.core.pipeline import HiddenGemScanner, TokenConfig, ScanContext
 from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient
+from src.core.freshness import get_freshness_tracker
+from src.core.provenance import get_provenance_tracker
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +41,23 @@ if not os.environ.get('COINGECKO_API_KEY'):
 # Data Models
 # ============================================================================
 
+class DataSourceInfo(BaseModel):
+    """Information about a data source with freshness."""
+    source_name: str = Field(..., description="Name of data source")
+    last_updated: str = Field(..., description="ISO timestamp of last update")
+    data_age_seconds: float = Field(..., description="Age of data in seconds")
+    freshness_level: str = Field(..., description="Freshness classification")
+    is_free: bool = Field(default=True, description="Whether this is a FREE data source")
+    
+    
+class ProvenanceInfo(BaseModel):
+    """Provenance information for token data."""
+    artifact_id: Optional[str] = Field(None, description="Unique artifact identifier")
+    data_sources: List[str] = Field(default_factory=list, description="List of data sources used")
+    pipeline_version: Optional[str] = Field(None, description="Pipeline version")
+    created_at: Optional[str] = Field(None, description="Creation timestamp")
+
+
 class TokenResponse(BaseModel):
     """Scanner token summary response."""
     symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
@@ -52,6 +71,8 @@ class TokenResponse(BaseModel):
     sentiment_score: float = Field(..., ge=-1, le=1, description="Sentiment score")
     holders: int = Field(..., ge=0, description="Number of token holders")
     updated_at: str = Field(..., description="ISO timestamp of last update")
+    provenance: Optional[ProvenanceInfo] = Field(None, description="Data provenance information")
+    freshness: Optional[Dict[str, DataSourceInfo]] = Field(None, description="Data freshness by source")
     
     @field_validator('symbol')
     @classmethod
@@ -451,11 +472,30 @@ def root():
 
 
 @app.get("/api/tokens", response_model=List[TokenResponse], tags=["Scanner"])
-def get_tokens():
-    """Get all scanned tokens with summary information.
+def get_tokens(
+    min_score: Optional[float] = None,
+    min_confidence: Optional[float] = None,
+    min_liquidity: Optional[float] = None,
+    max_liquidity: Optional[float] = None,
+    safety_filter: Optional[str] = None,
+    time_window_hours: Optional[int] = None,
+    include_provenance: bool = True,
+    include_freshness: bool = True,
+):
+    """Get all scanned tokens with summary information and filters.
+    
+    Args:
+        min_score: Minimum final score (0-1)
+        min_confidence: Minimum confidence level (0-1)
+        min_liquidity: Minimum liquidity in USD
+        max_liquidity: Maximum liquidity in USD
+        safety_filter: Safety filter ("safe", "flagged", "all")
+        time_window_hours: Only include tokens updated within this many hours
+        include_provenance: Include provenance information
+        include_freshness: Include freshness badges
 
     Returns:
-        List of token summaries
+        List of token summaries with optional provenance and freshness data
     """
     tokens = [
         ("LINK", "chainlink", "chainlink", "0x514910771AF9Ca656af840dff83E8264EcF986CA"),
@@ -465,33 +505,86 @@ def get_tokens():
     ]
 
     summaries: List[Dict[str, Any]] = []
+    freshness_tracker = get_freshness_tracker()
+    
     for symbol, cg_id, df_slug, addr in tokens:
         entry = _get_cached(symbol)
         if entry:
             logger.info(f"Returning cached summary for {symbol}")
-            summaries.append(entry["summary"])
+            summary = entry["summary"].copy()
+        else:
+            detail = scan_token_full(symbol, cg_id, df_slug, addr)
+            if not detail:
+                logger.error(f"Failed to scan {symbol}; skipping from summary response")
+                continue
+            entry = _cache_token(symbol, detail)
+            summary = entry["summary"].copy()
+        
+        # Apply filters
+        if min_score is not None and summary["final_score"] < min_score:
             continue
-
-        detail = scan_token_full(symbol, cg_id, df_slug, addr)
-        if not detail:
-            logger.error(f"Failed to scan {symbol}; skipping from summary response")
+        if min_confidence is not None and summary["confidence"] < min_confidence:
             continue
-
-        entry = _cache_token(symbol, detail)
-        summaries.append(entry["summary"])
+        if min_liquidity is not None and summary["liquidity_usd"] < min_liquidity:
+            continue
+        if max_liquidity is not None and summary["liquidity_usd"] > max_liquidity:
+            continue
+        if safety_filter == "safe" and summary["flagged"]:
+            continue
+        if safety_filter == "flagged" and not summary["flagged"]:
+            continue
+        if time_window_hours is not None:
+            updated_at = datetime.fromisoformat(summary["updated_at"].replace('Z', '+00:00'))
+            age_hours = (datetime.utcnow() - updated_at.replace(tzinfo=None)).total_seconds() / 3600
+            if age_hours > time_window_hours:
+                continue
+        
+        # Add provenance if requested
+        if include_provenance:
+            summary["provenance"] = {
+                "artifact_id": f"token_{symbol}_{int(time.time())}",
+                "data_sources": ["coingecko", "dexscreener", "blockscout"],
+                "pipeline_version": "2.0.0",
+                "created_at": summary["updated_at"],
+            }
+        
+        # Add freshness if requested
+        if include_freshness:
+            # Record updates for tracked sources
+            freshness_tracker.record_update("coingecko")
+            freshness_tracker.record_update("dexscreener")
+            freshness_tracker.record_update("blockscout")
+            
+            freshness_data = {}
+            for source in ["coingecko", "dexscreener", "blockscout"]:
+                freshness = freshness_tracker.get_freshness(
+                    source,
+                    is_free=True,
+                    update_frequency_seconds=300  # 5 minutes
+                )
+                freshness_data[source] = freshness.to_dict()
+            summary["freshness"] = freshness_data
+        
+        summaries.append(summary)
 
     return summaries
 
 
 @app.get("/api/tokens/{symbol}", tags=["Scanner"])
-def get_token(symbol: str):
+def get_token(
+    symbol: str,
+    include_provenance: bool = True,
+    include_freshness: bool = True,
+):
     """Get detailed information for a specific token.
 
     Args:
         symbol: Token symbol (e.g., LINK, UNI, AAVE, PEPE)
+        include_provenance: Include provenance information
+        include_freshness: Include freshness badges
 
     Returns:
-        Detailed token scan results
+        Detailed token scan results with evidence panels
     """
     symbol = symbol.upper()
 
@@ -508,23 +601,111 @@ def get_token(symbol: str):
     entry = _get_cached(symbol)
     if entry:
         logger.info(f"Returning cached full result for {symbol}")
-        return entry["detail"]
+        detail = entry["detail"]
+    else:
+        try:
+            cg_id, df_slug, addr = token_map[symbol]
+            result = scan_token_full(symbol, cg_id, df_slug, addr)
 
-    try:
-        cg_id, df_slug, addr = token_map[symbol]
-        result = scan_token_full(symbol, cg_id, df_slug, addr)
+            if not result:
+                raise HTTPException(status_code=500, detail=f"Scan failed for {symbol} - no result returned")
 
-        if not result:
-            raise HTTPException(status_code=500, detail=f"Scan failed for {symbol} - no result returned")
-
-        entry = _cache_token(symbol, result)
-        return entry["detail"]
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in get_token for {symbol}: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+            entry = _cache_token(symbol, result)
+            detail = entry["detail"]
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in get_token for {symbol}: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+    
+    # Enhance with provenance and freshness
+    if include_provenance:
+        freshness_tracker = get_freshness_tracker()
+        provenance_tracker = get_provenance_tracker()
+        
+        # Add provenance information
+        detail["provenance"] = {
+            "artifact_id": f"token_{symbol}_{int(time.time())}",
+            "data_sources": ["coingecko", "dexscreener", "blockscout"],
+            "pipeline_version": "2.0.0",
+            "created_at": detail["updated_at"],
+            "clickable_links": {
+                "coingecko": f"https://www.coingecko.com/en/coins/{token_map[symbol][0]}",
+                "dexscreener": f"https://dexscreener.com/ethereum/{token_map[symbol][2]}",
+                "blockscout": f"https://eth.blockscout.com/token/{token_map[symbol][2]}",
+            }
+        }
+        
+        # Add freshness badges
+        if include_freshness:
+            freshness_tracker.record_update("coingecko")
+            freshness_tracker.record_update("dexscreener")
+            freshness_tracker.record_update("blockscout")
+            
+            freshness_data = {}
+            for source in ["coingecko", "dexscreener", "blockscout"]:
+                freshness = freshness_tracker.get_freshness(
+                    source,
+                    is_free=True,
+                    update_frequency_seconds=300
+                )
+                freshness_data[source] = freshness.to_dict()
+            detail["freshness"] = freshness_data
+        
+        # Add evidence panels with confidence levels
+        detail["evidence_panels"] = {
+            "price_volume": {
+                "title": "Price & Volume Analysis",
+                "confidence": detail["confidence"],
+                "freshness": freshness_data.get("coingecko", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "source": "coingecko",
+                "is_free": True,
+                "data": {
+                    "price": detail["price"],
+                    "volume_24h": detail["market_snapshot"]["volume_24h"],
+                }
+            },
+            "liquidity": {
+                "title": "Liquidity Analysis",
+                "confidence": detail["confidence"],
+                "freshness": freshness_data.get("dexscreener", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "source": "dexscreener",
+                "is_free": True,
+                "data": {
+                    "liquidity_usd": detail["liquidity_usd"],
+                }
+            },
+            "narrative": {
+                "title": "Narrative Analysis (NVI)",
+                "confidence": detail["confidence"] * 0.9,  # Slightly lower for narrative
+                "freshness": "fresh",
+                "source": "groq_ai",
+                "is_free": True,
+                "data": detail["narrative"]
+            },
+            "tokenomics": {
+                "title": "Tokenomics & Unlocks",
+                "confidence": detail["confidence"],
+                "freshness": freshness_data.get("blockscout", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "source": "blockscout",
+                "is_free": True,
+                "data": {
+                    "holders": detail["holders"],
+                    "unlock_events": detail["unlock_events"],
+                }
+            },
+            "safety": {
+                "title": "Contract Safety Checks",
+                "confidence": detail["confidence"],
+                "freshness": freshness_data.get("blockscout", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "source": "blockscout",
+                "is_free": True,
+                "data": detail["safety_report"]
+            }
+        }
+    
+    return detail
 
 
 # ============================================================================

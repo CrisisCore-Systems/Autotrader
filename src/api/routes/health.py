@@ -146,11 +146,32 @@ def get_circuit_breakers(request: Request) -> List[Dict[str, Any]]:
 def get_health_overview(request: Request) -> Dict[str, Any]:
     """Get overall system health status.
     
-    Combines SLA, circuit breakers, and cache stats.
+    Combines SLA, circuit breakers, cache stats, and per-exchange degradation.
     
     Rate limit: 60 requests per minute per IP address.
     """
     return get_system_health()
+
+
+@router.get("/exchanges")
+@limiter.limit("60/minute")
+def get_exchange_health(request: Request) -> Dict[str, Any]:
+    """Get per-exchange health and degradation metrics.
+    
+    Returns detailed status for each exchange including:
+    - Overall health status
+    - Source-level metrics
+    - Circuit breaker state
+    - Degradation score (0-1, where 0 is healthy and 1 is fully degraded)
+    
+    Rate limit: 60 requests per minute per IP address.
+    """
+    from src.services.reliability import get_exchange_degradation
+    
+    return {
+        "exchanges": get_exchange_degradation(),
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
 
 
 @router.get("/rate-limits")
@@ -287,5 +308,29 @@ def get_security_checks(request: Request) -> Dict[str, Any]:
     return {
         "checks": security_checks,
         "overall_status": "passing",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+
+@router.get("/alerts")
+@limiter.limit("60/minute")
+def get_circuit_breaker_alerts(request: Request, limit: Optional[int] = 50) -> Dict[str, Any]:
+    """Get recent circuit breaker alerts.
+    
+    Returns history of circuit breaker state changes and alerts.
+    
+    Query parameters:
+    - limit: Maximum number of alerts to return (default: 50)
+    
+    Rate limit: 60 requests per minute per IP address.
+    """
+    from src.services.circuit_breaker_alerts import get_alert_manager
+    
+    alert_manager = get_alert_manager()
+    alerts = alert_manager.get_alert_history(limit=limit)
+    
+    return {
+        "alerts": [alert.to_dict() for alert in alerts],
+        "count": len(alerts),
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }

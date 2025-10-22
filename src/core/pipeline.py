@@ -123,19 +123,6 @@ class ScanContext:
     liquidity_ok: bool = False
     result: ScanResult | None = None
     artifact_html: str | None = None
-    news_items: Sequence[NewsItem] = field(default_factory=list)
-    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
-    technical_metrics: Dict[str, float] = field(default_factory=dict)
-    security_metrics: Dict[str, float] = field(default_factory=dict)
-    final_score: float = 0.0
-    github_events: Sequence["GitHubEvent"] = field(default_factory=list)
-    social_posts: Sequence["SocialPost"] = field(default_factory=list)
-    tokenomics_metrics: Sequence["TokenomicsSnapshot"] = field(default_factory=list)
-    alerts: Sequence["Alert"] = field(default_factory=list)
-    # Phase 3: Derivatives & On-Chain Flow
-    derivatives_data: Dict[str, Any] = field(default_factory=dict)
-    onchain_alerts: Sequence["OnChainAlert"] = field(default_factory=list)
-    liquidation_spikes: Dict[str, Any] = field(default_factory=dict)
     news_items: list[NewsItem] = field(default_factory=list)
     sentiment_metrics: Dict[str, float] = field(default_factory=dict)
     technical_metrics: Dict[str, float] = field(default_factory=dict)
@@ -144,6 +131,11 @@ class ScanContext:
     github_events: list["GitHubEvent"] = field(default_factory=list)
     social_posts: list["SocialPost"] = field(default_factory=list)
     tokenomics_metrics: list["TokenomicsSnapshot"] = field(default_factory=list)
+    alerts: list["Alert"] = field(default_factory=list)
+    # Phase 3: Derivatives & On-Chain Flow
+    derivatives_data: Dict[str, Any] = field(default_factory=dict)
+    onchain_alerts: Sequence["OnChainAlert"] = field(default_factory=list)
+    liquidation_spikes: Dict[str, Any] = field(default_factory=dict)
 
 
 class HiddenGemScanner:

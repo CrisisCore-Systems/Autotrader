@@ -11,6 +11,7 @@ pipeline/__main__.py
 pipeline/cli_backtest.py
 src/__init__.py
 src/alerts/__init__.py
+src/alerts/backtest.py
 src/alerts/dispatcher.py
 src/alerts/engine.py
 src/alerts/models.py
@@ -26,6 +27,7 @@ src/api/main.py
 src/api/routes/__init__.py
 src/api/routes/experiments.py
 src/api/routes/health.py
+src/api/routes/monitoring.py
 src/api/routes/tokens.py
 src/api/schemas/__init__.py
 src/api/schemas/token.py
@@ -129,6 +131,7 @@ src/microstructure/multi_exchange_stream.py
 src/microstructure/stream.py
 src/monitoring/__init__.py
 src/monitoring/drift_monitor.py
+src/monitoring/integrated_monitor.py
 src/pipeline/__init__.py
 src/pipeline/backtest.py
 src/pipeline/backtest_statistics.py
@@ -136,6 +139,7 @@ src/security/__init__.py
 src/security/artifact_integrity.py
 src/security/prompt_validator.py
 tests/test_agentic.py
+tests/test_alert_backtest.py
 tests/test_alert_crud_api.py
 tests/test_alert_dispatcher.py
 tests/test_alert_rule_validation.py
@@ -144,6 +148,7 @@ tests/test_alerts_engine.py
 tests/test_api_integration.py
 tests/test_api_startup.py
 tests/test_artifact_integrity.py
+tests/test_backoff.py
 tests/test_backtest_cli.py
 tests/test_backtest_statistics.py
 tests/test_baseline_strategies.py
@@ -152,12 +157,15 @@ tests/test_broker.py
 tests/test_classification_metrics.py
 tests/test_cli_backtest_smoke.py
 tests/test_cli_run_scanner.py
+tests/test_compound_conditions.py
 tests/test_core_services.py
 tests/test_crypto_pnd_detector.py
 tests/test_dashboard_api.py
 tests/test_dev_deployment.py
 tests/test_e2e_workflows.py
+tests/test_enhanced_health_endpoints.py
 tests/test_enhanced_modules.py
+tests/test_enhanced_reliability.py
 tests/test_experiment_tracker.py
 tests/test_experiments_workspace.py
 tests/test_exporter.py
@@ -170,6 +178,7 @@ tests/test_free_clients_integration.py
 tests/test_health_api.py
 tests/test_http_manager.py
 tests/test_ingestion_worker.py
+tests/test_integrated_monitoring.py
 tests/test_integration_high_priority.py
 tests/test_job_queue.py
 tests/test_llm_guardrails.py
@@ -197,3 +206,4 @@ tests/test_summary_report.py
 tests/test_time_sliced_evaluation.py
 tests/test_trading_api.py
 tests/test_tree.py
+tests/test_yaml_rule_loading.py

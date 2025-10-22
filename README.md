@@ -332,9 +332,50 @@ Confidence is computed as `0.5 · Recency + 0.5 · DataCompleteness` and reporte
 
 ### Observability & Safety
 
-- Structured logging with OpenTelemetry.
-- Metrics pipeline (Prometheus + Grafana) tracking ingestion latency, API SLIs, false positive rates.
-- Alerting for safety violations (e.g., contract analyzer flagged HIGH severity) before user notifications.
+**Comprehensive Observability Stack** - Production-ready monitoring and debugging:
+
+- ✅ **Structured JSON Logging**: All components emit structured logs with context using `structlog`
+  - Request correlation IDs for end-to-end tracing
+  - Consistent field names for log aggregation (ELK, Loki, etc.)
+  - Context binding for scoped logging (user, session, request)
+  
+- ✅ **Prometheus Metrics**: Comprehensive metrics for all system components
+  - Scanner metrics: request rates, durations, error rates, gem scores
+  - Data source metrics: API latencies, error rates, cache hit rates, circuit breaker states
+  - API metrics: request counts, durations, active requests, error rates
+  - Feature metrics: validation failures, value distributions, freshness
+  
+- ✅ **Distributed Tracing**: OpenTelemetry integration for request/response flows
+  - Automatic span creation for all major operations
+  - Trace ID propagation across service boundaries
+  - Integration with Jaeger, Zipkin, or other OTLP-compatible backends
+  
+- ✅ **FastAPI Instrumentation**: Automatic API observability
+  - Request/response logging with durations and status codes
+  - Trace ID headers for correlation
+  - Active request tracking
+
+- ✅ **Metrics Server**: Standalone Prometheus exporter
+  ```bash
+  python -m src.services.metrics_server --port 9090
+  # View at http://localhost:9090/metrics
+  ```
+
+- 🛡️ **Safety Alerting**: Real-time notifications for safety violations
+  - Contract analyzer flags (HIGH severity contracts blocked)
+  - Rate limit breaches and API failures
+  - Data quality issues and validation failures
+
+**Quick Start:**
+```bash
+# Run observability example
+python examples/observability_example.py
+
+# View full documentation
+open docs/observability.md
+```
+
+See [`docs/observability.md`](docs/observability.md) for complete configuration and deployment guide.
 
 ### Artifact Provenance & Glossary (NEW)
 

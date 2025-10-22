@@ -9,7 +9,7 @@
 # - Health check for container monitoring
 
 # === Stage 1: Builder ===
-FROM python:3.11-slim-bookworm AS builder
+FROM python:3.14-slim-bookworm AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -33,7 +33,7 @@ RUN pip install --user --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --user --no-cache-dir -r requirements.txt
 
 # === Stage 2: Runtime ===
-FROM python:3.11-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 
 # Security: Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \

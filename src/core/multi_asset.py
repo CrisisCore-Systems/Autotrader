@@ -60,8 +60,8 @@ class Asset:
 @dataclass
 class ForexPair(Asset):
     """Forex currency pair."""
-    base_currency: str
-    quote_currency: str
+    base_currency: str = ""
+    quote_currency: str = ""
     pip_size: float = 0.0001  # Standard for most pairs
     
     def __post_init__(self):
@@ -97,15 +97,15 @@ class ForexPair(Asset):
 @dataclass
 class Option(Asset):
     """Options contract."""
-    underlying: str
-    option_type: OptionType
-    strike: float
-    expiration: date
+    underlying: str = ""
+    option_type: Optional[OptionType] = None
+    strike: float = 0.0
+    expiration: Optional[date] = None
     multiplier: int = 100  # Standard for equity options
     
     def __post_init__(self):
         self.asset_class = AssetClass.OPTION
-        if not self.symbol:
+        if not self.symbol and self.expiration and self.option_type:
             # OCC format: AAPL250117C00150000
             exp_str = self.expiration.strftime("%y%m%d")
             type_char = "C" if self.option_type == OptionType.CALL else "P"

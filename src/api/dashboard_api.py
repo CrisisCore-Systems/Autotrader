@@ -20,6 +20,8 @@ from src.core.pipeline import HiddenGemScanner, TokenConfig, ScanContext
 from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient
 from src.core.freshness import get_freshness_tracker
 from src.core.provenance import get_provenance_tracker
+from src.alerts.models import AlertRuleModel, AlertInboxItem, AlertAnalytics, AlertSeverity, AlertStatus
+from src.alerts.storage import AlertStorage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -230,6 +232,9 @@ feature_store = FeatureStore()
 scanner = None
 cached_results: Dict[str, Dict[str, Any]] = {}
 CACHE_TTL_SECONDS = 300
+
+# Global alert storage instance
+alert_storage = AlertStorage(db_path="alerts.db")
 
 
 # Scanner cache class to hold scan results
@@ -1877,6 +1882,259 @@ async def mark_trade_for_validation(validation_request: Dict[str, Any]) -> Dict[
     except Exception as e:
         logger.error(f"Error marking trade for validation: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to validate trade: {str(e)}")
+
+
+# ============================================================================
+# Alert Rules CRUD Endpoints
+# ============================================================================
+
+@app.post("/api/alerts/rules", tags=["Alerts"])
+async def create_alert_rule(rule_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a new alert rule.
+    
+    Args:
+        rule_data: Alert rule configuration
+    
+    Returns:
+        Created alert rule
+    """
+    try:
+        # Generate ID if not provided
+        if "id" not in rule_data:
+            rule_data["id"] = f"rule_{int(time.time())}_{rule_data.get('description', 'alert')[:20].replace(' ', '_')}"
+        
+        rule = AlertRuleModel.from_dict(rule_data)
+        created_rule = alert_storage.create_rule(rule)
+        
+        return created_rule.to_dict()
+    except Exception as e:
+        logger.error(f"Error creating alert rule: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/alerts/rules", tags=["Alerts"])
+async def list_alert_rules(enabled_only: bool = False) -> List[Dict[str, Any]]:
+    """List all alert rules.
+    
+    Args:
+        enabled_only: Only return enabled rules
+    
+    Returns:
+        List of alert rules
+    """
+    try:
+        rules = alert_storage.list_rules(enabled_only=enabled_only)
+        return [rule.to_dict() for rule in rules]
+    except Exception as e:
+        logger.error(f"Error listing alert rules: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/alerts/rules/{rule_id}", tags=["Alerts"])
+async def get_alert_rule(rule_id: str) -> Dict[str, Any]:
+    """Get a specific alert rule.
+    
+    Args:
+        rule_id: Rule identifier
+    
+    Returns:
+        Alert rule details
+    """
+    rule = alert_storage.get_rule(rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
+    return rule.to_dict()
+
+
+@app.put("/api/alerts/rules/{rule_id}", tags=["Alerts"])
+async def update_alert_rule(rule_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Update an existing alert rule.
+    
+    Args:
+        rule_id: Rule identifier
+        updates: Fields to update
+    
+    Returns:
+        Updated alert rule
+    """
+    try:
+        updated_rule = alert_storage.update_rule(rule_id, updates)
+        if not updated_rule:
+            raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
+        return updated_rule.to_dict()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating alert rule: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/alerts/rules/{rule_id}", tags=["Alerts"])
+async def delete_alert_rule(rule_id: str) -> Dict[str, str]:
+    """Delete an alert rule.
+    
+    Args:
+        rule_id: Rule identifier
+    
+    Returns:
+        Deletion confirmation
+    """
+    success = alert_storage.delete_rule(rule_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
+    return {"status": "deleted", "rule_id": rule_id}
+
+
+# ============================================================================
+# Alerts Inbox Endpoints
+# ============================================================================
+
+@app.get("/api/alerts/inbox", tags=["Alerts"])
+async def list_inbox_alerts(
+    status: Optional[str] = None,
+    severity: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> Dict[str, Any]:
+    """List alerts from inbox with pagination and filters.
+    
+    Args:
+        status: Filter by status (pending, acknowledged, snoozed, resolved)
+        severity: Filter by severity (info, warning, high, critical)
+        limit: Maximum number of alerts to return
+        offset: Pagination offset
+    
+    Returns:
+        List of alerts with pagination metadata
+    """
+    try:
+        alerts = alert_storage.list_alerts(
+            status=status,
+            severity=severity,
+            limit=limit,
+            offset=offset,
+        )
+        
+        return {
+            "alerts": [alert.to_dict() for alert in alerts],
+            "total": len(alerts),
+            "limit": limit,
+            "offset": offset,
+        }
+    except Exception as e:
+        logger.error(f"Error listing inbox alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/alerts/inbox/{alert_id}/acknowledge", tags=["Alerts"])
+async def acknowledge_alert(alert_id: str) -> Dict[str, Any]:
+    """Acknowledge an alert.
+    
+    Args:
+        alert_id: Alert identifier
+    
+    Returns:
+        Updated alert
+    """
+    alert = alert_storage.acknowledge_alert(alert_id)
+    if not alert:
+        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+    return alert.to_dict()
+
+
+@app.post("/api/alerts/inbox/{alert_id}/snooze", tags=["Alerts"])
+async def snooze_alert(alert_id: str, duration_seconds: int = 3600) -> Dict[str, Any]:
+    """Snooze an alert for a specified duration.
+    
+    Args:
+        alert_id: Alert identifier
+        duration_seconds: Snooze duration in seconds (default: 1 hour)
+    
+    Returns:
+        Updated alert
+    """
+    alert = alert_storage.snooze_alert(alert_id, duration_seconds)
+    if not alert:
+        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+    return alert.to_dict()
+
+
+@app.put("/api/alerts/inbox/{alert_id}/labels", tags=["Alerts"])
+async def update_alert_labels(alert_id: str, labels: List[str]) -> Dict[str, Any]:
+    """Update labels for an alert.
+    
+    Args:
+        alert_id: Alert identifier
+        labels: New list of labels
+    
+    Returns:
+        Updated alert
+    """
+    alert = alert_storage.update_alert_labels(alert_id, labels)
+    if not alert:
+        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+    return alert.to_dict()
+
+
+# ============================================================================
+# Alert Analytics Endpoints
+# ============================================================================
+
+@app.get("/api/alerts/analytics/delivery", tags=["Alerts"])
+async def get_delivery_analytics() -> Dict[str, Any]:
+    """Get alert delivery latency metrics.
+    
+    Returns:
+        Delivery metrics including average latency
+    """
+    try:
+        metrics = alert_storage.get_delivery_metrics()
+        return metrics
+    except Exception as e:
+        logger.error(f"Error getting delivery analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/alerts/analytics/performance", tags=["Alerts"])
+async def get_alert_performance() -> Dict[str, Any]:
+    """Get alert rule performance metrics.
+    
+    Returns:
+        Performance metrics including alerts by rule and severity
+    """
+    try:
+        # Get all alerts
+        all_alerts = alert_storage.list_alerts(limit=1000)
+        
+        # Count by severity
+        alerts_by_severity = {}
+        for alert in all_alerts:
+            severity = alert.severity.value if isinstance(alert.severity, AlertSeverity) else alert.severity
+            alerts_by_severity[severity] = alerts_by_severity.get(severity, 0) + 1
+        
+        # Count by rule
+        alerts_by_rule = {}
+        for alert in all_alerts:
+            alerts_by_rule[alert.rule_id] = alerts_by_rule.get(alert.rule_id, 0) + 1
+        
+        # Calculate acknowledgement rate
+        acknowledged = sum(1 for alert in all_alerts if alert.status == AlertStatus.ACKNOWLEDGED)
+        acknowledgement_rate = (acknowledged / len(all_alerts) * 100) if all_alerts else 0.0
+        
+        # Get delivery metrics
+        delivery_metrics = alert_storage.get_delivery_metrics()
+        
+        return {
+            "total_alerts": len(all_alerts),
+            "alerts_by_severity": alerts_by_severity,
+            "alerts_by_rule": alerts_by_rule,
+            "acknowledgement_rate": acknowledgement_rate,
+            "average_delivery_latency_ms": delivery_metrics.get("average_delivery_latency_ms", 0.0),
+            "dedupe_rate": delivery_metrics.get("dedupe_rate", 0.0),
+        }
+    except Exception as e:
+        logger.error(f"Error getting alert performance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================

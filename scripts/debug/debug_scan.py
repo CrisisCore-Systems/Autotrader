@@ -1,6 +1,12 @@
 """Debug scanner to see what's failing."""
 import asyncio
 import logging
+import sys
+from pathlib import Path
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from src.core.pipeline import HiddenGemScanner, TokenConfig
 from src.core.clients import CoinGeckoClient
 from src.core.free_clients import BlockscoutClient, EthereumRPCClient

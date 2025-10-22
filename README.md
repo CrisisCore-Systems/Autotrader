@@ -497,10 +497,13 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
 ├── requirements.txt              # Python dependencies
 ├── requirements-py313.txt        # Python 3.13 compatible dependencies
 ├── pyproject.toml               # Project configuration
-├── simple_api.py                # Compatibility shim for legacy imports
 ├── sitecustomize.py             # Ensures UTF-8 output on interpreters
 ├── scripts/
-│   ├── api/                     # FastAPI launchers and helpers
+│   ├── api/                     # API server launchers (start_api.py, simple_api.py)
+│   ├── debug/                   # Debug scripts for troubleshooting
+│   ├── setup/                   # Configuration and setup utilities
+│   ├── testing/                 # Manual integration and smoke tests
+│   ├── troubleshooting/         # Advanced diagnostic tools
 │   ├── dashboard/               # Frontend tooling
 │   ├── demo/
 │   │   ├── main.py              # Hidden Gem scanner demo entry point

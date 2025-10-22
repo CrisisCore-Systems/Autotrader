@@ -1,10 +1,9 @@
 """FastAPI endpoints for microstructure detection alerts and monitoring."""
 
 from __future__ import annotations
-
+import os
 import time
 from collections import defaultdict, deque
-from dataclasses import asdict
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -14,6 +13,7 @@ from pydantic import BaseModel, Field
 from starlette.responses import Response
 
 from src.core.logging_config import get_logger
+from src.microstructure.alerting import AlertConfig, AlertManager, AlertPriority
 from src.microstructure.detector import DetectionSignal
 
 logger = get_logger(__name__)
@@ -61,6 +61,83 @@ alert_latency = Histogram(
     ["channel"],
     buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
 )
+
+
+def _build_alert_manager_from_env() -> Optional[AlertManager]:
+    """Construct an alert manager from environment configuration."""
+
+    slack_webhook = os.getenv("MICROSTRUCTURE_SLACK_WEBHOOK") or os.getenv(
+        "MICROSTRUCTURE_SLACK_WEBHOOK_URL"
+    )
+    discord_webhook = os.getenv("MICROSTRUCTURE_DISCORD_WEBHOOK")
+    telegram_token = os.getenv("MICROSTRUCTURE_TELEGRAM_BOT_TOKEN")
+    telegram_chat_id = os.getenv("MICROSTRUCTURE_TELEGRAM_CHAT_ID")
+
+    if not any([slack_webhook, discord_webhook, telegram_token and telegram_chat_id]):
+        logger.info("microstructure_alerts_disabled_no_channels")
+        return None
+
+    config = AlertConfig(
+        slack_webhook_url=slack_webhook,
+        slack_channel=os.getenv("MICROSTRUCTURE_SLACK_CHANNEL", "#trading-alerts"),
+        slack_username=os.getenv("MICROSTRUCTURE_SLACK_USERNAME", "Microstructure Bot"),
+        discord_webhook_url=discord_webhook,
+        telegram_bot_token=telegram_token,
+        telegram_chat_id=telegram_chat_id,
+        min_score=float(os.getenv("MICROSTRUCTURE_ALERT_MIN_SCORE", "0.5")),
+        cooldown_seconds=float(os.getenv("MICROSTRUCTURE_ALERT_COOLDOWN", "60")),
+        max_alerts_per_minute=int(os.getenv("MICROSTRUCTURE_ALERTS_PER_MINUTE", "10")),
+        max_alerts_per_hour=int(os.getenv("MICROSTRUCTURE_ALERTS_PER_HOUR", "100")),
+    )
+
+    manager = AlertManager(config)
+    if not manager.channels:
+        logger.info("microstructure_alerts_disabled_after_init")
+        return None
+
+    enabled_channels = [channel.__class__.__name__ for channel in manager.channels]
+    logger.info("microstructure_alerts_enabled channels=%s", enabled_channels)
+    return manager
+
+
+ALERT_MANAGER: Optional[AlertManager] = _build_alert_manager_from_env()
+_ALERT_STATE = {"sent": 0}
+
+
+async def dispatch_alerts(signal: DetectionSignal) -> None:
+    """Send alerts for a detection signal using the configured manager."""
+
+    if ALERT_MANAGER is None:
+        logger.debug("alert_dispatch_skipped_no_manager")
+        return
+
+    try:
+        results = await ALERT_MANAGER.send_alert(signal, AlertPriority.MEDIUM)
+    except Exception as exc:  # pragma: no cover - defensive guard
+        logger.error("alert_dispatch_failed", error=str(exc), exc_info=True)
+        return
+
+    for channel, success in results.items():
+        channel_label = channel.lower()
+        status = "success" if success else "failed"
+        alert_counter.labels(channel=channel_label, status=status).inc()
+        if success:
+            latency = max(time.time() - signal.timestamp, 0.0)
+            alert_latency.labels(channel=channel_label).observe(latency)
+            _ALERT_STATE["sent"] += 1
+
+    logger.info(
+        "alert_dispatch_complete signal_id=%s results=%s",
+        signal.metadata.get("signal_id", "unknown"),
+        results,
+    )
+
+
+def _alerts_sent_total() -> int:
+    if ALERT_MANAGER is None:
+        return _ALERT_STATE["sent"]
+    stats = ALERT_MANAGER.get_stats()
+    return stats.get("total_alerts_sent", _ALERT_STATE["sent"])
 
 
 # ============================================================================
@@ -192,7 +269,7 @@ async def health_check():
         status="healthy",
         uptime_seconds=stats["uptime_seconds"],
         signals_received=stats["total_signals"],
-        alerts_sent=0,  # TODO: Track from alerting module
+        alerts_sent=_alerts_sent_total(),
     )
 
 
@@ -246,8 +323,8 @@ async def submit_signal(
         processing_time = time.time() - start_time
         signal_processing_time.observe(processing_time)
 
-        # TODO: Trigger alerts in background
-        # background_tasks.add_task(send_alerts, signal)
+        if ALERT_MANAGER is not None and ALERT_MANAGER.channels:
+            background_tasks.add_task(dispatch_alerts, signal)
 
         logger.info(
             "signal_received",
@@ -307,7 +384,7 @@ async def get_metrics():
             active_signals=stats["active_signals"],
             signals_by_type=stats["signals_by_type"],
             avg_score=stats["avg_score"],
-            alerts_sent=0,  # TODO: Track from alerting
+            alerts_sent=_alerts_sent_total(),
         )
 
     except Exception as e:

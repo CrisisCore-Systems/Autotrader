@@ -8,7 +8,7 @@ import traceback
 from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from src.core.pipeline import HiddenGemScanner, ScanContext, TokenConfig
+from src.core.pipeline import HiddenGemScanner, TokenConfig
 from src.core.clients import CoinGeckoClient, DefiLlamaClient, EtherscanClient
 from src.core.free_clients import BlockscoutClient, EthereumRPCClient
 from src.core.orderflow_clients import DexscreenerClient
@@ -37,11 +37,9 @@ class TokenScannerService:
     ) -> None:
         self._cache = cache or TokenCache(ttl_seconds=ttl_seconds)
         self._tokens = tuple(tokens)
-        self._scanner: Optional[HiddenGemScanner] = None
 
-    def _ensure_scanner(self) -> HiddenGemScanner:
-        # BUGFIX: Create a NEW scanner instance for each scan to avoid state pollution
-        # The old singleton pattern was causing all tokens to share the same scan results
+    def _create_scanner(self) -> HiddenGemScanner:
+        """Instantiate a fresh scanner to avoid stateful cross-talk between requests."""
         LOGGER.info("Creating fresh HiddenGemScanner instance to avoid state pollution")
         etherscan_key = os.environ.get("ETHERSCAN_API_KEY")
         sanitized_key = etherscan_key.strip() if etherscan_key and etherscan_key.strip() else None
@@ -68,15 +66,16 @@ class TokenScannerService:
             rpc_client=rpc_client,
         )
 
-    def _build_context(self, symbol: str, coingecko_id: str, defillama_slug: str, address: str) -> ScanContext:
-        token_cfg = TokenConfig(
+    def _build_config(
+        self, symbol: str, coingecko_id: str, defillama_slug: str, address: str
+    ) -> TokenConfig:
+        return TokenConfig(
             symbol=symbol,
             coingecko_id=coingecko_id,
             defillama_slug=defillama_slug,
             contract_address=address,
             narratives=[f"{symbol} market activity"],
         )
-        return ScanContext(config=token_cfg)
 
     def scan_token(
         self,
@@ -88,17 +87,9 @@ class TokenScannerService:
         """Run full scan workflow and return the detailed response payload."""
         try:
             LOGGER.info("Scanning token %s", symbol)
-            scanner = self._ensure_scanner()
-            context = self._build_context(symbol, coingecko_id, defillama_slug, address)
-
-            tree = scanner._build_execution_tree(context)  # pylint: disable=protected-access
-            tree.run(context)
-
-            if not context.result:
-                LOGGER.error("Scan completed but no result object for %s", symbol)
-                return None
-
-            result = context.result
+            scanner = self._create_scanner()
+            token_cfg = self._build_config(symbol, coingecko_id, defillama_slug, address)
+            result, tree = scanner.scan_with_tree(token_cfg)
             if not result.market_snapshot:
                 LOGGER.error("Scan completed but no market snapshot for %s", symbol)
                 return None

@@ -119,6 +119,7 @@ class AlpacaBroker:
         self.max_concurrent = max_concurrent
         
         logger.info(f"✅ AlpacaBroker initialized ({'PAPER' if paper else 'LIVE'} trading)")
+        self._position_metadata: Dict[str, Dict[str, object]] = {}
     
     def get_account(self) -> dict:
         """Get account information."""
@@ -151,17 +152,18 @@ class AlpacaBroker:
                 unrealized_pnl = float(pos.unrealized_pl)
                 unrealized_pnl_pct = float(pos.unrealized_plpc) * 100
                 
+                meta = self._position_metadata.get(pos.symbol.upper(), {})
                 positions.append(Position(
                     ticker=pos.symbol,
                     qty=qty,
                     entry_price=entry_price,
                     current_price=current_price,
-                    stop_price=0.0,  # TODO: Get from orders
-                    target_price=0.0,  # TODO: Get from orders
+                    stop_price=float(meta.get("stop_price", 0.0) or 0.0),
+                    target_price=float(meta.get("target_price", 0.0) or 0.0),
                     unrealized_pnl=unrealized_pnl,
                     unrealized_pnl_pct=unrealized_pnl_pct,
-                    signal_id="",  # TODO: Track signal_id
-                    entry_date=pos.created_at,
+                    signal_id=str(meta.get("signal_id", "")),
+                    entry_date=meta.get("entry_time", pos.created_at),
                 ))
             
             return positions
@@ -289,6 +291,14 @@ class AlpacaBroker:
             # Submit entry order
             entry_order = self.trading_client.submit_order(market_order)
             order_id = entry_order.id
+
+            ticker_key = order.ticker.upper()
+            self._position_metadata[ticker_key] = {
+                "stop_price": order.stop_price,
+                "target_price": order.target_price,
+                "signal_id": order.signal_id,
+                "entry_time": datetime.utcnow(),
+            }
             
             logger.info(f"✅ Entry order submitted: {order_id}")
             
@@ -304,6 +314,7 @@ class AlpacaBroker:
             logger.error(f"❌ Failed to execute trade: {e}")
             import traceback
             traceback.print_exc()
+            self._position_metadata.pop(order.ticker.upper(), None)
             return None
     
     def close_position(
@@ -316,6 +327,7 @@ class AlpacaBroker:
             # Close position (market order to close entire position)
             self.trading_client.close_position(ticker)
             logger.info(f"✅ Closed position {ticker}: {reason}")
+            self._position_metadata.pop(ticker.upper(), None)
             return True
             
         except Exception as e:

@@ -84,15 +84,10 @@ class CoinGeckoClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
-        super().__init__(session)
-
-    def fetch_market_chart(self, token_id: str, *, vs_currency: str = "usd", days: int = 14) -> Dict[str, Any]:
-        response = self.client.get(
-            f"/coins/{token_id}/market_chart",
-            params={"vs_currency": vs_currency, "days": days},
+        super().__init__(
+            session,
+            rate_limits={"api.coingecko.com": RateLimit(30, 60.0)},
         )
-        response.raise_for_status()
-        super().__init__(session, rate_limits={"api.coingecko.com": RateLimit(30, 60.0)})
 
     def fetch_market_chart(self, token_id: str, *, vs_currency: str = "usd", days: int = 14) -> Dict[str, Any]:
         response = self.requester.request(
@@ -115,12 +110,10 @@ class DefiLlamaClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
-        super().__init__(session)
-
-    def fetch_protocol(self, slug: str) -> Dict[str, Any]:
-        response = self.client.get(f"/protocol/{slug}")
-        response.raise_for_status()
-        super().__init__(session, rate_limits={"api.llama.fi": RateLimit(60, 60.0)})
+        super().__init__(
+            session,
+            rate_limits={"api.llama.fi": RateLimit(60, 60.0)},
+        )
 
     def fetch_protocol(self, slug: str) -> Dict[str, Any]:
         response = self.requester.request(

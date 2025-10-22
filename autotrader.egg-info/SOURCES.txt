@@ -26,6 +26,7 @@ src/api/main.py
 src/api/routes/__init__.py
 src/api/routes/experiments.py
 src/api/routes/health.py
+src/api/routes/monitoring.py
 src/api/routes/tokens.py
 src/api/schemas/__init__.py
 src/api/schemas/token.py
@@ -129,6 +130,7 @@ src/microstructure/multi_exchange_stream.py
 src/microstructure/stream.py
 src/monitoring/__init__.py
 src/monitoring/drift_monitor.py
+src/monitoring/integrated_monitor.py
 src/pipeline/__init__.py
 src/pipeline/backtest.py
 src/pipeline/backtest_statistics.py
@@ -174,6 +176,7 @@ tests/test_free_clients_integration.py
 tests/test_health_api.py
 tests/test_http_manager.py
 tests/test_ingestion_worker.py
+tests/test_integrated_monitoring.py
 tests/test_integration_high_priority.py
 tests/test_job_queue.py
 tests/test_llm_guardrails.py

@@ -2,11 +2,66 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import yaml
+
+
+@dataclass(frozen=True, slots=True)
+class CompoundCondition:
+    """Compound condition with AND/OR/NOT logic."""
+    
+    operator: str  # "AND", "OR", "NOT"
+    conditions: tuple[Union["CompoundCondition", "SimpleCondition"], ...] = ()
+    
+    def evaluate(self, context: Dict[str, Any]) -> bool:
+        """Evaluate compound condition against context."""
+        results = [cond.evaluate(context) for cond in self.conditions]
+        
+        if self.operator == "AND":
+            return all(results)
+        elif self.operator == "OR":
+            return any(results)
+        elif self.operator == "NOT":
+            return not any(results)
+        else:
+            return False
+
+
+@dataclass(frozen=True, slots=True)
+class SimpleCondition:
+    """Simple metric comparison condition."""
+    
+    metric: str
+    operator: str  # "lt", "gt", "lte", "gte", "eq", "neq"
+    threshold: Any
+    
+    def evaluate(self, context: Dict[str, Any]) -> bool:
+        """Evaluate condition against context."""
+        if self.metric not in context:
+            return False
+        
+        value = context[self.metric]
+        
+        try:
+            if self.operator in ("lt", "<"):
+                return value < self.threshold
+            elif self.operator in ("gt", ">"):
+                return value > self.threshold
+            elif self.operator in ("lte", "<=", "le"):
+                return value <= self.threshold
+            elif self.operator in ("gte", ">=", "ge"):
+                return value >= self.threshold
+            elif self.operator in ("eq", "=="):
+                return value == self.threshold
+            elif self.operator in ("neq", "!="):
+                return value != self.threshold
+            else:
+                return False
+        except (TypeError, ValueError):
+            return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +76,13 @@ class AlertRule:
     channels: Sequence[str] = ()
     version: str = "v1"
     description: str = ""
+    # V2 fields for compound conditions
+    condition: Optional[Union[CompoundCondition, SimpleCondition]] = None
+    severity: str = "info"
+    escalation_policy: Optional[str] = None
+    suppression_duration: int = 3600  # seconds
+    message_template: str = ""
+    tags: Sequence[str] = ()
 
     def key(self, *, token: str, window_start: str) -> str:
         """Return a deterministic idempotency key for the rule."""
@@ -37,6 +99,18 @@ class AlertRule:
         if safety_ok is not self.safety_ok:
             return False
         return True
+    
+    def matches_v2(self, context: Dict[str, Any]) -> bool:
+        """Evaluate rule using v2 compound conditions if available."""
+        if self.condition is not None:
+            return self.condition.evaluate(context)
+        
+        # Fall back to v1 logic
+        return self.matches(
+            score=context.get("gem_score", 0),
+            confidence=context.get("confidence", 0),
+            safety_ok=context.get("safety_ok", False)
+        )
 
 
 DEFAULT_RULES: tuple[AlertRule, ...] = (
@@ -52,18 +126,55 @@ DEFAULT_RULES: tuple[AlertRule, ...] = (
 )
 
 
+def _parse_condition(cond_data: Mapping[str, Any]) -> Union[CompoundCondition, SimpleCondition]:
+    """Parse condition from rule data."""
+    cond_type = cond_data.get("type", "simple")
+    
+    if cond_type == "compound":
+        operator = str(cond_data.get("operator", "AND")).upper()
+        sub_conditions = []
+        for sub_cond in cond_data.get("conditions", []):
+            sub_conditions.append(_parse_condition(sub_cond))
+        return CompoundCondition(operator=operator, conditions=tuple(sub_conditions))
+    else:
+        # Simple condition
+        return SimpleCondition(
+            metric=str(cond_data.get("metric", "")),
+            operator=str(cond_data.get("operator", "eq")),
+            threshold=cond_data.get("threshold")
+        )
+
+
 def _normalise_rule(raw: Mapping[str, object]) -> AlertRule:
     where = raw.get("where", {})
     channels = tuple(raw.get("channels", ()))
+    version = str(raw.get("version", "v1"))
+    
+    # Parse compound condition if present (v2)
+    condition = None
+    if "condition" in raw:
+        condition = _parse_condition(raw["condition"])
+    
+    # For v1 rules, extract simple thresholds
+    score_min = float(where.get("gem_score_min", 0.0))
+    confidence_min = float(where.get("confidence_min", 0.0))
+    safety_ok = bool(where.get("safety_ok", True))
+    
     return AlertRule(
         id=str(raw["id"]),
         description=str(raw.get("description", "")),
-        score_min=float(where.get("gem_score_min", 0.0)),
-        confidence_min=float(where.get("confidence_min", 0.0)),
-        safety_ok=bool(where.get("safety_ok", True)),
+        score_min=score_min,
+        confidence_min=confidence_min,
+        safety_ok=safety_ok,
         cool_off_minutes=int(raw.get("cool_off_minutes", 60)),
         channels=channels,
-        version=str(raw.get("version", "v1")),
+        version=version,
+        condition=condition,
+        severity=str(raw.get("severity", "info")),
+        escalation_policy=raw.get("escalation_policy"),
+        suppression_duration=int(raw.get("suppression_duration", 3600)),
+        message_template=str(raw.get("message_template", "")),
+        tags=tuple(raw.get("tags", [])),
     )
 
 
@@ -87,4 +198,4 @@ def load_rules(path: str | Path | None) -> Sequence[AlertRule]:
     return rules or DEFAULT_RULES
 
 
-__all__ = ["AlertRule", "DEFAULT_RULES", "load_rules"]
+__all__ = ["AlertRule", "DEFAULT_RULES", "load_rules", "CompoundCondition", "SimpleCondition"]

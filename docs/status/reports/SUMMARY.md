@@ -1,5 +1,7 @@
 # 🎉 VoidBloom Scanner - All Features Working!
 
+📚 **Need more context?** Start with the [Documentation Portal](../../documentation_portal.md) for a curated list of the latest guides and runbooks.
+
 ## ✅ System Status: OPERATIONAL
 
 ### 🚀 Quick Start

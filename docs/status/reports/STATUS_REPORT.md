@@ -1,6 +1,8 @@
 # VoidBloom Hidden Gem Scanner - System Status Report
-**Generated:** December 2024  
+**Generated:** December 2024
 **Status:** ✅ PRODUCTION READY
+
+📚 **Documentation Hub:** For the latest runbooks and reference material, begin with the [Documentation Portal](../../documentation_portal.md).
 
 ---
 
@@ -329,10 +331,9 @@ curl http://127.0.0.1:8000/docs
 ## 📖 Documentation
 
 ### Available Docs:
-- **`docs/ETHERSCAN_V2_MIGRATION.md`** - Etherscan V2 upgrade guide
-- **`ARCHITECTURE.md`** - System architecture overview
-- **`SETUP_GUIDE.md`** - Installation instructions  
-- **`README.md`** - Project overview
+- [Documentation Portal](../../documentation_portal.md) – Consolidated entry point for runbooks, quick references, and guides.
+- [Etherscan V2 Migration](../../ETHERSCAN_V2_MIGRATION.md) – Upgrade path for the contract verification client.
+- [Observability Guide](../../OBSERVABILITY_GUIDE.md) – Metrics, logging, and tracing patterns in production.
 
 ### Key Directories:
 - **`src/core/`** - Core scanning logic

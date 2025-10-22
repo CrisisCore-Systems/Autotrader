@@ -31,7 +31,7 @@ In TWS:
 
 ### 4. Test Connection
 ```bash
-python test_ibkr_connection.py
+python scripts/testing/manual_integration/test_ibkr_connection.py
 ```
 
 You should see:
@@ -245,7 +245,7 @@ broker = create_broker("ibkr")
 
 If you encounter issues:
 1. Check TWS API logs: `C:\TWS API\log`
-2. Run the test script: `python test_ibkr_connection.py`
+2. Run the test script: `python scripts/testing/manual_integration/test_ibkr_connection.py`
 3. Verify TWS settings match configuration
 4. Check that ib_insync is properly installed
 

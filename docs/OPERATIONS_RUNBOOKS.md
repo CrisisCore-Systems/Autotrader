@@ -123,7 +123,7 @@ curl -H "APCA-API-KEY-ID: $ALPACA_API_KEY" \
 **For Questrade:**
 ```bash
 # Refresh token (tokens expire every 30 days)
-python set_questrade_token.py
+python scripts/setup/set_questrade_token.py
 
 # Verify token
 cat ~/.config/autotrader/questrade_token.json

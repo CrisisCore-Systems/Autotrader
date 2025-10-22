@@ -256,7 +256,7 @@ GET  /health                             # API health check
   - `BINANCE_API_KEY`, `BINANCE_API_SECRET`
   - `BYBIT_API_KEY`, `BYBIT_API_SECRET`
   - `TWITTER_BEARER_TOKEN`
-- [x] Start dashboard API: `python start_api.py`
+- [x] Start dashboard API: `python scripts/api/start_api.py`
 - [x] Verify health: `curl http://127.0.0.1:8001/health` (or open in browser)
 
 ### Frontend Setup

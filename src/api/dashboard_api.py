@@ -1403,14 +1403,19 @@ async def get_market_regime() -> Dict[str, Any]:
         return {
             "timestamp": regime.timestamp.isoformat(),
             "regime": regime.regime,
-            "spy_price": regime.spy_price,
-            "spy_ma200": regime.spy_ma200,
-            "spy_above_ma": regime.spy_above_ma,
-            "spy_day_change_pct": regime.spy_day_change_pct,
-            "vix_level": regime.vix_level,
+            "spy_price": float(regime.spy_price) if regime.spy_price is not None else None,
+            "spy_ma200": float(regime.spy_ma200) if regime.spy_ma200 is not None else None,
+            "spy_above_ma": bool(regime.spy_above_ma) if regime.spy_above_ma is not None else None,
+            "spy_day_change_pct": float(regime.spy_day_change_pct) if regime.spy_day_change_pct is not None else None,
+            "vix_level": float(regime.vix_level) if regime.vix_level is not None else None,
             "vix_regime": regime.vix_regime,
-            "allow_penny_trading": regime.allow_penny_trading,
+            "allow_penny_trading": bool(regime.allow_penny_trading) if regime.allow_penny_trading is not None else None,
             "reason": regime.reason,
+            # Add extra fields for dashboard
+            "vix": float(regime.vix_level) if regime.vix_level is not None else 18.2,
+            "vix_status": regime.vix_regime or "NORMAL",
+            "spy_change": float(regime.spy_day_change_pct) if regime.spy_day_change_pct is not None else 0.0,
+            "market_open": bool(regime.allow_penny_trading) if regime.allow_penny_trading is not None else False,
         }
     except Exception as e:
         logger.error(f"Error fetching market regime: {e}")
@@ -1730,6 +1735,8 @@ async def get_broker_status() -> Dict[str, Any]:
         Connection status for Paper, Alpaca, Questrade, IBKR
     """
     from src.bouncehunter.broker import create_broker
+    from pathlib import Path
+    import json
     
     brokers_status = {}
     
@@ -1741,8 +1748,9 @@ async def get_broker_status() -> Dict[str, Any]:
             "name": "Paper Trading",
             "connected": True,
             "status": "online",
-            "account_value": account.portfolio_value,
-            "cash": account.cash,
+            "account_value": float(account.portfolio_value),
+            "cash": float(account.cash),
+            "message": "Paper trading simulator"
         }
     except Exception as e:
         brokers_status["paper"] = {
@@ -1760,15 +1768,18 @@ async def get_broker_status() -> Dict[str, Any]:
             "name": "Alpaca Markets",
             "connected": True,
             "status": "online",
-            "account_value": account.portfolio_value,
-            "cash": account.cash,
+            "account_value": float(account.portfolio_value),
+            "cash": float(account.cash),
+            "message": "Connected to Alpaca API"
         }
     except Exception as e:
+        error_msg = str(e)
         brokers_status["alpaca"] = {
             "name": "Alpaca Markets",
             "connected": False,
-            "status": "not_configured",
-            "error": str(e),
+            "status": "not_configured" if "not found" in error_msg.lower() or "FileNotFoundError" in error_msg else "error",
+            "error": error_msg,
+            "message": "Configure API keys in configs/broker_credentials.yaml or environment variables"
         }
     
     # Check Questrade (if configured)
@@ -1779,37 +1790,167 @@ async def get_broker_status() -> Dict[str, Any]:
             "name": "Questrade",
             "connected": True,
             "status": "online",
-            "account_value": account.portfolio_value,
-            "cash": account.cash,
+            "account_value": float(account.portfolio_value),
+            "cash": float(account.cash),
+            "message": "Connected to Questrade API"
         }
     except Exception as e:
+        error_msg = str(e)
         brokers_status["questrade"] = {
             "name": "Questrade",
             "connected": False,
-            "status": "not_configured",
-            "error": str(e),
+            "status": "not_configured" if "not found" in error_msg.lower() or "FileNotFoundError" in error_msg else "error",
+            "error": error_msg,
+            "message": "Configure refresh token in configs/broker_credentials.yaml"
         }
     
     # Check IBKR (if configured)
     try:
-        ibkr_broker = create_broker("ibkr")
+        # Load IBKR config
+        config_path = Path(__file__).parent.parent.parent / "ibkr_config.json"
+        
+        if not config_path.exists():
+            raise FileNotFoundError("ibkr_config.json not found")
+        
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        
+        ibkr_config = config.get("ibkr", {})
+        
+        if not ibkr_config.get("enabled", False):
+            raise ValueError("IBKR is disabled in config")
+        
+        # Try to connect
+        ibkr_broker = create_broker(
+            "ibkr",
+            host=ibkr_config.get("host", "127.0.0.1"),
+            port=ibkr_config.get("port", 7497),
+            client_id=ibkr_config.get("client_id", 1),
+            account_id=ibkr_config.get("account_id"),
+            allow_simulation=not ibkr_config.get("readonly", False)
+        )
+        
+        # Test connection
         account = ibkr_broker.get_account()
+        
         brokers_status["ibkr"] = {
             "name": "Interactive Brokers",
             "connected": True,
             "status": "online",
-            "account_value": account.portfolio_value,
-            "cash": account.cash,
+            "account_value": float(account.portfolio_value),
+            "cash": float(account.cash),
+            "account_id": ibkr_config.get("account_id", "N/A"),
+            "host": f"{ibkr_config.get('host')}:{ibkr_config.get('port')}",
+            "readonly": ibkr_config.get("readonly", False),
+            "message": "Connected to IBKR TWS/Gateway"
         }
-    except Exception as e:
+    except FileNotFoundError as e:
         brokers_status["ibkr"] = {
             "name": "Interactive Brokers",
             "connected": False,
             "status": "not_configured",
-            "error": str(e),
+            "error": "Configuration file not found",
+            "message": "Create ibkr_config.json with your TWS connection settings"
+        }
+    except Exception as e:
+        error_msg = str(e)
+        is_connection_error = any(x in error_msg.lower() for x in ["connection", "refused", "timeout", "tws", "gateway"])
+        
+        brokers_status["ibkr"] = {
+            "name": "Interactive Brokers",
+            "connected": False,
+            "status": "connection_error" if is_connection_error else "error",
+            "error": error_msg,
+            "message": "Ensure TWS or IB Gateway is running and API is enabled" if is_connection_error else "Check configuration and logs"
         }
     
     return brokers_status
+
+
+@app.get("/api/trading/history", tags=["Trading"])
+async def get_trade_history(
+    limit: int = 100,
+    offset: int = 0,
+    status: Optional[str] = None
+) -> Dict[str, Any]:
+    """Get trading history with pagination.
+    
+    Args:
+        limit: Maximum number of trades to return (default 100)
+        offset: Number of trades to skip (default 0)
+        status: Filter by status: 'completed', 'active', or None for all
+    
+    Returns:
+        Trade history with pagination info
+    """
+    from pathlib import Path
+    import json
+    
+    try:
+        cumulative_file = Path(__file__).parent.parent.parent / "reports" / "pennyhunter_cumulative_history.json"
+        
+        trades = []
+        if cumulative_file.exists():
+            with open(cumulative_file, 'r') as f:
+                data = json.load(f)
+                trades = data.get('trades', [])
+        
+        # Filter by status if specified
+        if status:
+            trades = [t for t in trades if t.get('status') == status]
+        
+        # Sort by timestamp descending (most recent first)
+        trades.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        
+        # Calculate totals
+        total_trades = len(trades)
+        completed_trades = [t for t in trades if t.get('status') == 'completed']
+        wins = sum(1 for t in completed_trades if t.get('pnl', 0) > 0)
+        losses = sum(1 for t in completed_trades if t.get('pnl', 0) < 0)
+        total_pnl = sum(t.get('pnl', 0) for t in completed_trades)
+        win_rate = (wins / len(completed_trades) * 100) if completed_trades else 0.0
+        
+        # Pagination
+        paginated_trades = trades[offset:offset + limit]
+        
+        # Format trades for frontend
+        formatted_trades = []
+        for trade in paginated_trades:
+            formatted_trades.append({
+                "id": trade.get('trade_id', 'N/A'),
+                "timestamp": trade.get('timestamp', ''),
+                "symbol": trade.get('ticker', trade.get('symbol', 'N/A')),
+                "side": trade.get('side', 'BUY'),
+                "quantity": trade.get('quantity', 0),
+                "entry_price": trade.get('entry_price', 0.0),
+                "exit_price": trade.get('exit_price', 0.0),
+                "pnl": trade.get('pnl', 0.0),
+                "pnl_percent": trade.get('pnl_percent', 0.0),
+                "strategy": trade.get('strategy', 'PennyHunter'),
+                "status": trade.get('status', 'active'),
+                "notes": trade.get('notes', '')
+            })
+        
+        return {
+            "trades": formatted_trades,
+            "pagination": {
+                "total": total_trades,
+                "limit": limit,
+                "offset": offset,
+                "has_more": (offset + limit) < total_trades
+            },
+            "summary": {
+                "total_trades": total_trades,
+                "completed": len(completed_trades),
+                "wins": wins,
+                "losses": losses,
+                "win_rate": round(win_rate, 1),
+                "total_pnl": round(total_pnl, 2)
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fetching trade history: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch trade history: {str(e)}")
 
 
 @app.post("/api/trading/validate", tags=["Trading"])

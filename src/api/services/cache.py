@@ -17,7 +17,11 @@ def _parse_iso_timestamp(value: str) -> datetime:
     if value.endswith("Z"):
         value = value[:-1] + "+00:00"
     try:
-        return datetime.fromisoformat(value)
+        # Parse as timezone-aware and convert to naive UTC
+        dt = datetime.fromisoformat(value)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone().replace(tzinfo=None)
+        return dt
     except ValueError:
         return datetime.utcnow()
 

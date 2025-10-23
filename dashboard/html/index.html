@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader - PennyHunter Dashboard</title>
+    <link rel="stylesheet" href="styles.css?v=7">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>🎯 PennyHunter Paper Trading</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info" id="account-info">Account: <span id="account-id">Loading...</span> | Capital: $<span id="account-capital">--</span></span>
+                <span class="timestamp" id="current-time">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html" class="nav-link active">Dashboard</a>
+            <a href="trading.html" class="nav-link">Trading</a>
+            <a href="portfolio.html" class="nav-link">Portfolio</a>
+            <a href="analytics.html" class="nav-link">Analytics</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-grid">
+                <!-- Market Status Panel -->
+                <section class="panel market-status">
+                    <h2>📊 Market Status</h2>
+                    <div class="market-indicators">
+                        <div class="indicator-card" id="vix-indicator">
+                            <div class="indicator-label">VIX</div>
+                            <div class="indicator-value" id="vix-value">--</div>
+                            <div class="indicator-status" id="vix-status">LOADING</div>
+                        </div>
+                        <div class="indicator-card" id="spy-indicator">
+                            <div class="indicator-label">SPY</div>
+                            <div class="indicator-value" id="spy-value">--</div>
+                            <div class="indicator-change" id="spy-change">--%</div>
+                        </div>
+                        <div class="indicator-card" id="regime-indicator">
+                            <div class="indicator-label">Regime</div>
+                            <div class="indicator-value" id="regime-value">LOADING</div>
+                            <div class="indicator-status" id="trading-status">--</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Broker Status Panel -->
+                <section class="panel broker-status">
+                    <h2>🔌 Broker Connections</h2>
+                    <div class="broker-grid" id="broker-grid">
+                        <div class="broker-card loading">
+                            <div class="broker-name">Loading...</div>
+                            <div class="broker-status">Checking connection...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Metrics -->
+                <section class="panel performance-metrics">
+                    <h2>📈 Performance</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Total P&L</div>
+                            <div class="metric-value" id="total-pnl">$0.00</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Win Rate</div>
+                            <div class="metric-value" id="win-rate">0.0%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Total Trades</div>
+                            <div class="metric-value" id="total-trades">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Active Positions</div>
+                            <div class="metric-value" id="active-positions">3</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Wins</div>
+                            <div class="metric-value" id="wins">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Losses</div>
+                            <div class="metric-value" id="losses">0</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- P&L Chart -->
+                <section class="panel performance-chart">
+                    <h2>📊 P&L Performance</h2>
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="pnl-chart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Active Positions -->
+                <section class="panel positions-table">
+                    <h2>📊 Active Positions</h2>
+                    <div class="table-container">
+                        <table id="positions-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Shares</th>
+                                    <th>Entry</th>
+                                    <th>Current</th>
+                                    <th>P&L</th>
+                                    <th>P&L %</th>
+                                    <th>Target</th>
+                                    <th>Stop</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positions-tbody">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                        No active positions. Start the scanner to begin trading.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Memory System -->
+                <section class="panel memory-system">
+                    <h2>🧠 Memory System</h2>
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="showMemoryTab('active')">Active</button>
+                        <button class="tab-button" onclick="showMemoryTab('monitored')">Monitored</button>
+                        <button class="tab-button" onclick="showMemoryTab('ejected')">Ejected</button>
+                    </div>
+                    <div id="memory-content">
+                        <div class="memory-list active" id="active-tickers">
+                            <div class="memory-item" style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                Loading memory data...
+                            </div>
+                        </div>
+                        <div class="memory-list" id="monitored-tickers">
+                            <div class="memory-item" style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                Loading memory data...
+                            </div>
+                        </div>
+                        <div class="memory-list" id="ejected-tickers">
+                            <div class="memory-item" style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                Loading memory data...
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- System Logs -->
+                <section class="panel system-logs">
+                    <h2>📝 System Logs</h2>
+                    <div class="logs-container" id="logs-container">
+                        <div class="log-entry">[--:--:--] Initializing dashboard...</div>
+                    </div>
+                </section>
+
+                <!-- Controls Panel -->
+                <section class="panel controls">
+                    <h2>⚙️ Controls</h2>
+                    <div class="control-buttons">
+                        <button class="control-btn primary" id="start-scanner-btn" onclick="toggleScanner()">
+                            ▶️ START SCANNER
+                        </button>
+                        <button class="control-btn secondary" onclick="refreshData()">
+                            🔄 REFRESH DATA
+                        </button>
+                        <button class="control-btn secondary" onclick="showSettings()">
+                            ⚙️ SETTINGS
+                        </button>
+                    </div>
+                    <div class="scanner-status" id="scanner-status">
+                        <span class="status-indicator stopped">●</span>
+                        <span class="status-text">Scanner Stopped</span>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-indicator" id="system-status">● Ready</span>
+            </div>
+            <div class="status-right">
+                <span>Last update: <span id="last-update">14:30:45</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js?v=6"></script>
+</body>
+</html>

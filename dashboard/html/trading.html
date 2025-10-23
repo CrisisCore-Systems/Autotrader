@@ -1,0 +1,278 @@
+<!DOCTYPE h        <header class="header">
+            <div class="header-left">
+                <h1>⚡ Live Trading</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info" id="account-info">Account: <span id="account-id">Loading...</span> | Capital: $<span id="account-capital">--</span></span>
+                <span class="timestamp" id="current-time">--:--:--</span>
+            </div>
+        </header>ml lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader - Trading Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>🎯 PennyHunter Trading Interface</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info">Account: DUO071381 | Capital: $<span id="account-capital">200.00</span></span>
+                <span class="timestamp" id="current-time">2025-10-22 14:30:45</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="trading.html" class="nav-link active">Trading</a>
+            <a href="portfolio.html" class="nav-link">Portfolio</a>
+            <a href="analytics.html" class="nav-link">Analytics</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="trading-layout">
+                <!-- Left Panel - Market Data & Scanner -->
+                <div class="trading-left">
+                    <!-- Market Status -->
+                    <section class="panel market-overview">
+                        <h2>📊 Market Overview</h2>
+                        <div class="market-indicators">
+                            <div class="indicator-card" id="vix-indicator">
+                                <div class="indicator-label">VIX</div>
+                                <div class="indicator-value" id="vix-value">18.2</div>
+                                <div class="indicator-status" id="vix-status">NORMAL</div>
+                            </div>
+                            <div class="indicator-card" id="spy-indicator">
+                                <div class="indicator-label">SPY</div>
+                                <div class="indicator-value" id="spy-value">671.30</div>
+                                <div class="indicator-change" id="spy-change">+0.60%</div>
+                            </div>
+                            <div class="indicator-card" id="regime-indicator">
+                                <div class="indicator-label">Regime</div>
+                                <div class="indicator-value" id="regime-value">RISK_ON</div>
+                                <div class="indicator-status" id="trading-status">TRADING</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Scanner Controls -->
+                    <section class="panel scanner-controls">
+                        <h2>🎯 Scanner Controls</h2>
+                        <div class="scanner-config">
+                            <div class="config-group">
+                                <label for="scanner-tickers">Tickers to Scan:</label>
+                                <input type="text" id="scanner-tickers" value="INTR, ADT, SAN, COMP, CLOV, EVGO"
+                                       placeholder="Comma-separated tickers">
+                            </div>
+                            <div class="config-group">
+                                <label for="min-score">Minimum Score:</label>
+                                <input type="number" id="min-score" value="5.5" min="0" max="10" step="0.1">
+                            </div>
+                            <div class="config-group">
+                                <label for="max-positions">Max Positions:</label>
+                                <input type="number" id="max-positions" value="5" min="1" max="20">
+                            </div>
+                            <div class="config-group">
+                                <label for="position-size">Position Size ($):</label>
+                                <input type="number" id="position-size" value="1000" min="100" max="10000" step="100">
+                            </div>
+                        </div>
+                        <div class="control-buttons">
+                            <button class="control-btn primary" id="start-scanner-btn" onclick="toggleScanner()">
+                                ▶️ START SCANNER
+                            </button>
+                            <button class="control-btn secondary" onclick="runSingleScan()">
+                                🔍 SINGLE SCAN
+                            </button>
+                            <button class="control-btn secondary" onclick="stopScanner()">
+                                ⏹️ STOP SCANNER
+                            </button>
+                        </div>
+                        <div class="scanner-status" id="scanner-status">
+                            <span class="status-indicator stopped">●</span>
+                            <span class="status-text">Scanner Stopped</span>
+                        </div>
+                    </section>
+
+                    <!-- Current Signals -->
+                    <section class="panel current-signals">
+                        <h2>📡 Current Signals</h2>
+                        <div class="signals-list" id="signals-list">
+                            <div class="signal-item">
+                                <div class="signal-header">
+                                    <span class="signal-symbol">CLOV</span>
+                                    <span class="signal-score">7.2</span>
+                                </div>
+                                <div class="signal-details">
+                                    <span>Entry: $12.50</span>
+                                    <span>Target: $14.00</span>
+                                    <span>Stop: $11.50</span>
+                                </div>
+                                <div class="signal-actions">
+                                    <button class="signal-btn buy" onclick="placeOrder('CLOV', 'BUY', 12.50, 100)">
+                                        BUY
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="signal-item">
+                                <div class="signal-header">
+                                    <span class="signal-symbol">TXMD</span>
+                                    <span class="signal-score">6.8</span>
+                                </div>
+                                <div class="signal-details">
+                                    <span>Entry: $0.85</span>
+                                    <span>Target: $1.00</span>
+                                    <span>Stop: $0.70</span>
+                                </div>
+                                <div class="signal-actions">
+                                    <button class="signal-btn buy" onclick="placeOrder('TXMD', 'BUY', 0.85, 200)">
+                                        BUY
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Panel - Order Placement & Activity -->
+                <div class="trading-right">
+                    <!-- Manual Order Entry -->
+                    <section class="panel order-entry">
+                        <h2>📝 Manual Order Entry</h2>
+                        <form id="order-form" onsubmit="submitOrder(event)">
+                            <div class="form-group">
+                                <label for="order-symbol">Symbol:</label>
+                                <input type="text" id="order-symbol" required placeholder="e.g., AAPL">
+                            </div>
+                            <div class="form-group">
+                                <label for="order-action">Action:</label>
+                                <select id="order-action" required>
+                                    <option value="BUY">BUY</option>
+                                    <option value="SELL">SELL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="order-quantity">Quantity:</label>
+                                <input type="number" id="order-quantity" required min="1" placeholder="100">
+                            </div>
+                            <div class="form-group">
+                                <label for="order-price">Price:</label>
+                                <input type="number" id="order-price" required step="0.01" placeholder="12.50">
+                            </div>
+                            <div class="form-group">
+                                <label for="order-type">Order Type:</label>
+                                <select id="order-type" required>
+                                    <option value="MARKET">MARKET</option>
+                                    <option value="LIMIT">LIMIT</option>
+                                    <option value="STOP">STOP</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="control-btn primary">Place Order</button>
+                        </form>
+                    </section>
+
+                    <!-- Pending Orders -->
+                    <section class="panel pending-orders">
+                        <h2>⏳ Pending Orders</h2>
+                        <div class="orders-list" id="pending-orders">
+                            <div class="order-item">
+                                <div class="order-header">
+                                    <span class="order-symbol">CLOV</span>
+                                    <span class="order-status pending">PENDING</span>
+                                </div>
+                                <div class="order-details">
+                                    <span>BUY 100 @ $12.50</span>
+                                    <span>LIMIT</span>
+                                </div>
+                                <div class="order-actions">
+                                    <button class="order-btn cancel" onclick="cancelOrder('order-1')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Recent Activity -->
+                    <section class="panel recent-activity">
+                        <h2>📈 Recent Activity</h2>
+                        <div class="activity-list" id="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-time">14:30:15</div>
+                                <div class="activity-content">
+                                    <span class="activity-symbol">CLOV</span>
+                                    <span class="activity-action">BUY</span>
+                                    <span class="activity-details">100 shares @ $12.50</span>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-time">14:28:42</div>
+                                <div class="activity-content">
+                                    <span class="activity-symbol">TXMD</span>
+                                    <span class="activity-action">BUY</span>
+                                    <span class="activity-details">200 shares @ $0.85</span>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-time">14:25:18</div>
+                                <div class="activity-content">
+                                    <span class="activity-symbol">Scanner</span>
+                                    <span class="activity-action">STARTED</span>
+                                    <span class="activity-details">Monitoring 6 tickers</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Risk Management -->
+                    <section class="panel risk-management">
+                        <h2>🛡️ Risk Management</h2>
+                        <div class="risk-metrics">
+                            <div class="risk-item">
+                                <span class="risk-label">Daily Loss Limit:</span>
+                                <span class="risk-value" id="daily-loss-limit">$500.00</span>
+                            </div>
+                            <div class="risk-item">
+                                <span class="risk-label">Current Daily P&L:</span>
+                                <span class="risk-value" id="current-daily-pnl">+$45.20</span>
+                            </div>
+                            <div class="risk-item">
+                                <span class="risk-label">Max Positions:</span>
+                                <span class="risk-value" id="max-positions-display">5</span>
+                            </div>
+                            <div class="risk-item">
+                                <span class="risk-label">Active Positions:</span>
+                                <span class="risk-value" id="active-positions-count">2</span>
+                            </div>
+                        </div>
+                        <div class="risk-actions">
+                            <button class="control-btn secondary" onclick="emergencyStop()">
+                                🚨 EMERGENCY STOP
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-indicator" id="system-status">● Ready</span>
+            </div>
+            <div class="status-right">
+                <span>Last update: <span id="last-update">14:30:45</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="trading.js?v=2"></script>
+</body>
+</html>

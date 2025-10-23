@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader - Reports</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📊 Reports</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info" id="account-info">Account: <span id="account-id">Loading...</span> | Capital: $<span id="account-capital">--</span></span>
+                <span class="timestamp" id="current-time">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="trading.html" class="nav-link">Trading</a>
+            <a href="portfolio.html" class="nav-link">Portfolio</a>
+            <a href="analytics.html" class="nav-link">Analytics</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="reports.html" class="nav-link active">Reports</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="reports-layout">
+                <!-- Report Controls -->
+                <section class="panel report-controls">
+                    <h2>📋 Report Generation</h2>
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <label for="report-type">Report Type</label>
+                            <select id="report-type">
+                                <option value="trade-history">Trade History</option>
+                                <option value="performance">Performance Report</option>
+                                <option value="tax">Tax Report</option>
+                                <option value="risk">Risk Analysis</option>
+                                <option value="custom">Custom Report</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="date-range">Date Range</label>
+                            <select id="date-range">
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="this-week">This Week</option>
+                                <option value="last-week">Last Week</option>
+                                <option value="this-month" selected>This Month</option>
+                                <option value="last-month">Last Month</option>
+                                <option value="this-quarter">This Quarter</option>
+                                <option value="last-quarter">Last Quarter</option>
+                                <option value="this-year">This Year</option>
+                                <option value="last-year">Last Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group" id="custom-date-range" style="display: none;">
+                            <div class="date-inputs">
+                                <div>
+                                    <label for="start-date">Start Date</label>
+                                    <input type="date" id="start-date" value="2025-10-01">
+                                </div>
+                                <div>
+                                    <label for="end-date">End Date</label>
+                                    <input type="date" id="end-date" value="2025-10-22">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="format">Export Format</label>
+                            <select id="format">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="group-by">Group By</label>
+                            <select id="group-by">
+                                <option value="none">None</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="strategy">Strategy</option>
+                                <option value="day">Day</option>
+                                <option value="week">Week</option>
+                                <option value="month">Month</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Filters</label>
+                            <div class="filter-options">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filter-winning" checked>
+                                    <span class="checkmark"></span>
+                                    Winning Trades
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filter-losing" checked>
+                                    <span class="checkmark"></span>
+                                    Losing Trades
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filter-pending" checked>
+                                    <span class="checkmark"></span>
+                                    Pending Orders
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-actions">
+                        <button class="control-btn primary" onclick="generateReport()">Generate Report</button>
+                        <button class="control-btn secondary" onclick="previewReport()">Preview</button>
+                        <button class="control-btn secondary" onclick="scheduleReport()">Schedule Report</button>
+                        <button class="control-btn secondary" onclick="saveTemplate()">Save as Template</button>
+                    </div>
+                </section>
+
+                <!-- Quick Reports -->
+                <section class="panel quick-reports">
+                    <h2>⚡ Quick Reports</h2>
+                    <div class="quick-report-grid">
+                        <div class="quick-report-card" onclick="generateQuickReport('daily-pnl')">
+                            <div class="report-icon">📈</div>
+                            <div class="report-info">
+                                <h3>Daily P&L</h3>
+                                <p>Today's profit and loss summary</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-report-card" onclick="generateQuickReport('weekly-summary')">
+                            <div class="report-icon">📊</div>
+                            <div class="report-info">
+                                <h3>Weekly Summary</h3>
+                                <p>This week's trading performance</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-report-card" onclick="generateQuickReport('monthly-review')">
+                            <div class="report-icon">📅</div>
+                            <div class="report-info">
+                                <h3>Monthly Review</h3>
+                                <p>Complete monthly analysis</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-report-card" onclick="generateQuickReport('tax-document')">
+                            <div class="report-icon">📄</div>
+                            <div class="report-info">
+                                <h3>Tax Document</h3>
+                                <p>Tax-ready trade summary</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-report-card" onclick="generateQuickReport('risk-report')">
+                            <div class="report-icon">⚠️</div>
+                            <div class="report-info">
+                                <h3>Risk Report</h3>
+                                <p>Current risk exposure analysis</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-report-card" onclick="generateQuickReport('performance')">
+                            <div class="report-icon">🏆</div>
+                            <div class="report-info">
+                                <h3>Performance</h3>
+                                <p>Overall strategy performance</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Trade History Table -->
+                <section class="panel trade-history">
+                    <h2>📜 Trade History</h2>
+                    <div class="table-controls">
+                        <div class="search-box">
+                            <input type="text" id="trade-search" placeholder="Search trades...">
+                            <button class="search-btn">🔍</button>
+                        </div>
+                        <div class="table-filters">
+                            <select id="sort-by">
+                                <option value="date-desc">Newest First</option>
+                                <option value="date-asc">Oldest First</option>
+                                <option value="pnl-desc">Highest P&L</option>
+                                <option value="pnl-asc">Lowest P&L</option>
+                                <option value="symbol">Symbol A-Z</option>
+                            </select>
+                            <button class="control-btn small secondary" onclick="exportTable()">Export</button>
+                        </div>
+                    </div>
+
+                    <div class="trade-table-container">
+                        <table class="trade-table">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>P&L</th>
+                                    <th>Strategy</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trade-table-body">
+                                <tr>
+                                    <td>2025-10-22 14:25:30</td>
+                                    <td>CLOV</td>
+                                    <td class="positive">BUY</td>
+                                    <td>50</td>
+                                    <td>$1.23</td>
+                                    <td class="positive">+$245.30</td>
+                                    <td>BounceHunter</td>
+                                    <td><span class="status-badge filled">Filled</span></td>
+                                    <td><button class="action-btn" onclick="viewTradeDetails('T001')">View</button></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-10-22 13:45:15</td>
+                                    <td>TXMD</td>
+                                    <td class="negative">SELL</td>
+                                    <td>25</td>
+                                    <td>$2.45</td>
+                                    <td class="negative">-$89.50</td>
+                                    <td>PennyHunter</td>
+                                    <td><span class="status-badge filled">Filled</span></td>
+                                    <td><button class="action-btn" onclick="viewTradeDetails('T002')">View</button></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-10-22 11:30:22</td>
+                                    <td>COMP</td>
+                                    <td class="positive">BUY</td>
+                                    <td>10</td>
+                                    <td>$78.90</td>
+                                    <td class="positive">+$156.80</td>
+                                    <td>MeanReversion</td>
+                                    <td><span class="status-badge filled">Filled</span></td>
+                                    <td><button class="action-btn" onclick="viewTradeDetails('T003')">View</button></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-10-22 10:15:45</td>
+                                    <td>NVDA</td>
+                                    <td class="negative">SELL</td>
+                                    <td>5</td>
+                                    <td>$145.20</td>
+                                    <td class="negative">-$67.30</td>
+                                    <td>BounceHunter</td>
+                                    <td><span class="status-badge filled">Filled</span></td>
+                                    <td><button class="action-btn" onclick="viewTradeDetails('T004')">View</button></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-10-21 15:50:12</td>
+                                    <td>AAPL</td>
+                                    <td class="positive">BUY</td>
+                                    <td>15</td>
+                                    <td>$225.80</td>
+                                    <td class="positive">+$312.50</td>
+                                    <td>PennyHunter</td>
+                                    <td><span class="status-badge filled">Filled</span></td>
+                                    <td><button class="action-btn" onclick="viewTradeDetails('T005')">View</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination">
+                        <div class="pagination-info">
+                            Showing 1-5 of 156 trades
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="page-btn" disabled>« Previous</button>
+                            <span class="page-numbers">
+                                <button class="page-number active">1</button>
+                                <button class="page-number">2</button>
+                                <button class="page-number">3</button>
+                                <span>...</span>
+                                <button class="page-number">32</button>
+                            </span>
+                            <button class="page-btn">Next »</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Summary -->
+                <section class="panel performance-summary">
+                    <h2>📈 Performance Summary</h2>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-icon">💰</div>
+                            <div class="summary-content">
+                                <div class="summary-value positive">+$2,945.30</div>
+                                <div class="summary-label">Total P&L</div>
+                                <div class="summary-period">This Month</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="summary-icon">📊</div>
+                            <div class="summary-content">
+                                <div class="summary-value">67.8%</div>
+                                <div class="summary-label">Win Rate</div>
+                                <div class="summary-period">23 trades</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="summary-icon">🎯</div>
+                            <div class="summary-content">
+                                <div class="summary-value positive">$127.50</div>
+                                <div class="summary-label">Avg Win</div>
+                                <div class="summary-period">Per winning trade</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="summary-icon">📉</div>
+                            <div class="summary-content">
+                                <div class="summary-value negative">$89.30</div>
+                                <div class="summary-label">Avg Loss</div>
+                                <div class="summary-period">Per losing trade</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="performance-chart">
+                        <canvas id="performance-chart" width="800" height="250"></canvas>
+                    </div>
+                </section>
+
+                <!-- Scheduled Reports -->
+                <section class="panel scheduled-reports">
+                    <h2>⏰ Scheduled Reports</h2>
+                    <div class="scheduled-list">
+                        <div class="scheduled-item">
+                            <div class="schedule-info">
+                                <h4>Daily P&L Report</h4>
+                                <p>Daily profit and loss summary emailed at 6:00 PM</p>
+                                <div class="schedule-meta">Next run: Today 6:00 PM | Recipients: user@email.com</div>
+                            </div>
+                            <div class="schedule-actions">
+                                <button class="control-btn small secondary" onclick="editSchedule('daily-pnl')">Edit</button>
+                                <button class="control-btn small danger" onclick="deleteSchedule('daily-pnl')">Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="scheduled-item">
+                            <div class="schedule-info">
+                                <h4>Weekly Performance</h4>
+                                <p>Weekly trading performance report every Friday</p>
+                                <div class="schedule-meta">Next run: Oct 25 6:00 PM | Recipients: user@email.com, manager@email.com</div>
+                            </div>
+                            <div class="schedule-actions">
+                                <button class="control-btn small secondary" onclick="editSchedule('weekly-perf')">Edit</button>
+                                <button class="control-btn small danger" onclick="deleteSchedule('weekly-perf')">Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="scheduled-item">
+                            <div class="schedule-info">
+                                <h4>Monthly Tax Report</h4>
+                                <p>Tax-ready monthly summary on the 1st of each month</p>
+                                <div class="schedule-meta">Next run: Nov 1 9:00 AM | Recipients: user@email.com, accountant@email.com</div>
+                            </div>
+                            <div class="schedule-actions">
+                                <button class="control-btn small secondary" onclick="editSchedule('monthly-tax')">Edit</button>
+                                <button class="control-btn small danger" onclick="deleteSchedule('monthly-tax')">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="schedule-actions">
+                        <button class="control-btn secondary" onclick="addNewSchedule()">Add New Schedule</button>
+                    </div>
+                </section>
+
+                <!-- Report Templates -->
+                <section class="panel report-templates">
+                    <h2>📝 Report Templates</h2>
+                    <div class="template-grid">
+                        <div class="template-card" onclick="loadTemplate('basic-trade-history')">
+                            <div class="template-icon">📜</div>
+                            <div class="template-info">
+                                <h4>Basic Trade History</h4>
+                                <p>Simple list of all trades with basic details</p>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="loadTemplate('detailed-performance')">
+                            <div class="template-icon">📊</div>
+                            <div class="template-info">
+                                <h4>Detailed Performance</h4>
+                                <p>Comprehensive performance analysis with charts</p>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="loadTemplate('tax-1099b')">
+                            <div class="template-icon">📄</div>
+                            <div class="template-info">
+                                <h4>Tax Report (1099-B)</h4>
+                                <p>IRS-ready tax reporting format</p>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="loadTemplate('risk-analysis')">
+                            <div class="template-icon">⚠️</div>
+                            <div class="template-info">
+                                <h4>Risk Analysis</h4>
+                                <p>Detailed risk metrics and exposure analysis</p>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="loadTemplate('strategy-comparison')">
+                            <div class="template-icon">🔄</div>
+                            <div class="template-info">
+                                <h4>Strategy Comparison</h4>
+                                <p>Compare performance across different strategies</p>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="loadTemplate('custom')">
+                            <div class="template-icon">⚙️</div>
+                            <div class="template-info">
+                                <h4>Custom Template</h4>
+                                <p>Create your own report template</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-indicator" id="system-status">● Ready</span>
+            </div>
+            <div class="status-right">
+                <span>Last update: <span id="last-update">14:30:45</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="reports.js"></script>
+</body>
+</html>

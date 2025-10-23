@@ -24,7 +24,9 @@ src/alerts/tools/__init__.py
 src/api/__init__.py
 src/api/dashboard_api.py
 src/api/main.py
+src/api/trading_dashboard_api.py
 src/api/routes/__init__.py
+src/api/routes/dashboard_api.py
 src/api/routes/experiments.py
 src/api/routes/health.py
 src/api/routes/monitoring.py
@@ -42,6 +44,7 @@ src/bouncehunter/advanced_filters.py
 src/bouncehunter/agentic.py
 src/bouncehunter/agentic_cli.py
 src/bouncehunter/alpaca_broker.py
+src/bouncehunter/auto_ejector.py
 src/bouncehunter/backtest.py
 src/bouncehunter/broker.py
 src/bouncehunter/cli.py
@@ -50,6 +53,7 @@ src/bouncehunter/engine.py
 src/bouncehunter/ensemble.py
 src/bouncehunter/ib_broker.py
 src/bouncehunter/market_regime.py
+src/bouncehunter/memory_tracker.py
 src/bouncehunter/penny_universe.py
 src/bouncehunter/pennyhunter_agentic.py
 src/bouncehunter/pennyhunter_memory.py
@@ -63,6 +67,18 @@ src/bouncehunter/signal_scoring.py
 src/bouncehunter/telegram_bot.py
 src/bouncehunter/telegram_cli.py
 src/bouncehunter/vwap_engine.py
+src/bouncehunter/data/__init__.py
+src/bouncehunter/data/cache.py
+src/bouncehunter/data/position_store.py
+src/bouncehunter/data/price_provider.py
+src/bouncehunter/data/regime_detector.py
+src/bouncehunter/data/vix_provider.py
+src/bouncehunter/exits/__init__.py
+src/bouncehunter/exits/adjustments.py
+src/bouncehunter/exits/config.py
+src/bouncehunter/exits/monitor.py
+src/bouncehunter/exits/tier1.py
+src/bouncehunter/exits/tier2.py
 src/cli/__init__.py
 src/cli/config.py
 src/cli/deterministic.py
@@ -79,6 +95,7 @@ src/cli/summary_report.py
 src/core/__init__.py
 src/core/artifact_retention.py
 src/core/clients.py
+src/core/compliance.py
 src/core/derivatives_client.py
 src/core/feature_store.py
 src/core/feature_validation.py
@@ -92,6 +109,7 @@ src/core/llm_schemas.py
 src/core/logging_config.py
 src/core/metrics.py
 src/core/metrics_registry.py
+src/core/multi_asset.py
 src/core/narrative.py
 src/core/news_client.py
 src/core/news_client_enhanced.py
@@ -116,10 +134,14 @@ src/core/tracing.py
 src/core/tree.py
 src/core/twitter_client.py
 src/core/worker.py
+src/core/brokers/__init__.py
+src/core/brokers/ibkr_client.py
 src/crypto_pnd_detector/__init__.py
 src/crypto_pnd_detector/pipeline.py
 src/crypto_pnd_detector/deployment/__init__.py
 src/crypto_pnd_detector/deployment/dev.py
+src/metrics/__init__.py
+src/metrics/pnl.py
 src/microstructure/__init__.py
 src/microstructure/alerting.py
 src/microstructure/api.py
@@ -128,6 +150,7 @@ src/microstructure/bocpd.py
 src/microstructure/detector.py
 src/microstructure/features.py
 src/microstructure/multi_exchange_stream.py
+src/microstructure/orderflow_analysis.py
 src/microstructure/stream.py
 src/monitoring/__init__.py
 src/monitoring/drift_monitor.py
@@ -135,6 +158,8 @@ src/monitoring/integrated_monitor.py
 src/pipeline/__init__.py
 src/pipeline/backtest.py
 src/pipeline/backtest_statistics.py
+src/risk/__init__.py
+src/risk/regime_flip.py
 src/security/__init__.py
 src/security/artifact_integrity.py
 src/security/prompt_validator.py
@@ -154,6 +179,7 @@ tests/test_backtest_statistics.py
 tests/test_baseline_strategies.py
 tests/test_bouncehunter_engine.py
 tests/test_broker.py
+tests/test_circuit_breaker_alerts.py
 tests/test_classification_metrics.py
 tests/test_cli_backtest_smoke.py
 tests/test_cli_run_scanner.py
@@ -161,6 +187,7 @@ tests/test_compound_conditions.py
 tests/test_core_services.py
 tests/test_crypto_pnd_detector.py
 tests/test_dashboard_api.py
+tests/test_db_initialization.py
 tests/test_dev_deployment.py
 tests/test_e2e_workflows.py
 tests/test_enhanced_health_endpoints.py
@@ -185,6 +212,7 @@ tests/test_llm_guardrails.py
 tests/test_llm_validation.py
 tests/test_manpage_generation.py
 tests/test_medium_priority_enhancements.py
+tests/test_multi_asset.py
 tests/test_narrative.py
 tests/test_news.py
 tests/test_notification_features.py
@@ -192,7 +220,10 @@ tests/test_observability.py
 tests/test_performance.py
 tests/test_phase3_integration.py
 tests/test_pipeline.py
+tests/test_portfolio_optimization.py
 tests/test_prompt_validator.py
+tests/test_regime_flip.py
+tests/test_reinforcement_learning.py
 tests/test_reliability_services.py
 tests/test_reproducibility_integration.py
 tests/test_research_api.py

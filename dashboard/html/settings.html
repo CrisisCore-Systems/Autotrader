@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader - Settings</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>⚙️ Settings</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info" id="account-info">Account: <span id="account-id">Loading...</span> | Capital: $<span id="account-capital">--</span></span>
+                <span class="timestamp" id="current-time">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="trading.html" class="nav-link">Trading</a>
+            <a href="portfolio.html" class="nav-link">Portfolio</a>
+            <a href="analytics.html" class="nav-link">Analytics</a>
+            <a href="settings.html" class="nav-link active">Settings</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="settings-layout">
+                <!-- Settings Navigation -->
+                <aside class="settings-sidebar">
+                    <nav class="settings-nav">
+                        <button class="settings-nav-item active" onclick="showSettingsSection('broker')">
+                            <span class="nav-icon">🏦</span>
+                            Broker Configuration
+                        </button>
+                        <button class="settings-nav-item" onclick="showSettingsSection('api')">
+                            <span class="nav-icon">🔑</span>
+                            API Settings
+                        </button>
+                        <button class="settings-nav-item" onclick="showSettingsSection('trading')">
+                            <span class="nav-icon">📈</span>
+                            Trading Preferences
+                        </button>
+                        <button class="settings-nav-item" onclick="showSettingsSection('risk')">
+                            <span class="nav-icon">⚠️</span>
+                            Risk Management
+                        </button>
+                        <button class="settings-nav-item" onclick="showSettingsSection('notifications')">
+                            <span class="nav-icon">🔔</span>
+                            Notifications
+                        </button>
+                        <button class="settings-nav-item" onclick="showSettingsSection('system')">
+                            <span class="nav-icon">🖥️</span>
+                            System Settings
+                        </button>
+                    </nav>
+                </aside>
+
+                <!-- Settings Content -->
+                <div class="settings-content">
+                    <!-- Broker Configuration -->
+                    <section id="broker-section" class="settings-section active">
+                        <h2>🏦 Broker Configuration</h2>
+
+                        <div class="settings-group">
+                            <h3>Connection Settings</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="broker-type">Broker</label>
+                                    <select id="broker-type">
+                                        <option value="ibkr" selected>Interactive Brokers (IBKR)</option>
+                                        <option value="tda">TD Ameritrade</option>
+                                        <option value="etrade">E*TRADE</option>
+                                        <option value="schwab">Charles Schwab</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="account-type">Account Type</label>
+                                    <select id="account-type">
+                                        <option value="paper" selected>Paper Trading</option>
+                                        <option value="live">Live Trading</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="host">Host</label>
+                                    <input type="text" id="host" value="127.0.0.1" placeholder="127.0.0.1">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="port">Port</label>
+                                    <input type="number" id="port" value="7497" placeholder="7497">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="client-id">Client ID</label>
+                                    <input type="number" id="client-id" value="1" placeholder="1">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="connection-timeout">Connection Timeout (s)</label>
+                                    <input type="number" id="connection-timeout" value="30" placeholder="30">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Authentication</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="username">Username</label>
+                                    <input type="text" id="username" placeholder="Enter username">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="password">Password</label>
+                                    <input type="password" id="password" placeholder="Enter password">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="api-key">API Key (Optional)</label>
+                                    <input type="text" id="api-key" placeholder="Enter API key">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="secret-key">Secret Key (Optional)</label>
+                                    <input type="password" id="secret-key" placeholder="Enter secret key">
+                                </div>
+                            </div>
+
+                            <div class="form-field checkbox-field">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="save-credentials" checked>
+                                    <span class="checkmark"></span>
+                                    Save credentials securely
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Connection Status</h3>
+                            <div class="connection-status">
+                                <div class="status-indicator">
+                                    <span class="status-dot" id="connection-status-dot">●</span>
+                                    <span id="connection-status-text">Disconnected</span>
+                                </div>
+                                <button class="control-btn primary" onclick="testConnection()">Test Connection</button>
+                                <button class="control-btn secondary" onclick="saveBrokerSettings()">Save Settings</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- API Settings -->
+                    <section id="api-section" class="settings-section">
+                        <h2>🔑 API Settings</h2>
+
+                        <div class="settings-group">
+                            <h3>Market Data APIs</h3>
+                            <div class="api-config-list">
+                                <div class="api-config-item">
+                                    <div class="api-info">
+                                        <h4>Alpha Vantage</h4>
+                                        <p>Free market data API for stocks and forex</p>
+                                    </div>
+                                    <div class="api-controls">
+                                        <input type="text" placeholder="Enter API key" class="api-key-input">
+                                        <button class="control-btn small secondary">Test</button>
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="api-config-item">
+                                    <div class="api-info">
+                                        <h4>Finnhub</h4>
+                                        <p>Real-time stock data and news API</p>
+                                    </div>
+                                    <div class="api-controls">
+                                        <input type="text" placeholder="Enter API key" class="api-key-input">
+                                        <button class="control-btn small secondary">Test</button>
+                                        <label class="toggle">
+                                            <input type="checkbox">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="api-config-item">
+                                    <div class="api-info">
+                                        <h4>Twelve Data</h4>
+                                        <p>High-quality financial market data</p>
+                                    </div>
+                                    <div class="api-controls">
+                                        <input type="text" placeholder="Enter API key" class="api-key-input">
+                                        <button class="control-btn small secondary">Test</button>
+                                        <label class="toggle">
+                                            <input type="checkbox">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Rate Limiting</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="api-rate-limit">Requests per Minute</label>
+                                    <input type="number" id="api-rate-limit" value="60" min="1" max="1000">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="api-timeout">Request Timeout (s)</label>
+                                    <input type="number" id="api-timeout" value="10" min="1" max="60">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="retry-attempts">Retry Attempts</label>
+                                    <input type="number" id="retry-attempts" value="3" min="0" max="10">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="retry-delay">Retry Delay (s)</label>
+                                    <input type="number" id="retry-delay" value="5" min="1" max="60">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="control-btn primary" onclick="saveAPISettings()">Save API Settings</button>
+                            <button class="control-btn secondary" onclick="testAllAPIs()">Test All APIs</button>
+                        </div>
+                    </section>
+
+                    <!-- Trading Preferences -->
+                    <section id="trading-section" class="settings-section">
+                        <h2>📈 Trading Preferences</h2>
+
+                        <div class="settings-group">
+                            <h3>Default Order Settings</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="default-order-type">Default Order Type</label>
+                                    <select id="default-order-type">
+                                        <option value="market" selected>Market</option>
+                                        <option value="limit">Limit</option>
+                                        <option value="stop">Stop</option>
+                                        <option value="stop-limit">Stop Limit</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="default-quantity">Default Quantity</label>
+                                    <input type="number" id="default-quantity" value="100" min="1">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="default-time-in-force">Time in Force</label>
+                                    <select id="default-time-in-force">
+                                        <option value="day" selected>Day</option>
+                                        <option value="gtc">Good Till Cancelled</option>
+                                        <option value="ext">Extended Hours</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="slippage-tolerance">Slippage Tolerance (%)</label>
+                                    <input type="number" id="slippage-tolerance" value="0.5" min="0" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Trading Hours</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="market-open">Market Open Time</label>
+                                    <input type="time" id="market-open" value="09:30">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="market-close">Market Close Time</label>
+                                    <input type="time" id="market-close" value="16:00">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="extended-hours">Allow Extended Hours Trading</label>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="extended-hours" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="auto-stop-trading">Auto-stop Trading</label>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="auto-stop-trading">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Strategy Settings</h3>
+                            <div class="strategy-settings">
+                                <div class="strategy-item">
+                                    <div class="strategy-header">
+                                        <h4>BounceHunter</h4>
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="strategy-params">
+                                        <div class="param-field">
+                                            <label>Max Position Size ($)</label>
+                                            <input type="number" value="5000" min="100">
+                                        </div>
+                                        <div class="param-field">
+                                            <label>Stop Loss (%)</label>
+                                            <input type="number" value="5" min="0" step="0.1">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="strategy-item">
+                                    <div class="strategy-header">
+                                        <h4>PennyHunter</h4>
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="strategy-params">
+                                        <div class="param-field">
+                                            <label>Max Position Size ($)</label>
+                                            <input type="number" value="2500" min="100">
+                                        </div>
+                                        <div class="param-field">
+                                            <label>Stop Loss (%)</label>
+                                            <input type="number" value="3" min="0" step="0.1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="control-btn primary" onclick="saveTradingPreferences()">Save Preferences</button>
+                            <button class="control-btn secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                        </div>
+                    </section>
+
+                    <!-- Risk Management -->
+                    <section id="risk-section" class="settings-section">
+                        <h2>⚠️ Risk Management</h2>
+
+                        <div class="settings-group">
+                            <h3>Position Limits</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="max-position-size">Max Position Size ($)</label>
+                                    <input type="number" id="max-position-size" value="10000" min="100">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="max-portfolio-risk">Max Portfolio Risk (%)</label>
+                                    <input type="number" id="max-portfolio-risk" value="5" min="0" max="100" step="0.1">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="max-daily-loss">Max Daily Loss ($)</label>
+                                    <input type="number" id="max-daily-loss" value="500" min="0">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="max-trades-per-day">Max Trades per Day</label>
+                                    <input type="number" id="max-trades-per-day" value="20" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Stop Loss Settings</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="default-stop-loss">Default Stop Loss (%)</label>
+                                    <input type="number" id="default-stop-loss" value="5" min="0" step="0.1">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="trailing-stop">Enable Trailing Stop</label>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="trailing-stop" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="trailing-stop-distance">Trailing Stop Distance (%)</label>
+                                    <input type="number" id="trailing-stop-distance" value="2" min="0" step="0.1">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="auto-stop-loss">Auto-adjust Stop Loss</label>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="auto-stop-loss">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Risk Monitoring</h3>
+                            <div class="risk-alerts">
+                                <div class="alert-item">
+                                    <div class="alert-info">
+                                        <span class="alert-icon">⚠️</span>
+                                        <span>Portfolio risk exceeds 5%</span>
+                                    </div>
+                                    <label class="toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="alert-item">
+                                    <div class="alert-info">
+                                        <span class="alert-icon">⚠️</span>
+                                        <span>Daily loss exceeds $500</span>
+                                    </div>
+                                    <label class="toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="alert-item">
+                                    <div class="alert-info">
+                                        <span class="alert-icon">⚠️</span>
+                                        <span>Large position size detected</span>
+                                    </div>
+                                    <label class="toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="alert-item">
+                                    <div class="alert-info">
+                                        <span class="alert-icon">⚠️</span>
+                                        <span>High volatility detected</span>
+                                    </div>
+                                    <label class="toggle">
+                                        <input type="checkbox">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="control-btn primary" onclick="saveRiskSettings()">Save Risk Settings</button>
+                        </div>
+                    </section>
+
+                    <!-- Notifications -->
+                    <section id="notifications-section" class="settings-section">
+                        <h2>🔔 Notifications</h2>
+
+                        <div class="settings-group">
+                            <h3>Email Notifications</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="email-address">Email Address</label>
+                                    <input type="email" id="email-address" placeholder="Enter email address">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="smtp-server">SMTP Server</label>
+                                    <input type="text" id="smtp-server" placeholder="smtp.gmail.com">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="smtp-port">SMTP Port</label>
+                                    <input type="number" id="smtp-port" value="587">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="email-username">Email Username</label>
+                                    <input type="text" id="email-username" placeholder="username@gmail.com">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="email-password">Email Password</label>
+                                    <input type="password" id="email-password" placeholder="Enter password">
+                                </div>
+                            </div>
+
+                            <div class="notification-types">
+                                <h4>Email Notification Types</h4>
+                                <div class="checkbox-grid">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Trade executions
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Daily P&L reports
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        System alerts
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Risk warnings
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        Weekly summaries
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        Monthly reports
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Desktop Notifications</h3>
+                            <div class="notification-types">
+                                <div class="checkbox-grid">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Trade signals
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Order fills
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        System status changes
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        Market news alerts
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>SMS Notifications</h3>
+                            <div class="form-field">
+                                <label for="phone-number">Phone Number</label>
+                                <input type="tel" id="phone-number" placeholder="+1 (555) 123-4567">
+                            </div>
+
+                            <div class="notification-types">
+                                <div class="checkbox-grid">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        Critical alerts only
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        All trade notifications
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="control-btn primary" onclick="saveNotificationSettings()">Save Notification Settings</button>
+                            <button class="control-btn secondary" onclick="testNotifications()">Test Notifications</button>
+                        </div>
+                    </section>
+
+                    <!-- System Settings -->
+                    <section id="system-section" class="settings-section">
+                        <h2>🖥️ System Settings</h2>
+
+                        <div class="settings-group">
+                            <h3>Performance Settings</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="cpu-threads">CPU Threads</label>
+                                    <input type="number" id="cpu-threads" value="4" min="1" max="16">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="memory-limit">Memory Limit (MB)</label>
+                                    <input type="number" id="memory-limit" value="2048" min="512">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="data-retention">Data Retention (days)</label>
+                                    <input type="number" id="data-retention" value="365" min="30">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="log-level">Log Level</label>
+                                    <select id="log-level">
+                                        <option value="debug">Debug</option>
+                                        <option value="info" selected>Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="error">Error</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Backup & Recovery</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="backup-frequency">Backup Frequency</label>
+                                    <select id="backup-frequency">
+                                        <option value="daily" selected>Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="backup-location">Backup Location</label>
+                                    <input type="text" id="backup-location" value="./backups" placeholder="./backups">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="auto-restart">Auto-restart on Failure</label>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="auto-restart" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="keep-backups">Keep Backups (days)</label>
+                                    <input type="number" id="keep-backups" value="30" min="7">
+                                </div>
+                            </div>
+
+                            <div class="backup-actions">
+                                <button class="control-btn secondary" onclick="createBackup()">Create Backup Now</button>
+                                <button class="control-btn secondary" onclick="restoreBackup()">Restore from Backup</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>Updates & Maintenance</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="auto-update">Auto-update Software</label>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="auto-update" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="update-channel">Update Channel</label>
+                                    <select id="update-channel">
+                                        <option value="stable" selected>Stable</option>
+                                        <option value="beta">Beta</option>
+                                        <option value="nightly">Nightly</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="maintenance-window">Maintenance Window</label>
+                                    <select id="maintenance-window">
+                                        <option value="02:00" selected>2:00 AM</option>
+                                        <option value="03:00">3:00 AM</option>
+                                        <option value="04:00">4:00 AM</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="system-info">
+                                <div class="info-item">
+                                    <span class="info-label">Current Version:</span>
+                                    <span class="info-value">v2.5.1</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Last Update:</span>
+                                    <span class="info-value">2025-10-20 08:30:00</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Uptime:</span>
+                                    <span class="info-value">7 days, 14 hours</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="control-btn primary" onclick="saveSystemSettings()">Save System Settings</button>
+                            <button class="control-btn danger" onclick="resetSystem()">Reset to Factory Defaults</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-indicator" id="system-status">● Ready</span>
+            </div>
+            <div class="status-right">
+                <span>Last update: <span id="last-update">14:30:45</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="settings.js?v=2"></script>
+</body>
+</html>

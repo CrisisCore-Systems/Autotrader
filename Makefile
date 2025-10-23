@@ -1,4 +1,18 @@
-.PHONY: backtest coverage sbom security manpage manpage-md docs docs-serve docs-build test-repro test-manpage test-all
+.PHONY: backtest coverage sbom security manpage manpage-md docs docs-serve docs-build test-repro test-manpage test-all bootstrap compose-up compose-down compose-logs
+
+bootstrap:
+	python -m pip install --upgrade pip
+	python -m pip install -r requirements.txt
+	python -m pip install -r requirements-dev.txt
+
+compose-up:
+	docker compose up -d
+
+compose-down:
+	docker compose down
+
+compose-logs:
+	docker compose logs -f --tail=200
 
 backtest:
 	python -m pipeline.backtest --start 2023-01-01 --end 2025-09-30 --k 10 --walk 30d

@@ -1,0 +1,26 @@
+stages:
+  fetch_market_data:
+    cmd: python scripts/data/fetch_market_data.py --config configs/data/fetch.yaml
+    deps:
+      - scripts/data/fetch_market_data.py
+      - configs/data/fetch.yaml
+    outs:
+      - data/raw/market
+  build_features:
+    cmd: python scripts/data/build_features.py --config configs/data/features.yaml
+    deps:
+      - scripts/data/build_features.py
+      - configs/data/features.yaml
+      - data/raw/market
+    outs:
+      - data/processed/features
+  train_model:
+    cmd: python scripts/training/train_strategy.py --config configs/training/strategy.yaml
+    deps:
+      - scripts/training/train_strategy.py
+      - configs/training/strategy.yaml
+      - data/processed/features
+    outs:
+      - artifacts/models/latest
+    metrics:
+      - artifacts/metrics/latest.json

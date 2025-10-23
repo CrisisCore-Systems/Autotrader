@@ -1,0 +1,244 @@
+.alert-analytics {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.analytics-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #1976D2;
+}
+
+.loading,
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 8px;
+  border-top: 4px solid;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.metric-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.metric-subtitle {
+  font-size: 12px;
+  color: #999;
+}
+
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.severity-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.severity-bar {
+  display: grid;
+  grid-template-columns: 120px 1fr 60px;
+  align-items: center;
+  gap: 12px;
+}
+
+.severity-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.severity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.severity-name {
+  text-transform: capitalize;
+  color: #333;
+}
+
+.severity-count {
+  color: #666;
+  font-size: 13px;
+}
+
+.progress-bar {
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.severity-percentage {
+  text-align: right;
+  font-size: 13px;
+  color: #666;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.rule-item:hover {
+  background: #f0f0f0;
+}
+
+.rule-rank {
+  font-weight: bold;
+  color: #2196F3;
+  min-width: 30px;
+}
+
+.rule-name {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-count {
+  font-size: 13px;
+  color: #666;
+}
+
+.performance-section {
+  margin-top: 24px;
+}
+
+.performance-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.performance-card h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.performance-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.perf-metric {
+  text-align: center;
+}
+
+.perf-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.perf-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.perf-indicator {
+  font-size: 13px;
+}
+
+.indicator-good {
+  color: #4CAF50;
+}
+
+.indicator-ok {
+  color: #FF9800;
+}
+
+.indicator-poor {
+  color: #F44336;
+}

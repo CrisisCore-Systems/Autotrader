@@ -12,9 +12,12 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import os
+import secrets
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 try:
@@ -24,6 +27,11 @@ try:
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
+
+
+LOGGER = logging.getLogger(__name__)
+
+DEFAULT_SECRET_PATH = Path(__file__).resolve().parents[2] / "artifacts" / "artifact_secret.key"
 
 
 @dataclass
@@ -62,21 +70,45 @@ class ArtifactSigner:
     
     def __init__(self, secret_key: Optional[str] = None):
         """Initialize signer.
-        
+
         Args:
             secret_key: Secret key for HMAC signing. If None, uses environment variable
-                       ARTIFACT_SECRET_KEY or generates a random key.
+                       ARTIFACT_SECRET_KEY or persists a key to disk.
         """
+        self._secret_path = Path(
+            os.environ.get("ARTIFACT_SECRET_PATH", DEFAULT_SECRET_PATH)
+        )
+
         if secret_key:
             self.secret_key = secret_key.encode()
         else:
-            # Try environment variable
-            env_key = os.environ.get('ARTIFACT_SECRET_KEY')
+            env_key = os.environ.get("ARTIFACT_SECRET_KEY")
             if env_key:
                 self.secret_key = env_key.encode()
             else:
-                # Generate random key (WARNING: not persistent across restarts)
-                self.secret_key = os.urandom(32)
+                self.secret_key = self._load_or_create_secret()
+
+    def _load_or_create_secret(self) -> bytes:
+        """Load a persisted secret key or create a new one."""
+
+        path = self._secret_path
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists():
+                raw = path.read_text(encoding="utf-8").strip()
+                if not raw:
+                    raise ValueError("artifact secret key file is empty")
+                try:
+                    return bytes.fromhex(raw)
+                except ValueError as exc:
+                    raise ValueError("artifact secret key file must contain hex-encoded data") from exc
+
+            token = secrets.token_hex(32)
+            path.write_text(token, encoding="utf-8")
+            LOGGER.info("artifact_secret_key_created path=%s", path)
+            return bytes.fromhex(token)
+        except Exception as exc:
+            raise RuntimeError(f"Unable to initialize artifact signer secret at {path}: {exc}") from exc
     
     def compute_hash(self, content: str, algorithm: str = "sha256") -> str:
         """Compute cryptographic hash of content.

@@ -81,8 +81,8 @@ class DriftStatistics:
             "test_name": self.test_name,
             "statistic": float(self.statistic),
             "p_value": float(self.p_value),
-            "threshold": self.threshold,
-            "is_drifted": self.is_drifted,
+            "threshold": float(self.threshold),
+            "is_drifted": bool(self.is_drifted),
             "severity": self.severity.value,
             "description": self.description,
         }
@@ -271,10 +271,19 @@ class DriftDetector:
         baseline_dist, _ = np.histogram(baseline, bins=bin_edges)
         current_dist, _ = np.histogram(current, bins=bin_edges)
         
+        # Normalize to same total count to make them comparable
+        baseline_normalized = (baseline_dist + 1) / (baseline_dist.sum() + len(baseline_dist))
+        current_normalized = (current_dist + 1) / (current_dist.sum() + len(current_dist))
+        
+        # Scale to same size for chi-square test
+        scale_factor = 1000
+        baseline_scaled = baseline_normalized * scale_factor
+        current_scaled = current_normalized * scale_factor
+        
         # Perform chi-square test
         statistic, p_value = stats.chisquare(
-            current_dist + 1,  # Add 1 to avoid zeros
-            baseline_dist + 1
+            current_scaled,
+            baseline_scaled
         )
         
         is_drifted = p_value < self.p_value_threshold
@@ -289,6 +298,74 @@ class DriftDetector:
             is_drifted=is_drifted,
             severity=severity,
             description=f"Chi-square: {statistic:.4f}, p-value: {p_value:.4f}",
+        )
+    
+    def kullback_leibler_divergence(
+        self,
+        baseline: np.ndarray,
+        current: np.ndarray,
+        bins: int = 10,
+    ) -> DriftStatistics:
+        """Calculate Kullback-Leibler (KL) divergence for distribution drift.
+        
+        KL divergence measures how one probability distribution diverges from a 
+        reference distribution. Higher values indicate greater drift.
+        
+        Args:
+            baseline: Baseline distribution
+            current: Current distribution
+            bins: Number of bins for discretization
+            
+        Returns:
+            Drift statistics
+        """
+        # Create bins based on combined range
+        bin_edges = np.linspace(
+            min(baseline.min(), current.min()),
+            max(baseline.max(), current.max()),
+            bins + 1
+        )
+        
+        # Calculate distributions
+        baseline_dist, _ = np.histogram(baseline, bins=bin_edges)
+        current_dist, _ = np.histogram(current, bins=bin_edges)
+        
+        # Normalize to probabilities (add small epsilon to avoid log(0))
+        epsilon = 1e-10
+        baseline_prob = (baseline_dist + epsilon) / (baseline_dist.sum() + epsilon * bins)
+        current_prob = (current_dist + epsilon) / (current_dist.sum() + epsilon * bins)
+        
+        # Calculate KL divergence: sum(P * log(P/Q))
+        kl_divergence = np.sum(current_prob * np.log(current_prob / baseline_prob))
+        
+        # KL divergence thresholds (empirical)
+        # 0-0.1: minimal drift
+        # 0.1-0.3: moderate drift
+        # 0.3-0.5: significant drift
+        # >0.5: severe drift
+        kl_threshold = 0.3
+        is_drifted = kl_divergence > kl_threshold
+        
+        # Determine severity
+        if kl_divergence > 0.5:
+            severity = DriftSeverity.CRITICAL
+        elif kl_divergence > 0.3:
+            severity = DriftSeverity.HIGH
+        elif kl_divergence > 0.1:
+            severity = DriftSeverity.MEDIUM
+        elif kl_divergence > 0.05:
+            severity = DriftSeverity.LOW
+        else:
+            severity = DriftSeverity.NONE
+        
+        return DriftStatistics(
+            test_name="KL Divergence",
+            statistic=kl_divergence,
+            p_value=0.0,  # KL divergence doesn't have p-value
+            threshold=kl_threshold,
+            is_drifted=is_drifted,
+            severity=severity,
+            description=f"KL divergence: {kl_divergence:.4f}",
         )
 
 
@@ -469,8 +546,9 @@ class DriftMonitor:
         ks_stats = self.detector.kolmogorov_smirnov_test(baseline_dist, current_distribution)
         psi_stats = self.detector.population_stability_index(baseline_dist, current_distribution)
         chi_stats = self.detector.chi_square_test(baseline_dist, current_distribution)
+        kl_stats = self.detector.kullback_leibler_divergence(baseline_dist, current_distribution)
         
-        statistics = [ks_stats, psi_stats, chi_stats]
+        statistics = [ks_stats, psi_stats, chi_stats, kl_stats]
         
         # Determine overall drift
         drift_detected = any(s.is_drifted for s in statistics)

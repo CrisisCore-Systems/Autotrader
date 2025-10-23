@@ -108,6 +108,7 @@ class IBBroker:
 
         # Connection state
         self.connected = False
+        self._position_metadata: Dict[str, Dict[str, object]] = {}
 
         logger.info(f"✅ IBBroker initialized ({'PAPER' if paper else 'LIVE'} trading)")
         logger.info(f"   Host: {host}:{port}")
@@ -191,17 +192,18 @@ class IBBroker:
                 unrealized_pnl = (current_price - entry_price) * qty
                 unrealized_pnl_pct = ((current_price / entry_price) - 1) * 100 if entry_price > 0 else 0
 
+                meta = self._position_metadata.get(ticker.upper(), {})
                 positions.append(Position(
                     ticker=ticker,
                     qty=qty,
                     entry_price=entry_price,
                     current_price=current_price,
-                    stop_price=0.0,  # TODO: Get from orders
-                    target_price=0.0,  # TODO: Get from orders
+                    stop_price=float(meta.get("stop_price", 0.0) or 0.0),
+                    target_price=float(meta.get("target_price", 0.0) or 0.0),
                     unrealized_pnl=unrealized_pnl,
                     unrealized_pnl_pct=unrealized_pnl_pct,
-                    signal_id="",
-                    entry_date=datetime.now(),
+                    signal_id=str(meta.get("signal_id", "")),
+                    entry_date=meta.get("entry_time", datetime.now()),
                 ))
 
             return positions
@@ -343,6 +345,14 @@ class IBBroker:
             action = 'BUY' if order.action == 'BUY' else 'SELL'
             market_order = MarketOrder(action, qty)
 
+            ticker_key = order.ticker.upper()
+            self._position_metadata[ticker_key] = {
+                "stop_price": order.stop_price,
+                "target_price": order.target_price,
+                "signal_id": order.signal_id,
+                "entry_time": datetime.utcnow(),
+            }
+
             # Place order
             trade = self.ib.placeOrder(contract, market_order)
             order_id = str(trade.order.orderId)
@@ -363,6 +373,7 @@ class IBBroker:
             logger.error(f"❌ Failed to execute trade: {e}")
             import traceback
             traceback.print_exc()
+            self._position_metadata.pop(order.ticker.upper(), None)
             return None
 
     def close_position(
@@ -401,6 +412,7 @@ class IBBroker:
             trade = self.ib.placeOrder(contract, market_order)
 
             logger.info(f"✅ Closed position {ticker}: {reason}")
+            self._position_metadata.pop(ticker.upper(), None)
             return True
 
         except Exception as e:

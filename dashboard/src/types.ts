@@ -1,3 +1,29 @@
+export interface DataSourceInfo {
+  source_name: string;
+  last_updated: string;
+  data_age_seconds: number;
+  freshness_level: 'fresh' | 'recent' | 'stale' | 'outdated';
+  is_free: boolean;
+  update_frequency_seconds?: number;
+}
+
+export interface ProvenanceInfo {
+  artifact_id?: string;
+  data_sources: string[];
+  pipeline_version?: string;
+  created_at?: string;
+  clickable_links?: Record<string, string>;
+}
+
+export interface EvidencePanel {
+  title: string;
+  confidence: number;
+  freshness: string;
+  source: string;
+  is_free: boolean;
+  data: any;
+}
+
 export interface TokenSummary {
   symbol: string;
   final_score: number;
@@ -10,6 +36,8 @@ export interface TokenSummary {
   narrative_momentum: number;
   sentiment_score: number;
   updated_at: string;
+  provenance?: ProvenanceInfo;
+  freshness?: Record<string, DataSourceInfo>;
 }
 
 export interface ExecutionTreeNode {
@@ -71,4 +99,84 @@ export interface TokenDetail extends TokenSummary {
     html: string;
   };
   tree: ExecutionTreeNode;
+  evidence_panels?: Record<string, EvidencePanel>;
+}
+
+// ============================================================================
+// Experiment Types
+// ============================================================================
+
+export interface ExperimentSummary {
+  config_hash: string;
+  short_hash: string;
+  created_at: string;
+  description: string;
+  tags: string[];
+  feature_count: number;
+  has_results: boolean;
+}
+
+export interface ExperimentConfig {
+  feature_names: string[];
+  feature_weights: Record<string, number>;
+  hyperparameters: Record<string, any>;
+  feature_transformations: Record<string, string>;
+  description: string;
+  tags: string[];
+  created_at: string;
+  config_hash: string;
+}
+
+export interface ExperimentMetrics {
+  precision_at_k: number;
+  average_return_at_k: number;
+  extended_metrics?: {
+    ic_pearson?: number;
+    ic_spearman?: number;
+    sharpe_ratio?: number;
+    sortino_ratio?: number;
+    max_drawdown?: number;
+    win_rate?: number;
+  };
+  baseline_results?: Record<string, {
+    precision: number;
+    avg_return: number;
+  }>;
+  flagged_assets?: string[];
+}
+
+export interface ExperimentDetail {
+  config: ExperimentConfig;
+  config_hash: string;
+  created_at: string;
+  results?: any;
+  metrics?: ExperimentMetrics;
+  execution_tree?: ExecutionTreeNode;
+}
+
+export interface ExperimentComparison {
+  config1_hash: string;
+  config2_hash: string;
+  features: {
+    only_in_config1: string[];
+    only_in_config2: string[];
+    common: string[];
+  };
+  weight_differences: Record<string, {
+    config1: number;
+    config2: number;
+    diff: number;
+  }>;
+  hyperparameters: {
+    config1: Record<string, any>;
+    config2: Record<string, any>;
+  };
+  metrics_comparison?: {
+    config1: ExperimentMetrics;
+    config2: ExperimentMetrics;
+    deltas: {
+      precision_delta: number;
+      return_delta: number;
+    };
+  };
 }

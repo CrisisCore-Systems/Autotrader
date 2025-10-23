@@ -1,0 +1,272 @@
+.alerts-inbox {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.inbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.inbox-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #1976D2;
+}
+
+.inbox-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.inbox-filters select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.loading,
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alert-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert-card.selected {
+  border-color: #2196F3;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.alert-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.severity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  text-transform: uppercase;
+}
+
+.alert-time {
+  font-size: 12px;
+  color: #666;
+}
+
+.alert-message {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.alert-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.label {
+  padding: 3px 8px;
+  background: #E3F2FD;
+  color: #1976D2;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.label.editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.label-remove {
+  background: none;
+  border: none;
+  color: #1976D2;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.label-remove:hover {
+  color: #0D47A1;
+}
+
+.alert-details {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.alert-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.btn-action {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ack {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-ack:hover {
+  background: #388E3C;
+}
+
+.btn-snooze {
+  background: #FF9800;
+  color: white;
+}
+
+.btn-snooze:hover {
+  background: #F57C00;
+}
+
+.alert-metadata,
+.alert-provenance,
+.label-editor {
+  margin-top: 16px;
+}
+
+.alert-metadata h4,
+.alert-provenance h4,
+.label-editor h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.alert-metadata pre {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.provenance-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.provenance-links a {
+  padding: 6px 12px;
+  background: #E3F2FD;
+  color: #1976D2;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.provenance-links a:hover {
+  background: #BBDEFB;
+}
+
+.labels-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.add-label {
+  display: flex;
+  gap: 8px;
+}
+
+.add-label input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.add-label button {
+  padding: 6px 16px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.add-label button:hover {
+  background: #1976D2;
+}

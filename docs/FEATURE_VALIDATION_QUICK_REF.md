@@ -208,10 +208,52 @@ python -c "import sys; sys.path.insert(0, '.'); from examples.feature_validation
 |------|---------|
 | `src/core/feature_validation.py` | Validator implementations |
 | `src/core/feature_store.py` | Integration with feature store |
+| `src/crypto_pnd_detector/data/storage/feature_store.py` | Simple feature store with NaN/Inf validation |
 | `src/core/metrics.py` | Prometheus metrics |
 | `tests/test_feature_validation.py` | Unit tests |
+| `tests/test_feature_validation_integration.py` | Integration tests |
+| `tests/test_crypto_pnd_detector.py` | Tests for InMemoryFeatureStore validation |
 | `examples/feature_validation_example.py` | Usage examples |
 | `docs/FEATURE_VALIDATION_GUIDE.md` | Full documentation |
+
+---
+
+## InMemoryFeatureStore Validation
+
+The crypto P&D detector uses a simplified `InMemoryFeatureStore` with basic validation:
+
+```python
+from src.crypto_pnd_detector.data.storage.feature_store import (
+    InMemoryFeatureStore,
+    FeatureRecord,
+    FeatureValidationError,
+)
+
+# Create store with validation (enabled by default)
+store = InMemoryFeatureStore(enable_validation=True)
+
+# Put valid record
+record = FeatureRecord(
+    token_id="BTC",
+    values={"momentum": 0.5, "volume_anomaly": 0.3}
+)
+store.put(record)
+
+# Invalid record with NaN will be rejected
+invalid_record = FeatureRecord(
+    token_id="ETH",
+    values={"momentum": float('nan')}
+)
+try:
+    store.put(invalid_record)
+except FeatureValidationError as e:
+    print(f"Validation failed: {e}")
+```
+
+Validates:
+- ✅ NaN values (rejected)
+- ✅ Inf values (rejected)
+- Can be disabled: `InMemoryFeatureStore(enable_validation=False)`
 
 ---
 
@@ -223,6 +265,7 @@ Typical overhead per validation:
 - Freshness: ~0.01ms
 - Enum: ~0.01ms
 - Custom: Varies
+- NaN/Inf check: ~0.001ms
 
 Tips:
 - Use batch validation for multiple features

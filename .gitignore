@@ -3,9 +3,32 @@ __pycache__/
 .env
 .DS_Store
 .ipynb_checkpoints/
-artifacts/*.db
 node_modules/
 dashboard/node_modules/
+
+# Database files (SQLite, PostgreSQL dumps, etc.)
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Keep schema files only
+!schema.sql
+!migrations/*.sql
+
+# Exclude all database dumps
+*.dump
+*.sql.gz
+
+# Test and coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+*.xml
+coverage.xml
 
 # Telegram bot credentials
 configs/telegram.yaml
@@ -15,3 +38,15 @@ configs/telegram_*.yaml
 configs/broker_credentials.yaml
 configs/broker_*.yaml
 *_credentials.yaml
+
+# Experiment data (generated files)
+backtest_results/*.json
+execution_trees/*.json
+exports/*
+!backtest_results/.gitkeep
+!execution_trees/.gitkeep
+!exports/.gitkeep
+
+# Monitoring artifacts (generated files)
+artifacts/monitoring/*.json
+artifacts/baselines/*.json

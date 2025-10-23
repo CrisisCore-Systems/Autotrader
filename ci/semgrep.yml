@@ -647,3 +647,184 @@ rules:
     metadata:
       cwe: 'CWE-502: Deserialization of Untrusted Data'
 
+  # === Supply Chain Security ===
+  
+  - id: pip-install-unverified
+    patterns:
+      - pattern-regex: 'pip install.*--trusted-host'
+    message: Installing packages without SSL verification - supply chain attack risk
+    severity: ERROR
+    languages: [bash, shell]
+    metadata:
+      cwe: 'CWE-494: Download of Code Without Integrity Check'
+  
+  - id: download-without-verification
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $DATA = requests.get($URL, ...)
+              ...
+              exec($DATA)
+          - pattern: |
+              $DATA = urllib.request.urlopen($URL)
+              ...
+              exec($DATA)
+    message: Downloading and executing code without verification - supply chain attack risk
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-494: Download of Code Without Integrity Check'
+  
+  - id: npm-install-insecure
+    patterns:
+      - pattern-regex: 'npm install.*--no-verify'
+    message: Installing npm packages without verification
+    severity: ERROR
+    languages: [bash, shell]
+  
+  - id: unsafe-package-import
+    patterns:
+      - pattern: __import__($PKG)
+      - metavariable-pattern:
+          metavariable: $PKG
+          patterns:
+            - pattern-regex: '.*(user_input|request\.|params\.).*'
+    message: Dynamic import with user input - code injection and supply chain risk
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-94: Code Injection'
+  
+  - id: subprocess-pip-install
+    patterns:
+      - pattern: subprocess.run(["pip", "install", $PKG], ...)
+      - metavariable-pattern:
+          metavariable: $PKG
+          patterns:
+            - pattern-regex: '.*(user|input|request|param).*'
+    message: Installing packages with user input - supply chain attack vector
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-494: Download of Code Without Integrity Check'
+  
+  - id: git-clone-http
+    patterns:
+      - pattern-regex: 'git clone http://.*'
+    message: Cloning repository over HTTP - use HTTPS for integrity
+    severity: WARNING
+    languages: [bash, shell]
+  
+  - id: download-and-execute
+    patterns:
+      - pattern: |
+          $SCRIPT = requests.get($URL).text
+          ...
+          eval($SCRIPT)
+    message: Downloading and executing remote code - extreme supply chain risk
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: 'CWE-494: Download of Code Without Integrity Check'
+  
+  - id: requirements-txt-git-http
+    patterns:
+      - pattern-regex: '^git\+http://.*'
+    message: Requirements file references HTTP git repository - use HTTPS
+    severity: ERROR
+    paths:
+      include:
+        - 'requirements*.txt'
+        - 'pyproject.toml'
+  
+  - id: docker-image-latest-tag
+    patterns:
+      - pattern-regex: 'FROM\s+[a-zA-Z0-9\-_./]+:latest'
+    message: Using :latest tag in Docker - pin to specific version for reproducibility
+    severity: WARNING
+    languages: [dockerfile]
+  
+  - id: dockerfile-add-remote
+    patterns:
+      - pattern-regex: 'ADD\s+https?://.*'
+    message: ADD with remote URL in Dockerfile - use COPY with verified local files or curl with checksum
+    severity: WARNING
+    languages: [dockerfile]
+    metadata:
+      cwe: 'CWE-494: Download of Code Without Integrity Check'
+
+  # === Secrets and Credentials ===
+  
+  - id: environment-variable-secrets
+    patterns:
+      - pattern-either:
+          - pattern: os.environ["$KEY"] = $SECRET
+          - pattern: os.environ.get("$KEY", $DEFAULT)
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: '.*(PASSWORD|SECRET|KEY|TOKEN|API_KEY|PRIVATE).*'
+      - metavariable-regex:
+          metavariable: $DEFAULT
+          regex: '^["''][a-zA-Z0-9_\-]{16,}["'']$'
+    message: Hardcoded secret as default value in environment variable access
+    severity: ERROR
+    languages: [python]
+  
+  - id: jwt-secret-weak
+    patterns:
+      - pattern: jwt.encode(..., $SECRET, ...)
+      - metavariable-pattern:
+          metavariable: $SECRET
+          patterns:
+            - pattern-regex: '^["''][a-zA-Z0-9]{1,16}["'']$'
+    message: Weak JWT secret key - use at least 32 bytes of random data
+    severity: ERROR
+    languages: [python]
+  
+  - id: database-connection-string
+    patterns:
+      - pattern-regex: '(mongodb|mysql|postgresql|postgres)://[^:]+:[^@]+@.*'
+    message: Database connection string with embedded credentials - use environment variables
+    severity: ERROR
+    languages: [python, javascript, typescript]
+  
+  - id: aws-credentials-hardcoded
+    patterns:
+      - pattern-regex: '(AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)\s*=\s*["''][A-Z0-9]{20,}["'']'
+    message: Hardcoded AWS credentials - use IAM roles or environment variables
+    severity: ERROR
+    languages: [python, javascript, typescript, bash, shell]
+
+  # === Secret Management Best Practices ===
+  
+  - id: secret-in-url
+    patterns:
+      - pattern: requests.$METHOD($URL, ...)
+      - metavariable-regex:
+          metavariable: $URL
+          regex: '.*[?&](api_key|token|secret|password)=[^&]*'
+    message: Secret passed in URL parameter - use headers or POST body
+    severity: ERROR
+    languages: [python]
+  
+  - id: secret-in-exception
+    patterns:
+      - pattern: |
+          raise $EXCEPTION($MSG)
+      - metavariable-regex:
+          metavariable: $MSG
+          regex: '.*(password|token|secret|key).*'
+    message: Exception message may contain secret - sanitize error messages
+    severity: WARNING
+    languages: [python]
+  
+  - id: secret-in-assert
+    patterns:
+      - pattern: assert $CONDITION, $MSG
+      - metavariable-regex:
+          metavariable: $MSG
+          regex: '.*(password|token|secret|key).*'
+    message: Assert message may expose secret in debug output
+    severity: WARNING
+    languages: [python]
+

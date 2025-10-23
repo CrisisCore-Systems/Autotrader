@@ -55,6 +55,14 @@ export default function App() {
             return token.confidence >= 75;
           case 'high-score':
             return token.final_score >= 70;
+          case 'free-only':
+            return token.provenance?.data_sources.every(source => 
+              ['coingecko', 'dexscreener', 'blockscout', 'groq_ai'].includes(source)
+            ) ?? true;
+          case 'fresh-data':
+            return token.freshness && Object.values(token.freshness).some(
+              f => f.freshness_level === 'fresh'
+            );
           default:
             return true;
         }
@@ -70,6 +78,8 @@ export default function App() {
     { label: 'High Score', value: 'high-score' },
     { label: 'High Confidence', value: 'high-confidence' },
     { label: 'Flagged', value: 'flagged' },
+    { label: 'FREE Only', value: 'free-only' },
+    { label: 'Fresh Data', value: 'fresh-data' },
   ];
 
   return (

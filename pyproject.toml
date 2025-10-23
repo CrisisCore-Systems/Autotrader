@@ -41,6 +41,7 @@ autotrader-backtest-harness = "backtest.harness:main"
 autotrader-scan = "src.cli.main:cli_main"
 autotrader-bouncehunter = "src.bouncehunter.cli:main"
 autotrader-telegram-bot = "src.bouncehunter.telegram_cli:main"
+autotrader-metrics = "src.services.metrics_server:main"
 
 [project.entry-points."autotrader.strategies"]
 default = "src.core.pipeline:HiddenGemScanner"
@@ -50,18 +51,48 @@ where = ["."]
 include = ["src*", "pipeline*", "backtest*"]
 namespaces = false
 
+[tool.black]
+line-length = 120
+target-version = ['py311']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip_gitignore = true
+
 [tool.pytest.ini_options]
-addopts = "-q --maxfail=1"
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra -q --strict-markers --cov-fail-under=80"
 
 [tool.coverage.run]
-branch = true
 source = ["src"]
-omit = ["tests/*"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+]
 
 [tool.coverage.report]
-fail_under = 75
+precision = 2
 show_missing = true
-skip_covered = true
+skip_covered = false
 
-[tool.coverage.html]
-show_contexts = true
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = ["tests/", "scripts/demo/", "src/legacy/"]

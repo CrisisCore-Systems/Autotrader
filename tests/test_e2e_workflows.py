@@ -3,16 +3,26 @@
 from __future__ import annotations
 
 import pytest
+from importlib.util import find_spec
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
-from src.core.pipeline import HiddenGemScanner, TokenConfig, ScanContext
-from src.core.tree import TreeNode, NodeOutcome
+try:
+    from src.core.pipeline import HiddenGemScanner, TokenConfig, ScanContext
+    from src.core.tree import TreeNode, NodeOutcome
+except ModuleNotFoundError as exc:  # pragma: no cover - skip when optional deps missing
+    pytest.skip(
+        f"Token scanning workflow tests require optional dependency: {exc}",
+        allow_module_level=True,
+    )
 
 
 # ============================================================================
 # Complete Scanning Workflow Tests
 # ============================================================================
+
+REQUESTS_AVAILABLE = find_spec("requests") is not None
+
 
 class TestTokenScanningWorkflow:
     """Test complete token scanning workflow from start to finish."""
@@ -36,6 +46,7 @@ class TestTokenScanningWorkflow:
         mock_coin_client = Mock()
         return HiddenGemScanner(coin_client=mock_coin_client)
     
+    @pytest.mark.skipif(not REQUESTS_AVAILABLE, reason="requests dependency is required for NewsClient")
     def test_end_to_end_scan_workflow(self, scanner, token_config):
         """Test complete scanning workflow with all components."""
         # Create scan context

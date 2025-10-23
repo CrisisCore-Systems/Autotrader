@@ -4,51 +4,54 @@
 **Status:** Phase 2 Validation In Progress (2/20 trades)
 
 ---
+**Note:** Legacy quick-reference documents now live in [`docs/legacy/`](docs/legacy/README.md).
 
 ## 🎯 Quick Navigation
 
 ### **🚀 START HERE (New Users)**
 
 **Essential Reading** (5 minutes):
-1. [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) - 30-second overview
+1. [`QUICK_REFERENCE.md`](docs/legacy/QUICK_REFERENCE.md) - 30-second overview
 2. [`README.md`](README.md) - Main project overview
-3. [`DAILY_SCHEDULE.md`](DAILY_SCHEDULE.md) - Visual workflow guide
+3. [`DAILY_SCHEDULE.md`](docs/legacy/DAILY_SCHEDULE.md) - Visual workflow guide
 
 ### **📊 For Operators (Daily Trading)**
 
 **Daily Operations** (30 minutes/day):
-1. [`TRADING_WORKFLOW_EXPLAINED.md`](TRADING_WORKFLOW_EXPLAINED.md) - Complete workflow explanation
+1. [`TRADING_WORKFLOW_EXPLAINED.md`](docs/legacy/TRADING_WORKFLOW_EXPLAINED.md) - Complete workflow explanation
 2. [`docs/OPERATOR_GUIDE.md`](docs/OPERATOR_GUIDE.md) - Daily operations manual
-3. [`PHASE2_VALIDATION_PLAN.md`](PHASE2_VALIDATION_PLAN.md) - Current validation plan
-4. [`NEXT_STEPS.md`](NEXT_STEPS.md) - Action items and priorities
+3. [`PHASE2_VALIDATION_PLAN.md`](docs/legacy/PHASE2_VALIDATION_PLAN.md) - Current validation plan
+4. [`NEXT_STEPS.md`](docs/legacy/NEXT_STEPS.md) - Action items and priorities
 
 **Data & Verification**:
-5. [`DATA_FRESHNESS.md`](DATA_FRESHNESS.md) - Proof of fresh data every run
-6. [`PROJECT_STATUS.md`](PROJECT_STATUS.md) - Comprehensive status report
+5. [`DATA_FRESHNESS.md`](docs/legacy/DATA_FRESHNESS.md) - Proof of fresh data every run
+6. [`PROJECT_STATUS.md`](docs/legacy/PROJECT_STATUS.md) - Comprehensive status report
 
 **Understanding the System**:
-7. [`SCAN_VS_TRADE_MODES.md`](SCAN_VS_TRADE_MODES.md) - How system knows scanning vs trading
-8. [`MODE_SELECTION_CHEATSHEET.md`](MODE_SELECTION_CHEATSHEET.md) - Which script to run when
+7. [`SCAN_VS_TRADE_MODES.md`](docs/legacy/SCAN_VS_TRADE_MODES.md) - How system knows scanning vs trading
+8. [`MODE_SELECTION_CHEATSHEET.md`](docs/legacy/MODE_SELECTION_CHEATSHEET.md) - Which script to run when
 
 ### **🔧 For Developers**
 
 **Technical Documentation**:
-1. [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Broker architecture
-2. [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Agent design
-3. [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Trading strategy details
+1. [`ARCHITECTURE.md`](ARCHITECTURE.md) - Complete system architecture and design
+2. [`FEATURE_CATALOG.md`](FEATURE_CATALOG.md) - Comprehensive feature inventory and data contracts
+3. [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Broker architecture
+4. [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Agent design
+5. [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Trading strategy details
 
 **Historical Context**:
-4. [`PROJECT_IMPROVEMENTS_SUMMARY.md`](PROJECT_IMPROVEMENTS_SUMMARY.md) - All 10 improvements overview
-5. [`IMPROVEMENTS_COMPLETED.md`](IMPROVEMENTS_COMPLETED.md) - Detailed technical documentation
+4. [`PROJECT_IMPROVEMENTS_SUMMARY.md`](docs/legacy/PROJECT_IMPROVEMENTS_SUMMARY.md) - All 10 improvements overview
+5. [`IMPROVEMENTS_COMPLETED.md`](docs/legacy/IMPROVEMENTS_COMPLETED.md) - Detailed technical documentation
 
 ### **Specific Topics**
 
 #### **Testing**
-- [`TESTING_REPORT.md`](TESTING_REPORT.md) - Current test coverage (9%), broken tests, recommendations
+- [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md) - Current test coverage (9%), broken tests, recommendations
 
 #### **API**
-- [`RATE_LIMITING_COMPLETE.md`](RATE_LIMITING_COMPLETE.md) - API rate limiting implementation
-- [`API_CONSOLIDATION_PLAN.md`](API_CONSOLIDATION_PLAN.md) - Future API unification plan (7-day roadmap)
+- [`RATE_LIMITING_COMPLETE.md`](docs/legacy/RATE_LIMITING_COMPLETE.md) - API rate limiting implementation
+- [`API_CONSOLIDATION_PLAN.md`](docs/legacy/API_CONSOLIDATION_PLAN.md) - Future API unification plan (7-day roadmap)
 
 #### **Database**
 - [`migrations/versions/001_initial_schema.py`](migrations/versions/001_initial_schema.py) - Database schema (9 tables)
@@ -56,7 +59,7 @@
 
 #### **Setup & Configuration**
 - [`.env.example`](.env.example) - Required environment variables
-- [`SETUP_COMPLETE.md`](SETUP_COMPLETE.md) - Initial setup guide
+- [`SETUP_COMPLETE.md`](docs/legacy/SETUP_COMPLETE.md) - Initial setup guide
 
 ---
 
@@ -119,21 +122,21 @@
 ## 📖 Key Documents by Audience
 
 ### **For Developers**
-- [`TESTING_REPORT.md`](TESTING_REPORT.md) - What tests exist, what's broken
-- [`API_CONSOLIDATION_PLAN.md`](API_CONSOLIDATION_PLAN.md) - Future API architecture
+- [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md) - What tests exist, what's broken
+- [`API_CONSOLIDATION_PLAN.md`](docs/legacy/API_CONSOLIDATION_PLAN.md) - Future API architecture
 - [`migrations/`](migrations/) - Database schema and migrations
 
 ### **For DevOps**
 - [`docker-compose.yml`](docker-compose.yml) - Container orchestration
-- [`RATE_LIMITING_COMPLETE.md`](RATE_LIMITING_COMPLETE.md) - API rate limiting config
+- [`RATE_LIMITING_COMPLETE.md`](docs/legacy/RATE_LIMITING_COMPLETE.md) - API rate limiting config
 - [`.env.example`](.env.example) - Required environment variables
 
 ### **For Product/Management**
-- [`PROJECT_IMPROVEMENTS_SUMMARY.md`](PROJECT_IMPROVEMENTS_SUMMARY.md) - High-level overview
+- [`PROJECT_IMPROVEMENTS_SUMMARY.md`](docs/legacy/PROJECT_IMPROVEMENTS_SUMMARY.md) - High-level overview
 - [`README.md`](README.md) - Project description and features
 
 ### **For QA/Testing**
-- [`TESTING_REPORT.md`](TESTING_REPORT.md) - Test coverage analysis
+- [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md) - Test coverage analysis
 - [`tests/`](tests/) - Test suite location
 - [`htmlcov/index.html`](htmlcov/index.html) - Coverage report (after running tests)
 
@@ -145,22 +148,22 @@
 → [`README.md`](README.md) → Setup section
 
 ### **"What's the API rate limit?"**
-→ [`RATE_LIMITING_COMPLETE.md`](RATE_LIMITING_COMPLETE.md)
+→ [`RATE_LIMITING_COMPLETE.md`](docs/legacy/RATE_LIMITING_COMPLETE.md)
 
 ### **"What database tables exist?"**
 → [`migrations/versions/001_initial_schema.py`](migrations/versions/001_initial_schema.py)
 
 ### **"What tests are broken?"**
-→ [`TESTING_REPORT.md`](TESTING_REPORT.md) → "Broken Test Modules" section
+→ [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md) → "Broken Test Modules" section
 
 ### **"When will APIs be consolidated?"**
-→ [`API_CONSOLIDATION_PLAN.md`](API_CONSOLIDATION_PLAN.md)
+→ [`API_CONSOLIDATION_PLAN.md`](docs/legacy/API_CONSOLIDATION_PLAN.md)
 
 ### **"What changed recently?"**
-→ [`IMPROVEMENTS_COMPLETED.md`](IMPROVEMENTS_COMPLETED.md)
+→ [`IMPROVEMENTS_COMPLETED.md`](docs/legacy/IMPROVEMENTS_COMPLETED.md)
 
 ### **"What security vulnerabilities exist?"**
-→ [`IMPROVEMENTS_COMPLETED.md`](IMPROVEMENTS_COMPLETED.md) → Security Updates section
+→ [`IMPROVEMENTS_COMPLETED.md`](docs/legacy/IMPROVEMENTS_COMPLETED.md) → Security Updates section
 
 ---
 
@@ -180,19 +183,19 @@
 ## 🆘 Common Questions
 
 **Q: Why are there 3 separate API files?**  
-A: Legacy growth - they evolved separately. See [`API_CONSOLIDATION_PLAN.md`](API_CONSOLIDATION_PLAN.md) for unification plan.
+A: Legacy growth - they evolved separately. See [`API_CONSOLIDATION_PLAN.md`](docs/legacy/API_CONSOLIDATION_PLAN.md) for unification plan.
 
 **Q: How do I run tests?**  
-A: `pytest tests/ -v --cov=src --cov-report=html` - See [`TESTING_REPORT.md`](TESTING_REPORT.md)
+A: `pytest tests/ -v --cov=src --cov-report=html` - See [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md)
 
 **Q: Why is coverage only 9%?**  
-A: Baseline established recently. Target is 75%. See [`TESTING_REPORT.md`](TESTING_REPORT.md) for roadmap.
+A: Baseline established recently. Target is 75%. See [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md) for roadmap.
 
 **Q: What does "VoidBloom" mean?**  
 A: Old project name, now 100% replaced with "AutoTrader" - See improvement #7
 
 **Q: Can I run all APIs at once?**  
-A: Yes, but they use different ports. Future plan consolidates to one - See [`API_CONSOLIDATION_PLAN.md`](API_CONSOLIDATION_PLAN.md)
+A: Yes, but they use different ports. Future plan consolidates to one - See [`API_CONSOLIDATION_PLAN.md`](docs/legacy/API_CONSOLIDATION_PLAN.md)
 
 **Q: What are the rate limits?**  
 A:
@@ -201,7 +204,7 @@ A:
 - Root: 60/minute
 - Health: 120/minute
 
-Full details in [`RATE_LIMITING_COMPLETE.md`](RATE_LIMITING_COMPLETE.md)
+Full details in [`RATE_LIMITING_COMPLETE.md`](docs/legacy/RATE_LIMITING_COMPLETE.md)
 
 ---
 
@@ -214,12 +217,12 @@ Full details in [`RATE_LIMITING_COMPLETE.md`](RATE_LIMITING_COMPLETE.md)
 4. Check [`tests/`](tests/) for usage examples
 
 ### **Contributing**
-1. Read [`PROJECT_IMPROVEMENTS_SUMMARY.md`](PROJECT_IMPROVEMENTS_SUMMARY.md) to understand recent changes
-2. Review [`TESTING_REPORT.md`](TESTING_REPORT.md) for test expectations
+1. Read [`PROJECT_IMPROVEMENTS_SUMMARY.md`](docs/legacy/PROJECT_IMPROVEMENTS_SUMMARY.md) to understand recent changes
+2. Review [`TESTING_REPORT.md`](docs/legacy/TESTING_REPORT.md) for test expectations
 3. Follow patterns in [`src/api/main.py`](src/api/main.py) (rate limiting, env validation)
 
 ### **Troubleshooting**
-1. Check [`IMPROVEMENTS_COMPLETED.md`](IMPROVEMENTS_COMPLETED.md) for known issues
+1. Check [`IMPROVEMENTS_COMPLETED.md`](docs/legacy/IMPROVEMENTS_COMPLETED.md) for known issues
 2. Review environment variables in [`.env.example`](.env.example)
 3. Verify Docker setup in [`docker-compose.yml`](docker-compose.yml)
 

@@ -1,10 +1,14 @@
 # AutoTrader Documentation
 
+[![CI Pipeline](https://github.com/CrisisCore-Systems/Autotrader/workflows/CI%20Pipeline/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/CrisisCore-Systems/Autotrader/workflows/security-scan/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/security-scan.yml)
+[![codecov](https://codecov.io/gh/CrisisCore-Systems/Autotrader/branch/main/graph/badge.svg)](https://codecov.io/gh/CrisisCore-Systems/Autotrader)
+
 ## CrisisCore AutoTrader - Hidden-Gem Scanner
 
 
 
-The documentation set has moved under [`docs/`](docs/).**🆓 Now 100% FREE** - Zero API keys required with FREE data sources!
+The documentation set has moved under [`docs/`](docs/), with legacy quick-reference files now archived in [`docs/legacy/`](docs/legacy/README.md).**🆓 Now 100% FREE** - Zero API keys required with FREE data sources!
 
 
 
@@ -47,20 +51,22 @@ This repository contains the foundational blueprint and implementation for **Cri
 - **Getting Started**: [`docs/PENNYHUNTER_GUIDE.md`](docs/PENNYHUNTER_GUIDE.md) - Complete PennyHunter guide
 - **Operator Manual**: [`docs/OPERATOR_GUIDE.md`](docs/OPERATOR_GUIDE.md) - Daily operations
 - **Broker Setup**: 
-  - [`QUESTRADE_SETUP.md`](QUESTRADE_SETUP.md) - Canadian broker integration
-  - [`IBKR_SETUP_README.md`](IBKR_SETUP_README.md) - Interactive Brokers setup
+  - [`QUESTRADE_SETUP.md`](docs/legacy/QUESTRADE_SETUP.md) - Canadian broker integration
+  - [`IBKR_SETUP_README.md`](docs/legacy/IBKR_SETUP_README.md) - Interactive Brokers setup
   - [`docs/BROKER_INTEGRATION.md`](docs/BROKER_INTEGRATION.md) - Multi-broker architecture
-- **Phase 2 Status**: [`PHASE2_VALIDATION_PLAN.md`](PHASE2_VALIDATION_PLAN.md) - Current validation progress
-- **Quick Start**: [`QUESTRADE_QUICKSTART.md`](QUESTRADE_QUICKSTART.md) - 5-minute setup
+- **Phase 2 Status**: [`PHASE2_VALIDATION_PLAN.md`](docs/legacy/PHASE2_VALIDATION_PLAN.md) - Current validation progress
+- **Quick Start**: [`QUESTRADE_QUICKSTART.md`](docs/legacy/QUESTRADE_QUICKSTART.md) - 5-minute setup
 
 **Architecture & Design**:
+- **System Architecture**: [`ARCHITECTURE.md`](ARCHITECTURE.md) - Complete system architecture, modules, and data flows
+- **Feature Catalog**: [`FEATURE_CATALOG.md`](FEATURE_CATALOG.md) - Complete feature inventory and data contracts
 - **Agentic System**: [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Multi-agent design
-- **Roadmap**: [`AGENTIC_ROADMAP_QUICK_REF.md`](AGENTIC_ROADMAP_QUICK_REF.md) - Implementation phases
+- **Roadmap**: [`AGENTIC_ROADMAP_QUICK_REF.md`](docs/legacy/AGENTIC_ROADMAP_QUICK_REF.md) - Implementation phases
 - **Backtesting**: [`docs/PHASE_3_BACKTEST_RESULTS.md`](docs/PHASE_3_BACKTEST_RESULTS.md) - Strategy validation
 
 **Legacy Documentation** (Hidden-Gem Scanner):
 - **Project Overview**: [`docs/overview/PROJECT_OVERVIEW.md`](docs/overview/PROJECT_OVERVIEW.md)
-- **Quick Reference**: [`NEXT_SESSION_GUIDE.md`](NEXT_SESSION_GUIDE.md)
+- **Quick Reference**: [`NEXT_SESSION_GUIDE.md`](docs/legacy/NEXT_SESSION_GUIDE.md)
 - **Navigation**: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
 
 ### 💰 **Cost Savings**
@@ -97,7 +103,7 @@ This repository contains the foundational blueprint and implementation for **Cri
 - **🗄️ Database**: Alembic migrations system
 - **🛡️ API Protection**: Rate limiting (10-120/min)
 
-**See [`BROKER_INTEGRATION_COMPLETE.md`](BROKER_INTEGRATION_COMPLETE.md) and [`PHASE2_VALIDATION_PLAN.md`](PHASE2_VALIDATION_PLAN.md) for complete details**
+**See [`BROKER_INTEGRATION_COMPLETE.md`](docs/legacy/BROKER_INTEGRATION_COMPLETE.md) and [`PHASE2_VALIDATION_PLAN.md`](docs/legacy/PHASE2_VALIDATION_PLAN.md) for complete details**
 
 ## System Overview
 
@@ -161,7 +167,18 @@ python -m venv .venv-1
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Initialize development databases
+python scripts/db/init_dev_databases.py
 ```
+
+**Database Setup**: The system uses SQLite databases for agent memory and experiment tracking. These databases are NOT committed to version control and must be initialized locally:
+
+- **bouncehunter_memory.db**: Agent memory for trading signals and outcomes
+- **test_memory.db**: Test database with same structure
+- **experiments.sqlite**: Experiment configuration tracking
+
+Run `python scripts/db/init_dev_databases.py` to create empty databases with the correct schema. Database migrations are managed via Alembic in the `migrations/` directory.
 
 ### Set Up Broker Credentials
 
@@ -181,7 +198,7 @@ questrade:
   practice_account: true  # Use practice account first!
 ```
 
-See [`QUESTRADE_SETUP.md`](QUESTRADE_SETUP.md) for detailed setup instructions.
+See [`QUESTRADE_SETUP.md`](docs/legacy/QUESTRADE_SETUP.md) for detailed setup instructions.
 
 ### Run Phase 2 Validation
 
@@ -253,6 +270,9 @@ for signal in signals:
 ### Test the System
 
 ```bash
+# Run core module tests (features, scoring, reliability)
+pytest tests/test_features.py tests/test_scoring.py tests/test_reliability_services.py -v
+
 # Run broker tests
 pytest tests/test_broker.py -v
 
@@ -261,7 +281,16 @@ pytest tests/test_bouncehunter_engine.py -v
 
 # Run comprehensive test suite
 pytest tests/test_broker.py tests/test_bouncehunter_engine.py tests/test_agentic.py -v
+
+# Run with coverage report
+pytest --cov=src --cov-report=term --cov-report=html
 ```
+
+**📊 Testing & CI Documentation**:
+- **Test Coverage Summary**: [`docs/TESTING_SUMMARY.md`](docs/TESTING_SUMMARY.md) - 36 core module tests
+- **CI Gating Setup**: [`docs/CI_GATING_SETUP.md`](docs/CI_GATING_SETUP.md) - Branch protection and quality gates
+
+The repository enforces quality gates via GitHub Actions with 80% coverage target, automatic linting, and type checking on all PRs.
 
 ### Tree-of-Thought Execution Trace
 
@@ -320,9 +349,50 @@ Confidence is computed as `0.5 · Recency + 0.5 · DataCompleteness` and reporte
 
 ### Observability & Safety
 
-- Structured logging with OpenTelemetry.
-- Metrics pipeline (Prometheus + Grafana) tracking ingestion latency, API SLIs, false positive rates.
-- Alerting for safety violations (e.g., contract analyzer flagged HIGH severity) before user notifications.
+**Comprehensive Observability Stack** - Production-ready monitoring and debugging:
+
+- ✅ **Structured JSON Logging**: All components emit structured logs with context using `structlog`
+  - Request correlation IDs for end-to-end tracing
+  - Consistent field names for log aggregation (ELK, Loki, etc.)
+  - Context binding for scoped logging (user, session, request)
+  
+- ✅ **Prometheus Metrics**: Comprehensive metrics for all system components
+  - Scanner metrics: request rates, durations, error rates, gem scores
+  - Data source metrics: API latencies, error rates, cache hit rates, circuit breaker states
+  - API metrics: request counts, durations, active requests, error rates
+  - Feature metrics: validation failures, value distributions, freshness
+  
+- ✅ **Distributed Tracing**: OpenTelemetry integration for request/response flows
+  - Automatic span creation for all major operations
+  - Trace ID propagation across service boundaries
+  - Integration with Jaeger, Zipkin, or other OTLP-compatible backends
+  
+- ✅ **FastAPI Instrumentation**: Automatic API observability
+  - Request/response logging with durations and status codes
+  - Trace ID headers for correlation
+  - Active request tracking
+
+- ✅ **Metrics Server**: Standalone Prometheus exporter
+  ```bash
+  python -m src.services.metrics_server --port 9090
+  # View at http://localhost:9090/metrics
+  ```
+
+- 🛡️ **Safety Alerting**: Real-time notifications for safety violations
+  - Contract analyzer flags (HIGH severity contracts blocked)
+  - Rate limit breaches and API failures
+  - Data quality issues and validation failures
+
+**Quick Start:**
+```bash
+# Run observability example
+python examples/observability_example.py
+
+# View full documentation
+open docs/observability.md
+```
+
+See [`docs/observability.md`](docs/observability.md) for complete configuration and deployment guide.
 
 ### Artifact Provenance & Glossary (NEW)
 
@@ -427,10 +497,13 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
 ├── requirements.txt              # Python dependencies
 ├── requirements-py313.txt        # Python 3.13 compatible dependencies
 ├── pyproject.toml               # Project configuration
-├── simple_api.py                # Compatibility shim for legacy imports
 ├── sitecustomize.py             # Ensures UTF-8 output on interpreters
 ├── scripts/
-│   ├── api/                     # FastAPI launchers and helpers
+│   ├── api/                     # API server launchers (start_api.py, simple_api.py)
+│   ├── debug/                   # Debug scripts for troubleshooting
+│   ├── setup/                   # Configuration and setup utilities
+│   ├── testing/                 # Manual integration and smoke tests
+│   ├── troubleshooting/         # Advanced diagnostic tools
 │   ├── dashboard/               # Frontend tooling
 │   ├── demo/
 │   │   ├── main.py              # Hidden Gem scanner demo entry point
@@ -1011,16 +1084,57 @@ See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentat
 
 ### Quick References
 - **[PROVENANCE_QUICK_REF.md](PROVENANCE_QUICK_REF.md)** - Provenance patterns
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - General quick reference
+- **[QUICK_REFERENCE.md](docs/legacy/QUICK_REFERENCE.md)** - General quick reference
 - **[docs/EXPERIMENT_TRACKING_QUICK_REF.md](docs/EXPERIMENT_TRACKING_QUICK_REF.md)** - Experiment tracking
 
 ### Implementation Details
 - **[SIMPLIFICATION_COMPLETE.md](SIMPLIFICATION_COMPLETE.md)** - Recent simplifications (NEW)
 
-## �🛡️ Security & Quality Gates
+## 🛡️ Security & Quality Gates
+
+### Automated Security Scanning
 
 Continuous security scanning and coverage enforcement ship with the repo:
 
-- `tests-and-coverage` workflow blocks merges below 75% coverage and publishes the XML artifact.
-- `security-scan` workflow runs Semgrep, Bandit, and pip-audit on every push and each morning UTC.
-- The new `Makefile` recipes (`security`, `coverage`, `sbom`) provide local mirrors of the CI guardrails.
+- **Test Coverage**: `tests-and-coverage` workflow blocks merges below 75% coverage
+- **Security Scans**: `security-scan` workflow runs Semgrep, Bandit, and pip-audit on every push and daily
+- **Secret Detection**: TruffleHog and Gitleaks scan for exposed credentials
+- **Dependency Updates**: Dependabot automatically creates PRs for security patches (weekly)
+- **Container Security**: Trivy scans Docker images for vulnerabilities
+- **SBOM Generation**: Software Bill of Materials tracked for compliance
+- **Local Testing**: `Makefile` recipes (`security`, `coverage`, `sbom`) mirror CI guardrails
+
+### Security Documentation
+
+- **[SECURITY.md](SECURITY.md)** - Security policy, vulnerability reporting, best practices
+- **[docs/DOCKER_SECURITY.md](docs/DOCKER_SECURITY.md)** - Container security hardening guide
+- **[docs/SECRET_ROTATION.md](docs/SECRET_ROTATION.md)** - API key and credential rotation procedures
+
+### Key Security Features
+
+**Secrets Management**:
+- ✅ Environment variable-based configuration (no hardcoded secrets)
+- ✅ Pre-commit hooks detect secrets before commit
+- ✅ Quarterly rotation schedule for all API keys
+- ✅ Emergency rotation procedures documented
+
+**Dependency Security**:
+- ✅ Automated vulnerability scanning with pip-audit
+- ✅ Weekly Dependabot PRs for security updates
+- ✅ License compliance checking (no GPL/AGPL)
+- ✅ Supply chain attack prevention rules
+
+**Docker Hardening**:
+- ✅ Multi-stage builds (build vs runtime separation)
+- ✅ Non-root user (UID 1000)
+- ✅ Minimal base image (slim-bookworm)
+- ✅ Read-only filesystem support
+- ✅ Security options configured (no-new-privileges, dropped capabilities)
+
+**Code Security**:
+- ✅ 100+ custom Semgrep rules (injection, crypto, secrets, supply chain)
+- ✅ Bandit Python security scanning
+- ✅ Type checking with mypy
+- ✅ SARIF output to GitHub Security tab
+
+See [SECURITY.md](SECURITY.md) for complete security posture documentation.

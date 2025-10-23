@@ -12,6 +12,8 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checkers only
 
 from src.core.http_manager import CachePolicy, RateAwareRequester, build_cache_backend
 from src.core.rate_limit import RateLimit
+from src.core.logging_config import get_logger
+from src.core.tracing import trace_operation
 
 
 DEFAULT_RATE_LIMITS: Mapping[str, RateLimit] = {
@@ -40,6 +42,7 @@ class BaseClient:
         self._requester = requester
         self._rate_limits = rate_limits
         self._cache_config = cache_config
+        self._logger = get_logger(__name__)
 
     @property
     def client(self) -> httpx.Client:
@@ -84,24 +87,39 @@ class CoinGeckoClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
-        super().__init__(session)
+        super().__init__(
+            session,
+            rate_limits={"api.coingecko.com": RateLimit(30, 60.0)},
+        )
 
     def fetch_market_chart(self, token_id: str, *, vs_currency: str = "usd", days: int = 14) -> Dict[str, Any]:
-        response = self.client.get(
-            f"/coins/{token_id}/market_chart",
-            params={"vs_currency": vs_currency, "days": days},
-        )
-        response.raise_for_status()
-        super().__init__(session, rate_limits={"api.coingecko.com": RateLimit(30, 60.0)})
-
-    def fetch_market_chart(self, token_id: str, *, vs_currency: str = "usd", days: int = 14) -> Dict[str, Any]:
-        response = self.requester.request(
-            "GET",
-            f"/coins/{token_id}/market_chart",
-            params={"vs_currency": vs_currency, "days": days},
-            cache_policy=CachePolicy(ttl_seconds=300.0),
-        )
-        return response.json()
+        with trace_operation(
+            "coingecko_fetch_market_chart",
+            attributes={
+                "token_id": token_id,
+                "vs_currency": vs_currency,
+                "days": days,
+            }
+        ):
+            self._logger.debug(
+                "fetch_market_chart_start",
+                token_id=token_id,
+                vs_currency=vs_currency,
+                days=days,
+            )
+            response = self.requester.request(
+                "GET",
+                f"/coins/{token_id}/market_chart",
+                params={"vs_currency": vs_currency, "days": days},
+                cache_policy=CachePolicy(ttl_seconds=300.0),
+            )
+            data = response.json()
+            self._logger.info(
+                "fetch_market_chart_success",
+                token_id=token_id,
+                data_points=len(data.get("prices", [])),
+            )
+            return data
 
 
 class DefiLlamaClient(BaseClient):
@@ -115,20 +133,29 @@ class DefiLlamaClient(BaseClient):
         client: Optional[httpx.Client] = None,
     ) -> None:
         session = client or httpx.Client(base_url=base_url, timeout=timeout)
-        super().__init__(session)
-
-    def fetch_protocol(self, slug: str) -> Dict[str, Any]:
-        response = self.client.get(f"/protocol/{slug}")
-        response.raise_for_status()
-        super().__init__(session, rate_limits={"api.llama.fi": RateLimit(60, 60.0)})
-
-    def fetch_protocol(self, slug: str) -> Dict[str, Any]:
-        response = self.requester.request(
-            "GET",
-            f"/protocol/{slug}",
-            cache_policy=CachePolicy(ttl_seconds=600.0),
+        super().__init__(
+            session,
+            rate_limits={"api.llama.fi": RateLimit(60, 60.0)},
         )
-        return response.json()
+
+    def fetch_protocol(self, slug: str) -> Dict[str, Any]:
+        with trace_operation(
+            "defillama_fetch_protocol",
+            attributes={"slug": slug}
+        ):
+            self._logger.debug("fetch_protocol_start", slug=slug)
+            response = self.requester.request(
+                "GET",
+                f"/protocol/{slug}",
+                cache_policy=CachePolicy(ttl_seconds=600.0),
+            )
+            data = response.json()
+            self._logger.info(
+                "fetch_protocol_success",
+                slug=slug,
+                protocol_name=data.get("name", "unknown"),
+            )
+            return data
 
 
 class EtherscanClient(BaseClient):
@@ -150,23 +177,40 @@ class EtherscanClient(BaseClient):
         self._api_key = api_key or ""
 
     def fetch_contract_source(self, address: str) -> Dict[str, Any]:
-        response = self.requester.request(
-            "GET",
-            "",
-            params={
-                "module": "contract",
-                "action": "getsourcecode",
-                "address": address,
-                "apikey": self._api_key,
-            },
-            cache_policy=CachePolicy(ttl_seconds=3600.0),
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if payload.get("status") != "1":
-            raise RuntimeError(f"Etherscan error: {payload.get('message', 'unknown error')}")
-        results = payload.get("result", [])
-        return results[0] if results else {}
+        with trace_operation(
+            "etherscan_fetch_contract_source",
+            attributes={"contract_address": address}
+        ):
+            self._logger.debug("fetch_contract_source_start", address=address)
+            response = self.requester.request(
+                "GET",
+                "",
+                params={
+                    "module": "contract",
+                    "action": "getsourcecode",
+                    "address": address,
+                    "apikey": self._api_key,
+                },
+                cache_policy=CachePolicy(ttl_seconds=3600.0),
+            )
+            response.raise_for_status()
+            payload = response.json()
+            if payload.get("status") != "1":
+                error_msg = payload.get('message', 'unknown error')
+                self._logger.error(
+                    "fetch_contract_source_error",
+                    address=address,
+                    error=error_msg,
+                )
+                raise RuntimeError(f"Etherscan error: {error_msg}")
+            results = payload.get("result", [])
+            contract_data = results[0] if results else {}
+            self._logger.info(
+                "fetch_contract_source_success",
+                address=address,
+                contract_name=contract_data.get("ContractName", "unknown"),
+            )
+            return contract_data
 
 
 class NewsFeedClient(BaseClient):

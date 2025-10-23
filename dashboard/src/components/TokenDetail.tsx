@@ -3,6 +3,7 @@ import { formatDistanceToNowStrict, parseISO } from 'date-fns';
 import type { TokenDetail } from '../types';
 import { ScoreChart } from './ScoreChart';
 import { TreeView } from './TreeView';
+import { EvidencePanel } from './EvidencePanel';
 
 interface Props {
   token: TokenDetail;
@@ -134,6 +135,20 @@ export function TokenDetailPanel({ token }: Props) {
           </div>
         </div>
       </div>
+
+      {token.evidence_panels && (
+        <div className="panel">
+          <div className="section-title">Evidence & Data Sources</div>
+          {Object.entries(token.evidence_panels).map(([key, panel]) => (
+            <EvidencePanel
+              key={key}
+              panel={panel}
+              freshness={token.freshness?.[panel.source]}
+              provenanceLink={token.provenance?.clickable_links?.[panel.source]}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="panel">
         <div className="section-title">Tree-of-Thought execution</div>

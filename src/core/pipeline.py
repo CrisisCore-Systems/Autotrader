@@ -123,19 +123,6 @@ class ScanContext:
     liquidity_ok: bool = False
     result: ScanResult | None = None
     artifact_html: str | None = None
-    news_items: Sequence[NewsItem] = field(default_factory=list)
-    sentiment_metrics: Dict[str, float] = field(default_factory=dict)
-    technical_metrics: Dict[str, float] = field(default_factory=dict)
-    security_metrics: Dict[str, float] = field(default_factory=dict)
-    final_score: float = 0.0
-    github_events: Sequence["GitHubEvent"] = field(default_factory=list)
-    social_posts: Sequence["SocialPost"] = field(default_factory=list)
-    tokenomics_metrics: Sequence["TokenomicsSnapshot"] = field(default_factory=list)
-    alerts: Sequence["Alert"] = field(default_factory=list)
-    # Phase 3: Derivatives & On-Chain Flow
-    derivatives_data: Dict[str, Any] = field(default_factory=dict)
-    onchain_alerts: Sequence["OnChainAlert"] = field(default_factory=list)
-    liquidation_spikes: Dict[str, Any] = field(default_factory=dict)
     news_items: list[NewsItem] = field(default_factory=list)
     sentiment_metrics: Dict[str, float] = field(default_factory=dict)
     technical_metrics: Dict[str, float] = field(default_factory=dict)
@@ -144,6 +131,11 @@ class ScanContext:
     github_events: list["GitHubEvent"] = field(default_factory=list)
     social_posts: list["SocialPost"] = field(default_factory=list)
     tokenomics_metrics: list["TokenomicsSnapshot"] = field(default_factory=list)
+    alerts: list["Alert"] = field(default_factory=list)
+    # Phase 3: Derivatives & On-Chain Flow
+    derivatives_data: Dict[str, Any] = field(default_factory=dict)
+    onchain_alerts: Sequence["OnChainAlert"] = field(default_factory=list)
+    liquidation_spikes: Dict[str, Any] = field(default_factory=dict)
 
 
 class HiddenGemScanner:
@@ -348,7 +340,7 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
-                key="A5",
+                key="A3",
                 title="Contract Source & Verification",
                 description="Fetch Etherscan contract metadata",
                 action=self._action_fetch_contract_metadata,
@@ -356,7 +348,7 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
-                key="A3",
+                key="A4",
                 title="Wallet Clustering",
                 description="Smart-money heuristics staged for enrichment",
                 action=self._action_wallet_clustering_deferred,
@@ -364,7 +356,7 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
-                key="A3",
+                key="A5",
                 title="News & Narrative Signals",
                 description="Aggregate news feeds for sentiment context",
                 action=self._action_fetch_news,
@@ -372,7 +364,7 @@ class HiddenGemScanner:
         )
         branch_a.add_child(
             TreeNode(
-                key="A4",
+                key="A6",
                 title="Social & Narrative Streams",
                 description="Memetic signal ingestion queued post-MVP",
                 action=self._action_social_signal_deferred,
@@ -381,7 +373,7 @@ class HiddenGemScanner:
         if self.github_aggregator is not None:
             branch_a.add_child(
                 TreeNode(
-                    key="A4",
+                    key="A7",
                     title="GitHub Activity",
                     description="Collect repository development signals",
                     action=self._action_fetch_github_activity,
@@ -390,24 +382,16 @@ class HiddenGemScanner:
         if self.social_aggregator is not None:
             branch_a.add_child(
                 TreeNode(
-                    key="A4b",
+                    key="A8",
                     title="Social Sentiment",
                     description="Pull high-signal social posts",
                     action=self._action_fetch_social_sentiment,
                 )
             )
-        branch_a.add_child(
-            TreeNode(
-                key="A5",
-                title="Contract Source & Verification",
-                description="Fetch Etherscan contract metadata",
-                action=self._action_fetch_contract_metadata,
-            )
-        )
         if self.tokenomics_aggregator is not None:
             branch_a.add_child(
                 TreeNode(
-                    key="A6",
+                    key="A9",
                     title="Tokenomics Intelligence",
                     description="Normalize circulating supply & unlock data",
                     action=self._action_fetch_tokenomics,
@@ -418,7 +402,7 @@ class HiddenGemScanner:
         if self.derivatives_aggregator is not None:
             branch_a.add_child(
                 TreeNode(
-                    key="A7",
+                    key="A10",
                     title="Derivatives Data",
                     description="Fetch funding rates, open interest, and liquidation data",
                     action=self._action_fetch_derivatives_data,
@@ -427,7 +411,7 @@ class HiddenGemScanner:
         if self.onchain_monitor is not None:
             branch_a.add_child(
                 TreeNode(
-                    key="A8",
+                    key="A11",
                     title="On-chain Flow Analysis",
                     description="Monitor CEX wallet transfers and whale movements",
                     action=self._action_scan_onchain_transfers,
@@ -768,8 +752,8 @@ class HiddenGemScanner:
     def _action_record_ingestion_decision(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
         return NodeOutcome(
             status="success",
-            summary="Executing A1/A2/A5 for MVP; wallet + social streams deferred",
-            data={"active_streams": ["A1", "A2", "A5"], "deferred": ["A3", "A4"]},
+            summary="Executing A1/A2/A3/A5 for MVP; wallet + social streams deferred",
+            data={"active_streams": ["A1", "A2", "A3", "A5"], "deferred": ["A4", "A6"]},
         )
 
     def _action_wallet_clustering_deferred(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node

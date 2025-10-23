@@ -7,7 +7,9 @@ Focus: NASDAQ/NYSE/AMEX microcaps with real liquidity and clean balance sheets.
 Author: BounceHunter Team
 """
 
+import csv
 import logging
+from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Dict, Set, Optional
 from datetime import datetime, timedelta
@@ -269,11 +271,17 @@ def create_penny_universe(config_path: str = 'configs/pennyhunter.yaml') -> Penn
     return PennyUniverse(config['universe'])
 
 
+DEFAULT_CANDIDATE_PATH = (
+    Path(__file__).resolve().parents[2] / "configs" / "under10_candidates.csv"
+)
+
+
 def get_penny_candidates(
     min_price: float = 0.20,
     max_price: float = 5.00,
     min_volume: float = 300_000,
-    exchanges: Optional[List[str]] = None
+    exchanges: Optional[List[str]] = None,
+    data_path: Optional[str] = None,
 ) -> List[str]:
     """
     Get initial list of penny stock candidates (before full screening).
@@ -292,17 +300,69 @@ def get_penny_candidates(
     if exchanges is None:
         exchanges = ['NASDAQ', 'NYSE', 'AMEX']
 
-    # TODO: Implement screener API integration (e.g., Finviz, TradingView, etc.)
-    # For now, return sample tickers for testing
-    logger.warning("get_penny_candidates() using sample data - integrate screener API for production")
+    candidate_file = Path(data_path) if data_path else DEFAULT_CANDIDATE_PATH
+    if not candidate_file.exists():
+        logger.error(
+            "penny_candidate_file_missing path=%s",
+            candidate_file,
+        )
+        return []
 
-    # Sample microcaps (Updated Oct 2025 - removed delisted: NAKD, ZOM, TELL, GNUS)
-    candidates = [
-        'SNDL', 'PLUG', 'MARA', 'RIOT', 'GEVO', 'ATOS', 'CTRM', 'OCGN',
-        'SOS', 'CLSK', 'ANY', 'CLOV', 'EVGO', 'SPCE', 'SENS', 'SOFI'
-    ]
+    allowed_exchanges = {ex.upper() for ex in exchanges}
+    tickers: List[tuple[str, float]] = []
 
-    return candidates
+    with candidate_file.open(newline='') as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            try:
+                price = float(row.get('price', 0) or 0)
+                avg_volume = float(row.get('avg_volume', 0) or 0)
+                exchange = (row.get('exchange', '') or '').upper()
+            except ValueError:
+                logger.debug("invalid_candidate_row row=%s", row)
+                continue
+
+            if not (min_price <= price <= max_price):
+                continue
+            if avg_volume < min_volume:
+                continue
+
+            normalized_exchange = (
+                exchange.replace('NMS', 'NASDAQ')
+                .replace('NYQ', 'NYSE')
+                .replace('ASE', 'AMEX')
+                .replace('NCM', 'NASDAQ')
+            )
+
+            if allowed_exchanges and not any(
+                allowed in normalized_exchange for allowed in allowed_exchanges
+            ):
+                continue
+
+            symbol = (row.get('ticker') or '').strip().upper()
+            if not symbol:
+                continue
+
+            try:
+                dollar_volume = float(row.get('dollar_volume', 0) or 0)
+            except ValueError:
+                dollar_volume = 0.0
+
+            tickers.append((symbol, dollar_volume))
+
+    tickers.sort(key=lambda item: item[1], reverse=True)
+    results = [symbol for symbol, _ in tickers]
+
+    logger.info(
+        "penny_candidates_sourced path=%s count=%d min_price=%.2f max_price=%.2f min_volume=%.0f",
+        candidate_file,
+        len(results),
+        min_price,
+        max_price,
+        min_volume,
+    )
+
+    return results
 
 
 # ===== CLI testing =====

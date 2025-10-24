@@ -22,13 +22,13 @@ This repository contains the foundational blueprint and implementation for **Cri
 
 > This lightweight README keeps the repository browsable on GitHub while the full documentation lives in the structured `docs/` tree.
 
-## 🎯 Current Status (October 20, 2025)
+## 🎯 Current Status (October 24, 2025)
 
 ### ✅ **Production Ready - Trading System Active**
 
 **BounceHunter/PennyHunter Gap Trading Strategy**:
 - ✅ **Broker Integration**: Multi-broker support (Paper, Alpaca, Questrade, IBKR)
-- ✅ **Comprehensive Test Suite**: 311 files changed, 50+ test classes
+- ✅ **Comprehensive Test Suite**: 86 test files, 188 source files
   - `test_broker.py`: Complete broker abstraction tests
   - `test_bouncehunter_engine.py`: Gap trading strategy validation
   - `test_agentic.py`: Multi-agent orchestration tests
@@ -75,11 +75,11 @@ This repository contains the foundational blueprint and implementation for **Cri
 | **FREE (Recommended)** | **$0** | **0** | ✅ **Ready** |
 | Paid (Optional) | ~$50 | 3 | ✅ Supported |
 
-### 🚀 **Recent Updates (October 20, 2025)**
+### 🚀 **Recent Updates (October 2025)**
 
 **BounceHunter/PennyHunter Trading System**:
 - **🎉 Major Implementation**: Complete broker integration with 4 brokers (Paper, Alpaca, Questrade, IBKR)
-- **📊 Comprehensive Testing**: 311 files with extensive test coverage
+- **📊 Comprehensive Testing**: 86 test files covering all major components
   - Complete broker abstraction tests
   - Gap trading engine validation
   - Multi-agent orchestration framework
@@ -184,7 +184,7 @@ Run `python scripts/db/init_dev_databases.py` to create empty databases with the
 
 **For Paper Trading (Recommended)**:
 ```yaml
-# configs/broker_credentials.yaml
+# Create configs/broker_credentials.yaml
 paper:
   enabled: true
   initial_capital: 100000.0
@@ -192,6 +192,7 @@ paper:
 
 **For Questrade (Canadian)**:
 ```yaml
+# Add to configs/broker_credentials.yaml
 questrade:
   enabled: true
   refresh_token: "YOUR_REFRESH_TOKEN_HERE"
@@ -219,7 +220,7 @@ python scripts\analyze_pennyhunter_results.py
 =================================================================
  PENNYHUNTER DAILY RUNNER
 =================================================================
-Date: 2025-10-20
+Date: 2025-10-24
 
 📊 Current Progress: 2/20 trades (10%)
 ✅ Win Rate: 100.0% (Target: 65-75%)
@@ -447,19 +448,18 @@ glossary.export_markdown(Path("docs/GLOSSARY.md"))
 ```
 
 **Documentation:**
-- 📖 [Full Guide](PROVENANCE_GLOSSARY_GUIDE.md) - Comprehensive documentation
-- ⚡ [Quick Reference](PROVENANCE_QUICK_REF.md) - Quick examples and patterns
 - 📓 [Interactive Notebook](notebooks/hidden_gem_scanner.ipynb) - Hands-on tutorial
-- 📊 [Implementation Summary](PROVENANCE_IMPLEMENTATION_SUMMARY.md) - Technical details
+- 🔍 [Demo Script](examples/demo_provenance.py) - Provenance tracking example
+- 🧪 [Test Script](scripts/manual/test_provenance_glossary.py) - Test suite
 
 **Quick Start:**
 
 ```bash
 # Run interactive demo
-python demo_provenance.py
+python examples/demo_provenance.py
 
 # Run test suite
-python test_provenance_glossary.py
+python scripts/manual/test_provenance_glossary.py
 
 # Explore in Jupyter
 jupyter notebook notebooks/hidden_gem_scanner.ipynb
@@ -519,11 +519,6 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
 │   │   ├── validate_system.py   # Post-installation system checks
 │   │   └── verify_cli.py        # CLI verification harness
 │   └── manual/                  # Interactive regression experiments
-├── prompts/
-│   ├── narrative_analyzer.md    # LLM prompt for narrative analysis
-│   ├── onchain_activity.md      # LLM prompt for on-chain metrics
-│   ├── contract_safety.md       # LLM prompt for safety analysis
-│   └── technical_pattern.md     # LLM prompt for technical patterns
 ├── prompts/
 │   ├── narrative_analyzer.md    # LLM prompt for narrative analysis
 │   ├── onchain_activity.md      # LLM prompt for on-chain metrics
@@ -620,7 +615,7 @@ pip install -r requirements-py313.txt
 # Run system validation
 python scripts/testing/validate_system.py
 
-# Run all tests (21 tests should pass)
+# Run smoke tests
 pytest tests/test_smoke.py tests/test_free_clients_integration.py -v
 ```
 
@@ -655,7 +650,7 @@ python start_enhanced_api.py
 
 ## Next Steps
 
-- ✅ **Production Ready**: All 21 tests passing
+- ✅ **Comprehensive Test Suite**: 86 test files covering all major components
 - ✅ **FREE Tier Working**: $0/month, 0 API keys required
 - ✅ **Documentation Updated**: Reflects current state
 - 🎯 **Future Enhancements**: 
@@ -1060,35 +1055,26 @@ python -m src.cli.experiments search baseline
 
 See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentation and [Quick Reference](docs/EXPERIMENT_TRACKING_QUICK_REF.md) for common commands.
 
-## � Documentation
+## 📋 Documentation
 
 ### CLI Reference
-- **[CLI_REFERENCE.md](CLI_REFERENCE.md)** - Complete CLI reference (NEW - consolidated)
-  - Quick start and installation
-  - Configuration precedence (CLI > Env > File)
-  - Command reference with all options
-  - Exit codes (simplified to 8 canonical categories)
-  - Strategy plugin development guide
-  - Metrics naming conventions
-  - Best practices and troubleshooting
+- **[docs/CLI_BACKTEST_GUIDE.md](docs/CLI_BACKTEST_GUIDE.md)** - CLI backtest guide
+  - Backtesting from command line
+  - Configuration and options
+  - Result analysis
 
 ### Feature Guides
-- **[PROVENANCE_GLOSSARY_GUIDE.md](PROVENANCE_GLOSSARY_GUIDE.md)** - Artifact lineage tracking
-- **[OBSERVABILITY_QUICK_REF.md](OBSERVABILITY_QUICK_REF.md)** - Metrics and logging
-- **[FREE_DATA_SOURCES.md](FREE_DATA_SOURCES.md)** - FREE data alternatives ($0/month)
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Installation and setup
+- **[docs/observability.md](docs/observability.md)** - Observability guide with metrics and logging
 - **[docs/EXPERIMENT_TRACKING.md](docs/EXPERIMENT_TRACKING.md)** - Experiment tracking
+- **[examples/demo_provenance.py](examples/demo_provenance.py)** - Artifact lineage tracking demo
 
 ### Examples
-- **[examples/example_strategy_plugin.py](examples/example_strategy_plugin.py)** - Custom strategy template (NEW)
+- **[examples/example_strategy_plugin.py](examples/example_strategy_plugin.py)** - Custom strategy template
+- **[examples/observability_example.py](examples/observability_example.py)** - Observability integration example
 
 ### Quick References
-- **[PROVENANCE_QUICK_REF.md](PROVENANCE_QUICK_REF.md)** - Provenance patterns
-- **[QUICK_REFERENCE.md](docs/legacy/QUICK_REFERENCE.md)** - General quick reference
+- **[docs/legacy/QUICK_REFERENCE.md](docs/legacy/QUICK_REFERENCE.md)** - General quick reference
 - **[docs/EXPERIMENT_TRACKING_QUICK_REF.md](docs/EXPERIMENT_TRACKING_QUICK_REF.md)** - Experiment tracking
-
-### Implementation Details
-- **[SIMPLIFICATION_COMPLETE.md](SIMPLIFICATION_COMPLETE.md)** - Recent simplifications (NEW)
 
 ## 🛡️ Security & Quality Gates
 

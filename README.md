@@ -344,7 +344,7 @@ Confidence is computed as `0.5 · Recency + 0.5 · DataCompleteness` and reporte
 
 ### CI/CD Skeleton
 
-1. GitHub Actions workflow for lint/test/build (see [`ci/github-actions.yml`](ci/github-actions.yml)).
+1. GitHub Actions workflows for lint/test/build (see [`.github/workflows/`](.github/workflows/)).
 2. Infrastructure-as-code stubs in [`infra/`](infra/) for Terraform or Pulumi expansion.
 3. Secrets stored in Vault/Secrets Manager. Local development uses `.env` managed by Doppler or `direnv`.
 
@@ -534,7 +534,6 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
 ├── backtest/
 │   └── harness.py                # Backtest harness scaffold
 ├── ci/
-│   ├── github-actions.yml        # CI pipeline skeleton
 │   └── semgrep.yml              # Security scanning config
 ├── infra/
 │   └── docker-compose.yml        # Local stack bootstrap
@@ -543,18 +542,17 @@ Artifacts blend operational data with mythic lore for archival memorywear. See [
 │   ├── llm.yaml                 # LLM provider settings
 │   └── alert_rules.yaml         # Alert configuration
 ├── docs/
-│   ├── FREE_DATA_SOURCES.md     # FREE data alternatives documentation
-│   ├── CORRUPTION_FIX_COMPLETE.md  # Fix summary for repository corruption
 │   ├── ETHERSCAN_V2_MIGRATION.md   # Etherscan API v2 migration guide
 │   ├── FEATURE_STATUS.md        # Feature implementation status
 │   ├── ORDERFLOW_TWITTER_IMPLEMENTATION.md  # OrderFlow & Twitter docs
 │   └── RELIABILITY_IMPLEMENTATION.md  # Reliability & monitoring docs
 ├── tests/
-│   ├── test_smoke.py            # Smoke tests (13 tests - all passing)
-│   ├── test_free_clients_integration.py  # Integration tests (8 tests - all passing)
-│   ├── test_all_features.py     # Comprehensive feature tests
-│   ├── test_news_sentiment_enhanced.py  # Enhanced sentiment tests
-│   └── ...                      # Additional test files
+│   ├── test_smoke.py            # Smoke tests
+│   ├── test_free_clients_integration.py  # Integration tests
+│   ├── test_features.py     # Feature tests
+│   ├── test_broker.py      # Broker abstraction tests
+│   ├── test_bouncehunter_engine.py  # Gap trading engine tests
+│   └── ...                      # Additional test files (86 total)
 └── src/
     ├── core/
     │   ├── __init__.py

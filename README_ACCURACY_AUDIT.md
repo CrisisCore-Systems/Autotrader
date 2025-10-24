@@ -21,11 +21,11 @@ A comprehensive audit of the README.md file was conducted to verify accuracy aga
 ### 2. Inflated Test Count Claims ✅ FIXED
 **Issue:** README claimed "311 files changed, 50+ test classes" which was misleading.
 
-**Methodology:** Used `find` command to count all .py files:
+**Methodology:** Used `find` command to count all .py files (verified October 24, 2025):
 - `find tests -name "*.py" -type f | wc -l` = 86 test files
 - `find src -name "*.py" -type f | wc -l` = 188 source files
 
-**Actual State:**
+**Actual State (as of Oct 24, 2025):**
 - Test files: 86 Python test files (all .py files in tests/ directory)
 - Source files: 188 Python source files in src/ (all .py files in src/ directory)
 
@@ -102,14 +102,11 @@ The following claims in the README were verified against the actual repository s
 ### ✅ Major Features and Components
 - **Broker Integration:** Confirmed multi-broker support (Paper, Alpaca, Questrade, IBKR)
   - Files verified: `src/bouncehunter/broker.py`, `src/bouncehunter/alpaca_broker.py`, `src/bouncehunter/ib_broker.py`
-- **Test Suite:** 86 test files exist covering major components
-  - Count verified with: `find tests -name "*.py" -type f | wc -l`
+- **Test Suite:** 86 test files exist covering major components (see methodology above)
   - Sample files verified: `test_broker.py`, `test_bouncehunter_engine.py`, `test_agentic.py` all exist
-- **Source Files:** 188 Python source files in src/
-  - Count verified with: `find src -name "*.py" -type f | wc -l`
+- **Source Files:** 188 Python source files in src/ (see methodology above)
   - All major modules verified: core, api, bouncehunter, alerts, services, etc.
-- **Documentation:** 146 markdown files in docs/ + 14 root-level = 160 total (claim of "25+ guides" is understated)
-  - Counts verified with: `find docs -name "*.md" -type f | wc -l` and `find . -maxdepth 1 -name "*.md" -type f | wc -l`
+- **Documentation:** 160 total markdown files (146 in docs/ + 14 root-level, claim of "25+ guides" is understated)
 
 ### ✅ Repository Structure
 - All major directories exist: `src/`, `tests/`, `docs/`, `scripts/`, `configs/`, `artifacts/`, `backtest/`, `infra/`, `dashboard/`

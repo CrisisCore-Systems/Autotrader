@@ -21,9 +21,13 @@ A comprehensive audit of the README.md file was conducted to verify accuracy aga
 ### 2. Inflated Test Count Claims ✅ FIXED
 **Issue:** README claimed "311 files changed, 50+ test classes" which was misleading.
 
+**Methodology:** Used `find` command to count all .py files:
+- `find tests -name "*.py" -type f | wc -l` = 86 test files
+- `find src -name "*.py" -type f | wc -l` = 188 source files
+
 **Actual State:**
-- Test files: 86 Python test files
-- Source files: 188 Python source files in src/
+- Test files: 86 Python test files (all .py files in tests/ directory)
+- Source files: 188 Python source files in src/ (all .py files in src/ directory)
 
 **Corrections Made:**
 - Line 31: Changed "311 files changed, 50+ test classes" → "86 test files, 188 source files"
@@ -99,8 +103,13 @@ The following claims in the README were verified against the actual repository s
 - **Broker Integration:** Confirmed multi-broker support (Paper, Alpaca, Questrade, IBKR)
   - Files verified: `src/bouncehunter/broker.py`, `src/bouncehunter/alpaca_broker.py`, `src/bouncehunter/ib_broker.py`
 - **Test Suite:** 86 test files exist covering major components
-  - Verified: `test_broker.py`, `test_bouncehunter_engine.py`, `test_agentic.py` all exist
+  - Count verified with: `find tests -name "*.py" -type f | wc -l`
+  - Sample files verified: `test_broker.py`, `test_bouncehunter_engine.py`, `test_agentic.py` all exist
+- **Source Files:** 188 Python source files in src/
+  - Count verified with: `find src -name "*.py" -type f | wc -l`
+  - All major modules verified: core, api, bouncehunter, alerts, services, etc.
 - **Documentation:** 146 markdown files in docs/ + 14 root-level = 160 total (claim of "25+ guides" is understated)
+  - Counts verified with: `find docs -name "*.md" -type f | wc -l` and `find . -maxdepth 1 -name "*.md" -type f | wc -l`
 
 ### ✅ Repository Structure
 - All major directories exist: `src/`, `tests/`, `docs/`, `scripts/`, `configs/`, `artifacts/`, `backtest/`, `infra/`, `dashboard/`

@@ -945,7 +945,7 @@ Final Score = (0.4 × APS) + (0.3 × NVI) + (0.2 × ERR⁻¹) + (0.1 × RRR)
 ## 🛠️ Development
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.11+
 - Node.js 16+
 - TypeScript 4.5+
 

@@ -1080,7 +1080,7 @@ See [Experiment Tracking Guide](docs/EXPERIMENT_TRACKING.md) for full documentat
 
 Continuous security scanning and coverage enforcement ship with the repo:
 
-- **Test Coverage**: `tests-and-coverage` workflow blocks merges below 75% coverage
+- **Test Coverage**: `tests-and-coverage` workflow blocks merges below 80% coverage
 - **Security Scans**: `security-scan` workflow runs Semgrep, Bandit, and pip-audit on every push and daily
 - **Secret Detection**: TruffleHog and Gitleaks scan for exposed credentials
 - **Dependency Updates**: Dependabot automatically creates PRs for security patches (weekly)

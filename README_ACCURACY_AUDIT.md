@@ -224,14 +224,17 @@ This follow-up audit conducted comprehensive verification of all major feature c
 - ✅ Architecture docs confirmed: ARCHITECTURE.md, FEATURE_CATALOG.md, SECURITY.md
 - ✅ Legacy docs present: QUESTRADE_SETUP.md, IBKR_SETUP_README.md, PHASE2_VALIDATION_PLAN.md
 
-#### Minor Issue Found
+#### Minor Issues Found and Fixed
 
-**Date Accuracy:**
-- README.md shows "October 24, 2025" but current date is October 25, 2025
-- This is a minor discrepancy as the audit was completed on Oct 25
-- Example output shows "Date: 2025-10-24" on line 223
+**1. Date Accuracy:**
+- README.md showed "October 24, 2025" but current date is October 25, 2025
+- Example output showed "Date: 2025-10-24" on line 223
+- **FIXED:** Updated both references to October 25, 2025
 
-**Recommendation:** Update dates to "October 25, 2025" for consistency.
+**2. Coverage Threshold Discrepancy:**
+- README line 1083 claimed "blocks merges below 75% coverage"
+- Actual threshold in pyproject.toml and CI workflow is 80%
+- **FIXED:** Updated README to correctly state 80% threshold
 
 ### Summary
 

@@ -4,6 +4,11 @@
 [![Security Scan](https://github.com/CrisisCore-Systems/Autotrader/workflows/security-scan/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/security-scan.yml)
 [![codecov](https://codecov.io/gh/CrisisCore-Systems/Autotrader/branch/main/graph/badge.svg)](https://codecov.io/gh/CrisisCore-Systems/Autotrader)
 
+> **📖 NEW: [Understanding What You've Created](OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
+> - [Quick Summary (5 min)](SYSTEM_SUMMARY.md) - TL;DR with key stats
+> - [Complete Overview (20 min)](WHAT_YOU_CREATED.md) - Deep dive into the system
+> - [Visual Diagrams (10 min)](SYSTEM_DIAGRAMS.md) - Architecture visualizations
+
 ## CrisisCore AutoTrader - Hidden-Gem Scanner
 
 

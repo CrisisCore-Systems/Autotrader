@@ -1,0 +1,310 @@
+name: Validation Pipeline
+
+on:
+  pull_request:
+    branches: [main, develop, feature/**]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'configs/**'
+      - 'dvc.yaml'
+      - 'dvc.lock'
+  push:
+    branches: [main]
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+
+env:
+  PYTHON_VERSION: '3.11'
+  DVC_CACHE_DIR: .dvc/cache
+
+jobs:
+  data-validation:
+    name: Data Pipeline Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for DVC
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install dvc[s3]
+      
+      - name: Configure DVC
+        run: |
+          dvc remote modify s3cache access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          dvc remote modify s3cache secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      
+      - name: Pull DVC data
+        run: dvc pull
+      
+      - name: Validate data integrity
+        run: |
+          python scripts/validation/check_data_integrity.py
+      
+      - name: Check DVC pipeline status
+        run: |
+          dvc status
+          dvc repro --dry
+
+  baseline-validation:
+    name: Baseline Strategy Validation
+    needs: data-validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run baseline strategies
+        run: |
+          python scripts/validation/baseline_strategies.py \
+            --data-dir data/processed/features \
+            --symbol AAPL
+      
+      - name: Run comparative backtest
+        run: |
+          python scripts/validation/comparative_backtest.py \
+            --data-dir data/processed/features \
+            --symbol AAPL
+      
+      - name: Upload baseline reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-reports
+          path: reports/baseline/
+          retention-days: 30
+
+  parameter-search:
+    name: Parameter Search Validation
+    needs: data-validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run parameter grid search
+        run: |
+          python scripts/validation/parameter_search.py \
+            --data-dir data/processed/features \
+            --symbol AAPL
+      
+      - name: Upload parameter search reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: parameter-reports
+          path: reports/parameter_search/
+          retention-days: 30
+
+  walk-forward-validation:
+    name: Walk-Forward Validation
+    needs: data-validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run walk-forward validation
+        run: |
+          python scripts/validation/walk_forward.py \
+            --data-dir data/processed/features \
+            --symbol AAPL \
+            --train-days 120 \
+            --test-days 30 \
+            --step-days 30
+      
+      - name: Check for performance degradation
+        run: |
+          python scripts/validation/check_degradation.py \
+            --report-file reports/walk_forward/AAPL/walk_forward_summary.json \
+            --threshold -10.0
+      
+      - name: Upload walk-forward reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: walk-forward-reports
+          path: reports/walk_forward/
+          retention-days: 30
+
+  portfolio-analysis:
+    name: Portfolio Analysis
+    needs: data-validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run portfolio analysis
+        run: |
+          python scripts/validation/portfolio_analysis.py \
+            --data-dir data/processed/features \
+            --symbols AAPL MSFT NVDA BTCUSD ETHUSD EURUSD GBPUSD
+      
+      - name: Upload portfolio reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-reports
+          path: reports/portfolio_analysis/
+          retention-days: 30
+
+  optuna-optimization:
+    name: Optuna Hyperparameter Optimization
+    needs: data-validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install optuna
+      
+      - name: Run Optuna optimization
+        run: |
+          python scripts/validation/optuna_optimization.py \
+            --data-dir data/processed/features \
+            --symbol AAPL \
+            --n-trials 100 \
+            --n-splits 5
+      
+      - name: Upload optimization reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: optuna-reports
+          path: reports/optuna/
+          retention-days: 90
+
+  performance-regression:
+    name: Performance Regression Check
+    needs: [baseline-validation, walk-forward-validation, portfolio-analysis]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports/
+      
+      - name: Check for performance regressions
+        run: |
+          python scripts/validation/check_regressions.py \
+            --baseline-threshold 0.8 \
+            --sharpe-threshold 0.01
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('reports/regression_summary.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Validation Report\n\n${report}`
+            });
+
+  publish-reports:
+    name: Publish Validation Reports
+    needs: [baseline-validation, parameter-search, walk-forward-validation, portfolio-analysis]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports/
+      
+      - name: Generate HTML report
+        run: |
+          python scripts/validation/generate_html_report.py
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports/html
+          destination_dir: validation-reports
+      
+      - name: Update status badge
+        run: |
+          python scripts/validation/update_status_badge.py \
+            --status passing \
+            --color green

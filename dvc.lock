@@ -6,8 +6,8 @@ stages:
     deps:
     - path: configs/data/fetch.yaml
       hash: md5
-      md5: 552ad17c1052c29b1a0a181500e0868f
-      size: 307
+      md5: b3d479e6b1ebd25ac846d0ce41187c56
+      size: 310
     - path: scripts/data/fetch_market_data.py
       hash: md5
       md5: e6c588065b72710315b3c36f3cb69d74
@@ -15,8 +15,8 @@ stages:
     outs:
     - path: data/raw/market
       hash: md5
-      md5: 60f4c47005ea2b67ff7bfe57336ce588.dir
-      size: 18248595
+      md5: a49a9f859933d31cf9d47df7a36a9e39.dir
+      size: 100098801
       nfiles: 8
   build_features:
     cmd: python scripts/data/build_features.py --config 
@@ -28,8 +28,8 @@ stages:
       size: 265
     - path: data/raw/market
       hash: md5
-      md5: 60f4c47005ea2b67ff7bfe57336ce588.dir
-      size: 18248595
+      md5: a49a9f859933d31cf9d47df7a36a9e39.dir
+      size: 100098801
       nfiles: 8
     - path: scripts/data/build_features.py
       hash: md5
@@ -38,8 +38,8 @@ stages:
     outs:
     - path: data/processed/features
       hash: md5
-      md5: cc0f191e2a0a9dbf861bf33975e0a1cd.dir
-      size: 50288925
+      md5: 8fc9fae3572cf633a67f8ef680566fbf.dir
+      size: 275790172
       nfiles: 8
   reconcile_datasets:
     cmd: python scripts/data/reconcile_datasets.py --raw-dir data/raw/market 

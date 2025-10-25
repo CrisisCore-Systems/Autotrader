@@ -2,14 +2,14 @@ source:
   equities:
     symbols: [AAPL, MSFT, NVDA]
     provider: polygon
-    lookback_days: 30
+    lookback_days: 182
   crypto:
     symbols: [BTC-USD, ETH-USD]
     provider: binance
-    lookback_days: 30
+    lookback_days: 182
   fx:
     symbols: [EURUSD, GBPUSD]
     provider: oanda
-    lookback_days: 30
+    lookback_days: 182
 output:
   path: data/raw/market

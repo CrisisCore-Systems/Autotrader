@@ -1,0 +1,32 @@
+{
+  "data_file": "data\\processed\\features\\AAPL_bars_features.parquet",
+  "num_bars": 262021,
+  "transaction_cost": 0.001,
+  "agentic_performance": {
+    "strategy": "Agentic System",
+    "total_return": -1.0,
+    "annualized_return": -1.0,
+    "volatility": 1.0062270570407166,
+    "sharpe_ratio": -0.993811479231109,
+    "sortino_ratio": -1.1341012720301922,
+    "max_drawdown": -1.0,
+    "total_trades": 146634,
+    "win_rate": 0.16817354334194587,
+    "final_value": 4.9896894038431584e-74
+  },
+  "baseline_count": 5,
+  "best_baseline": {
+    "strategy": "Buy & Hold",
+    "total_return": 400121078449.9122,
+    "annualized_return": 0.026026234281734784,
+    "volatility": 1.5656987669250078,
+    "sharpe_ratio": 0.016622759646703716,
+    "sortino_ratio": 0.027851241616387797,
+    "max_drawdown": -0.46683898764389803,
+    "total_trades": 1,
+    "win_rate": 0.5086233546166147,
+    "final_value": 400121078450.9122
+  },
+  "significant_improvements": 0,
+  "average_return_improvement_pct": -6286.5614989705455
+}

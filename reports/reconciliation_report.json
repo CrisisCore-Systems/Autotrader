@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-10-25T01:03:36.140083",
+  "summary": {
+    "total_symbols": 1,
+    "matched": 1,
+    "mismatched": 0,
+    "missing_live": 0,
+    "match_rate": 1.0
+  },
+  "symbol_reports": [
+    {
+      "symbol": "EURUSD",
+      "hist_rows": 43201,
+      "live_rows": 43201,
+      "common_rows_hist": 43201,
+      "common_rows_live": 43201,
+      "price_correlation": 1.0,
+      "volume_correlation": 1.0,
+      "mean_price_diff": 0.0,
+      "match_quality": 1.0,
+      "differences": {
+        "row_count_diff": 0,
+        "price_corr_below_threshold": false
+      }
+    }
+  ],
+  "issues": []
+}

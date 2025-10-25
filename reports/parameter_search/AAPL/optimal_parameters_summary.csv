@@ -1,0 +1,4 @@
+Strategy,Parameters,Sharpe,Return,Max DD,Trades
+Momentum,lookback=3900,0.0118,155988128.6770,-75.59%,895
+Mean Reversion,"lookback=780, num_std=3.0",-0.0066,-0.7559,-80.07%,1340
+Ma Crossover,"fast=65, slow=1950",0.0084,703927.8874,-72.93%,307

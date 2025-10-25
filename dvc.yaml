@@ -5,7 +5,9 @@ stages:
       - scripts/data/fetch_market_data.py
       - configs/data/fetch.yaml
     outs:
-      - data/raw/market
+      - data/raw/market:
+          cache: true
+  
   build_features:
     cmd: python scripts/data/build_features.py --config configs/data/features.yaml
     deps:
@@ -13,7 +15,46 @@ stages:
       - configs/data/features.yaml
       - data/raw/market
     outs:
-      - data/processed/features
+      - data/processed/features:
+          cache: true
+  
+  snapshot_config:
+    cmd: >
+      python scripts/validation/snapshot_config.py
+      --agents-config configs/agents.yaml
+      --training-config configs/training/strategy.yaml
+      --feature-catalog FEATURE_CATALOG.md
+      --output artifacts/config_snapshot.json
+      --dvc-metrics artifacts/config_metrics.json
+    deps:
+      - scripts/validation/snapshot_config.py
+      - configs/agents.yaml
+      - configs/training/strategy.yaml
+      - FEATURE_CATALOG.md
+    outs:
+      - artifacts/config_snapshot.json:
+          cache: false
+    metrics:
+      - artifacts/config_metrics.json:
+          cache: false
+  
+  reconcile_data:
+    cmd: >
+      python scripts/validation/reconcile_data.py
+      --historical data/historical/dukascopy
+      --live data/raw/market
+      --output reports/reconciliation_report.json
+      --validation-log reports/validation.log
+    deps:
+      - scripts/validation/reconcile_data.py
+      - data/historical/dukascopy
+      - data/raw/market
+    outs:
+      - reports/reconciliation_report.json:
+          cache: false
+      - reports/validation.log:
+          cache: false
+  
   train_model:
     cmd: python scripts/training/train_strategy.py --config configs/training/strategy.yaml
     deps:
@@ -21,6 +62,8 @@ stages:
       - configs/training/strategy.yaml
       - data/processed/features
     outs:
-      - artifacts/models/latest
+      - artifacts/models/latest:
+          cache: true
     metrics:
-      - artifacts/metrics/latest.json
+      - artifacts/metrics/latest.json:
+          cache: false

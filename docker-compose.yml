@@ -36,6 +36,31 @@ services:
     ports:
       - "9091:9091"
 
+  backtest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python scripts/validation/snapshot_config.py
+      --agents-config configs/agents.yaml
+      --training-config configs/training/strategy.yaml
+      --feature-catalog FEATURE_CATALOG.md
+      --output backtest_results/config_snapshot.json
+      --dvc-metrics backtest_results/metrics.json &&
+      python backtest/harness.py data/features/EURUSD_20241018_ml_ready.parquet
+      --extended-metrics
+      --top-k 10
+      --json-output backtest_results/backtest_results.json"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data:ro
+      - ./backtest_results:/app/backtest_results
+    depends_on:
+      - app
+    profiles:
+      - validation
+
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.16.1
     command: >-
@@ -127,10 +152,13 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
     ports:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/grafana/dashboards:/etc/grafana/dashboards:ro
     depends_on:
       - prometheus
 
@@ -141,3 +169,4 @@ volumes:
   minio_data:
   prometheus_data:
   grafana_data:
+  backtest_results:

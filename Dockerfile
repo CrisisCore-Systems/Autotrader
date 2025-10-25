@@ -56,13 +56,15 @@ WORKDIR /app
 RUN chown autotrader:autotrader /app
 
 # Create necessary directories with correct permissions
-RUN mkdir -p /app/logs /app/.cache /tmp && \
-    chown -R autotrader:autotrader /app/logs /app/.cache
+RUN mkdir -p /app/logs /app/.cache /app/artifacts /app/backtest_results /tmp && \
+    chown -R autotrader:autotrader /app/logs /app/.cache /app/artifacts /app/backtest_results
 
 # Copy application code
 COPY --chown=autotrader:autotrader src/ ./src/
 COPY --chown=autotrader:autotrader pipeline/ ./pipeline/
 COPY --chown=autotrader:autotrader configs/ ./configs/
+COPY --chown=autotrader:autotrader backtest/ ./backtest/
+COPY --chown=autotrader:autotrader scripts/ ./scripts/
 COPY --chown=autotrader:autotrader *.py ./
 
 # Switch to non-root user

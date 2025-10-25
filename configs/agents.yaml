@@ -228,7 +228,9 @@ agents:
     system_prompt_ref: "prompts/narrative_analyzer.md"
     input_contract:
       description: "array of text items with timestamps + engagement stats"
-      expected_fields: [items[], window_hours]
+      expected_fields:
+        - items
+        - window_hours
     output_contract:
       validator: narrative_v1
     routing_policy:
@@ -245,7 +247,10 @@ agents:
     purpose: "Summarize ownership concentration, wallet flows, anomalies."
     system_prompt_ref: "prompts/onchain_activity.md"
     input_contract:
-      expected_fields: [recent_transactions[], wallet_clusters[], liquidity_info]
+      expected_fields:
+        - recent_transactions
+        - wallet_clusters
+        - liquidity_info
     output_contract:
       validator: onchain_activity_v1
     routing_policy:
@@ -277,7 +282,10 @@ agents:
       output JSON strictly matching the declared schema. DO NOT hallucinate ranges; only use provided metadata.
       If no violations, return empty arrays. Provide at most five recommendations prioritizing remediation impact.
     input_contract:
-      expected_fields: [features{}, feature_metadata{}, freshness_thresholds{}]
+      expected_fields:
+        - features
+        - feature_metadata
+        - freshness_thresholds
     output_contract:
       validator: feature_quality_v1
     routing_policy:
@@ -296,7 +304,12 @@ agents:
       contributions (positive and negative), and any safety flags, produce concise JSON. Avoid repetition.
       Use short factor phrases (< 8 words). Only include caution_flags that are directly substantiated.
     input_contract:
-      expected_fields: [token, gem_score, positive_factors[], negative_factors[], safety_flags[]]
+      expected_fields:
+        - token
+        - gem_score
+        - positive_factors
+        - negative_factors
+        - safety_flags
     output_contract:
       validator: score_explainer_v1
     routing_policy:
@@ -315,7 +328,13 @@ agents:
       assign priority using a risk × novelty matrix. Recommend suppression if alert is redundant or noise.
       Escalation targets must be roles (e.g. 'quant', 'risk', 'infra'). No free-form text outside fields.
     input_contract:
-      expected_fields: [alert_id, alert_type, signal_strength, novelty_score, risk_flags[], cooldown_remaining]
+      expected_fields:
+        - alert_id
+        - alert_type
+        - signal_strength
+        - novelty_score
+        - risk_flags
+        - cooldown_remaining
     output_contract:
       validator: alert_triage_v1
     routing_policy:
@@ -335,7 +354,12 @@ agents:
       provided weight map and elasticities. If uncertainty is high, bias magnitude toward conservative center.
       NEVER invent parameters not supplied.
     input_contract:
-      expected_fields: [token, current_score, feature_weights{}, elasticity_map{}, changes[]]
+      expected_fields:
+        - token
+        - current_score
+        - feature_weights
+        - elasticity_map
+        - changes
     output_contract:
       validator: simulation_v1
     routing_policy:

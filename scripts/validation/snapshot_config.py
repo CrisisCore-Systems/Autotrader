@@ -7,9 +7,17 @@ from __future__ import annotations
 import json
 import hashlib
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, Any
 import yaml
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """JSON encoder that handles datetime and date objects."""
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 def compute_file_hash(file_path: Path) -> str:
@@ -83,7 +91,7 @@ def snapshot_agent_config(
     # Write snapshot
     output_snapshot.parent.mkdir(parents=True, exist_ok=True)
     with open(output_snapshot, 'w') as f:
-        json.dump(snapshot, f, indent=2)
+        json.dump(snapshot, f, indent=2, cls=DateTimeEncoder)
     
     print(f"✅ Snapshot created: {output_snapshot}")
     print(f"   Snapshot ID: {snapshot['snapshot_id']}")
@@ -194,7 +202,7 @@ def create_dvc_metrics(snapshot: Dict[str, Any], output_metrics: Path) -> None:
     
     output_metrics.parent.mkdir(parents=True, exist_ok=True)
     with open(output_metrics, 'w') as f:
-        json.dump(metrics, f, indent=2)
+        json.dump(metrics, f, indent=2, cls=DateTimeEncoder)
     
     print(f"✅ DVC metrics: {output_metrics}")
 

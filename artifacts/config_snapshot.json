@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-10-25T01:03:22.141060",
+  "version": "1.0.0",
+  "snapshot_id": "config_20251025_010322",
+  "agents": {
+    "config_path": "configs\\agents.yaml",
+    "config_hash": "56c0aa851d6d113cf8c91b82a4a069cc6b2c0c01992e08d438482dbb53c06037",
+    "version": "1.0.0",
+    "last_updated": "2025-10-08",
+    "agent_count": 9,
+    "defaults": {
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "max_output_tokens": 900,
+      "json_enforced": true,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_seconds": 1.5,
+        "jitter": true
+      },
+      "cache": {
+        "enabled": true,
+        "strategy": "semantic",
+        "min_tokens_to_cache": 50
+      },
+      "timeout_seconds": 25,
+      "allow_parallel": true,
+      "telemetry": {
+        "emit_prompt_hash": true,
+        "redact_numbers_over": "1.0e12",
+        "pii_scrub": true
+      }
+    }
+  },
+  "training": {
+    "config_path": "configs\\training\\strategy.yaml",
+    "config_hash": "02982436fc86a440efff1580c9e8bec6e66145c0c77ed17dd7c9c7a417732c57",
+    "experiment_name": "Autotrader-Dev",
+    "model_name": "autotrader-strategy",
+    "hyperparameters": {
+      "learning_rate": 0.001,
+      "batch_size": 128,
+      "epochs": 20,
+      "target_metric": "sharpe"
+    },
+    "tags": {
+      "phase": "phase1",
+      "horizon": "15s"
+    }
+  },
+  "features": {
+    "catalog_path": "FEATURE_CATALOG.md",
+    "catalog_hash": "05e97149b37bfa0855595bbfd492647d5fd8c8c7f950f36e3855fa7b300dc098",
+    "catalog_size_bytes": 34411
+  },
+  "git_info": {
+    "branch": "feature/phase-2.5-memory-bootstrap",
+    "commit": "017e26514a3cd3cfcf1bf95a8c7091f16862204a",
+    "commit_short": "017e2651"
+  }
+}

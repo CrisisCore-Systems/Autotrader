@@ -90,9 +90,9 @@ stages:
       size: 317
     - path: data/processed/features
       hash: md5
-      md5: 1ecd3d66660d22a702339605b730ae12.dir
-      size: 34
-      nfiles: 1
+      md5: cc0f191e2a0a9dbf861bf33975e0a1cd.dir
+      size: 50288925
+      nfiles: 8
     - path: scripts/training/train_strategy.py
       hash: md5
       md5: aec5f241b059a36194c1ba9188858f0e
@@ -107,3 +107,61 @@ stages:
       md5: 2167392695364ebca5e544ee746b3a3d.dir
       size: 27
       nfiles: 1
+  snapshot_config:
+    cmd: "python scripts/validation/snapshot_config.py --agents-config configs/agents.yaml
+      --training-config configs/training/strategy.yaml --feature-catalog FEATURE_CATALOG.md
+      --output artifacts/config_snapshot.json --dvc-metrics artifacts/config_metrics.json\n"
+    deps:
+    - path: FEATURE_CATALOG.md
+      hash: md5
+      md5: dc7dace9e9854d29432b88fb9a6637ec
+      size: 34411
+    - path: configs/agents.yaml
+      hash: md5
+      md5: c9a16599d959ffbc72e992d2417e1567
+      size: 20106
+    - path: configs/training/strategy.yaml
+      hash: md5
+      md5: 3da281ca4eb1d715d8a83fa594420879
+      size: 317
+    - path: scripts/validation/snapshot_config.py
+      hash: md5
+      md5: d828d8063addf7bf5cf12b656c8ba79d
+      size: 8630
+    outs:
+    - path: artifacts/config_metrics.json
+      hash: md5
+      md5: 11e0e04cae22f7fac17120cef5782608
+      size: 565
+    - path: artifacts/config_snapshot.json
+      hash: md5
+      md5: 81f0d11aecd966c0d92a6f47cf1a19a3
+      size: 1743
+  reconcile_data:
+    cmd: "python scripts/validation/reconcile_data.py --historical data/historical/dukascopy
+      --live data/raw/market --output reports/reconciliation_report.json --validation-log
+      reports/validation.log\n"
+    deps:
+    - path: data/historical/dukascopy
+      hash: md5
+      md5: fc5e1d89884610e51aac3a7f736cf88f.dir
+      size: 2674142
+      nfiles: 2
+    - path: data/raw/market
+      hash: md5
+      md5: 60f4c47005ea2b67ff7bfe57336ce588.dir
+      size: 18248595
+      nfiles: 8
+    - path: scripts/validation/reconcile_data.py
+      hash: md5
+      md5: 126738b31b7b2d090b4a629ca45b5f3e
+      size: 8059
+    outs:
+    - path: reports/reconciliation_report.json
+      hash: md5
+      md5: 73ba15d3877ce430585a229e0ff17b96
+      size: 628
+    - path: reports/validation.log
+      hash: md5
+      md5: 524bab36fa71911a96f10d994f93df7a
+      size: 799

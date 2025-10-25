@@ -1,0 +1,6 @@
+Strategy,Avg Sharpe,Std Sharpe,Avg Return,Consistency,Degradation
+Buy & Hold,7.7770,2.4771,3.0844,100.0%,-6.0075
+Momentum (390),1.1402,4.2574,0.3777,61.1%,-2.0162
+Momentum (3900),4.7718,4.1352,1.2111,83.3%,-4.2194
+Mean Reversion (BB 3.0σ),-2.3357,2.9812,-0.0672,16.7%,2.4216
+MA Crossover (65/1950),4.3973,3.8663,1.2868,88.9%,-8.0885

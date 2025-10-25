@@ -1,0 +1,89 @@
+{
+  "symbols": [
+    "AAPL",
+    "MSFT",
+    "NVDA"
+  ],
+  "num_symbols": 3,
+  "transaction_cost": 0.001,
+  "strategies": {
+    "Buy & Hold": {
+      "individual_metrics": {
+        "AAPL": {
+          "sharpe_ratio": 7.183044696567998,
+          "total_return": 400121078449.9122
+        },
+        "MSFT": {
+          "sharpe_ratio": 6.884243689564558,
+          "total_return": 117210903380.6929
+        },
+        "NVDA": {
+          "sharpe_ratio": 7.5114823655624665,
+          "total_return": 1515645061977.2122
+        }
+      },
+      "portfolio_metrics": {
+        "total_return": 3653308025171.2617,
+        "annualized_return": 51529.9500921899,
+        "volatility": 0.9037623459194944,
+        "sharpe_ratio": 57017.1465151748,
+        "sortino_ratio": 96140.90735096968,
+        "max_drawdown": -0.2297704212100095
+      },
+      "diversification_benefit": 7926.838906339844,
+      "avg_correlation": 2.3339980430019124e-05
+    },
+    "Momentum (3900)": {
+      "individual_metrics": {
+        "AAPL": {
+          "sharpe_ratio": 5.33065772138946,
+          "total_return": 155988128.6770113
+        },
+        "MSFT": {
+          "sharpe_ratio": 4.901248380483238,
+          "total_return": 26939841.224973027
+        },
+        "NVDA": {
+          "sharpe_ratio": 6.045772717977538,
+          "total_return": 2959656861.2144513
+        }
+      },
+      "portfolio_metrics": {
+        "total_return": 1984803957.0482,
+        "annualized_return": 3071.056535967246,
+        "volatility": 0.8967961897057681,
+        "sharpe_ratio": 3424.4754507429784,
+        "sortino_ratio": 5700.3729355187015,
+        "max_drawdown": -0.3247928356755956
+      },
+      "diversification_benefit": 631.1358312157345,
+      "avg_correlation": -0.0006249990167723023
+    },
+    "MA Crossover (65/1950)": {
+      "individual_metrics": {
+        "AAPL": {
+          "sharpe_ratio": 4.017048721481366,
+          "total_return": 703927.887439613
+        },
+        "MSFT": {
+          "sharpe_ratio": 3.4885838004113205,
+          "total_return": 78835.95110288847
+        },
+        "NVDA": {
+          "sharpe_ratio": 4.192499557547375,
+          "total_return": 1437422.4654665482
+        }
+      },
+      "portfolio_metrics": {
+        "total_return": 3743427.1845854325,
+        "annualized_return": 291.09969953462553,
+        "volatility": 0.9005974922207107,
+        "sharpe_ratio": 323.2295248977723,
+        "sortino_ratio": 536.9241147264585,
+        "max_drawdown": -0.4962922936309809
+      },
+      "diversification_benefit": 82.89259927211658,
+      "avg_correlation": -0.00010976522614116969
+    }
+  }
+}

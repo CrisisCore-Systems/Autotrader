@@ -83,6 +83,12 @@ class PennyHunterBacktester:
         self.universe = PennyUniverse(config['universe'])
         self.advanced_filters = AdvancedRiskFilters()
         self.advanced_filters_enabled = config.get('advanced_filters', {}).get('enabled', True)
+        self.base_risk_dollars = config.get('risk', {}).get('per_trade_risk_dollars', 5.0)
+
+        # Preload market data for historical regime reconstruction
+        self.spy_history = self._load_spy_history()
+        self.vix_history = self._load_vix_history()
+        self._regime_cache: Dict[pd.Timestamp, Dict] = {}
 
         # Tracking
         self.trades = []
@@ -94,26 +100,177 @@ class PennyHunterBacktester:
             'regime_blocks': 0
         }
 
+    def _load_spy_history(self) -> pd.DataFrame:
+        """Fetch SPY history with 200-day moving average for regime reconstruction."""
+        buffer_start = self.start_date - pd.Timedelta(days=320)
+        buffer_end = self.end_date + pd.Timedelta(days=5)
+        try:
+            spy = yf.Ticker("SPY")
+            hist = spy.history(start=buffer_start, end=buffer_end)
+            if hist.empty:
+                logger.warning("⚠️ Unable to load SPY history for regime reconstruction")
+                return pd.DataFrame()
+            hist = hist.tz_localize(None)
+            hist.index = pd.to_datetime(hist.index).normalize()
+            hist['MA200'] = hist['Close'].rolling(200).mean()
+            logger.info("📥 Loaded %s SPY bars for regime reconstruction", len(hist))
+            return hist
+        except Exception as exc:
+            logger.error("Failed to load SPY history: %s", exc, exc_info=True)
+            return pd.DataFrame()
+
+    def _load_vix_history(self) -> pd.DataFrame:
+        """Fetch VIX history for regime reconstruction."""
+        buffer_start = self.start_date - pd.Timedelta(days=120)
+        buffer_end = self.end_date + pd.Timedelta(days=5)
+        try:
+            vix = yf.Ticker("^VIX")
+            hist = vix.history(start=buffer_start, end=buffer_end)
+            if hist.empty:
+                logger.warning("⚠️ Unable to load VIX history for regime reconstruction")
+                return pd.DataFrame()
+            hist = hist.tz_localize(None)
+            hist.index = pd.to_datetime(hist.index).normalize()
+            logger.info("📥 Loaded %s VIX bars for regime reconstruction", len(hist))
+            return hist
+        except Exception as exc:
+            logger.error("Failed to load VIX history: %s", exc, exc_info=True)
+            return pd.DataFrame()
+
+    def _get_history_row(self, df: pd.DataFrame, date: pd.Timestamp) -> Optional[pd.Series]:
+        """Return row for date or most recent prior trading day."""
+        if df.empty:
+            return None
+
+        if date in df.index:
+            return df.loc[date]
+
+        earlier = df.index[df.index < date]
+        if len(earlier) == 0:
+            return None
+
+        return df.loc[earlier[-1]]
+
     def get_historical_regime(self, date: pd.Timestamp) -> Optional[Dict]:
         """Get market regime for a specific historical date"""
-        if not self.regime_detector:
-            return {'allow_trading': True, 'regime': 'NEUTRAL', 'reason': 'Regime checking disabled'}
+        date_norm = pd.Timestamp(date).tz_localize(None).normalize()
 
-        # For now, use current regime (historical regime would require SPY/VIX historical data)
-        # TODO: Implement true historical regime detection
-        try:
-            regime = self.regime_detector.get_regime()
-            return {
-                'allow_trading': regime.allow_penny_trading,
-                'regime': regime.regime.upper(),
-                'reason': regime.reason,
-                'spy_price': regime.spy_price,
-                'spy_ma200': regime.spy_ma200,
-                'vix': regime.vix_level
+        if date_norm in self._regime_cache:
+            return self._regime_cache[date_norm]
+
+        if not self.regime_detector:
+            snapshot = {
+                'allow_trading': True,
+                'regime': 'NEUTRAL',
+                'reason': 'Regime checking disabled',
+                'spy_price': None,
+                'spy_ma200': None,
+                'spy_above_ma': False,
+                'spy_day_change_pct': 0.0,
+                'spy_green': True,
+                'vix': None,
+                'vix_regime': 'unknown',
             }
-        except Exception as e:
-            logger.warning(f"Regime detection failed for {date}: {e}")
-            return {'allow_trading': True, 'regime': 'UNKNOWN', 'reason': str(e)}
+            self._regime_cache[date_norm] = snapshot
+            return snapshot
+
+        spy_row = self._get_history_row(self.spy_history, date_norm)
+        vix_row = self._get_history_row(self.vix_history, date_norm)
+
+        if spy_row is None or vix_row is None:
+            snapshot = {
+                'allow_trading': True,
+                'regime': 'UNKNOWN',
+                'reason': 'insufficient_historical_data',
+                'spy_price': None,
+                'spy_ma200': None,
+                'spy_above_ma': False,
+                'spy_day_change_pct': 0.0,
+                'spy_green': True,
+                'vix': None,
+                'vix_regime': 'unknown',
+            }
+            self._regime_cache[date_norm] = snapshot
+            return snapshot
+
+        spy_close = float(spy_row['Close'])
+        spy_open = float(spy_row['Open']) if spy_row['Open'] else spy_close
+        spy_ma200 = float(spy_row['MA200']) if not pd.isna(spy_row.get('MA200')) else None
+        spy_day_change_pct = ((spy_close - spy_open) / spy_open * 100) if spy_open else 0.0
+        spy_above_ma = bool(spy_ma200 and spy_close > spy_ma200)
+        spy_green = spy_day_change_pct > 0
+
+        vix_level = float(vix_row['Close']) if not pd.isna(vix_row['Close']) else None
+
+        if vix_level is None:
+            vix_regime = 'unknown'
+        elif vix_level < self.regime_detector.vix_low:
+            vix_regime = 'low'
+        elif vix_level < self.regime_detector.vix_medium:
+            vix_regime = 'medium'
+        elif vix_level < self.regime_detector.vix_high:
+            vix_regime = 'high'
+        else:
+            vix_regime = 'extreme'
+
+        signals_desc = []
+        signals_desc.append("SPY > 200MA" if spy_above_ma else "SPY < 200MA ⚠️")
+        signals_desc.append(f"SPY {spy_day_change_pct:+.2f}%" + ("" if spy_green else " ⚠️"))
+        if vix_level is None:
+            signals_desc.append("VIX unknown")
+        elif vix_regime in ['low', 'medium']:
+            signals_desc.append(f"VIX {vix_level:.1f} ({vix_regime})")
+        else:
+            signals_desc.append(f"VIX {vix_level:.1f} ({vix_regime}) ⚠️")
+
+        reason = ', '.join(signals_desc)
+
+        if not spy_above_ma and self.regime_detector.require_spy_above_ma:
+            regime_str, allow = 'risk_off', False
+            reason = f"SPY below 200MA ({reason})"
+        elif vix_level is not None and vix_level > self.regime_detector.vix_medium:
+            regime_str, allow = 'risk_off', False
+            reason = f"VIX too high ({reason})"
+        elif (
+            spy_day_change_pct < -1.0
+            and self.regime_detector.require_spy_green
+        ):
+            regime_str, allow = 'risk_off', False
+            reason = f"SPY red day ({reason})"
+        elif spy_above_ma and vix_regime == 'low' and spy_day_change_pct > 0:
+            regime_str, allow = 'risk_on', True
+            reason = f"Optimal conditions ({reason})"
+        elif spy_above_ma and vix_regime == 'medium':
+            regime_str, allow = 'neutral', True
+            reason = f"Mixed signals ({reason})"
+        else:
+            regime_str, allow = 'neutral', True
+            reason = f"Neutral market ({reason})"
+
+        snapshot = {
+            'allow_trading': allow,
+            'regime': regime_str.upper(),
+            'reason': reason,
+            'spy_price': spy_close,
+            'spy_ma200': spy_ma200,
+            'spy_above_ma': spy_above_ma,
+            'spy_day_change_pct': spy_day_change_pct,
+            'spy_green': spy_green,
+            'vix': vix_level,
+            'vix_regime': vix_regime,
+        }
+
+        self._regime_cache[date_norm] = snapshot
+        return snapshot
+
+    def compute_risk_budget(self, date: pd.Timestamp) -> float:
+        """Return risk-per-trade dollars scaled by historical VIX."""
+        regime = self.get_historical_regime(date)
+        vix = regime.get('vix') if regime else None
+        vix_value = float(vix) if vix is not None else 20.0
+        scale = 20.0 / max(10.0, vix_value)
+        scale = max(0.5, min(1.0, scale))
+        return round(self.base_risk_dollars * scale, 2)
 
     def scan_historical_gaps(self, ticker: str, hist: pd.DataFrame) -> List[Dict]:
         """Scan historical data for gap signals"""
@@ -138,6 +295,10 @@ class PennyHunterBacktester:
             # Get date
             signal_date = current.name if hasattr(current, 'name') else hist.index[i]
 
+            regime = self.get_historical_regime(signal_date)
+            spy_green = regime.get('spy_green', True)
+            vix_level = float(regime.get('vix', 20.0) or 20.0)
+
             # Score the signal
             score = self.scorer.score_runner_vwap(
                 ticker=ticker,
@@ -146,8 +307,8 @@ class PennyHunterBacktester:
                 float_millions=15,  # Assume mid-range
                 vwap_reclaim=True,
                 rsi=50.0,
-                spy_green=True,
-                vix_level=20.0,
+                spy_green=spy_green,
+                vix_level=vix_level,
                 premarket_volume_mult=vol_spike if vol_spike > 1.5 else None,
                 confirmation_bars=0
             )
@@ -163,6 +324,7 @@ class PennyHunterBacktester:
                     'gap_pct': gap_pct,
                     'vol_spike': vol_spike,
                     'score': score.total_score,
+                    'regime': regime,
                     'hist': hist  # Keep for quality gate
                 })
                 self.stats['signals_found'] += 1
@@ -177,8 +339,8 @@ class PennyHunterBacktester:
         ticker = signal['ticker']
         hist = signal['hist']
 
-        # Estimate position size (simplified)
-        position_size_dollars = 50.0  # $50 position for testing
+        # Estimate position size based on historical risk budget (approx 20x risk)
+        position_size_dollars = self.compute_risk_budget(signal['date']) * 20
 
         try:
             quality_results = self.advanced_filters.run_quality_gate(
@@ -212,8 +374,8 @@ class PennyHunterBacktester:
             stop_loss = entry_price * 0.97  # 3% stop
             take_profit = entry_price * 1.07  # 7% target
 
-        # Position size calculation (simplified)
-        risk_dollars = 5.0
+        # Position size calculation uses dynamic risk budget
+        risk_dollars = self.compute_risk_budget(signal['date'])
         risk_per_share = entry_price - stop_loss
         shares = int(risk_dollars / risk_per_share) if risk_per_share > 0 else 0
 
@@ -281,6 +443,11 @@ class PennyHunterBacktester:
             'status': 'closed'
         }
 
+        regime = signal.get('regime', {})
+        trade['market_regime'] = regime.get('regime')
+        trade['vix'] = regime.get('vix')
+        trade['risk_dollars'] = risk_dollars
+
         self.stats['trades_executed'] += 1
         return trade
 
@@ -321,7 +488,7 @@ class PennyHunterBacktester:
                 signal_date = signal['date']
 
                 # Check market regime
-                regime = self.get_historical_regime(signal_date)
+                regime = signal.get('regime') or self.get_historical_regime(signal_date)
                 if not regime['allow_trading']:
                     logger.debug(f"❌ {ticker} on {signal_date}: Regime blocked ({regime['regime']})")
                     self.stats['regime_blocks'] += 1

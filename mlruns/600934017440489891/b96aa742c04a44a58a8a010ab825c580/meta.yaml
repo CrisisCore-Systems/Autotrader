@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/kay/Documents/Projects/AutoTrader/Autotrader/mlruns/600934017440489891/b96aa742c04a44a58a8a010ab825c580/artifacts
+end_time: 1761376857261
+entry_point_name: ''
+experiment_id: '600934017440489891'
+lifecycle_stage: active
+run_id: b96aa742c04a44a58a8a010ab825c580
+run_name: intrigued-squid-426
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761376828474
+status: 3
+tags: []
+user_id: kay

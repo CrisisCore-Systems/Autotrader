@@ -1,6 +1,5 @@
 # Ignore temporary files and caches
 **/__pycache__/
 **/.ipynb_checkpoints/
-*.log
 logs/
 artifacts/cache/

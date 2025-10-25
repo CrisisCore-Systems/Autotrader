@@ -1,0 +1,15 @@
+creation_timestamp: 1761379433051
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1761379433051
+model_id: m-c50a95485b1247c59e67a8016f3fd622
+name: autotrader-strategy
+run_id: 3ca62abe295e42caa73c6f515b8f6d51
+run_link: null
+source: models:/m-c50a95485b1247c59e67a8016f3fd622
+status: READY
+status_message: null
+storage_location: file:///C:/Users/kay/Documents/Projects/AutoTrader/Autotrader/mlruns/600934017440489891/models/m-c50a95485b1247c59e67a8016f3fd622/artifacts
+user_id: null
+version: 2

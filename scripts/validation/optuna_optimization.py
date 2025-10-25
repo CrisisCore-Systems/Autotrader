@@ -28,8 +28,17 @@ import pandas as pd
 import optuna
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
-import seaborn as sns
+
+# Optional seaborn import (for better plots, but not required)
+try:
+    import seaborn as sns
+    HAS_SEABORN = True
+except ImportError:
+    HAS_SEABORN = False
+    print("Warning: seaborn not available, using matplotlib defaults")
 
 # Import baseline strategies for comparison
 from baseline_strategies import (

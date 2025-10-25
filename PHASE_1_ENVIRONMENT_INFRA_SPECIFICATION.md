@@ -5,6 +5,13 @@
 - Standardize experiment management and artifact versioning to support rapid iteration under auditability constraints.
 - Deliver the foundational orchestration, messaging, and observability stack required for production hardening in later phases.
 
+## 1.1 Phase 1 at a Glance
+- **Repository & Packaging:** Python-centric codebase with Markdown documentation, Dockerized runtime, and `.env`-driven configuration hygiene.
+- **Experiment Tracking:** MLflow as the default tracker with W&B adapters, ensuring datasets and models are versioned and reproducible.
+- **Orchestration & Messaging:** Prefect-led pipeline skeletons backed by Redis and Kafka for coordination and event flow.
+- **Monitoring & Logging:** Prometheus + Grafana dashboards, structured logging, and automated alerting to Slack and email.
+- **Primary Deliverables:** Dockerized developer environment, experiment tracker, orchestration skeleton, and observability stack configured and documented.
+
 ## 2. Repository & Packaging Strategy
 - **Language Footprint:** Python 3.11+ for modeling, execution engines, and task orchestration. Supporting assets captured as Markdown documentation under `docs/`.
 - **Project Layout:**

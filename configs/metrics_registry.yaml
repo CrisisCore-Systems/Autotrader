@@ -237,6 +237,50 @@ metrics:
     unit: bytes
     example: 'cache_size_bytes{cache_name="price_data"}'
 
+  # =============================================================================
+  # Ingestion Worker Metrics
+  # =============================================================================
+
+  ingestion_cycle_duration_seconds:
+    type: histogram
+    description: "Duration of ingestion worker cycles"
+    labels:
+      - worker
+      - outcome
+    buckets: [0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0]
+    category: performance
+    unit: seconds
+    example: 'ingestion_cycle_duration_seconds{worker="autotrader-worker",outcome="success"}'
+
+  ingestion_items_total:
+    type: counter
+    description: "Total number of items collected by the ingestion worker"
+    labels:
+      - worker
+      - source
+    category: monitoring
+    unit: count
+    example: 'ingestion_items_total{worker="autotrader-worker",source="news"}'
+
+  ingestion_cycle_errors_total:
+    type: counter
+    description: "Total number of ingestion worker cycle errors"
+    labels:
+      - worker
+      - stage
+    category: errors
+    unit: count
+    example: 'ingestion_cycle_errors_total{worker="autotrader-worker",stage="cycle"}'
+
+  ingestion_last_success_timestamp:
+    type: gauge
+    description: "Unix timestamp of the last successful ingestion cycle"
+    labels:
+      - worker
+    category: monitoring
+    unit: seconds
+    example: 'ingestion_last_success_timestamp{worker="autotrader-worker"}'
+
 # =============================================================================
 # Pattern Rules
 # =============================================================================

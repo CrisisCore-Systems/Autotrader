@@ -1,0 +1,53 @@
+// Grafana Alloy Configuration for AutoTrader Compliance Monitoring
+// This configuration scrapes Prometheus metrics and sends them to Grafana Cloud
+
+// Prometheus Scrape Config
+prometheus.scrape "compliance_metrics" {
+  targets = [
+    // IMPORTANT: When running in Docker on Windows/macOS, use host.docker.internal to reach host services
+    {"__address__" = "host.docker.internal:9090"},
+  ]
+  
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+  
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+}
+
+// Remote Write to Grafana Cloud
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "https://prometheus-prod-ca-east-0.grafana.net/api/prom/push"
+    
+    basic_auth {
+      // Set via environment variables when running Alloy
+      // Example: -e GRAFANA_CLOUD_METRICS_USERNAME=1417118 -e GRAFANA_CLOUD_METRICS_TOKEN=glc_...
+      username = env("GRAFANA_CLOUD_METRICS_USERNAME")
+      password = env("GRAFANA_CLOUD_METRICS_TOKEN")
+    }
+    
+    queue_config {
+      capacity          = 10000
+      max_shards        = 10
+      min_shards        = 1
+      max_samples_per_send = 5000
+      batch_send_deadline  = "5s"
+    }
+    
+    metadata_config {
+      send_interval = "1m"
+    }
+  }
+  
+  external_labels = {
+    cluster = "autotrader-compliance",
+    environment = "production",
+    source = "alloy",
+  }
+}
+
+// Optional: Logging Config (for debugging)
+logging {
+  level  = "info"
+  format = "logfmt"
+}

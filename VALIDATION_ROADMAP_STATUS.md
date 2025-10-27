@@ -653,5 +653,51 @@ git commit 8cf3176 "feat: Complete Week 2-3 validation roadmap (Optuna + CI/CD +
 
 ---
 
+## 🚧 CRITICAL GAP IDENTIFIED: Agentic System Validation
+
+**Date**: October 25, 2025  
+**Status**: ⏸️ **VALIDATION PENDING**  
+**Priority**: **CRITICAL** - Blocks live deployment of agentic features
+
+### Gap Summary
+
+**Baseline System (Phases 1-8, 12)**: ✅ **VALIDATED** (Week 0-3 complete)
+- Data pipeline, features, strategies, optimization, monitoring: **Production-ready**
+- Statistical validation complete: 5 tests, 262K bars, 18-split walk-forward
+- Sharpe 0.01-0.015, parameter optimization complete
+
+**Agentic System (Phase 9)**: 🚧 **NOT VALIDATED**
+- LLM decision quality: ⏸️ **No metrics**
+- Win rate target (65-75%): ⏸️ **Not measured**
+- Sample size (≥20 trades): ⏸️ **Insufficient**
+- Statistical tests: ⏸️ **Not run**
+- Paper/live trading: ⏸️ **0 trades**
+
+### Action Required
+
+**Validation Plan Created**: See `AGENTIC_SYSTEM_VALIDATION_PLAN.md` (52KB)
+
+**Timeline**: 8 weeks to full validation
+- Week 1: LLM decision quality testing
+- Week 2: Comparative backtest (statistical tests)
+- Week 3: Regime robustness testing
+- Week 4-5: Paper trading (≥20 trades)
+- Week 6-8: Staged live rollout ($1K → $5K → $25K)
+
+**Success Criteria**:
+- ✅ All 5 statistical tests: p < 0.05
+- ✅ Win rate: ≥ 65% (≥ 195 total trades)
+- ✅ Sharpe: ≥ 0.02 (30% improvement)
+- ✅ Regime robustness: Positive Sharpe all conditions
+- ✅ Paper trading: ≥ 80% backtest alignment
+- ✅ Live rollout: 0 circuit breaker triggers
+
+**Documentation**:
+- `AGENTIC_SYSTEM_VALIDATION_PLAN.md` - Full 8-week plan
+- `VALIDATION_GAP_CRITICAL.md` - Risk assessment and recommendations
+
+---
+
 **Validation Roadmap Phases 1-3: COMPLETE** ✅  
-**Ready for**: Phase 4 (Production Deployment & Live Trading)
+**Validation Roadmap Phase 4-5: PENDING** ⏸️ (Agentic system statistical validation required)  
+**Ready for**: Baseline production deployment (non-agentic features)

@@ -1,0 +1,21 @@
+{
+  "symbol": "ETHUSD",
+  "objective_metric": "sharpe",
+  "best_value": 0.013180740732495241,
+  "best_params": {
+    "strategy_type": "momentum",
+    "momentum_lookback": 4900,
+    "momentum_threshold": 0.007394325094379888,
+    "mr_lookback": 340,
+    "mr_std_threshold": 2.25,
+    "ma_fast": 100,
+    "ma_slow": 1200,
+    "position_size": 0.9,
+    "stop_loss_pct": 0.08,
+    "take_profit_pct": 0.11,
+    "commission": 0.0004,
+    "slippage": 0.0009000000000000001
+  },
+  "n_trials": 50,
+  "timestamp": "2025-10-25T02:43:25.232433"
+}

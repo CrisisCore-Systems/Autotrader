@@ -36,6 +36,101 @@ services:
     ports:
       - "9091:9091"
 
+  # ============================================================================
+  # Worker Services
+  # ============================================================================
+  
+  worker-ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m src.cli.worker ingestion --config configs/ingestion.yaml --db-path artifacts/autotrader.db
+    env_file:
+      - .env
+    environment:
+      WORKER_NAME: ingestion-worker-1
+      WORKER_METRICS_PORT: 9100
+      WORKER_POLL_INTERVAL: 900
+      LOG_LEVEL: INFO
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./configs:/app/configs:ro
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; from pathlib import Path; sys.exit(0 if Path('/app/artifacts/autotrader.db').exists() else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    profiles:
+      - production
+      - workers
+  
+  worker-backtest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m src.cli.worker backtest --data-dir data/processed/features --symbols ${BACKTEST_SYMBOLS:-AAPL,MSFT,NVDA}
+    env_file:
+      - .env
+    environment:
+      WORKER_NAME: backtest-worker-1
+      WORKER_METRICS_PORT: 9101
+      LOG_LEVEL: INFO
+    volumes:
+      - ./data:/app/data:ro
+      - ./backtest_results:/app/backtest_results
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    profiles:
+      - validation
+      - workers
+  
+  worker-optimization:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m src.cli.worker optimize --data-dir data/processed/features --symbols ${OPTIM_SYMBOLS:-AAPL,MSFT,NVDA,BTCUSD,ETHUSD,EURUSD,GBPUSD} --trials ${OPTIM_TRIALS:-50} --splits ${OPTIM_SPLITS:-5}
+    env_file:
+      - .env
+    environment:
+      WORKER_NAME: optimization-worker-1
+      WORKER_METRICS_PORT: 9102
+      LOG_LEVEL: INFO
+    volumes:
+      - ./data:/app/data:ro
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    profiles:
+      - optimization
+      - workers
+  
+  # ============================================================================
+  # Legacy Backtest Service (kept for backwards compatibility)
+  # ============================================================================
+  
   backtest:
     build:
       context: .
@@ -59,7 +154,7 @@ services:
     depends_on:
       - app
     profiles:
-      - validation
+      - validation-legacy
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.16.1

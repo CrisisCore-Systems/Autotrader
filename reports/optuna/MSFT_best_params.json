@@ -1,0 +1,21 @@
+{
+  "symbol": "MSFT",
+  "objective_metric": "sharpe",
+  "best_value": 0.017179185260138684,
+  "best_params": {
+    "strategy_type": "momentum",
+    "momentum_lookback": 4500,
+    "momentum_threshold": 0.006435824715221723,
+    "mr_lookback": 280,
+    "mr_std_threshold": 2.5,
+    "ma_fast": 150,
+    "ma_slow": 1450,
+    "position_size": 0.2,
+    "stop_loss_pct": 0.08,
+    "take_profit_pct": 0.07,
+    "commission": 0.00030000000000000003,
+    "slippage": 0.0004
+  },
+  "n_trials": 50,
+  "timestamp": "2025-10-25T02:38:39.937288"
+}

@@ -47,6 +47,7 @@ from src.cli.runtime import (
     Watchdog,
     WatchdogTimeout,
 )
+from src.cli.worker import main as worker_main
 
 __all__ = [
     # Config
@@ -78,6 +79,8 @@ __all__ = [
     'LockError',
     'Watchdog',
     'WatchdogTimeout',
+    # Worker
+    'worker_main',
 ]
 
 __version__ = '0.1.0'

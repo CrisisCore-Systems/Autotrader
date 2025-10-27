@@ -1,0 +1,47 @@
+# Grafana Alloy - Docker Setup (Simplified)
+# Runs only Alloy - metrics exporter runs locally
+
+services:
+  alloy:
+    image: grafana/alloy:latest
+    container_name: autotrader-alloy
+    restart: unless-stopped
+    
+    # Mount configuration
+    volumes:
+      - ./configs/alloy-config.river:/etc/alloy/config.river:ro
+    
+    # Run Alloy with config
+    command:
+      - run
+      - /etc/alloy/config.river
+      - --server.http.listen-addr=0.0.0.0:12345
+    
+    # Expose Alloy UI
+    ports:
+      - "12345:12345"
+    
+    # Use host network to access localhost:9090 (metrics exporter)
+    network_mode: "host"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:12345/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Environment variables
+    environment:
+      - ALLOY_LOG_LEVEL=info
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

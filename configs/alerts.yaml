@@ -1,0 +1,20 @@
+# Alert Configuration
+# Generated on 2025-10-25
+
+# Telegram Bot Configuration
+telegram:
+  enabled: true
+  bot_token: "8447164652:AAHTW_RmFRr4UwmBNwMTE_GlZNG0bGs1hi8"
+  chat_id: "8171766594"
+
+# Email Configuration (Optional - configure later if needed)
+email:
+  enabled: false
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  from_addr: "alerts@yourcompany.com"
+  to_addrs:
+    - "trader@yourcompany.com"
+  username: null
+  password: null
+  use_tls: true

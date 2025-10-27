@@ -15,8 +15,68 @@ from autotrader.audit.trail import (
 )
 from autotrader.monitoring.anomaly.detector import Anomaly, AnomalyDetector
 
+try:
+    from prometheus_client import Counter, Gauge, Histogram
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    # Mock implementations for when prometheus is not available
+    class Counter:
+        def __init__(self, *args, **kwargs): pass
+        def labels(self, *args, **kwargs): return self
+        def inc(self, *args, **kwargs): pass
+    class Gauge:
+        def __init__(self, *args, **kwargs): pass
+        def labels(self, *args, **kwargs): return self
+        def set(self, *args, **kwargs): pass
+    class Histogram:
+        def __init__(self, *args, **kwargs): pass
+        def labels(self, *args, **kwargs): return self
+        def observe(self, *args, **kwargs): pass
+
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Prometheus Metrics
+# =============================================================================
+
+COMPLIANCE_ISSUES_TOTAL = Counter(
+    'compliance_issues_total',
+    'Total number of compliance issues detected',
+    ['severity', 'issue_code']
+)
+
+COMPLIANCE_CHECKS_TOTAL = Counter(
+    'compliance_checks_total',
+    'Total number of compliance checks performed',
+    ['check_type', 'status']
+)
+
+COMPLIANCE_CHECK_DURATION = Histogram(
+    'compliance_check_duration_seconds',
+    'Duration of compliance checks',
+    ['check_type']
+)
+
+RISK_CHECK_FAILURES = Counter(
+    'risk_check_failures_total',
+    'Total number of risk check failures',
+    ['failure_type']
+)
+
+ALERT_DELIVERY_TOTAL = Counter(
+    'alert_delivery_total',
+    'Total number of alerts sent',
+    ['channel', 'severity', 'status']
+)
+
+ACTIVE_VIOLATIONS = Gauge(
+    'active_violations',
+    'Number of active compliance violations',
+    ['severity']
+)
 
 
 class ComplianceSeverity(str, Enum):
@@ -147,6 +207,18 @@ class ComplianceMonitor:
             audit_summary=audit_summary,
             anomalies=anomalies,
         )
+        
+        # Record Prometheus metrics
+        if PROMETHEUS_AVAILABLE:
+            COMPLIANCE_CHECKS_TOTAL.labels(
+                check_type='period_analysis',
+                status='completed'
+            ).inc()
+            
+            for severity, count in totals.items():
+                if severity != 'total':
+                    ACTIVE_VIOLATIONS.labels(severity=severity).set(count)
+        
         logger.info(
             "Compliance report generated: %d issues (%d critical)",
             totals.get("total", 0),
@@ -193,23 +265,38 @@ class ComplianceMonitor:
     ) -> List[ComplianceIssue]:
         issues: List[ComplianceIssue] = []
         if self._policy.require_risk_check and not risk_events:
-            issues.append(
-                ComplianceIssue(
-                    issue_code="missing_risk_check",
-                    description="Signal executed without recorded risk checks",
-                    severity=ComplianceSeverity.CRITICAL,
-                    signal_id=signal_id,
-                )
+            issue = ComplianceIssue(
+                issue_code="missing_risk_check",
+                description="Signal executed without recorded risk checks",
+                severity=ComplianceSeverity.CRITICAL,
+                signal_id=signal_id,
             )
+            issues.append(issue)
+            
+            # Record metric
+            if PROMETHEUS_AVAILABLE:
+                COMPLIANCE_ISSUES_TOTAL.labels(
+                    severity='critical',
+                    issue_code='missing_risk_check'
+                ).inc()
+                RISK_CHECK_FAILURES.labels(failure_type='missing').inc()
+                
         if self._policy.require_llm_review and not llm_decisions:
-            issues.append(
-                ComplianceIssue(
-                    issue_code="llm_review_missing",
-                    description="LLM review required but not recorded",
-                    severity=ComplianceSeverity.WARNING,
-                    signal_id=signal_id,
-                )
+            issue = ComplianceIssue(
+                issue_code="llm_review_missing",
+                description="LLM review required but not recorded",
+                severity=ComplianceSeverity.WARNING,
+                signal_id=signal_id,
             )
+            issues.append(issue)
+            
+            # Record metric
+            if PROMETHEUS_AVAILABLE:
+                COMPLIANCE_ISSUES_TOTAL.labels(
+                    severity='warning',
+                    issue_code='llm_review_missing'
+                ).inc()
+                
         return issues
 
     def _order_notional_issues(

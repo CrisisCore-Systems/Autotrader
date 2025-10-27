@@ -1,0 +1,29 @@
+# Grafana Cloud Configuration
+# Auto-generated token for Alloy data write
+
+# Token Details
+token_name: autotrader
+expiration: No expiry
+scopes: alloy-data-write
+
+# API Token (keep secure!)
+# Do NOT commit real tokens. Prefer environment variables or secret managers.
+# Example runtime env var: $env:GRAFANA_CLOUD_METRICS_TOKEN = "glc_..."
+grafana_cloud_token: "<SET_VIA_ENV_OR_SECRET>"
+
+# Stack Info
+organization_id: "<YOUR_ORG_ID>"
+stack_id: "<YOUR_METRICS_INSTANCE_ID>"
+region: "prod-ca-east-0"
+
+# Endpoints (will be provided by Grafana Cloud)
+# metrics_endpoint: https://prometheus-xxx.grafana.net/api/prom/push
+# logs_endpoint: https://logs-xxx.grafana.net/loki/api/v1/push
+# traces_endpoint: https://tempo-xxx.grafana.net/tempo
+
+# Usage Notes:
+# 1. Install Grafana Alloy: https://grafana.com/docs/alloy/latest/
+# 2. Configure Alloy with this token
+# 3. Point Alloy at your Prometheus metrics (port 9090)
+# 4. Alloy will forward metrics to Grafana Cloud
+# 5. Import compliance-monitoring.json dashboard in Grafana Cloud

@@ -1,7 +1,7 @@
 # Phase 12: Monitoring, Analytics, and Governance — Status
 
-**Date**: October 24, 2025  
-**Status**: Monitoring Stack Production Ready  
+**Date**: October 25, 2025  
+**Status**: Monitoring Stack Production Ready + Demo Complete ✅  
 **Progress**: 6/6 Components Complete (100%)  
 **Next Phase**: Phase 13 — Final Integration & Production
 
@@ -22,15 +22,15 @@ Phase 12 is complete. The audit trail foundation now feeds a full governance sta
 | Post-Trade Analytics Engine | `autotrader/analytics/pnl_attribution.py`, `autotrader/analytics/slippage.py`, `autotrader/analytics/regime.py`, package init | Factor/instrument/time/regime PnL attribution, slippage decomposition, regime classification with performance metrics and full attribution reports. |
 | Anomaly Detection System | `autotrader/monitoring/anomaly/detector.py`, package init | Z-score/IQR detectors, Isolation Forest & One-Class SVM pipelines, rule checks, `Anomaly` dataclass with severity/context, bulk `detect_all`. |
 | Weekly Research Report Generator | `autotrader/reports/weekly.py`, package init | Generates Markdown weekly reports incl. executive summary, highlights, tables, notable trades, leveraging analytics outputs. |
-| Compliance Monitoring Framework | `autotrader/monitoring/compliance/monitor.py`, package init | Policy-driven checks across risk events, LLM decisions, order notional limits, anomaly tie-ins; emits `ComplianceReport` with severity counts and metadata.
+| Compliance Monitoring Framework | `autotrader/monitoring/compliance/monitor.py`, package init, `scripts/demo_compliance_monitoring.py` (320 LOC) | Policy-driven checks across risk events, LLM decisions, order notional limits, anomaly tie-ins; emits `ComplianceReport` with severity counts and metadata. **Includes 6-demo comprehensive usage script** ✅
 
 ---
 
 ## Quality & Tooling Snapshot
 
-Codacy CLI (Trivy, Pylint, Semgrep, Lizard) executed on October 24, 2025:
+Codacy CLI (Trivy, Pylint, Semgrep, Lizard) executed on October 25, 2025:
 
-- **Clean**: `monitoring/realtime/dashboard.py`, `reports/weekly.py`, `monitoring/compliance/monitor.py`.
+- **Clean**: `monitoring/realtime/dashboard.py`, `reports/weekly.py`, `monitoring/compliance/monitor.py`, `scripts/demo_compliance_monitoring.py`.
 - **Known Complexity Warnings**:
   - `analytics/pnl_attribution.py`: `attribute_by_factor` (CCN 19), `attribute_by_instrument` (CCN 17), `attribute_by_horizon` (CCN 12), `attribute_by_regime` (CCN 9), `generate_full_attribution_report` (CCN 12).
   - `analytics/slippage.py`: `generate_slippage_report` (82 LOC > 50 LOC target).

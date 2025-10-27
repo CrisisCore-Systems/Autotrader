@@ -49,6 +49,21 @@ scrape_configs:
           - prefect:4200
     scrape_interval: 30s
 
+  # Worker Services
+  - job_name: workers
+    static_configs:
+      - targets:
+          - worker-ingestion:9100
+          - worker-backtest:9101
+          - worker-optimization:9102
+        labels:
+          service: 'worker'
+    scrape_interval: 15s  # Match global default
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'worker_.*'
+        action: keep  # Only keep worker-specific metrics
+
   # PostgreSQL exporter (requires postgres_exporter sidecar)
   # - job_name: postgres
   #   static_configs:

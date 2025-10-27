@@ -18,7 +18,7 @@ feedparser==6.0.11
 
 # Configuration & Testing
 pyyaml==6.0.2
-pytest==8.3.3
+pytest==8.4.2
 respx==0.21.1
 
 # HTTP Requests

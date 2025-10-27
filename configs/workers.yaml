@@ -1,0 +1,311 @@
+# AutoTrader Worker Configuration
+# Production-ready settings for containerized workers
+
+# ============================================================================
+# Ingestion Worker Configuration
+# ============================================================================
+ingestion:
+  # Poll interval for data collection cycles (seconds)
+  poll_interval: 900  # 15 minutes
+  
+  # Enable/disable specific data sources
+  sources:
+    news: true
+    social: true
+    github: true
+    tokenomics: true
+  
+  # Concurrency and resource limits
+  max_concurrent_requests: 10
+  request_timeout: 30  # seconds
+  max_retries: 3
+  
+  # Circuit breaker settings
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5  # Number of failures before opening
+    recovery_timeout: 300  # seconds before attempting recovery
+  
+  # Rate limiting (requests per minute)
+  rate_limits:
+    news_feeds: 60
+    social_streams: 30
+    github_api: 60
+    tokenomics_api: 120
+  
+  # Data retention (days)
+  retention:
+    news: 90
+    social: 30
+    github: 180
+    tokenomics: 365
+
+# ============================================================================
+# Backtest Worker Configuration
+# ============================================================================
+backtest:
+  # Strategy execution settings
+  strategies:
+    - momentum
+    - mean_reversion
+    - ma_crossover
+  
+  # Backtest parameters
+  default_params:
+    initial_capital: 100000
+    position_size: 0.1  # 10% of capital per trade
+    commission: 0.001  # 0.1% commission
+    slippage: 0.0005  # 0.05% slippage
+  
+  # Performance metrics to calculate
+  metrics:
+    - sharpe_ratio
+    - sortino_ratio
+    - max_drawdown
+    - win_rate
+    - profit_factor
+    - calmar_ratio
+  
+  # Resource limits
+  max_symbols_parallel: 3  # Process up to 3 symbols concurrently
+  memory_limit_mb: 4096  # 4GB memory limit per worker
+  timeout_per_symbol: 600  # 10 minutes per symbol
+  
+  # Output settings
+  save_trade_history: true
+  save_equity_curve: true
+  generate_plots: false  # Disable in production to save resources
+
+# ============================================================================
+# Optimization Worker Configuration
+# ============================================================================
+optimization:
+  # Optuna settings
+  sampler: TPE  # Tree-structured Parzen Estimator
+  pruner: MedianPruner  # Prune unpromising trials
+  
+  # Search space defaults
+  search_space:
+    strategy_type:
+      - momentum
+      - mean_reversion
+      - ma_crossover
+    momentum_lookback:
+      min: 10
+      max: 5000
+      step: 10
+    mr_lookback:
+      min: 10
+      max: 500
+      step: 10
+    ma_fast:
+      min: 5
+      max: 200
+      step: 5
+    ma_slow:
+      min: 50
+      max: 2000
+      step: 50
+    position_size:
+      min: 0.1
+      max: 1.0
+      step: 0.1
+    stop_loss_pct:
+      min: 0.01
+      max: 0.10
+      step: 0.01
+    take_profit_pct:
+      min: 0.02
+      max: 0.20
+      step: 0.01
+  
+  # Optimization objectives
+  objectives:
+    primary: sharpe_ratio  # Primary metric to optimize
+    secondary: max_drawdown  # Secondary metric for multi-objective
+    minimize_drawdown: true
+  
+  # Cross-validation settings
+  cv_strategy: walk_forward
+  min_train_samples: 10000
+  test_ratio: 0.2  # 20% for testing
+  
+  # Resource limits
+  max_trials_per_symbol: 200
+  max_duration_per_symbol: 3600  # 1 hour
+  parallel_trials: 1  # Sequential by default to avoid OOM
+  memory_limit_mb: 8192  # 8GB memory limit
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 20  # Stop if no improvement for 20 trials
+    min_delta: 0.001  # Minimum improvement threshold
+
+# ============================================================================
+# Health Check Configuration
+# ============================================================================
+health:
+  # Health check intervals (seconds)
+  check_interval: 30
+  startup_grace_period: 60
+  shutdown_timeout: 30
+  
+  # Failure thresholds
+  consecutive_failures: 3  # Mark unhealthy after 3 failures
+  success_threshold: 1  # Mark healthy after 1 success
+  
+  # Health indicators
+  indicators:
+    - database_connection
+    - memory_usage
+    - cpu_usage
+    - disk_space
+    - network_connectivity
+
+# ============================================================================
+# Metrics and Monitoring
+# ============================================================================
+metrics:
+  # Prometheus settings
+  enabled: true
+  port: 9100  # Default port (overridden per worker)
+  path: /metrics
+  
+  # Metric retention
+  retention_seconds: 86400  # 24 hours
+  
+  # Custom labels
+  labels:
+    application: autotrader
+    environment: production
+    version: 1.0.0
+  
+  # Metric aggregation windows
+  aggregation_windows:
+    - 1m
+    - 5m
+    - 15m
+    - 1h
+    - 24h
+
+# ============================================================================
+# Logging Configuration
+# ============================================================================
+logging:
+  # Log level per worker type
+  levels:
+    ingestion: INFO
+    backtest: INFO
+    optimization: INFO
+  
+  # Log format
+  format: json  # json or text
+  
+  # Log destinations
+  handlers:
+    - console  # Always log to stdout
+    - file  # Log to file if enabled
+  
+  # File logging settings (optional)
+  file:
+    enabled: true
+    path: logs/workers
+    max_size_mb: 100
+    max_backups: 10
+    rotation: daily
+  
+  # Structured logging fields
+  include_fields:
+    - timestamp
+    - level
+    - worker_type
+    - worker_name
+    - pid
+    - message
+    - duration_ms
+    - error
+    - trace_id
+
+# ============================================================================
+# Error Handling and Retries
+# ============================================================================
+error_handling:
+  # Retry strategy
+  retry:
+    max_attempts: 3
+    backoff_multiplier: 2  # Exponential backoff
+    initial_delay: 1  # seconds
+    max_delay: 60  # seconds
+  
+  # Error recovery
+  recovery:
+    auto_restart: true
+    restart_delay: 10  # seconds
+    max_restarts_per_hour: 6
+  
+  # Error notification
+  notifications:
+    enabled: false  # Enable in production with proper alerting
+    channels:
+      - email
+      - slack
+      - pagerduty
+  
+  # Dead letter queue
+  dlq:
+    enabled: true
+    path: artifacts/failed_jobs
+    retention_days: 7
+
+# ============================================================================
+# Security Configuration
+# ============================================================================
+security:
+  # API authentication (if workers expose HTTP endpoints)
+  api_key_header: X-API-Key
+  require_auth: false  # Enable in production
+  
+  # Secrets management
+  secrets:
+    provider: env  # env, vault, aws-secrets-manager
+    refresh_interval: 3600  # 1 hour
+  
+  # Network security
+  network:
+    allowed_hosts:
+      - localhost
+      - 127.0.0.1
+      - "*.autotrader.internal"
+    blocked_ips: []
+
+# ============================================================================
+# Resource Management
+# ============================================================================
+resources:
+  # CPU limits (cores)
+  cpu:
+    ingestion: 1.0
+    backtest: 2.0
+    optimization: 4.0
+  
+  # Memory limits (MB)
+  memory:
+    ingestion: 2048
+    backtest: 4096
+    optimization: 8192
+  
+  # Disk I/O limits
+  disk:
+    max_write_rate_mbps: 100
+    max_read_rate_mbps: 200
+  
+  # Connection pooling
+  connections:
+    database:
+      pool_size: 10
+      max_overflow: 20
+      pool_timeout: 30
+    redis:
+      pool_size: 10
+      max_connections: 50

@@ -43,7 +43,7 @@ Comprehensive analysis identified **10 critical areas** needing improvement. **4
 **Problem:** Docker worker service referenced `python -m src.core.worker` which doesn't exist
 
 **Actions Taken:**
-- Updated command to `python -m src.cli.main --help` (placeholder)
+- Worker container now launches via `python -m src.core.worker`
 - Added TODO comment for proper worker implementation
 - Prevents Docker Compose startup failures
 

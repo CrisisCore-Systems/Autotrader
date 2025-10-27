@@ -1,0 +1,141 @@
+{
+  "symbols": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "BTCUSD",
+    "ETHUSD",
+    "EURUSD",
+    "GBPUSD"
+  ],
+  "num_symbols": 7,
+  "transaction_cost": 0.001,
+  "strategies": {
+    "Buy & Hold": {
+      "individual_metrics": {
+        "AAPL": {
+          "sharpe_ratio": 7.183044696567998,
+          "total_return": 400121078449.9122
+        },
+        "MSFT": {
+          "sharpe_ratio": 6.884243689564558,
+          "total_return": 117210903380.6929
+        },
+        "NVDA": {
+          "sharpe_ratio": 7.5114823655624665,
+          "total_return": 1515645061977.2122
+        },
+        "BTCUSD": {
+          "sharpe_ratio": 7.762818297660062,
+          "total_return": 4577527578993.105
+        },
+        "ETHUSD": {
+          "sharpe_ratio": 7.98374099223124,
+          "total_return": 11233299775694.326
+        },
+        "EURUSD": {
+          "sharpe_ratio": 6.951453094138495,
+          "total_return": 154640213174.5096
+        },
+        "GBPUSD": {
+          "sharpe_ratio": 8.314290428933676,
+          "total_return": 46358111654808.2
+        }
+      },
+      "portfolio_metrics": {
+        "total_return": 26254239789744.14,
+        "annualized_return": 107976.41030592252,
+        "volatility": 0.5920146808886584,
+        "sharpe_ratio": 182388.06197143934,
+        "sortino_ratio": 308875.1101669461,
+        "max_drawdown": -0.08602213799211426
+      },
+      "diversification_benefit": 24276.295334233986,
+      "avg_correlation": 6.300531912610091e-05
+    },
+    "Momentum (3900)": {
+      "individual_metrics": {
+        "AAPL": {
+          "sharpe_ratio": 5.33065772138946,
+          "total_return": 155988128.6770113
+        },
+        "MSFT": {
+          "sharpe_ratio": 4.901248380483238,
+          "total_return": 26939841.224973027
+        },
+        "NVDA": {
+          "sharpe_ratio": 6.045772717977538,
+          "total_return": 2959656861.2144513
+        },
+        "BTCUSD": {
+          "sharpe_ratio": 5.693714968963803,
+          "total_return": 716033198.9085658
+        },
+        "ETHUSD": {
+          "sharpe_ratio": 6.30248291675465,
+          "total_return": 8785154909.843306
+        },
+        "EURUSD": {
+          "sharpe_ratio": 5.540028596238391,
+          "total_return": 378064859.5352357
+        },
+        "GBPUSD": {
+          "sharpe_ratio": 6.815734589774232,
+          "total_return": 75680027864.24228
+        }
+      },
+      "portfolio_metrics": {
+        "total_return": 17778333097.67037,
+        "annualized_return": 6990.568843162442,
+        "volatility": 0.5873193365461211,
+        "sharpe_ratio": 11902.500749034143,
+        "sortino_ratio": 19943.08296336025,
+        "max_drawdown": -0.13247679209714255
+      },
+      "diversification_benefit": 2050.6582255114413,
+      "avg_correlation": -0.00022928674017870363
+    },
+    "MA Crossover (65/1950)": {
+      "individual_metrics": {
+        "AAPL": {
+          "sharpe_ratio": 4.017048721481366,
+          "total_return": 703927.887439613
+        },
+        "MSFT": {
+          "sharpe_ratio": 3.4885838004113205,
+          "total_return": 78835.95110288847
+        },
+        "NVDA": {
+          "sharpe_ratio": 4.192499557547375,
+          "total_return": 1437422.4654665482
+        },
+        "BTCUSD": {
+          "sharpe_ratio": 4.0307158811629265,
+          "total_return": 750246.7750300895
+        },
+        "ETHUSD": {
+          "sharpe_ratio": 4.028539811170032,
+          "total_return": 738246.5043383364
+        },
+        "EURUSD": {
+          "sharpe_ratio": 4.161774535140086,
+          "total_return": 1298455.707565328
+        },
+        "GBPUSD": {
+          "sharpe_ratio": 4.878288986789888,
+          "total_return": 25713986.06392234
+        }
+      },
+      "portfolio_metrics": {
+        "total_return": 17072924.971077904,
+        "annualized_return": 515.0908728488959,
+        "volatility": 0.590585808458486,
+        "sharpe_ratio": 872.1694044653007,
+        "sortino_ratio": 1458.6949789293028,
+        "max_drawdown": -0.23472578958009827
+      },
+      "diversification_benefit": 212.00438083880354,
+      "avg_correlation": 0.0003811551214934097
+    }
+  }
+}

@@ -68,13 +68,17 @@ services:
       context: ../
       dockerfile: Dockerfile
     image: autotrader-worker:latest
-    # TODO: Create src/core/worker.py or replace with actual worker entrypoint
-    command: python -m src.cli.main --help  # Placeholder until worker module is implemented
+    command: python -m src.core.worker
     env_file:
       - ../.env
     environment:
       - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
       - ENABLE_METRICS=true
+      - INGESTION_CONFIG=/app/configs/ingestion.yaml
+      - INGESTION_DB_PATH=/app/artifacts/worker.db
+      - WORKER_METRICS_PORT=9100
+      - WORKER_NAME=autotrader-worker
+      - WORKER_LOG_LEVEL=${WORKER_LOG_LEVEL:-INFO}
     depends_on:
       postgres:
         condition: service_healthy
@@ -98,7 +102,7 @@ services:
     
     # Health check (assumes worker exposes metrics endpoint)
     healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      test: ["CMD", "curl", "-f", "http://localhost:9100/metrics"]
       interval: 60s
       timeout: 10s
       retries: 3
@@ -116,6 +120,7 @@ services:
       - worker-tmp:/tmp
       - worker-logs:/app/logs
       - worker-cache:/app/.cache
+      - worker-data:/app/artifacts
     
     # Logging
     logging:
@@ -420,6 +425,12 @@ volumes:
   
   grafana-data:
     driver: local
+  worker-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/worker
   
   # Ephemeral volumes
   api-tmp:

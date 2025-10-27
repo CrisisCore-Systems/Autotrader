@@ -1,0 +1,13 @@
+input:
+  path: data/raw/market
+output:
+  path: data/processed/features
+features:
+  - name: momentum_5
+    window: 5
+  - name: volatility_20
+    window: 20
+  - name: liquidity_depth
+    source: orderbook
+  - name: sentiment_score
+    source: narratives

@@ -1,0 +1,296 @@
+# ============================================================
+# Live Trading Configuration with Intelligent Adjustments
+# ============================================================
+# PRODUCTION READY - Conservative settings for live trading
+# Only enable after successful paper trading validation
+# ============================================================
+
+# ===== TIER EXIT CONFIGURATION =====
+tier1:
+  enabled: true
+  profit_threshold_pct: 5.0           # Base target: +5%
+  exit_percentage: 30.0               # Sell 30% of position
+  time_window_start: "15:50"          # 3:50 PM ET
+  time_window_end: "15:55"            # 3:55 PM ET
+  min_trading_days: 1
+  max_trading_days: 1
+  min_shares_remaining: 10            # Higher minimum for live
+  min_position_size: 20
+
+tier2:
+  enabled: true
+  profit_threshold_min_pct: 8.0       # Base target range: 8-10%
+  profit_threshold_max_pct: 10.0
+  exit_percentage: 40.0               # Sell 40% of position
+  min_trading_days: 2                 # Day 2+ only (PDT rule)
+  volume_spike_threshold: 2.5         # Higher threshold for live (2.5x)
+  max_spread_pct: 1.5                 # Tighter spread requirement
+  cooldown_minutes: 60                # Longer cooldown (1 hour)
+  min_shares_remaining: 10
+  min_position_size: 20
+
+# ===== INTELLIGENT ADJUSTMENTS (CONSERVATIVE FOR LIVE) =====
+adjustments:
+  enabled: true                       # ENABLED after paper validation
+  
+  volatility:
+    enabled: true
+    vix_low_threshold: 15
+    vix_normal_threshold: 20
+    vix_high_threshold: 30
+    
+    # Conservative adjustments for live trading
+    tier1_adjustment_low: 0.2         # +0.2% in LOW VIX (subtle)
+    tier1_adjustment_normal: 0.0
+    tier1_adjustment_high: -0.5       # -0.5% in HIGH VIX (moderate)
+    tier1_adjustment_extreme: -1.0    # -1.0% in EXTREME VIX
+    
+    tier2_adjustment_low: 0.5
+    tier2_adjustment_normal: 0.0
+    tier2_adjustment_high: -0.8
+    tier2_adjustment_extreme: -1.5
+    
+    cache_ttl_seconds: 300
+    fallback_vix: 20.0
+  
+  time_decay:
+    enabled: true
+    market_open: "09:30"
+    market_close: "16:00"
+    
+    # Conservative decay for live trading
+    tier1_max_decay_pct: -0.8         # Max -0.8% at close
+    tier2_max_decay_pct: -1.2         # Max -1.2% at close
+  
+  regime:
+    enabled: true
+    spy_symbol: "SPY"
+    short_window: 20
+    long_window: 50
+    sideways_threshold_pct: 0.5
+    
+    # Conservative regime adjustments
+    tier1_adjustment_bull: -0.2       # -0.2% in BULL (subtle)
+    tier1_adjustment_bear: 0.5        # +0.5% in BEAR (moderate)
+    tier1_adjustment_sideways: 0.0
+    
+    tier2_adjustment_bull: -0.5
+    tier2_adjustment_bear: 1.0
+    tier2_adjustment_sideways: 0.0
+    
+    cache_ttl_hours: 24
+    fallback_regime: "SIDEWAYS"
+  
+  symbol_learning:
+    enabled: true
+    min_exits_for_adjustment: 10      # Higher threshold for live (more data)
+    win_rate_threshold: 0.65          # Higher bar for live (65%)
+    adjustment_magnitude_pct: 0.3     # Smaller adjustments (0.3%)
+    
+    persistence_enabled: true
+    persistence_file: "reports/live_symbol_adjustments.json"
+    save_interval_seconds: 300
+    max_symbols_tracked: 500
+  
+  combination:
+    # Tighter bounds for live trading
+    tier1_min_target_pct: 3.0         # Never below 3%
+    tier1_max_target_pct: 6.5         # Never above 6.5%
+    tier2_min_target_pct: 7.0         # Never below 7%
+    tier2_max_target_pct: 11.0        # Never above 11%
+    round_to_decimal_places: 1
+
+# ===== VIX DATA PROVIDER (LIVE ALPACA) =====
+vix_provider:
+  provider_type: "fallback"           # Use fallback for reliability
+  
+  alpaca:
+    api_key: ${ALPACA_API_KEY_LIVE}   # LIVE API key (separate env var)
+    api_secret: ${ALPACA_API_SECRET_LIVE}
+    base_url: "https://api.alpaca.markets"  # LIVE URL
+  
+  fallback:
+    primary_provider: "alpaca"
+    default_vix: 20.0
+
+# ===== REGIME DETECTOR (LIVE ALPACA) =====
+regime_detector:
+  detector_type: "spy"
+  
+  spy:
+    price_provider: "alpaca"
+    symbol: "SPY"
+    short_window: 20
+    long_window: 50
+    sideways_threshold_pct: 0.5
+    cache_ttl_hours: 24
+
+# ===== MONITORING (CONSERVATIVE FOR LIVE) =====
+monitoring:
+  poll_interval_seconds: 300          # 5 minutes (standard)
+  max_positions_per_cycle: 20         # Process in batches
+  api_timeout_seconds: 15             # Longer timeout for live
+  max_retries: 5                      # More retries for live
+  circuit_breaker_threshold: 3        # Stop after 3 errors
+  enable_caching: true
+  cache_ttl_seconds: 60
+
+# ===== SAFETY (STRICT FOR LIVE TRADING) =====
+safety:
+  max_exits_per_cycle: 2              # Conservative (2 per cycle)
+  min_position_size_shares: 20        # Higher minimum
+  max_daily_exits: 10                 # Daily limit
+  require_volume_confirmation: true   # REQUIRED for tier2
+  dry_run_mode: false                 # Actually execute
+  
+  validate_adjustments: true          # REQUIRED validation
+  log_adjustment_details: true        # Full audit trail
+  alert_on_extreme_adjustments: true  # Alert on anything unusual
+  
+  # Additional live trading safety
+  require_manual_approval: false      # Set true for extra safety
+  max_position_value: 10000           # Max $10k per position
+  emergency_stop_enabled: true        # Emergency kill switch
+  emergency_stop_loss_pct: 15         # Emergency stop at -15%
+
+# ===== LOGGING (PRODUCTION LEVEL) =====
+logging:
+  level: INFO                         # Production logging
+  log_adjustments: true
+  log_tier_decisions: true
+  log_vix_updates: true
+  log_regime_updates: true
+  log_symbol_learning: true
+  
+  # Production log files
+  adjustment_log: "logs/live_adjustments.log"
+  tier_exit_log: "logs/live_tier_exits.log"
+  symbol_learning_log: "logs/live_symbol_learning.log"
+  error_log: "logs/live_errors.log"
+  
+  # Log rotation
+  rotate_logs: true
+  max_log_size_mb: 100
+  backup_count: 30
+
+# ===== ALERTS (FULL ALERTING FOR LIVE) =====
+alerts:
+  enabled: true
+  alert_on_regime_change: true
+  alert_on_high_vix: true
+  alert_on_extreme_adjustment: true
+  alert_on_symbol_eject: true
+  alert_on_error: true                # Alert on any errors
+  alert_on_circuit_breaker: true      # Alert on circuit breaker
+  
+  channels:
+    - telegram                        # Primary
+    - email                           # Backup
+    - slack                           # Team notification
+
+# ===== PERFORMANCE TRACKING =====
+performance:
+  track_adjustment_effectiveness: true
+  track_regime_performance: true
+  track_vix_performance: true
+  track_symbol_performance: true
+  
+  # Detailed reporting for live
+  generate_daily_report: true
+  generate_weekly_report: true
+  generate_monthly_report: true
+  report_path: "reports/live_adjustment_performance/"
+  
+  # P&L tracking
+  track_pnl_with_adjustments: true
+  track_pnl_without_adjustments: true  # Baseline comparison
+  export_to_csv: true
+  csv_path: "reports/live_pnl.csv"
+
+# ===== LIVE TRADING SPECIFIC =====
+live_trading:
+  enabled: true                       # Confirm live trading enabled
+  
+  # Pre-flight checks
+  preflight_checks:
+    enabled: true
+    check_api_connection: true
+    check_vix_data: true
+    check_spy_data: true
+    check_account_status: true
+    check_buying_power: true
+    check_position_limits: true
+  
+  # Trading hours (strict)
+  trading_hours:
+    enabled: true
+    start_time: "09:35"               # Start 5 min after open
+    end_time: "15:55"                 # End 5 min before close
+    no_trade_lunch: false             # Trade through lunch
+    lunch_start: "12:00"
+    lunch_end: "13:00"
+  
+  # Circuit breakers
+  circuit_breakers:
+    daily_loss_limit_dollars: 1000    # Stop if down $1000
+    daily_loss_limit_pct: 3.0         # Stop if down 3%
+    max_consecutive_losses: 3         # Stop after 3 losses
+    cooldown_minutes: 60              # 1-hour cooldown after breaker
+  
+  # Position limits
+  position_limits:
+    max_positions: 10                 # Max 10 concurrent positions
+    max_per_symbol: 1                 # Max 1 position per symbol
+    max_per_sector: 3                 # Max 3 per sector
+    max_portfolio_pct: 0.80           # Max 80% deployed
+  
+  # Compliance
+  compliance:
+    pdt_protection: true              # PDT rule awareness
+    day_trade_limit: 3                # Max 3 day trades in 5 days
+    track_wash_sales: true            # Wash sale awareness
+    require_settled_funds: false      # Don't require settled funds
+  
+  # Backup and recovery
+  backup:
+    enabled: true
+    backup_interval_minutes: 15       # Backup state every 15 min
+    backup_path: "backups/live_state/"
+    max_backups: 100
+  
+  # Health monitoring
+  health_check:
+    enabled: true
+    check_interval_seconds: 60        # Health check every 1 min
+    alert_on_failure: true
+    auto_restart_on_failure: false    # Require manual restart
+
+# ===== ROLLBACK PLAN =====
+rollback:
+  # If adjustments cause issues, quickly disable
+  emergency_disable_adjustments: false
+  
+  # Fallback to base targets
+  fallback_to_base_on_error: true
+  
+  # Gradual rollout
+  gradual_enable:
+    enabled: false                    # Set true for gradual rollout
+    start_pct: 0.25                   # Start with 25% of positions
+    increment_pct: 0.25               # Add 25% per week
+    max_pct: 1.0                      # Full rollout at 100%
+
+# ===== AUDIT TRAIL =====
+audit:
+  enabled: true
+  log_all_decisions: true
+  log_all_adjustments: true
+  log_all_trades: true
+  
+  audit_log: "logs/live_audit.log"
+  audit_retention_days: 365           # Keep 1 year of audit logs
+  
+  # Compliance reporting
+  generate_compliance_report: true
+  compliance_report_frequency: weekly
+  compliance_report_path: "reports/compliance/"

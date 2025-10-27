@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-10-25T02:46:48.638893",
+  "total_duration_minutes": 11.3,
+  "trials_per_symbol": 50,
+  "symbols_optimized": 7,
+  "objective": "sharpe",
+  "results": [
+    {
+      "symbol": "AAPL",
+      "best_value": 0.022861201157404802,
+      "strategy": "momentum",
+      "duration_minutes": 1.8,
+      "status": "success"
+    },
+    {
+      "symbol": "MSFT",
+      "best_value": 0.017179185260138684,
+      "strategy": "momentum",
+      "duration_minutes": 1.7,
+      "status": "success"
+    },
+    {
+      "symbol": "NVDA",
+      "best_value": 0.02359839284856313,
+      "strategy": "momentum",
+      "duration_minutes": 1.8,
+      "status": "success"
+    },
+    {
+      "symbol": "BTCUSD",
+      "best_value": 0.018530675302217064,
+      "strategy": "momentum",
+      "duration_minutes": 1.5,
+      "status": "success"
+    },
+    {
+      "symbol": "ETHUSD",
+      "best_value": 0.013180740732495241,
+      "strategy": "momentum",
+      "duration_minutes": 1.5,
+      "status": "success"
+    },
+    {
+      "symbol": "EURUSD",
+      "best_value": 0.021216006456446106,
+      "strategy": "momentum",
+      "duration_minutes": 1.4,
+      "status": "success"
+    },
+    {
+      "symbol": "GBPUSD",
+      "best_value": 0.020929860988217912,
+      "strategy": "momentum",
+      "duration_minutes": 1.6,
+      "status": "success"
+    }
+  ]
+}

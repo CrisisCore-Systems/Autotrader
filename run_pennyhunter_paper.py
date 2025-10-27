@@ -23,7 +23,7 @@ import argparse
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
 import yaml
 import json
 
@@ -31,7 +31,7 @@ import json
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
 from bouncehunter.broker import create_broker
-from bouncehunter.market_regime import MarketRegimeDetector
+from bouncehunter.market_regime import MarketRegimeDetector, MarketRegime
 from bouncehunter.signal_scoring import SignalScorer
 from bouncehunter.penny_universe import PennyUniverse
 from bouncehunter.advanced_filters import AdvancedRiskFilters
@@ -133,20 +133,59 @@ class PennyHunterPaperTrader:
         # Track trades
         self.trades_log = []
         self.active_positions = {}
+        self.base_risk_per_trade = max_risk_per_trade
+        self.current_risk_per_trade = max_risk_per_trade
+        self.regime_snapshot: Optional[MarketRegime] = None
 
     def check_market_regime(self) -> bool:
         """Check if market regime allows penny trading"""
         if not self.regime_detector:
             logger.info("Market regime checking disabled")
+            self.regime_snapshot = None
+            self.current_risk_per_trade = self.base_risk_per_trade
             return True
 
-        regime = self.regime_detector.get_regime()
-        logger.info(f"📊 Market Regime: {regime.regime.upper()} - Trading {'ALLOWED' if regime.allow_penny_trading else 'BLOCKED'}")
+        regime = self.refresh_regime(force_refresh=True)
+
+        if regime is None:
+            logger.warning("⚠️ Market regime unavailable, defaulting to trading allowed")
+            self.current_risk_per_trade = self.base_risk_per_trade
+            return True
+
+        logger.info(
+            "📊 Market Regime: %s | SPY Δ %.2f%% | VIX %.1f → %s",
+            regime.regime.upper(),
+            regime.spy_day_change_pct,
+            regime.vix_level,
+            "ALLOWED" if regime.allow_penny_trading else "BLOCKED",
+        )
 
         if not regime.allow_penny_trading:
             logger.warning(f"⚠️ Reason: {regime.reason}")
 
         return regime.allow_penny_trading
+
+    def refresh_regime(self, force_refresh: bool = False) -> Optional[MarketRegime]:
+        """Refresh cached market regime snapshot and adjust risk budget."""
+        if not self.regime_detector:
+            self.regime_snapshot = None
+            self.current_risk_per_trade = self.base_risk_per_trade
+            return None
+
+        try:
+            regime = self.regime_detector.get_regime(force_refresh=force_refresh)
+            self.regime_snapshot = regime
+
+            vix = float(regime.vix_level or 20.0)
+            self.current_risk_per_trade = self.dynamic_risk_per_trade(vix)
+
+            return regime
+
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error("Failed to refresh market regime: %s", exc, exc_info=True)
+            self.regime_snapshot = None
+            self.current_risk_per_trade = self.base_risk_per_trade
+            return None
 
     def check_regime_flip(self) -> bool:
         """
@@ -219,20 +258,39 @@ class PennyHunterPaperTrader:
             Scaled risk amount
         """
         # Scale risk down when VIX is high
-        # Formula: max_risk * clamp(20 / max(10, vix), 0.5, 1.0)
+        # Formula: base_risk * clamp(20 / max(10, vix), 0.5, 1.0)
         scale_factor = 20.0 / max(10.0, vix)
         scale_factor = max(0.5, min(1.0, scale_factor))
-        
-        scaled_risk = self.max_risk_per_trade * scale_factor
-        
-        if scale_factor < 1.0:
-            logger.info(f"📉 VIX={vix:.1f}: Scaling risk to ${scaled_risk:.2f} (factor={scale_factor:.2f})")
-        
+
+        scaled_risk = self.base_risk_per_trade * scale_factor
+
+        if scale_factor < 1.0 or scale_factor > 1.0:
+            logger.info(
+                "📉 VIX=%.1f: Adjusting risk budget to $%.2f (factor=%.2f)",
+                vix,
+                scaled_risk,
+                scale_factor,
+            )
+
         return scaled_risk
 
     def scan_for_signals(self, tickers: List[str]) -> List[Dict]:
         """Scan tickers for high-scoring signals"""
         logger.info(f"🔍 Scanning {len(tickers)} tickers for signals...")
+
+        regime = self.regime_snapshot or self.refresh_regime()
+        spy_green = True
+        vix_level = 20.0
+        if regime:
+            spy_green = regime.spy_day_change_pct >= 0
+            vix_level = float(regime.vix_level or vix_level)
+
+        logger.info(
+            "🛰️  Regime context for scan: %s (SPY Δ %.2f%% | VIX %.1f)",
+            regime.regime.upper() if regime else "UNKNOWN",
+            regime.spy_day_change_pct if regime else 0.0,
+            vix_level,
+        )
 
         # Filter universe
         passed_tickers = self.universe.screen(tickers, lookback_days=10)
@@ -281,8 +339,8 @@ class PennyHunterPaperTrader:
                             float_millions=15,  # Assume mid-range
                             vwap_reclaim=True,
                             rsi=50.0,
-                            spy_green=True,  # Already checked regime
-                            vix_level=20.8,  # From regime check
+                            spy_green=spy_green,
+                            vix_level=vix_level,
                             premarket_volume_mult=vol_spike if vol_spike > 1.5 else None,
                             confirmation_bars=0
                         )
@@ -317,7 +375,7 @@ class PennyHunterPaperTrader:
             logger.warning("Invalid risk calculation")
             return 0
 
-        shares = int(self.max_risk_per_trade / risk_per_share)
+        shares = int(self.current_risk_per_trade / risk_per_share)
 
         # Cap position size at account size
         max_shares = int(self.account_size / entry_price)
@@ -349,7 +407,7 @@ class PennyHunterPaperTrader:
         if self.advanced_filters_enabled and 'hist' in signal:
             logger.info(f"🔍 Running advanced quality gate for {ticker}...")
 
-            position_size_dollars = self.max_risk_per_trade * 20  # Approx position size
+            position_size_dollars = self.current_risk_per_trade * 20  # Approx position size
             quality_results = self.advanced_filters.run_quality_gate(
                 ticker,
                 signal['hist'],
@@ -416,7 +474,10 @@ class PennyHunterPaperTrader:
                 'gap_pct': signal.get('gap_pct', 0),
                 'vol_mult': signal.get('vol_mult', 0),
                 'status': 'active',
-                'orders': {k: v.order_id for k, v in orders.items()}
+                'orders': {k: v.order_id for k, v in orders.items()},
+                'market_regime': self.regime_snapshot.regime if self.regime_snapshot else 'UNKNOWN',
+                'vix_level': float(self.regime_snapshot.vix_level) if self.regime_snapshot else None,
+                'risk_dollars': self.current_risk_per_trade,
             }
 
             self.active_positions[ticker] = trade

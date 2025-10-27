@@ -1,0 +1,57 @@
+{
+  "symbol": "AAPL",
+  "num_bars": 262021,
+  "transaction_cost": 0.001,
+  "strategies": {
+    "momentum": {
+      "metric_optimized": "sharpe_ratio",
+      "best_value": 0.011782370599415368,
+      "parameters": {
+        "lookback": 3900
+      },
+      "performance": {
+        "total_return": 155988128.6770113,
+        "annualized_return": 0.01830938545715277,
+        "sharpe_ratio": 0.011782370599415368,
+        "sortino_ratio": 0.019523883749580945,
+        "max_drawdown": -0.7559351564390769,
+        "total_trades": 895,
+        "win_rate": 0.4995362967090424
+      }
+    },
+    "mean_reversion": {
+      "metric_optimized": "sharpe_ratio",
+      "best_value": -0.006623261676285823,
+      "parameters": {
+        "lookback": 780,
+        "num_std": 3.0
+      },
+      "performance": {
+        "total_return": -0.7559338592004845,
+        "annualized_return": -0.0013554589829429808,
+        "sharpe_ratio": -0.006623261676285823,
+        "sortino_ratio": -0.0014340833971845457,
+        "max_drawdown": -0.8006585430579438,
+        "total_trades": 1340,
+        "win_rate": 0.008251247037451196
+      }
+    },
+    "ma_crossover": {
+      "metric_optimized": "sharpe_ratio",
+      "best_value": 0.008353707843077629,
+      "parameters": {
+        "fast": 65,
+        "slow": 1950
+      },
+      "performance": {
+        "total_return": 703927.887439613,
+        "annualized_return": 0.013033692710964218,
+        "sharpe_ratio": 0.008353707843077629,
+        "sortino_ratio": 0.013891038295414037,
+        "max_drawdown": -0.7292710048119371,
+        "total_trades": 307,
+        "win_rate": 0.5011125062494991
+      }
+    }
+  }
+}

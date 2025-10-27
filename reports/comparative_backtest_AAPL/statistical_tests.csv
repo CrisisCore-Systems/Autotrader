@@ -1,0 +1,6 @@
+comparison,t_statistic,t_pvalue,significant_at_5pct,mean_return_diff,mean_return_diff_pct,variance_ratio,ks_statistic,ks_pvalue,distributions_different
+Agentic vs Buy & Hold,,,False,-0.0007532321484415155,-658.2280536441867,0.4130242613773672,,,False
+Agentic vs Momentum (390),,,False,-0.0006412258960846513,-26419.888529542168,0.41218418406983914,,,False
+Agentic vs Momentum (1950),,,False,-0.0006985785487268981,-1168.5880487220159,0.41556880704721993,,,False
+Agentic vs Mean Reversion (BB 2.0σ),,,False,-0.0005994777377711192,-1524.57008056089,2.533247101801514,,,False
+Agentic vs MA Crossover (195/780),,,False,-0.0006797072873319396,-1661.5327823834668,0.41401330546670595,,,False

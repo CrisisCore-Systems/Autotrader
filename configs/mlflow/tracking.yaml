@@ -1,0 +1,29 @@
+# MLflow tracking configuration for local and remote environments
+profiles:
+  local:
+    tracking_uri: http://mlflow:5000
+    artifact_uri: s3://autotrader-artifacts
+    backend_store:
+      uri: postgresql+psycopg2://autotrader:autotrader@postgres:5432/autotrader
+    experiment: Autotrader-Dev
+    default_tags:
+      phase: phase1
+      owner: engineering
+  staging:
+    tracking_uri: ${MLFLOW_TRACKING_URI}
+    artifact_uri: ${MLFLOW_S3_BUCKET}
+    backend_store:
+      uri: ${MLFLOW_BACKEND_URI}
+    experiment: Autotrader-Staging
+    default_tags:
+      phase: phase1
+      environment: staging
+  production:
+    tracking_uri: ${MLFLOW_TRACKING_URI}
+    artifact_uri: ${MLFLOW_S3_BUCKET}
+    backend_store:
+      uri: ${MLFLOW_BACKEND_URI}
+    experiment: Autotrader-Prod
+    default_tags:
+      phase: phase1
+      environment: prod

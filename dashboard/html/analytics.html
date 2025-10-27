@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader - Analytics</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📊 Trading Analytics</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info" id="account-info">Account: <span id="account-id">Loading...</span> | Capital: $<span id="account-capital">--</span></span>
+                <span class="timestamp" id="current-time">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="trading.html" class="nav-link">Trading</a>
+            <a href="portfolio.html" class="nav-link">Portfolio</a>
+            <a href="analytics.html" class="nav-link active">Analytics</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="analytics-layout">
+                <!-- Performance Overview -->
+                <section class="panel performance-overview">
+                    <h2>📈 Performance Overview</h2>
+                    <div class="metrics-overview">
+                        <div class="metric-box">
+                            <div class="metric-title">Total Return</div>
+                            <div class="metric-value positive">+2.45%</div>
+                            <div class="metric-subtitle">Since inception</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Win Rate</div>
+                            <div class="metric-value">65.2%</div>
+                            <div class="metric-subtitle">23 trades</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Avg Win</div>
+                            <div class="metric-value positive">+$127.50</div>
+                            <div class="metric-subtitle">Per winning trade</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Avg Loss</div>
+                            <div class="metric-value negative">-$89.30</div>
+                            <div class="metric-subtitle">Per losing trade</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Profit Factor</div>
+                            <div class="metric-value">1.42</div>
+                            <div class="metric-subtitle">Gross profit / Gross loss</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Sharpe Ratio</div>
+                            <div class="metric-value">0.87</div>
+                            <div class="metric-subtitle">Risk-adjusted return</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Equity Curve Chart -->
+                <section class="panel equity-curve">
+                    <h2>📊 Equity Curve</h2>
+                    <div class="chart-controls">
+                        <select id="timeframe-select">
+                            <option value="1M">1 Month</option>
+                            <option value="3M">3 Months</option>
+                            <option value="6M">6 Months</option>
+                            <option value="1Y" selected>1 Year</option>
+                            <option value="ALL">All Time</option>
+                        </select>
+                        <div class="chart-legend">
+                            <label class="legend-toggle">
+                                <input type="checkbox" checked> Portfolio
+                            </label>
+                            <label class="legend-toggle">
+                                <input type="checkbox" checked> Benchmark (SPY)
+                            </label>
+                            <label class="legend-toggle">
+                                <input type="checkbox"> Drawdown
+                            </label>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="equity-chart" width="800" height="300"></canvas>
+                    </div>
+                </section>
+
+                <!-- Trade Analysis -->
+                <section class="panel trade-analysis">
+                    <h2>🔍 Trade Analysis</h2>
+                    <div class="analysis-tabs">
+                        <button class="analysis-tab active" onclick="showAnalysisTab('distribution')">Distribution</button>
+                        <button class="analysis-tab" onclick="showAnalysisTab('timeline')">Timeline</button>
+                        <button class="analysis-tab" onclick="showAnalysisTab('symbols')">By Symbol</button>
+                    </div>
+                    <div class="analysis-content">
+                        <!-- P&L Distribution -->
+                        <div id="distribution-view" class="analysis-view active">
+                            <div class="distribution-chart">
+                                <canvas id="pnl-distribution-chart" width="600" height="250"></canvas>
+                            </div>
+                            <div class="distribution-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Largest Win:</span>
+                                    <span class="stat-value positive">$245.30</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Largest Loss:</span>
+                                    <span class="stat-value negative">-$156.80</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Avg Trade:</span>
+                                    <span class="stat-value positive">+$19.50</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Std Deviation:</span>
+                                    <span class="stat-value">$89.20</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trade Timeline -->
+                        <div id="timeline-view" class="analysis-view">
+                            <div class="timeline-chart">
+                                <canvas id="trade-timeline-chart" width="600" height="250"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Symbol Performance -->
+                        <div id="symbols-view" class="analysis-view">
+                            <div class="symbols-performance">
+                                <div class="symbol-performance-item">
+                                    <div class="symbol-header">
+                                        <span class="symbol-name">CLOV</span>
+                                        <span class="symbol-stats">3 trades | 66.7% win rate</span>
+                                    </div>
+                                    <div class="symbol-metrics">
+                                        <span>Total P&L: <span class="positive">+$89.50</span></span>
+                                        <span>Avg Return: <span class="positive">+4.2%</span></span>
+                                    </div>
+                                </div>
+                                <div class="symbol-performance-item">
+                                    <div class="symbol-header">
+                                        <span class="symbol-name">TXMD</span>
+                                        <span class="symbol-stats">2 trades | 50.0% win rate</span>
+                                    </div>
+                                    <div class="symbol-metrics">
+                                        <span>Total P&L: <span class="negative">-$23.40</span></span>
+                                        <span>Avg Return: <span class="negative">-2.1%</span></span>
+                                    </div>
+                                </div>
+                                <div class="symbol-performance-item">
+                                    <div class="symbol-header">
+                                        <span class="symbol-name">COMP</span>
+                                        <span class="symbol-stats">5 trades | 80.0% win rate</span>
+                                    </div>
+                                    <div class="symbol-metrics">
+                                        <span>Total P&L: <span class="positive">+$312.75</span></span>
+                                        <span>Avg Return: <span class="positive">+6.8%</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Risk Metrics -->
+                <section class="panel risk-metrics">
+                    <h2>⚠️ Risk Analysis</h2>
+                    <div class="risk-grid">
+                        <div class="risk-card">
+                            <div class="risk-title">Maximum Drawdown</div>
+                            <div class="risk-value">-12.4%</div>
+                            <div class="risk-date">Peak: Oct 15 | Trough: Oct 18</div>
+                        </div>
+                        <div class="risk-card">
+                            <div class="risk-title">Value at Risk (95%)</div>
+                            <div class="risk-value">$1,247</div>
+                            <div class="risk-period">Daily loss not exceeded 95% of time</div>
+                        </div>
+                        <div class="risk-card">
+                            <div class="risk-title">Volatility</div>
+                            <div class="risk-value">18.7%</div>
+                            <div class="risk-period">Annualized standard deviation</div>
+                        </div>
+                        <div class="risk-card">
+                            <div class="risk-title">Beta</div>
+                            <div class="risk-value">0.73</div>
+                            <div class="risk-period">Relative to S&P 500</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Backtesting Results -->
+                <section class="panel backtesting-results">
+                    <h2>🔬 Backtesting Results</h2>
+                    <div class="backtest-controls">
+                        <select id="strategy-select">
+                            <option value="bouncehunter">BounceHunter Gap Trading</option>
+                            <option value="pennyhunter">PennyHunter Momentum</option>
+                            <option value="mean-reversion">Mean Reversion</option>
+                        </select>
+                        <button class="control-btn secondary" onclick="runBacktest()">Run Backtest</button>
+                        <button class="control-btn secondary" onclick="exportResults()">Export Results</button>
+                    </div>
+                    <div class="backtest-results">
+                        <div class="backtest-summary">
+                            <div class="backtest-metric">
+                                <span class="metric-label">Total Return:</span>
+                                <span class="metric-value positive">+24.7%</span>
+                            </div>
+                            <div class="backtest-metric">
+                                <span class="metric-label">Annual Return:</span>
+                                <span class="metric-value positive">+18.3%</span>
+                            </div>
+                            <div class="backtest-metric">
+                                <span class="metric-label">Max Drawdown:</span>
+                                <span class="metric-value negative">-15.2%</span>
+                            </div>
+                            <div class="backtest-metric">
+                                <span class="metric-label">Win Rate:</span>
+                                <span class="metric-value">67.8%</span>
+                            </div>
+                            <div class="backtest-metric">
+                                <span class="metric-label">Profit Factor:</span>
+                                <span class="metric-value">1.65</span>
+                            </div>
+                            <div class="backtest-metric">
+                                <span class="metric-label">Total Trades:</span>
+                                <span class="metric-value">156</span>
+                            </div>
+                        </div>
+                        <div class="backtest-chart">
+                            <canvas id="backtest-chart" width="600" height="250"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Monthly Performance -->
+                <section class="panel monthly-performance">
+                    <h2>📅 Monthly Performance</h2>
+                    <div class="monthly-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Return</th>
+                                    <th>Win Rate</th>
+                                    <th>Trades</th>
+                                    <th>Best Trade</th>
+                                    <th>Worst Trade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>October 2025</td>
+                                    <td class="positive">+2.45%</td>
+                                    <td>65.2%</td>
+                                    <td>23</td>
+                                    <td class="positive">+$245.30</td>
+                                    <td class="negative">-$89.50</td>
+                                </tr>
+                                <tr>
+                                    <td>September 2025</td>
+                                    <td class="positive">+3.12%</td>
+                                    <td>71.4%</td>
+                                    <td>21</td>
+                                    <td class="positive">+$198.75</td>
+                                    <td class="negative">-$67.20</td>
+                                </tr>
+                                <tr>
+                                    <td>August 2025</td>
+                                    <td class="negative">-1.23%</td>
+                                    <td>55.6%</td>
+                                    <td>18</td>
+                                    <td class="positive">+$156.40</td>
+                                    <td class="negative">-$134.80</td>
+                                </tr>
+                                <tr>
+                                    <td>July 2025</td>
+                                    <td class="positive">+4.67%</td>
+                                    <td>72.2%</td>
+                                    <td>25</td>
+                                    <td class="positive">+$312.50</td>
+                                    <td class="negative">-$78.90</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-indicator" id="system-status">● Ready</span>
+            </div>
+            <div class="status-right">
+                <span>Last update: <span id="last-update">14:30:45</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="analytics.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/kay/Documents/Projects/AutoTrader/Autotrader/mlruns/600934017440489891/models/m-c50a95485b1247c59e67a8016f3fd622/artifacts
+creation_timestamp: 1761379422568
+experiment_id: '600934017440489891'
+last_updated_timestamp: 1761379432931
+model_id: m-c50a95485b1247c59e67a8016f3fd622
+model_type: null
+name: model
+source_run_id: 3ca62abe295e42caa73c6f515b8f6d51
+status: 2
+status_message: null

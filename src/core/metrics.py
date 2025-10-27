@@ -114,6 +114,35 @@ FEATURE_STORE_OPERATIONS = Counter(
 )
 
 # =============================================================================
+# Ingestion Worker Metrics
+# =============================================================================
+
+INGESTION_CYCLE_DURATION_SECONDS = Histogram(
+    'ingestion_cycle_duration_seconds',
+    'Duration of ingestion worker cycles in seconds',
+    ['worker', 'outcome'],
+    buckets=[0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0]
+)
+
+INGESTION_ITEMS_TOTAL = Counter(
+    'ingestion_items_total',
+    'Total number of items collected by the ingestion worker',
+    ['worker', 'source']
+)
+
+INGESTION_CYCLE_ERRORS_TOTAL = Counter(
+    'ingestion_cycle_errors_total',
+    'Total number of ingestion worker cycle errors',
+    ['worker', 'stage']
+)
+
+INGESTION_LAST_SUCCESS_TIMESTAMP = Gauge(
+    'ingestion_last_success_timestamp',
+    'Unix timestamp of the last successful ingestion cycle',
+    ['worker']
+)
+
+# =============================================================================
 # Scanner & Pipeline Metrics
 # =============================================================================
 

@@ -1,7 +1,5 @@
 """FastAPI routes for experiment tracking and analysis."""
 
-from __future__ import annotations
-
 import json
 import logging
 from datetime import datetime
@@ -21,6 +19,17 @@ logger = logging.getLogger(__name__)
 
 # Initialize limiter for this router
 limiter = Limiter(key_func=get_remote_address)
+
+# ============================================================================
+# Request/Response Models
+# ============================================================================
+
+class ArtifactExportRequest(BaseModel):
+    """Request for artifact export."""
+    config_hash: str = Field(..., description="Experiment hash to export")
+    format: str = Field("json", description="Export format (json or pdf)")
+    include_metrics: bool = Field(True, description="Include metrics in export")
+    include_config: bool = Field(True, description="Include configuration in export")
 
 router = APIRouter(prefix="/experiments", tags=["Experiments"])
 
@@ -69,14 +78,6 @@ class ComparisonResponse(BaseModel):
     weight_differences: Dict[str, Dict[str, float]] = Field(..., description="Weight deltas")
     hyperparameters: Dict[str, Dict[str, Any]] = Field(..., description="Hyperparameter comparison")
     metrics_comparison: Optional[Dict[str, Any]] = Field(None, description="Performance metrics comparison")
-
-
-class ArtifactExportRequest(BaseModel):
-    """Request for artifact export."""
-    config_hash: str = Field(..., description="Experiment hash to export")
-    format: str = Field("json", description="Export format (json or pdf)")
-    include_metrics: bool = Field(True, description="Include metrics in export")
-    include_config: bool = Field(True, description="Include configuration in export")
 
 
 # ============================================================================

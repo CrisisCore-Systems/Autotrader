@@ -411,6 +411,43 @@ class AdvancedRiskFilters:
 
 # ==================== UTILITY FUNCTIONS ====================
 
+def risk_flag(row: pd.Series) -> Optional[str]:
+    """
+    Phase 2.5 risk flagging for signal quality annotation.
+    
+    Flags signals that fall outside optimal parameter ranges
+    discovered during Phase 2 backtesting:
+    - Optimal gap range: 10-15%
+    - Optimal volume ratio: ≥4x
+    
+    Args:
+        row: DataFrame row with 'gap_pct' and 'volume_ratio' columns
+    
+    Returns:
+        Risk flag string or None if signal is in optimal range
+    
+    Usage:
+        df['risk_flag'] = df.apply(risk_flag, axis=1)
+        clean_signals = df[df['risk_flag'].isna()]
+    """
+    flags = []
+    
+    gap_pct = row.get('gap_pct', 0)
+    volume_ratio = row.get('volume_ratio', 0)
+    
+    # Gap range check (optimal: 10-15%)
+    if gap_pct < 10:
+        flags.append('gap_too_small')
+    elif gap_pct > 15:
+        flags.append('gap_too_large')
+    
+    # Volume ratio check (optimal: ≥4x)
+    if volume_ratio < 4:
+        flags.append('low_volume_ratio')
+    
+    return ', '.join(flags) if flags else None
+
+
 def format_quality_report(results: Dict) -> str:
     """Format quality gate results as readable text"""
     lines = []

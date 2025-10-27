@@ -1,0 +1,316 @@
+{
+  "dashboard": {
+    "title": "AutoTrader - Trading Metrics",
+    "tags": ["autotrader", "trading", "performance"],
+    "timezone": "UTC",
+    "schemaVersion": 30,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Current PnL",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(trading_pnl_total)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "textMode": "value_and_name",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": -1000, "color": "red"},
+                {"value": 0, "color": "yellow"},
+                {"value": 1000, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Daily PnL",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(increase(trading_pnl_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": -500, "color": "red"},
+                {"value": 0, "color": "yellow"},
+                {"value": 500, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Sharpe Ratio",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "trading_sharpe_ratio",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 5,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1.5, "color": "yellow"},
+                {"value": 2.0, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Win Rate",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(trading_winning_trades) / sum(trading_total_trades) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 50, "color": "yellow"},
+                {"value": 55, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "PnL Over Time",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "sum(trading_pnl_total)",
+            "legendFormat": "Total PnL",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(trading_pnl_total) by (instrument)",
+            "legendFormat": "{{instrument}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "currencyUSD"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Trades Per Minute",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(trading_total_trades[1m])",
+            "legendFormat": "Trades/min",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "min": 0},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Position Sizes",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "trading_position_size by (instrument)",
+            "legendFormat": "{{instrument}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "currencyUSD"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Max Drawdown",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "trading_max_drawdown_percent",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 15, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Circuit Breaker Status",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 24},
+        "targets": [
+          {
+            "expr": "trading_circuit_breaker_active",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"options": {"0": {"text": "ACTIVE", "color": "green"}}, "type": "value"},
+              {"options": {"1": {"text": "TRIPPED", "color": "red"}}, "type": "value"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        },
+        "alert": {
+          "name": "Circuit Breaker Tripped",
+          "conditions": [
+            {
+              "evaluator": {"params": [0.5], "type": "gt"},
+              "query": {"params": ["A", "1m", "now"]},
+              "reducer": {"params": [], "type": "last"},
+              "type": "query"
+            }
+          ],
+          "frequency": "10s",
+          "handler": 1,
+          "message": "Trading circuit breaker has been tripped!",
+          "noDataState": "alerting",
+          "executionErrorState": "alerting"
+        }
+      },
+      {
+        "id": 10,
+        "title": "Profit Factor",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "sum(trading_gross_profit) / sum(trading_gross_loss)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "decimals": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1.0, "color": "yellow"},
+                {"value": 1.5, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Active Positions",
+        "type": "table",
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 24},
+        "targets": [
+          {
+            "expr": "trading_active_positions",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showHeader": true
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "instrument"},
+              "properties": [{"id": "custom.width", "value": 100}]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

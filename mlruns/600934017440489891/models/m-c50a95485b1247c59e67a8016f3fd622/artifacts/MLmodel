@@ -1,0 +1,23 @@
+artifact_path: file:///C:/Users/kay/Documents/Projects/AutoTrader/Autotrader/mlruns/600934017440489891/models/m-c50a95485b1247c59e67a8016f3fd622/artifacts
+flavors:
+  python_function:
+    artifacts:
+      model_config:
+        path: artifacts\model.json
+        uri: artifacts\models\latest\model.json
+    cloudpickle_version: 3.1.1
+    code: null
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pyfunc.model
+    python_model: python_model.pkl
+    python_version: 3.13.7
+    streamable: false
+mlflow_version: 3.5.1
+model_id: m-c50a95485b1247c59e67a8016f3fd622
+model_size_bytes: 1563
+model_uuid: m-c50a95485b1247c59e67a8016f3fd622
+prompts: null
+run_id: 3ca62abe295e42caa73c6f515b8f6d51
+utc_time_created: '2025-10-25 08:03:42.692494'

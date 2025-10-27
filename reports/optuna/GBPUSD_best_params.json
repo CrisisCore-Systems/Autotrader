@@ -1,0 +1,21 @@
+{
+  "symbol": "GBPUSD",
+  "objective_metric": "sharpe",
+  "best_value": 0.020929860988217912,
+  "best_params": {
+    "strategy_type": "momentum",
+    "momentum_lookback": 3900,
+    "momentum_threshold": 0.005352909333291651,
+    "mr_lookback": 320,
+    "mr_std_threshold": 1.5,
+    "ma_fast": 10,
+    "ma_slow": 1500,
+    "position_size": 1.0,
+    "stop_loss_pct": 0.04,
+    "take_profit_pct": 0.09000000000000001,
+    "commission": 0.0007000000000000001,
+    "slippage": 0.0001
+  },
+  "n_trials": 50,
+  "timestamp": "2025-10-25T02:46:22.699705"
+}

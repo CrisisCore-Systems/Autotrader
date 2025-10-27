@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/kay/Documents/Projects/AutoTrader/Autotrader/mlruns/600934017440489891/3ca62abe295e42caa73c6f515b8f6d51/artifacts
+end_time: 1761379433504
+entry_point_name: ''
+experiment_id: '600934017440489891'
+lifecycle_stage: active
+run_id: 3ca62abe295e42caa73c6f515b8f6d51
+run_name: omniscient-bat-334
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761379422363
+status: 3
+tags: []
+user_id: kay

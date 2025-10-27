@@ -1,0 +1,49 @@
+{
+  "name": "Autotrader Dev",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "app",
+  "workspaceFolder": "/app",
+  "runServices": [
+    "postgres",
+    "redis",
+    "kafka",
+    "mlflow",
+    "minio",
+    "prometheus",
+    "grafana",
+    "prefect",
+    "metrics"
+  ],
+  "overrideCommand": false,
+  "postCreateCommand": "make bootstrap",
+  "remoteUser": "autotrader",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [
+    8000,
+    5000,
+    4200,
+    6379,
+    9090,
+    9091,
+    3000,
+    9000,
+    9001
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/home/autotrader/.local/bin/python",
+        "python.analysis.typeCheckingMode": "strict",
+        "editor.formatOnSave": true
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  }
+}

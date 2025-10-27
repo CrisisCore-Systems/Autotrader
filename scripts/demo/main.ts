@@ -1,7 +1,9 @@
 // AutoTrader Data Oracle v1 – Phase 1–2 Pipeline (TypeScript Implementation)
 
-import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Parser from 'rss-parser';
+// Pinecone is optional; we'll import dynamically only if configured
 
 type TokenPayload = {
   news: Array<Record<string, unknown>>;
@@ -30,7 +32,11 @@ type ContractSecurity = {
   ACI: number;
 };
 
-const supabase = createClient('SUPABASE_URL', 'SUPABASE_KEY');
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabase: SupabaseClient | null = (SUPABASE_URL && SUPABASE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 const parser = new Parser();
 
 const COINGECKO_TOKEN_MAP: Record<string, string> = {
@@ -216,16 +222,94 @@ async function fetchTechnical(token: string): Promise<Record<string, unknown>> {
 
 // --- Storage ---
 async function storeRawData(token: string, payload: TokenPayload) {
-  await supabase.from('token_data').insert([
+  if (!supabase) {
+    console.warn('[storeRawData] Supabase not configured; skipping raw payload insert');
+    return;
+  }
+  const { error } = await supabase.from('token_data').insert([
     { token, payload: JSON.stringify(payload), timestamp: payload.timestamp },
   ]);
+  if (error) console.warn('[storeRawData] Insert error:', error.message);
 }
 
 // --- Embedding & Vector DB ---
 async function embedAndStore(token: string, payload: TokenPayload) {
-  const embedding = await getGptEmbedding(payload);
-  console.log(`Embedding for ${token} length:`, embedding.embedding.length);
-  // TODO: send to Pinecone / Supabase vector extension
+  const { embedding } = await getGptEmbedding(payload);
+  console.log(`Embedding for ${token} length:`, embedding.length);
+
+  // Prefer Pinecone if configured, else fallback to Supabase vector table, else log
+  const usePinecone = !!process.env.PINECONE_API_KEY && !!process.env.PINECONE_INDEX;
+  const useSupabaseVector = !!supabase && !!process.env.SUPABASE_VECTOR_TABLE;
+
+  if (usePinecone) {
+    await persistToPinecone(token, embedding, payload);
+    return;
+  }
+
+  if (useSupabaseVector) {
+    await persistToSupabase(token, embedding, payload);
+    return;
+  }
+
+  console.warn('[embedAndStore] No vector store configured. Set PINECONE_API_KEY/PINECONE_INDEX or SUPABASE_VECTOR_TABLE');
+}
+
+async function persistToPinecone(token: string, embedding: number[], payload: TokenPayload) {
+  try {
+    const { Pinecone } = await import('@pinecone-database/pinecone');
+    const apiKey = process.env.PINECONE_API_KEY as string;
+    const indexName = process.env.PINECONE_INDEX as string;
+    const pc = new Pinecone({ apiKey });
+
+    // Ensure index exists (best-effort): dimension must match embedding length
+    try {
+      const indexes = await pc.listIndexes();
+      const exists = indexes.indexes?.some((i: any) => i.name === indexName);
+      if (!exists) {
+        console.warn(`[pinecone] Index "${indexName}" not found. Please create it with dimension=${embedding.length}`);
+      }
+    } catch (_) {
+      // ignore list errors in restricted environments
+    }
+
+    const index = pc.index(indexName);
+    const id = `${token}-${Date.now()}`;
+    await index.upsert([
+      {
+        id,
+        values: embedding,
+        metadata: {
+          token,
+          timestamp: payload.timestamp,
+        } as Record<string, any>,
+      },
+    ]);
+    console.log('[pinecone] upserted vector id', id);
+  } catch (err: any) {
+    console.warn('[pinecone] persist error:', err?.message || err);
+  }
+}
+
+async function persistToSupabase(token: string, embedding: number[], payload: TokenPayload) {
+  if (!supabase) {
+    console.warn('[supabase] client not configured; skipping');
+    return;
+  }
+  const table = process.env.SUPABASE_VECTOR_TABLE as string; // e.g., 'embeddings'
+  const id = `${token}-${Date.now()}`;
+  // Assumes table has columns: id (text), token (text), embedding (vector or json), timestamp (timestamptz)
+  const row: any = {
+    id,
+    token,
+    embedding,
+    timestamp: payload.timestamp,
+  };
+  const { error } = await supabase.from(table).upsert(row);
+  if (error) {
+    console.warn('[supabase] upsert error:', error.message);
+  } else {
+    console.log('[supabase] upserted vector id', id);
+  }
 }
 
 async function getGptEmbedding(payload: TokenPayload): Promise<{ embedding: number[] }> {

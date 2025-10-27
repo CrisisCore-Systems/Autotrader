@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader - Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📊 Portfolio Management</h1>
+            </div>
+            <div class="header-right">
+                <span class="account-info" id="account-info">Account: <span id="account-id">Loading...</span> | Capital: $<span id="account-capital">--</span></span>
+                <span class="timestamp" id="current-time">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="trading.html" class="nav-link">Trading</a>
+            <a href="portfolio.html" class="nav-link active">Portfolio</a>
+            <a href="analytics.html" class="nav-link">Analytics</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="portfolio-layout">
+                <!-- Portfolio Summary -->
+                <section class="panel portfolio-summary">
+                    <h2>💼 Portfolio Summary</h2>
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <div class="summary-label">Total Value</div>
+                            <div class="summary-value" id="total-value">$--</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Cash Available</div>
+                            <div class="summary-value" id="cash-available">$--</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Total P&L</div>
+                            <div class="summary-value" id="total-pnl">$--</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">P&L %</div>
+                            <div class="summary-value" id="total-pnl-percent">--%</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Day P&L</div>
+                            <div class="summary-value" id="day-pnl">$--</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Active Positions</div>
+                            <div class="summary-value" id="active-positions">--</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Positions Table -->
+                <section class="panel positions-detailed">
+                    <h2>📈 Positions</h2>
+                    <div class="table-controls">
+                        <div class="filter-controls">
+                            <button class="filter-btn active" onclick="filterPositions('all', event)">All</button>
+                            <button class="filter-btn" onclick="filterPositions('profitable', event)">Profitable</button>
+                            <button class="filter-btn" onclick="filterPositions('losing', event)">Losing</button>
+                        </div>
+                        <div class="view-controls">
+                            <button class="view-btn active" onclick="toggleView('table', event)">Table</button>
+                            <button class="view-btn" onclick="toggleView('cards', event)">Cards</button>
+                        </div>
+                    </div>
+                    <div class="positions-container">
+                        <!-- Table View -->
+                        <div id="positions-table-view" class="positions-view active">
+                            <div class="table-container">
+                                <table id="detailed-positions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Symbol</th>
+                                            <th>Shares</th>
+                                            <th>Avg Cost</th>
+                                            <th>Current</th>
+                                            <th>Market Value</th>
+                                            <th>Unrealized P&L</th>
+                                            <th>P&L %</th>
+                                            <th>Day Change</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="positions-tbody">
+                                        <tr>
+                                            <td colspan="9" style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                                Loading positions...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Cards View -->
+                        <div id="positions-cards-view" class="positions-view">
+                            <div class="positions-cards" id="positions-cards">
+                                <div style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                    Loading positions...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Chart -->
+                <section class="panel performance-chart">
+                    <h2>📊 Portfolio Performance</h2>
+                    <div class="chart-placeholder">
+                        <div class="chart-container">
+                            <canvas id="portfolio-chart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color portfolio"></span>
+                                <span class="legend-label">Portfolio Value</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color benchmark"></span>
+                                <span class="legend-label">S&P 500</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Trade History -->
+                <section class="panel trade-history">
+                    <h2>📋 Recent Trades</h2>
+                    <div class="table-container">
+                        <table id="trades-table">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Symbol</th>
+                                    <th>Action</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                    <th>Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trades-tbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--fg-secondary);">
+                                        Loading recent trades...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Allocation -->
+                <section class="panel allocation">
+                    <h2>🥧 Asset Allocation</h2>
+                    <div class="allocation-content">
+                        <div class="allocation-chart">
+                            <div class="pie-chart-placeholder">
+                                <div class="pie-segment" style="--percentage: 5.4; --color: #4ec9b0;">
+                                    <span class="segment-label">CLOV</span>
+                                    <span class="segment-value">5.4%</span>
+                                </div>
+                                <div class="pie-segment" style="--percentage: 0.6; --color: #f48771;">
+                                    <span class="segment-label">TXMD</span>
+                                    <span class="segment-value">0.6%</span>
+                                </div>
+                                <div class="pie-segment" style="--percentage: 93.9; --color: #cccccc;">
+                                    <span class="segment-label">Cash</span>
+                                    <span class="segment-value">93.9%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="allocation-breakdown">
+                            <div class="allocation-item">
+                                <span class="allocation-symbol">CLOV</span>
+                                <span class="allocation-value">$1,325.00 (5.4%)</span>
+                            </div>
+                            <div class="allocation-item">
+                                <span class="allocation-symbol">TXMD</span>
+                                <span class="allocation-value">$156.00 (0.6%)</span>
+                            </div>
+                            <div class="allocation-item">
+                                <span class="allocation-symbol">Cash</span>
+                                <span class="allocation-value">$23,175.00 (93.9%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-indicator" id="system-status">● Ready</span>
+            </div>
+            <div class="status-right">
+                <span>Last update: <span id="last-update">14:30:45</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="portfolio.js?v=2"></script>
+</body>
+</html>

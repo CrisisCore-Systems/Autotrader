@@ -1,0 +1,32 @@
+# MLflow Tracking Configuration
+
+profiles:
+  local:
+    tracking_uri: "sqlite:///mlruns/mlflow.db"
+    experiment: "autotrader-validation"
+    artifact_location: "mlruns/artifacts"
+    backend_store_uri: "sqlite:///mlruns/mlflow.db"
+    
+  docker:
+    tracking_uri: "http://mlflow:5000"
+    experiment: "autotrader-validation"
+    artifact_location: "s3://mlflow-artifacts"
+    backend_store_uri: "postgresql://mlflow:mlflow@postgres:5432/mlflow"
+    
+  production:
+    tracking_uri: "http://mlflow-server:5000"
+    experiment: "autotrader-production"
+    artifact_location: "s3://prod-mlflow-artifacts"
+    backend_store_uri: "postgresql://mlflow_prod:${MLFLOW_PASSWORD}@postgres-prod:5432/mlflow"
+
+default_profile: local
+
+# Tracking settings
+settings:
+  autolog: true
+  log_models: true
+  log_system_metrics: true
+  tags:
+    project: "AutoTrader"
+    phase: "validation"
+    team: "quant"

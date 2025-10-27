@@ -1,0 +1,200 @@
+# ============================================================
+# Paper Trading Configuration with Intelligent Adjustments
+# ============================================================
+# For testing intelligent adjustment system in paper trading
+# Inherits base exit settings from intelligent_exits.yaml
+# ============================================================
+
+# ===== TIER EXIT CONFIGURATION =====
+tier1:
+  enabled: true
+  profit_threshold_pct: 5.0           # Base target: +5%
+  exit_percentage: 30.0               # Sell 30% of position
+  time_window_start: "15:50"          # 3:50 PM ET
+  time_window_end: "15:55"            # 3:55 PM ET
+  min_trading_days: 1
+  max_trading_days: 1
+  min_shares_remaining: 5
+  min_position_size: 10
+
+tier2:
+  enabled: true
+  profit_threshold_min_pct: 8.0       # Base target range: 8-10%
+  profit_threshold_max_pct: 10.0
+  exit_percentage: 40.0               # Sell 40% of position
+  min_trading_days: 2                 # Day 2+ only (PDT rule)
+  volume_spike_threshold: 2.0         # Require 2x volume spike
+  max_spread_pct: 2.0                 # Max 2% spread
+  cooldown_minutes: 30                # 30min cooldown
+  min_shares_remaining: 5
+  min_position_size: 10
+
+# ===== INTELLIGENT ADJUSTMENTS (ENABLED FOR TESTING) =====
+adjustments:
+  enabled: true                       # ENABLED for paper trading testing
+  
+  volatility:
+    enabled: true
+    vix_low_threshold: 15
+    vix_normal_threshold: 20
+    vix_high_threshold: 30
+    
+    # Conservative adjustments for paper testing
+    tier1_adjustment_low: 0.3         # +0.3% in LOW VIX
+    tier1_adjustment_normal: 0.0
+    tier1_adjustment_high: -0.8       # -0.8% in HIGH VIX
+    tier1_adjustment_extreme: -1.5    # -1.5% in EXTREME VIX
+    
+    tier2_adjustment_low: 0.8
+    tier2_adjustment_normal: 0.0
+    tier2_adjustment_high: -1.2
+    tier2_adjustment_extreme: -2.5
+    
+    cache_ttl_seconds: 300
+    fallback_vix: 20.0
+  
+  time_decay:
+    enabled: true
+    market_open: "09:30"
+    market_close: "16:00"
+    
+    # Moderate decay for paper testing
+    tier1_max_decay_pct: -1.0         # Max -1.0% at close
+    tier2_max_decay_pct: -1.5         # Max -1.5% at close
+  
+  regime:
+    enabled: true
+    spy_symbol: "SPY"
+    short_window: 20
+    long_window: 50
+    sideways_threshold_pct: 0.5
+    
+    # Moderate regime adjustments
+    tier1_adjustment_bull: -0.3       # -0.3% in BULL
+    tier1_adjustment_bear: 0.8        # +0.8% in BEAR
+    tier1_adjustment_sideways: 0.0
+    
+    tier2_adjustment_bull: -0.8
+    tier2_adjustment_bear: 1.2
+    tier2_adjustment_sideways: 0.0
+    
+    cache_ttl_hours: 24
+    fallback_regime: "SIDEWAYS"
+  
+  symbol_learning:
+    enabled: true
+    min_exits_for_adjustment: 3       # Lower threshold for paper testing
+    win_rate_threshold: 0.60
+    adjustment_magnitude_pct: 0.5
+    
+    persistence_enabled: true
+    persistence_file: "reports/paper_symbol_adjustments.json"
+    save_interval_seconds: 300
+    max_symbols_tracked: 200
+  
+  combination:
+    tier1_min_target_pct: 2.5         # Conservative minimums
+    tier1_max_target_pct: 7.0
+    tier2_min_target_pct: 6.0
+    tier2_max_target_pct: 12.0
+    round_to_decimal_places: 1
+
+# ===== VIX DATA PROVIDER (ALPACA PAPER) =====
+vix_provider:
+  provider_type: "alpaca"
+  
+  alpaca:
+    api_key: ${ALPACA_API_KEY}        # Paper trading API key
+    api_secret: ${ALPACA_API_SECRET}
+    base_url: "https://paper-api.alpaca.markets"
+  
+  fallback:
+    primary_provider: "alpaca"
+    default_vix: 20.0
+
+# ===== REGIME DETECTOR (ALPACA PAPER) =====
+regime_detector:
+  detector_type: "spy"
+  
+  spy:
+    price_provider: "alpaca"
+    symbol: "SPY"
+    short_window: 20
+    long_window: 50
+    sideways_threshold_pct: 0.5
+    cache_ttl_hours: 24
+
+# ===== MONITORING (FREQUENT FOR PAPER TESTING) =====
+monitoring:
+  poll_interval_seconds: 60           # Check every 1 minute (faster than prod)
+  max_positions_per_cycle: 50
+  api_timeout_seconds: 10
+  max_retries: 3
+  circuit_breaker_threshold: 5
+  enable_caching: true
+  cache_ttl_seconds: 30
+
+# ===== SAFETY (RELAXED FOR PAPER TESTING) =====
+safety:
+  max_exits_per_cycle: 10             # Allow more exits in paper
+  min_position_size_shares: 1         # Lower minimum
+  max_daily_exits: 50                 # Higher limit for testing
+  require_volume_confirmation: true
+  dry_run_mode: false                 # Actually execute in paper account
+  
+  validate_adjustments: true
+  log_adjustment_details: true        # Verbose logging for analysis
+  alert_on_extreme_adjustments: true
+
+# ===== LOGGING (VERBOSE FOR PAPER TESTING) =====
+logging:
+  level: DEBUG                        # More verbose for testing
+  log_adjustments: true
+  log_tier_decisions: true
+  log_vix_updates: true
+  log_regime_updates: true
+  log_symbol_learning: true
+  
+  adjustment_log: "logs/paper_adjustments.log"
+  tier_exit_log: "logs/paper_tier_exits.log"
+  symbol_learning_log: "logs/paper_symbol_learning.log"
+
+# ===== ALERTS (ENABLED FOR TESTING) =====
+alerts:
+  enabled: true
+  alert_on_regime_change: true
+  alert_on_high_vix: true
+  alert_on_extreme_adjustment: true
+  alert_on_symbol_eject: true
+  
+  channels:
+    - telegram
+
+# ===== PERFORMANCE TRACKING =====
+performance:
+  track_adjustment_effectiveness: true
+  track_regime_performance: true
+  track_vix_performance: true
+  track_symbol_performance: true
+  
+  generate_daily_report: true
+  generate_weekly_report: true
+  report_path: "reports/paper_adjustment_performance/"
+
+# ===== PAPER TRADING SPECIFIC =====
+paper_trading:
+  enabled: true
+  
+  # Comparison mode: Run with and without adjustments
+  comparison_mode:
+    enabled: false                    # Disable for now (future enhancement)
+    split_positions: 0.5              # 50% with adjustments, 50% without
+  
+  # Tracking
+  track_vs_baseline: true             # Compare to base targets (no adjustments)
+  baseline_metrics_file: "reports/paper_baseline_metrics.json"
+  
+  # Test scenarios
+  test_extreme_vix: false             # Simulate EXTREME VIX scenarios
+  test_regime_changes: false          # Simulate regime transitions
+  test_symbol_learning: true          # Enable symbol learning testing

@@ -1,0 +1,167 @@
+schema: '2.0'
+stages:
+  fetch_market_data:
+    cmd: python scripts/data/fetch_market_data.py --config 
+      configs/data/fetch.yaml
+    deps:
+    - path: configs/data/fetch.yaml
+      hash: md5
+      md5: b3d479e6b1ebd25ac846d0ce41187c56
+      size: 310
+    - path: scripts/data/fetch_market_data.py
+      hash: md5
+      md5: e6c588065b72710315b3c36f3cb69d74
+      size: 3751
+    outs:
+    - path: data/raw/market
+      hash: md5
+      md5: a49a9f859933d31cf9d47df7a36a9e39.dir
+      size: 100098801
+      nfiles: 8
+  build_features:
+    cmd: python scripts/data/build_features.py --config 
+      configs/data/features.yaml
+    deps:
+    - path: configs/data/features.yaml
+      hash: md5
+      md5: 4c26ad83672ad71e1731080b6a6aa26d
+      size: 265
+    - path: data/raw/market
+      hash: md5
+      md5: a49a9f859933d31cf9d47df7a36a9e39.dir
+      size: 100098801
+      nfiles: 8
+    - path: scripts/data/build_features.py
+      hash: md5
+      md5: 86a6beda156f68d7b18f01deb4533b02
+      size: 2895
+    outs:
+    - path: data/processed/features
+      hash: md5
+      md5: 8fc9fae3572cf633a67f8ef680566fbf.dir
+      size: 275790172
+      nfiles: 8
+  reconcile_datasets:
+    cmd: python scripts/data/reconcile_datasets.py --raw-dir data/raw/market 
+      --historical-dir data/historical --bars-dir data/bars --features-dir 
+      data/processed/features --output-json reports/reconciliation/latest.json 
+      --output-log reports/reconciliation/latest.log
+    deps:
+    - path: data/bars
+      hash: md5
+      md5: 7b82bacfa657c911395226b7351936a5.dir
+      size: 85138
+      nfiles: 9
+    - path: data/historical
+      hash: md5
+      md5: 704ab0c5e9cf881239ed51f8179a12e6.dir
+      size: 67252
+      nfiles: 1
+    - path: data/processed/features
+      hash: md5
+      md5: 1ecd3d66660d22a702339605b730ae12.dir
+      size: 34
+      nfiles: 1
+    - path: data/raw/market
+      hash: md5
+      md5: 094949ce88f005246ecf564d1fafef0f.dir
+      size: 27
+      nfiles: 1
+    - path: scripts/data/reconcile_datasets.py
+      hash: md5
+      md5: 5f32f34bd0099a8bc1ee4f8f49e76d2a
+      size: 4978
+    outs:
+    - path: reports/reconciliation/latest.json
+      hash: md5
+      md5: 1573c9453185077d9e005603d6ebc078
+      size: 1803
+    - path: reports/reconciliation/latest.log
+      hash: md5
+      md5: 2d230132433c51449dcf7294f4815ce5
+      size: 352
+  train_model:
+    cmd: python scripts/training/train_strategy.py --config 
+      configs/training/strategy.yaml
+    deps:
+    - path: configs/training/strategy.yaml
+      hash: md5
+      md5: 3da281ca4eb1d715d8a83fa594420879
+      size: 317
+    - path: data/processed/features
+      hash: md5
+      md5: cc0f191e2a0a9dbf861bf33975e0a1cd.dir
+      size: 50288925
+      nfiles: 8
+    - path: scripts/training/train_strategy.py
+      hash: md5
+      md5: aec5f241b059a36194c1ba9188858f0e
+      size: 2075
+    outs:
+    - path: artifacts/metrics/latest.json
+      hash: md5
+      md5: 634f291a95c24d3368cc60c0243ff7ee
+      size: 47
+    - path: artifacts/models/latest
+      hash: md5
+      md5: 2167392695364ebca5e544ee746b3a3d.dir
+      size: 27
+      nfiles: 1
+  snapshot_config:
+    cmd: "python scripts/validation/snapshot_config.py --agents-config configs/agents.yaml
+      --training-config configs/training/strategy.yaml --feature-catalog FEATURE_CATALOG.md
+      --output artifacts/config_snapshot.json --dvc-metrics artifacts/config_metrics.json\n"
+    deps:
+    - path: FEATURE_CATALOG.md
+      hash: md5
+      md5: dc7dace9e9854d29432b88fb9a6637ec
+      size: 34411
+    - path: configs/agents.yaml
+      hash: md5
+      md5: c9a16599d959ffbc72e992d2417e1567
+      size: 20106
+    - path: configs/training/strategy.yaml
+      hash: md5
+      md5: 3da281ca4eb1d715d8a83fa594420879
+      size: 317
+    - path: scripts/validation/snapshot_config.py
+      hash: md5
+      md5: d828d8063addf7bf5cf12b656c8ba79d
+      size: 8630
+    outs:
+    - path: artifacts/config_metrics.json
+      hash: md5
+      md5: 11e0e04cae22f7fac17120cef5782608
+      size: 565
+    - path: artifacts/config_snapshot.json
+      hash: md5
+      md5: 81f0d11aecd966c0d92a6f47cf1a19a3
+      size: 1743
+  reconcile_data:
+    cmd: "python scripts/validation/reconcile_data.py --historical data/historical/dukascopy
+      --live data/raw/market --output reports/reconciliation_report.json --validation-log
+      reports/validation.log\n"
+    deps:
+    - path: data/historical/dukascopy
+      hash: md5
+      md5: fc5e1d89884610e51aac3a7f736cf88f.dir
+      size: 2674142
+      nfiles: 2
+    - path: data/raw/market
+      hash: md5
+      md5: 60f4c47005ea2b67ff7bfe57336ce588.dir
+      size: 18248595
+      nfiles: 8
+    - path: scripts/validation/reconcile_data.py
+      hash: md5
+      md5: 126738b31b7b2d090b4a629ca45b5f3e
+      size: 8059
+    outs:
+    - path: reports/reconciliation_report.json
+      hash: md5
+      md5: 73ba15d3877ce430585a229e0ff17b96
+      size: 628
+    - path: reports/validation.log
+      hash: md5
+      md5: 524bab36fa71911a96f10d994f93df7a
+      size: 799

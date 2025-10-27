@@ -1,0 +1,21 @@
+{
+  "symbol": "AAPL",
+  "objective_metric": "sharpe",
+  "best_value": 0.022861201157404802,
+  "best_params": {
+    "strategy_type": "momentum",
+    "momentum_lookback": 3700,
+    "momentum_threshold": 0.007832661993403524,
+    "mr_lookback": 180,
+    "mr_std_threshold": 2.5,
+    "ma_fast": 75,
+    "ma_slow": 1850,
+    "position_size": 0.5,
+    "stop_loss_pct": 0.05,
+    "take_profit_pct": 0.05,
+    "commission": 0.00030000000000000003,
+    "slippage": 0.00030000000000000003
+  },
+  "n_trials": 50,
+  "timestamp": "2025-10-25T02:36:52.729344"
+}

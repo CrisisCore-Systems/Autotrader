@@ -1,0 +1,147 @@
+2025-10-20 21:23:59,820 [INFO] Connecting to 127.0.0.1:7497 (client_id=42)...
+2025-10-20 21:23:59,821 [INFO] Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:23:59,823 [INFO] Connected
+2025-10-20 21:23:59,826 [INFO] Logged on to server version 176
+2025-10-20 21:23:59,827 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:23:59,828 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:23:59,828 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:23:59,829 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:23:59,871 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:23:59,871 [INFO] Warning 2103, reqId -1: Market data farm connection is broken:usopt.nj
+2025-10-20 21:23:59,872 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:23:59,872 [INFO] API connection ready
+2025-10-20 21:23:59,873 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:23:59,874 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:23:59,875 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:23:59,875 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:23:59,876 [INFO] Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:23:59,877 [INFO] position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:23:59,987 [INFO] updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:24:00,119 [INFO] execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:24:00,120 [INFO] Synchronization complete
+2025-10-20 21:24:00,137 [INFO] Disconnecting from 127.0.0.1:7497, 127 B sent in 9 messages, 17.4 kB received in 370 messages, session time 318 ms.
+2025-10-20 21:24:00,138 [INFO] Disconnecting
+2025-10-20 21:24:00,138 [INFO] Disconnected
+2025-10-20 21:24:01,057 [INFO] Connecting to 127.0.0.1:7497 (client_id=42)...
+2025-10-20 21:24:01,057 [INFO] Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:24:01,058 [INFO] Connected
+2025-10-20 21:24:01,062 [INFO] Logged on to server version 176
+2025-10-20 21:24:01,064 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:24:01,065 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:24:01,066 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:24:01,067 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:24:01,068 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:24:01,068 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usopt.nj
+2025-10-20 21:24:01,068 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:24:01,069 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:24:01,069 [INFO] API connection ready
+2025-10-20 21:24:01,070 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:24:01,071 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:24:01,071 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:24:01,072 [INFO] Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:24:01,073 [INFO] position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:24:01,179 [INFO] updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:24:01,316 [INFO] execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:24:01,317 [INFO] Synchronization complete
+2025-10-20 21:24:01,896 [INFO] Disconnecting from 127.0.0.1:7497, 711 B sent in 9 messages, 27.3 kB received in 595 messages, session time 840 ms.
+2025-10-20 21:24:01,896 [INFO] Disconnecting
+2025-10-20 21:24:01,897 [INFO] Disconnected
+2025-10-20 21:24:02,626 [INFO] Connecting to 127.0.0.1:7497 (client_id=42)...
+2025-10-20 21:24:02,627 [INFO] Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:24:02,628 [INFO] Connected
+2025-10-20 21:24:02,631 [INFO] Logged on to server version 176
+2025-10-20 21:24:02,634 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:24:02,634 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:24:02,634 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:24:02,635 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:24:02,635 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:24:02,635 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usopt.nj
+2025-10-20 21:24:02,635 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:24:02,636 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:24:02,636 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:24:02,636 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:24:02,636 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:24:02,637 [INFO] Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:24:02,637 [INFO] API connection ready
+2025-10-20 21:24:02,639 [INFO] position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:24:02,741 [INFO] updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:24:02,781 [INFO] execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:24:02,782 [INFO] Synchronization complete
+2025-10-20 21:24:03,751 [ERROR] Error 10089, reqId 3: Requested market data requires additional subscription for API. See link in 'Market Data Connections' dialog for more details.AAPL NASDAQ.NMS/TOP/ALL, contract: Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS')
+2025-10-20 21:24:03,800 [INFO] Disconnecting from 127.0.0.1:7497, 181 B sent in 9 messages, 17.6 kB received in 370 messages, session time 1.18 s.
+2025-10-20 21:24:03,801 [INFO] Disconnecting
+2025-10-20 21:24:03,802 [INFO] Disconnected
+2025-10-20 21:24:14,181 [INFO] Connecting to 127.0.0.1:7497 (client_id=42)...
+2025-10-20 21:24:14,182 [INFO] Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:24:14,183 [INFO] Connected
+2025-10-20 21:24:14,188 [INFO] Logged on to server version 176
+2025-10-20 21:24:14,191 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:24:14,191 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:24:14,192 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:24:14,192 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:24:14,192 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:24:14,193 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usopt.nj
+2025-10-20 21:24:14,193 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:24:14,193 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:24:14,194 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:24:14,194 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:24:14,194 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:24:14,194 [INFO] Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:24:14,195 [INFO] API connection ready
+2025-10-20 21:24:14,198 [INFO] position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:24:14,294 [INFO] updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:24:14,332 [INFO] execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:24:14,334 [INFO] Synchronization complete
+2025-10-20 21:24:15,459 [ERROR] Error 10089, reqId 4: Requested market data requires additional subscription for API. See link in 'Market Data Connections' dialog for more details.SHOP TSE/TOP/ALL, contract: Stock(conId=195426111, symbol='SHOP', exchange='TSE', primaryExchange='TSE', currency='CAD', localSymbol='SHOP', tradingClass='SHOP')
+2025-10-20 21:24:17,200 [INFO] Disconnecting from 127.0.0.1:7497, 239 B sent in 11 messages, 18.4 kB received in 372 messages, session time 3.02 s.
+2025-10-20 21:24:17,201 [INFO] Disconnecting
+2025-10-20 21:24:17,201 [INFO] Disconnected
+2025-10-20 21:28:53,846 [INFO] Connecting to 127.0.0.1:7497 (client_id=42)...
+2025-10-20 21:28:53,847 [INFO] Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:28:53,848 [INFO] Connected
+2025-10-20 21:28:53,851 [INFO] Logged on to server version 176
+2025-10-20 21:28:53,853 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:28:53,853 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:28:53,854 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:28:53,854 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:28:53,855 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:28:53,855 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usopt.nj
+2025-10-20 21:28:53,856 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:28:53,856 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:28:53,857 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:28:53,857 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:28:53,857 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:28:53,858 [INFO] Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:28:53,858 [INFO] API connection ready
+2025-10-20 21:28:53,861 [INFO] position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:28:54,066 [INFO] updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:28:54,236 [INFO] execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:28:54,239 [INFO] Synchronization complete
+2025-10-20 21:28:54,240 [INFO] [OK] Connected (server version: 176)
+2025-10-20 21:28:54,241 [INFO] Disconnecting from 127.0.0.1:7497, 127 B sent in 9 messages, 17.8 kB received in 371 messages, session time 396 ms.
+2025-10-20 21:28:54,242 [INFO] Disconnecting
+2025-10-20 21:28:54,242 [INFO] Disconnected
+2025-10-20 21:33:02,993 [INFO] Connecting to 127.0.0.1:7497 (client_id=42)...
+2025-10-20 21:33:02,993 [INFO] Connecting to 127.0.0.1:7497 with clientId 42...
+2025-10-20 21:33:02,994 [INFO] Connected
+2025-10-20 21:33:02,999 [INFO] Logged on to server version 176
+2025-10-20 21:33:03,001 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cafarm
+2025-10-20 21:33:03,001 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:hfarm
+2025-10-20 21:33:03,002 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:eufarmnj
+2025-10-20 21:33:03,002 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:cashfarm
+2025-10-20 21:33:03,002 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfuture
+2025-10-20 21:33:03,003 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:jfarm
+2025-10-20 21:33:03,003 [INFO] Warning 2104, reqId -1: Market data farm connection is OK:usfarm
+2025-10-20 21:33:03,003 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:euhmds
+2025-10-20 21:33:03,003 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:fundfarm
+2025-10-20 21:33:03,004 [INFO] Warning 2106, reqId -1: HMDS data farm connection is OK:ushmds
+2025-10-20 21:33:03,004 [INFO] Warning 2158, reqId -1: Sec-def data farm connection is OK:secdefil
+2025-10-20 21:33:03,005 [INFO] API connection ready
+2025-10-20 21:33:03,007 [INFO] position: Position(account='DUO071381', contract=Stock(conId=265598, symbol='AAPL', exchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, avgCost=254.33)
+2025-10-20 21:33:03,115 [INFO] updatePortfolio: PortfolioItem(contract=Stock(conId=265598, symbol='AAPL', right='0', primaryExchange='NASDAQ', currency='USD', localSymbol='AAPL', tradingClass='NMS'), position=1.0, marketPrice=262.6000061, marketValue=262.6, averageCost=254.33, unrealizedPNL=8.27, realizedPNL=0.0, account='DUO071381')
+2025-10-20 21:33:03,157 [INFO] execDetails Execution(execId='00012ec5.68f61bb4.01.01', time=datetime.datetime(2025, 10, 20, 9, 30, 52, tzinfo=datetime.timezone.utc), acctNumber='DUO071381', exchange='BYX', side='BOT', shares=1.0, price=253.33, permId=647627216, clientId=7, orderId=4, liquidation=0, cumQty=1.0, avgPrice=253.33, orderRef='', evRule='', evMultiplier=0.0, modelCode='', lastLiquidity=2)
+2025-10-20 21:33:03,160 [INFO] Synchronization complete
+2025-10-20 21:33:03,160 [INFO] [OK] Connected (server version: 176)
+2025-10-20 21:33:03,650 [INFO] Disconnecting from 127.0.0.1:7497, 711 B sent in 9 messages, 30.6 kB received in 672 messages, session time 659 ms.
+2025-10-20 21:33:03,650 [INFO] Disconnecting
+2025-10-20 21:33:03,651 [INFO] Disconnected

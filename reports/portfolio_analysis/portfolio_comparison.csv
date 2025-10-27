@@ -1,0 +1,4 @@
+Strategy,Portfolio Sharpe,Portfolio Return,Avg Individual Sharpe,Diversification,Avg Correlation
+Buy & Hold,182388.0620,26254239789744.1406,7.5130,24276.30x,0.00
+Momentum (3900),11902.5007,17778333097.6704,5.8042,2050.66x,-0.00
+MA Crossover (65/1950),872.1694,17072924.9711,4.1139,212.00x,0.00

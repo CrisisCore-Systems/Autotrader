@@ -337,13 +337,20 @@ class IBBroker:
         logger.info(f"  Signal ID:    {order.signal_id}")
 
         try:
+            if order.stop_price <= 0 or order.target_price <= 0:
+                logger.error("❌ Stop and target prices must be positive for bracket orders")
+                return None
+
             # Create contract
             contract = Stock(order.ticker, 'SMART', 'USD')
             self.ib.qualifyContracts(contract)
 
             # Create market order
             action = 'BUY' if order.action == 'BUY' else 'SELL'
+            exit_action = 'SELL' if action == 'BUY' else 'BUY'
+
             market_order = MarketOrder(action, qty)
+            market_order.transmit = False
 
             ticker_key = order.ticker.upper()
             self._position_metadata[ticker_key] = {
@@ -359,11 +366,39 @@ class IBBroker:
 
             logger.info(f"✅ Entry order submitted: {order_id}")
 
-            # Wait for fill
-            self.ib.sleep(2)
+            # Prepare exit orders (take profit + stop loss)
+            take_profit_price = round(order.target_price, 2)
+            stop_loss_price = round(order.stop_price, 2)
 
-            # TODO: Submit bracket orders (stop loss + take profit)
-            # Note: IB requires waiting for entry fill before submitting brackets
+            oca_group = f"BRACKET_{order_id}"
+
+            take_profit_order = LimitOrder(exit_action, qty, take_profit_price)
+            take_profit_order.parentId = trade.order.orderId
+            take_profit_order.ocaGroup = oca_group
+            take_profit_order.ocaType = 1
+            take_profit_order.transmit = False
+
+            stop_loss_order = StopOrder(exit_action, qty, stop_loss_price)
+            stop_loss_order.parentId = trade.order.orderId
+            stop_loss_order.ocaGroup = oca_group
+            stop_loss_order.ocaType = 1
+            stop_loss_order.transmit = True
+
+            tp_trade = self.ib.placeOrder(contract, take_profit_order)
+            sl_trade = self.ib.placeOrder(contract, stop_loss_order)
+
+            self._position_metadata[ticker_key].update({
+                "take_profit_order_id": tp_trade.order.orderId if tp_trade else None,
+                "stop_loss_order_id": sl_trade.order.orderId if sl_trade else None,
+            })
+
+            logger.info(
+                "✅ Protective bracket submitted: TP %s @ %.2f, SL %s @ %.2f",
+                tp_trade.order.orderId if tp_trade else "N/A",
+                take_profit_price,
+                sl_trade.order.orderId if sl_trade else "N/A",
+                stop_loss_price,
+            )
 
             logger.info(f"{'='*70}\n")
 

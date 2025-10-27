@@ -2,15 +2,20 @@ Metadata-Version: 2.4
 Name: autotrader
 Version: 0.1.0
 Summary: AutoTrader - Cryptocurrency Trading Bot
-Requires-Python: >=3.11
-Requires-Dist: numpy>=1.24.0
-Requires-Dist: pandas>=2.0.0
+Requires-Python: <3.14,>=3.11
+Requires-Dist: numpy<3.0,>=2.3.0
+Requires-Dist: pandas<3.0,>=2.2.3
 Requires-Dist: ccxt>=4.0.0
 Requires-Dist: fastapi>=0.100.0
 Requires-Dist: uvicorn>=0.23.0
 Requires-Dist: aiohttp>=3.8.0
 Requires-Dist: prometheus-client>=0.17.0
 Requires-Dist: pyyaml>=6.0
+Requires-Dist: mlflow>=2.16.0
+Requires-Dist: prefect>=2.19.0
+Requires-Dist: wandb>=0.17.0
+Requires-Dist: dvc[s3]>=3.50.0
+Requires-Dist: boto3>=1.34.0
 Provides-Extra: microstructure
 Requires-Dist: ccxt[async]>=4.0.0; extra == "microstructure"
 Provides-Extra: dev
@@ -20,6 +25,6 @@ Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
 Requires-Dist: httpx>=0.24.0; extra == "dev"
 Provides-Extra: bouncehunter
 Requires-Dist: yfinance>=0.2.40; extra == "bouncehunter"
-Requires-Dist: scikit-learn>=1.3.0; extra == "bouncehunter"
+Requires-Dist: scikit-learn>=1.7.0; extra == "bouncehunter"
 Requires-Dist: lxml>=4.9.0; extra == "bouncehunter"
 Requires-Dist: requests>=2.31.0; extra == "bouncehunter"

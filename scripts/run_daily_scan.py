@@ -22,6 +22,8 @@ from bouncehunter.pennyhunter_agentic import (
     Orchestrator,
     AgenticMemory,
     AgenticPolicy,
+    Signal,
+    Action,
     Sentinel,
     Screener,
     Forecaster,
@@ -253,10 +255,11 @@ class PaperTradingScanner:
                     'target': order.target_price,
                     'confidence': order.confidence,
                     'signal_id': order.signal_id,
+                    'consensus_score': trade_data['consensus_score'],
                 })
                 
                 # Store in database
-                self._store_trade_in_db(order, order_id)
+                self._store_trade_in_db(order, order_id, trade_data)
         
         # Summary
         end_time = datetime.now()
@@ -342,26 +345,129 @@ class PaperTradingScanner:
         # Calculate position size based on regime
         regime_adjustment = self.config['trading']['regime_adjustments'][regime_info['regime']]['position_size']
         position_size_pct = self.config['trading']['risk_per_trade_pct'] * regime_adjustment
-        
+
+        entry_price = (
+            signal.get('price')
+            or signal.get('entry_price')
+            or signal.get('open')
+            or signal.get('close')
+        )
+
+        # Guard against missing pricing data
+        if not entry_price or entry_price <= 0:
+            logger.warning(
+                "Signal %s missing entry price fields, defaulting to 0", signal.get('ticker', 'UNKNOWN')
+            )
+            entry_price = 0.0
+
+        stop_price = signal.get('stop_price') or (entry_price * 0.95 if entry_price else 0.0)
+        target_price = signal.get('target_price') or (entry_price * 1.10 if entry_price else 0.0)
+        signal_date = signal.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+
         return {
             'approved': should_trade,
             'ticker': signal['ticker'],
-            'entry_price': signal['price'],
-            'stop_price': signal.get('stop_price', signal['price'] * 0.95),
-            'target_price': signal.get('target_price', signal['price'] * 1.10),
+            'entry_price': entry_price,
+            'stop_price': stop_price,
+            'target_price': target_price,
             'position_size_pct': position_size_pct,
             'confidence': signal.get('confidence', 0),
             'signal_id': signal.get('signal_id', ''),
             'agent_votes': agent_votes,
             'consensus_score': consensus_score,
+            'consensus_reason': consensus_reason,
+            'gap_pct': signal.get('gap_pct', 0.0),
+            'probability': signal.get('probability', 0.0),
+            'adv_usd': signal.get('adv_usd', 0.0),
+            'sector': signal.get('sector', 'UNKNOWN'),
+            'notes': signal.get('notes', ''),
+            'signal_date': signal_date,
+            'prev_close': signal.get('prev_close') or signal.get('close') or entry_price,
+            'raw_signal': signal,
             'veto_reason': veto_reason if not should_trade else None,
         }
     
-    def _store_trade_in_db(self, order: TradeOrder, order_id: str):
-        """Store trade in database for tracking."""
-        # TODO: Store in agentic DB
-        # For now, just log
-        logger.info(f"   Stored trade {order.ticker} ({order_id}) in database")
+    def _store_trade_in_db(self, order: TradeOrder, order_id: str, trade_metadata: Dict):
+        """Store executed trade in agentic datastore for telemetry."""
+        try:
+            raw_signal = trade_metadata.get('raw_signal', {}) or {}
+            agent_votes = dict(order.agent_votes)
+
+            # Ensure core agent votes are present
+            agent_votes.setdefault('sentinel', True)
+            agent_votes.setdefault('screener', True)
+            agent_votes.setdefault('trader', True)
+
+            signal_date = trade_metadata.get('signal_date') or datetime.utcnow().strftime('%Y-%m-%d')
+            consensus_score = trade_metadata.get('consensus_score', 0.0)
+            consensus_reason = trade_metadata.get('consensus_reason', 'Consensus approved')
+
+            signal = Signal(
+                ticker=order.ticker,
+                date=signal_date,
+                gap_pct=float(trade_metadata.get('gap_pct', raw_signal.get('gap_pct', 0.0)) or 0.0),
+                close=float(trade_metadata.get('prev_close', raw_signal.get('prev_close', raw_signal.get('close', order.entry_price))) or order.entry_price),
+                entry=float(order.entry_price),
+                stop=float(order.stop_price),
+                target=float(order.target_price),
+                confidence=float(order.confidence),
+                probability=float(trade_metadata.get('probability', raw_signal.get('probability', 0.0)) or 0.0),
+                adv_usd=float(trade_metadata.get('adv_usd', raw_signal.get('adv_usd', 0.0)) or 0.0),
+                sector=str(trade_metadata.get('sector', raw_signal.get('sector', 'UNKNOWN')) or 'UNKNOWN'),
+                notes=str(trade_metadata.get('notes', raw_signal.get('notes', '')) or ''),
+                agent_votes=agent_votes,
+            )
+
+            action = Action(
+                signal_id=order.signal_id or trade_metadata.get('signal_id', ''),
+                ticker=order.ticker,
+                action='BUY',
+                size_pct=float(order.position_size_pct),
+                entry=float(order.entry_price),
+                stop=float(order.stop_price),
+                target=float(order.target_price),
+                confidence=float(order.confidence),
+                regime=order.regime,
+                reason=f"Consensus {consensus_score:.1%} ({consensus_reason})",
+                order_id=order_id,
+            )
+
+            signal_id = self.memory.record_signal_agentic(signal, action, agent_votes)
+
+            # Update order with generated signal id for traceability
+            if not order.signal_id:
+                order.signal_id = signal_id
+
+            account = self.broker.get_account() or {}
+            portfolio_value = account.get('portfolio_value', self.config['trading']['initial_capital'])
+            shares = float(self.broker.calculate_position_size(order, portfolio_value))
+
+            entry_date = signal_date
+            fill_id = self.memory.record_fill_agentic(
+                signal_id=signal_id,
+                ticker=order.ticker,
+                entry_date=entry_date,
+                entry_price=float(order.entry_price),
+                shares=shares,
+                size_pct=float(order.position_size_pct),
+                regime=order.regime,
+                is_paper=True,
+            )
+
+            logger.info(
+                "   Agentic datastore updated: signal %s, fill %s (shares %.0f)",
+                signal_id,
+                fill_id,
+                shares,
+            )
+
+        except Exception as exc:
+            logger.exception(
+                "   Failed to persist trade %s (%s): %s",
+                order.ticker,
+                order_id,
+                exc,
+            )
 
 
 async def main():

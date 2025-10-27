@@ -13,8 +13,12 @@ import os
 
 try:
     from alpaca.trading.client import TradingClient
-    from alpaca.trading.requests import MarketOrderRequest
-    from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.trading.requests import (
+        MarketOrderRequest,
+        StopLossRequest,
+        TakeProfitRequest,
+    )
+    from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockLatestQuoteRequest
 except ImportError:
@@ -280,12 +284,21 @@ class AlpacaBroker:
         logger.info(f"  Signal ID:    {order.signal_id}")
         
         try:
-            # Create market order (entry)
+            if order.stop_price <= 0 or order.target_price <= 0:
+                logger.error("❌ Stop and target prices must be positive for bracket orders")
+                return None
+
+            side = OrderSide.BUY if order.action == 'BUY' else OrderSide.SELL
+
+            # Create market order (entry) with attached bracket legs
             market_order = MarketOrderRequest(
                 symbol=order.ticker,
                 qty=qty,
-                side=OrderSide.BUY if order.action == 'BUY' else OrderSide.SELL,
+                side=side,
                 time_in_force=TimeInForce.DAY,
+                order_class=OrderClass.BRACKET,
+                take_profit=TakeProfitRequest(limit_price=round(order.target_price, 2)),
+                stop_loss=StopLossRequest(stop_price=round(order.stop_price, 2)),
             )
             
             # Submit entry order

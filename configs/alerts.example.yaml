@@ -1,0 +1,42 @@
+# Alert Configuration
+# This file configures how compliance alerts are routed to notification channels
+
+# Telegram Bot Configuration
+telegram:
+  enabled: true
+  
+  # Get bot token from @BotFather on Telegram:
+  # 1. Message @BotFather
+  # 2. Send /newbot
+  # 3. Follow prompts to create bot
+  # 4. Copy the bot token
+  bot_token: "YOUR_BOT_TOKEN_HERE"
+  
+  # Get chat ID:
+  # 1. Start a chat with your bot
+  # 2. Send any message
+  # 3. Visit: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+  # 4. Look for "chat":{"id": YOUR_CHAT_ID}
+  # OR use @userinfobot to get your user ID
+  chat_id: "YOUR_CHAT_ID_HERE"
+
+# Email Configuration (Optional - for backup/reporting)
+email:
+  enabled: false
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  from_addr: "alerts@yourcompany.com"
+  to_addrs:
+    - "trader@yourcompany.com"
+    - "compliance@yourcompany.com"
+  
+  # SMTP Authentication (optional)
+  username: null
+  password: null
+  
+  use_tls: true
+
+# Routing Logic (automatically applied):
+# - CRITICAL: Telegram (immediate) + Email (audit trail)
+# - WARNING: Telegram (immediate)
+# - INFO: Email (daily digest)

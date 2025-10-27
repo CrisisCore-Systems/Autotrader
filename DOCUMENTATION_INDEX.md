@@ -1,7 +1,7 @@
 # 📚 AutoTrader Documentation Index
 
-**Last Updated:** October 20, 2025  
-**Status:** Phase 2 Validation In Progress (2/20 trades)
+**Last Updated:** October 23, 2025  
+**Status:** Phase 2 Complete ✅ | Phase 3 Specification Ready 📋
 
 ---
 **Note:** Legacy quick-reference documents now live in [`docs/legacy/`](docs/legacy/README.md).
@@ -14,6 +14,16 @@
 1. [`QUICK_REFERENCE.md`](docs/legacy/QUICK_REFERENCE.md) - 30-second overview
 2. [`README.md`](README.md) - Main project overview
 3. [`DAILY_SCHEDULE.md`](docs/legacy/DAILY_SCHEDULE.md) - Visual workflow guide
+
+### **📐 Phase Documentation**
+
+**Phase 2: Market Data Ingestion** ✅ COMPLETE
+- [`PHASE_2_MARKET_DATA_COMPLETE.md`](PHASE_2_MARKET_DATA_COMPLETE.md) - Full specification & implementation
+- [`PHASE_2_TESTING_SUMMARY.md`](PHASE_2_TESTING_SUMMARY.md) - Testing results & bug fixes
+
+**Phase 3: Data Cleaning & Bar Construction** 📋 READY FOR IMPLEMENTATION
+- [`PHASE_3_DATA_PREP_SPECIFICATION.md`](PHASE_3_DATA_PREP_SPECIFICATION.md) - Full specification (90+ pages)
+- [`PHASE_3_QUICKSTART.md`](PHASE_3_QUICKSTART.md) - Quick start guide with examples
 
 ### **📊 For Operators (Daily Trading)**
 

@@ -24,6 +24,22 @@ This repository contains the foundational blueprint and implementation for **Cri
 
 ## 🎯 Current Status (October 26, 2025)
 
+### ✅ **Phase 3 — Data Preparation (50% Complete)**
+
+**Bar Construction Library**:
+- ✅ **6 Bar Algorithms**: Time, Tick, Volume, Dollar, Imbalance, Run bars
+- ✅ **Data Cleaning**: TimezoneNormalizer, SessionFilter, DataQualityChecker
+- ✅ **Unified API**: BarFactory interface for all bar types
+- ✅ **Quality**: 0 Codacy issues, 100% test coverage on real data
+- ✅ **Performance**: <40ms for 3,002 ticks (all bar types)
+- ✅ **Documentation**: 220+ pages (specs, guides, comparisons)
+- ⏳ **Next**: Week 3 - Order Book Features (15+ L2 features)
+
+**Key Documents**:
+- [`PHASE_3_MIDPOINT_SUMMARY.md`](PHASE_3_MIDPOINT_SUMMARY.md) - Executive summary (Weeks 1-2)
+- [`PHASE_3_WEEK_2_COMPLETE.md`](PHASE_3_WEEK_2_COMPLETE.md) - Bar construction details
+- [`PHASE_3_DATA_PREP_SPECIFICATION.md`](PHASE_3_DATA_PREP_SPECIFICATION.md) - Full specification
+
 ### ✅ **Production Ready - Trading System Active**
 
 **BounceHunter/PennyHunter Gap Trading Strategy**:
@@ -154,6 +170,34 @@ flowchart TD
 
 ## 🚀 Quick Start - BounceHunter Gap Trading
 
+> **Environment requirement:** Use Python 3.11 or 3.12. Python 3.13 is not yet supported by upstream dependencies (e.g., scikit-learn) unless you install Microsoft C++ Build Tools.
+
+### Containerized Development Environment (Recommended)
+
+```bash
+cp .env.example .env
+make bootstrap
+docker compose up -d
+```
+
+- API available at [http://localhost:8000](http://localhost:8000)
+- MLflow tracking UI at [http://localhost:5000](http://localhost:5000)
+- Prefect server UI at [http://localhost:4200](http://localhost:4200)
+- Prometheus at [http://localhost:9090](http://localhost:9090) and Grafana at [http://localhost:3000](http://localhost:3000) (default `admin/admin`)
+
+Useful helpers:
+
+- `make compose-logs` to follow service logs
+- `make compose-down` to tear down the stack when finished
+- `dvc repro train_model` to execute the data → training pipeline locally
+
+To orchestrate the full experiment pipeline via Prefect:
+
+```bash
+prefect deployment build orchestration/flows/experiment_pipeline.py:experiment_flow -n local-dev
+prefect deployment run "autotrader-experiment-pipeline/local-dev"
+```
+
 ### Installation
 
 ```bash
@@ -165,8 +209,12 @@ cd Autotrader/Autotrader
 python -m venv .venv-1
 .venv-1\Scripts\activate  # On Windows PowerShell
 
-# Install dependencies
+# Install dependencies (or run `make bootstrap`)
 pip install -r requirements.txt
+
+# Initialize DVC (first-time only)
+dvc init
+dvc repro train_model
 
 # Initialize development databases
 python scripts/db/init_dev_databases.py

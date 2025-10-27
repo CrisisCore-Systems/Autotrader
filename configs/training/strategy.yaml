@@ -1,0 +1,14 @@
+run:
+  experiment_name: Autotrader-Dev
+  model_name: autotrader-strategy
+  tags:
+    phase: phase1
+    horizon: 15s
+hyperparameters:
+  learning_rate: 0.001
+  batch_size: 128
+  epochs: 20
+  target_metric: sharpe
+outputs:
+  model_dir: artifacts/models/latest
+  metrics_path: artifacts/metrics/latest.json

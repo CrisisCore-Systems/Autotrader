@@ -1,0 +1,84 @@
+# Lightweight Docker Compose - Only Essential Services
+# Use this if you want SOME Docker services but not the full heavy stack
+# Memory usage: ~1-2 GB instead of 6-8 GB
+
+version: "3.9"
+
+services:
+  # Postgres - Most useful service to have in Docker
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-autotrader}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-autotrader}
+      POSTGRES_DB: ${POSTGRES_DB:-autotrader}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autotrader"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis - Optional lightweight cache
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles:
+      - with-redis
+
+  # MLflow - Optional experiment tracking
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.16.1
+    command: >-
+      mlflow server
+      --backend-store-uri postgresql+psycopg2://${POSTGRES_USER:-autotrader}:${POSTGRES_PASSWORD:-autotrader}@postgres:5432/${POSTGRES_DB:-autotrader}
+      --default-artifact-root file:///mlruns
+      --host 0.0.0.0
+      --port 5000
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlruns_data:/mlruns
+    restart: unless-stopped
+    profiles:
+      - with-mlflow
+
+volumes:
+  postgres_data:
+  mlruns_data:
+
+# Usage examples:
+#
+# 1. Just Postgres (most common):
+#    docker compose -f docker-compose.lightweight.yml up -d
+#
+# 2. Postgres + Redis:
+#    docker compose -f docker-compose.lightweight.yml --profile with-redis up -d
+#
+# 3. Postgres + MLflow:
+#    docker compose -f docker-compose.lightweight.yml --profile with-mlflow up -d
+#
+# 4. All lightweight services:
+#    docker compose -f docker-compose.lightweight.yml --profile with-redis --profile with-mlflow up -d
+#
+# Stop services:
+#    docker compose -f docker-compose.lightweight.yml down
+#
+# Memory usage:
+#    Postgres only: ~100 MB
+#    + Redis: ~150 MB total
+#    + MLflow: ~300 MB total

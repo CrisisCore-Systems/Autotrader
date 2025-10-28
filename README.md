@@ -3,8 +3,12 @@
 [![CI Pipeline](https://github.com/CrisisCore-Systems/Autotrader/workflows/CI%20Pipeline/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/ci.yml)
 [![Security Scan](https://github.com/CrisisCore-Systems/Autotrader/workflows/security-scan/badge.svg)](https://github.com/CrisisCore-Systems/Autotrader/actions/workflows/security-scan.yml)
 [![codecov](https://codecov.io/gh/CrisisCore-Systems/Autotrader/branch/main/graph/badge.svg)](https://codecov.io/gh/CrisisCore-Systems/Autotrader)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=CrisisCore-Systems/Autotrader)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CrisisCore-Systems/Autotrader)
 
-> **📖 NEW: [Understanding What You've Created](OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
+> **🪶 NEW: [Lightweight Development Guide](LIGHTWEIGHT_DEVELOPMENT.md)** - Don't let Docker slow you down! Develop on resource-constrained laptops, use GitHub Codespaces, or skip Docker entirely. **90% less RAM usage!**
+
+> **📖 [Understanding What You've Created](OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
 > - [Quick Summary (5 min)](SYSTEM_SUMMARY.md) - TL;DR with key stats
 > - [Complete Overview (20 min)](WHAT_YOU_CREATED.md) - Deep dive into the system
 > - [Visual Diagrams (10 min)](SYSTEM_DIAGRAMS.md) - Architecture visualizations
@@ -189,7 +193,43 @@ flowchart TD
 
 > **Environment requirement:** Use Python 3.11 or 3.12. Python 3.13 is not yet supported by upstream dependencies (e.g., scikit-learn) unless you install Microsoft C++ Build Tools.
 
-### Containerized Development Environment (Recommended)
+> **⚡ Laptop struggling with Docker?** See [Lightweight Development Guide](LIGHTWEIGHT_DEVELOPMENT.md) for alternatives that use **90% less RAM**! Includes GitHub Codespaces, SQLite-only mode, and more.
+
+### Option 1: Lightweight Development (🪶 Recommended for Limited Resources)
+
+**No Docker required!** Perfect for laptops with limited RAM or slow performance.
+
+```bash
+# Quick setup (5 minutes)
+python setup_lightweight.py
+
+# Or manual setup:
+cp .env.lightweight .env
+pip install -r requirements.txt
+python scripts/db/init_dev_databases.py
+
+# Start developing!
+python run_scanner_free.py
+uvicorn src.api.main:app --reload
+```
+
+**Memory usage:** 200-500 MB (vs 4-8 GB with Docker)
+
+**What works:** All core trading features, paper trading, backtesting, testing, and development tools.
+
+**What's disabled:** Optional infrastructure (Kafka, Redis, Grafana, Prometheus). These are production features you don't need for development!
+
+**See full guide:** [LIGHTWEIGHT_DEVELOPMENT.md](LIGHTWEIGHT_DEVELOPMENT.md)
+
+### Option 2: GitHub Codespaces (☁️ Zero Local Resources)
+
+Develop entirely in the cloud - no impact on your laptop!
+
+1. Click the green `Code` button → `Codespaces` → `Create codespace`
+2. Wait 2-3 minutes for setup
+3. Start coding! (60 hours/month free)
+
+### Option 3: Containerized Development Environment (Full Stack)
 
 ```bash
 cp .env.example .env

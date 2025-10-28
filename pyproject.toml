@@ -53,7 +53,7 @@ default = "src.core.pipeline:HiddenGemScanner"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*", "pipeline*", "backtest*"]
+include = ["src*", "pipeline*", "backtest*", "autotrader*"]
 namespaces = false
 
 [tool.black]

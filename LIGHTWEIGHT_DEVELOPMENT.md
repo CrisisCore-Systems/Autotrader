@@ -479,9 +479,11 @@ rm -rf __pycache__ .pytest_cache
 
 ## ❓ Questions?
 
+- **Currently using Docker?** See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for step-by-step migration
 - **Issues?** Open a GitHub issue
 - **Discussion?** Start a GitHub discussion
-- **Quick help?** Check troubleshooting section above
+- **Quick help?** Check [LIGHTWEIGHT_FAQ.md](LIGHTWEIGHT_FAQ.md)
+- **Need quick reference?** Print [LIGHTWEIGHT_QUICK_REF.txt](LIGHTWEIGHT_QUICK_REF.txt)
 
 **Remember:** The goal is to keep developing, not to run the perfect infrastructure. Start lightweight, iterate fast, and scale up only when needed!
 

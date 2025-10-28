@@ -176,6 +176,18 @@ Can now easily start the metrics server for Prometheus scraping.
 - Link to detailed documentation
 - Metrics server instructions
 
+### 10. Docker Compose Wiring (`docker-compose.yml`)
+
+**Added a dedicated `compliance-exporter` service** that reuses the primary image's default ENTRYPOINT to serve Prometheus metrics on port 9090. The service mounts `./data`, `./artifacts`, and `./logs` so the exporter can analyze the latest audit trail files and persists its outputs. Health checks probe `http://localhost:9090/metrics` to ensure the endpoint is online before Grafana Alloy or Prometheus begins scraping. The service is scoped to the `observability` profile and has no `depends_on` requirements, so it can be launched independently without pulling the rest of the trading stack.
+
+**Quick start:**
+
+```powershell
+docker compose up -d compliance-exporter
+```
+
+Once the container is healthy, scrape `http://localhost:9090/metrics` from Prometheus or Grafana Alloy (on Windows, use `http://host.docker.internal:9090/metrics` inside other containers) to ingest the compliance metrics.
+
 ## Metrics Exposed
 
 The system now exposes 30+ Prometheus metrics across 6 categories:

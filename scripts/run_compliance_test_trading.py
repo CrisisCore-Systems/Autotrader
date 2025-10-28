@@ -282,6 +282,7 @@ class ComplianceTestTrader:
                         quantity=order.quantity,
                         price=500.0,  # Excessive price to trigger notional limit
                         fee=round(order.quantity * 500.0 * 0.001, 2),
+                        fee_currency="USD",
                         liquidity="taker",
                         slippage_bps=100.0  # Excessive slippage
                     )

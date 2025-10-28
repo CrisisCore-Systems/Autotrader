@@ -35,6 +35,29 @@ services:
       - app
     ports:
       - "9091:9091"
+    profiles:
+      - observability
+
+  compliance-exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+      - ./logs:/app/logs
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    profiles:
+      - observability
 
   # ============================================================================
   # Worker Services
@@ -175,6 +198,8 @@ services:
       - minio
     ports:
       - "5000:5000"
+    profiles:
+      - mlops
 
   prefect:
     image: prefecthq/prefect:2.19-python3.11
@@ -183,6 +208,8 @@ services:
       PREFECT_API_URL: http://prefect:4200/api
     ports:
       - "4200:4200"
+    profiles:
+      - mlops
 
   postgres:
     image: postgres:15-alpine
@@ -219,6 +246,8 @@ services:
       - "9092:9092"
     volumes:
       - kafka_data:/bitnami/kafka
+    profiles:
+      - infra
 
   minio:
     image: quay.io/minio/minio:RELEASE.2024-05-10T01-41-38Z
@@ -231,6 +260,8 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    profiles:
+      - infra
 
   prometheus:
     image: prom/prometheus:v2.53.0
@@ -239,7 +270,9 @@ services:
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "9095:9090"
+    profiles:
+      - observability
 
   grafana:
     image: grafana/grafana:10.4.2
@@ -256,6 +289,8 @@ services:
       - ./infrastructure/grafana/dashboards:/etc/grafana/dashboards:ro
     depends_on:
       - prometheus
+    profiles:
+      - observability
 
 volumes:
   postgres_data:

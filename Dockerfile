@@ -3,50 +3,62 @@
 # Security features:
 # - Multi-stage build (separates build from runtime)
 # - Non-root user (UID 1000)
-# - Minimal base image (slim-bookworm)
+# - Minimal base image (Alpine)
 # - No unnecessary packages in final image
 # - Pinned base image versions for reproducibility
 # - Health check for container monitoring
 
+# Build args to control Python version and requirements file (override at build time if needed)
+ARG PYTHON_TAG=3.13-alpine
+ARG REQS_FILE=requirements-py313.txt
+
 # === Stage 1: Builder ===
-FROM python:3.14-slim-bookworm AS builder
+FROM python:${PYTHON_TAG} AS builder
+ARG REQS_FILE
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    g++ \
+RUN apk add --no-cache \
+    bash \
+    build-base \
     git \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    libffi-dev \
+    linux-headers \
+    openssl-dev \
+    postgresql-dev
 
 # Create non-root user for build
-RUN useradd --create-home --shell /bin/bash builder
+RUN addgroup -S builder && \
+    adduser -S -G builder builder && \
+    mkdir -p /home/builder && \
+    chown builder:builder /home/builder
 USER builder
 WORKDIR /home/builder
 
-# Copy dependency files
-COPY --chown=builder:builder requirements.txt pyproject.toml ./
+# Copy dependency files (both requirement sets to allow switching via REQS_FILE)
+COPY --chown=builder:builder requirements*.txt pyproject.toml ./
 
 # Install Python dependencies in user space
 RUN pip install --user --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --user --no-cache-dir -r requirements.txt
+    pip install --user --no-cache-dir -r ${REQS_FILE}
 
 # === Stage 2: Runtime ===
-FROM python:3.14-slim-bookworm AS runtime
+FROM python:${PYTHON_TAG} AS runtime
 
 # Security: Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+RUN apk add --no-cache \
+    bash \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    curl \
+    libstdc++
 
 # Security: Create non-root user with explicit UID
-RUN useradd --create-home --shell /bin/bash --uid 1000 autotrader
+RUN addgroup -g 1000 -S autotrader && \
+    adduser -S -G autotrader -u 1000 autotrader && \
+    mkdir -p /home/autotrader && \
+    chown autotrader:autotrader /home/autotrader
 
 # Security: Set secure default umask
-RUN echo "umask 027" >> /home/autotrader/.bashrc
+RUN echo "umask 027" >> /home/autotrader/.profile
 
 # Copy Python packages from builder
 COPY --from=builder /home/builder/.local /home/autotrader/.local
@@ -61,6 +73,7 @@ RUN mkdir -p /app/logs /app/.cache /app/artifacts /app/backtest_results /tmp && 
 
 # Copy application code
 COPY --chown=autotrader:autotrader src/ ./src/
+COPY --chown=autotrader:autotrader autotrader/ ./autotrader/
 COPY --chown=autotrader:autotrader pipeline/ ./pipeline/
 COPY --chown=autotrader:autotrader configs/ ./configs/
 COPY --chown=autotrader:autotrader backtest/ ./backtest/
@@ -72,15 +85,19 @@ USER autotrader
 
 # Add local Python packages to PATH
 ENV PATH="/home/autotrader/.local/bin:${PATH}"
-ENV PYTHONPATH="/app:${PYTHONPATH}"
+ENV PYTHONPATH="/app:${PYTHONPATH:-}"
 ENV PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import sys; sys.exit(0)"
 
-# Default command (can be overridden)
-CMD ["python", "-m", "src.services.exporter"]
+# Expose Prometheus metrics port
+EXPOSE 9090
+
+# Default entrypoint to start the Prometheus exporter; allow overriding args (e.g., port)
+ENTRYPOINT ["python", "scripts/monitoring/export_compliance_metrics.py"]
+CMD ["--port", "9090"]
 
 # Metadata
 LABEL maintainer="CrisisCore Systems"

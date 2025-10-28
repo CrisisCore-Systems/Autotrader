@@ -50,3 +50,27 @@ exports/*
 # Monitoring artifacts (generated files)
 artifacts/monitoring/*.json
 artifacts/baselines/*.json
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Documentation build
+site/
+
+# MLflow tracking
+mlruns/
+mlartifacts/
+
+# Logs
+logs/
+*.log
+
+# Generated reports
+compliance_report.json
+bandit-report.json
+
+# Temporary test results
+test_results/

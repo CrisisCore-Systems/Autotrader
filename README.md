@@ -6,12 +6,12 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=CrisisCore-Systems/Autotrader)
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CrisisCore-Systems/Autotrader)
 
-> **🪶 NEW: [Lightweight Development Guide](LIGHTWEIGHT_DEVELOPMENT.md)** - Don't let Docker slow you down! Develop on resource-constrained laptops, use GitHub Codespaces, or skip Docker entirely. **90% less RAM usage!**
+> **🪶 NEW: [Lightweight Development Guide](docs/LIGHTWEIGHT_DEVELOPMENT.md)** - Don't let Docker slow you down! Develop on resource-constrained laptops, use GitHub Codespaces, or skip Docker entirely. **90% less RAM usage!**
 
-> **📖 [Understanding What You've Created](OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
-> - [Quick Summary (5 min)](SYSTEM_SUMMARY.md) - TL;DR with key stats
-> - [Complete Overview (20 min)](WHAT_YOU_CREATED.md) - Deep dive into the system
-> - [Visual Diagrams (10 min)](SYSTEM_DIAGRAMS.md) - Architecture visualizations
+> **📖 [Understanding What You've Created](docs/OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
+> - [Quick Summary (5 min)](docs/status/SYSTEM_SUMMARY.md) - TL;DR with key stats
+> - [Complete Overview (20 min)](docs/WHAT_YOU_CREATED.md) - Deep dive into the system
+> - [Visual Diagrams (10 min)](docs/SYSTEM_DIAGRAMS.md) - Architecture visualizations
 
 ## CrisisCore AutoTrader - Hidden-Gem Scanner
 
@@ -34,10 +34,10 @@ This repository contains the foundational blueprint and implementation for **Cri
 ## 📊 **NEW: Comprehensive Repository Analysis Available**
 
 🎯 **Complete Tree of Thought Analysis** of what this repository is, what it can do, and how far along it is:
-- **[ANALYSIS_INDEX.md](ANALYSIS_INDEX.md)** - Start here for navigation and quick summary
-- **[REPOSITORY_ANALYSIS.md](REPOSITORY_ANALYSIS.md)** - Deep dive into capabilities and maturity (8.5/10 production-ready)
-- **[MATURITY_ASSESSMENT.md](MATURITY_ASSESSMENT.md)** - Visual maturity scoring across all components (Level 3.8/5.0)
-- **[STRATEGIC_ROADMAP.md](STRATEGIC_ROADMAP.md)** - 12-month strategic plan with quarterly milestones
+- **[ANALYSIS_INDEX.md](docs/ANALYSIS_INDEX.md)** - Start here for navigation and quick summary
+- **[REPOSITORY_ANALYSIS.md](docs/REPOSITORY_ANALYSIS.md)** - Deep dive into capabilities and maturity (8.5/10 production-ready)
+- **[MATURITY_ASSESSMENT.md](docs/MATURITY_ASSESSMENT.md)** - Visual maturity scoring across all components (Level 3.8/5.0)
+- **[STRATEGIC_ROADMAP.md](docs/STRATEGIC_ROADMAP.md)** - 12-month strategic plan with quarterly milestones
 
 **Key Finding**: 80-90% complete for core use cases, production-ready for individual/small team trading
 
@@ -57,9 +57,9 @@ This repository contains the foundational blueprint and implementation for **Cri
 - ⏳ **Next**: Week 3 - Order Book Features (15+ L2 features)
 
 **Key Documents**:
-- [`PHASE_3_MIDPOINT_SUMMARY.md`](PHASE_3_MIDPOINT_SUMMARY.md) - Executive summary (Weeks 1-2)
-- [`PHASE_3_WEEK_2_COMPLETE.md`](PHASE_3_WEEK_2_COMPLETE.md) - Bar construction details
-- [`PHASE_3_DATA_PREP_SPECIFICATION.md`](PHASE_3_DATA_PREP_SPECIFICATION.md) - Full specification
+- [`PHASE_3_MIDPOINT_SUMMARY.md`](docs/phases/PHASE_3_MIDPOINT_SUMMARY.md) - Executive summary (Weeks 1-2)
+- [`PHASE_3_WEEK_2_COMPLETE.md`](docs/phases/PHASE_3_WEEK_2_COMPLETE.md) - Bar construction details
+- [`PHASE_3_DATA_PREP_SPECIFICATION.md`](docs/phases/PHASE_3_DATA_PREP_SPECIFICATION.md) - Full specification
 
 ### ✅ **Production Ready - Trading System Active**
 
@@ -95,8 +95,8 @@ This repository contains the foundational blueprint and implementation for **Cri
 - **Quick Start**: [`QUESTRADE_QUICKSTART.md`](docs/legacy/QUESTRADE_QUICKSTART.md) - 5-minute setup
 
 **Architecture & Design**:
-- **System Architecture**: [`ARCHITECTURE.md`](ARCHITECTURE.md) - Complete system architecture, modules, and data flows
-- **Feature Catalog**: [`FEATURE_CATALOG.md`](FEATURE_CATALOG.md) - Complete feature inventory and data contracts
+- **System Architecture**: [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) - Complete system architecture, modules, and data flows
+- **Feature Catalog**: [`FEATURE_CATALOG.md`](docs/FEATURE_CATALOG.md) - Complete feature inventory and data contracts
 - **Agentic System**: [`docs/AGENTIC_ARCHITECTURE.md`](docs/AGENTIC_ARCHITECTURE.md) - Multi-agent design
 - **Roadmap**: [`AGENTIC_ROADMAP_QUICK_REF.md`](docs/legacy/AGENTIC_ROADMAP_QUICK_REF.md) - Implementation phases
 - **Backtesting**: [`docs/PHASE_3_BACKTEST_RESULTS.md`](docs/PHASE_3_BACKTEST_RESULTS.md) - Strategy validation

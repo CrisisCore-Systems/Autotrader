@@ -34,11 +34,11 @@ AutoTrader is a sophisticated cryptocurrency trading system featuring:
 
 Key modules in `src/`:
 - `src/bouncehunter/` - Gap trading strategy implementation
-- `src/core/` - Core trading engine and pipeline
+- `src/core/` - Core trading engine and pipeline (includes `src/core/brokers/`)
 - `src/services/` - API services and metrics
-- `src/brokers/` - Broker integrations (Alpaca, Questrade, IBKR)
-- `src/feature_engineering/` - ML feature computation
-- `src/compliance/` - Compliance and risk management
+- `src/features/` - Feature computation and engineering
+- `src/risk/` - Risk management
+- `src/monitoring/` - System monitoring and observability
 
 ## Build and Setup
 
@@ -140,7 +140,7 @@ mypy src/ --ignore-missing-imports --exclude "src/legacy/"
 make security
 
 # Or manually:
-bandit -r src/ -ll
+bandit -r src -ll
 pip-audit --requirement requirements.txt
 ```
 
@@ -246,8 +246,9 @@ async def test_fetch_data():
 ### Python Version Support
 
 - Minimum: Python 3.11
-- Supported: 3.11, 3.12, 3.13
-- Test matrix: CI runs on all supported versions
+- Compatible: 3.11, 3.12, 3.13 (per pyproject.toml)
+- CI Tested: 3.11, 3.12, 3.13
+- Test matrix: CI runs on all tested versions
 
 ## Security Guidelines
 
@@ -284,10 +285,10 @@ async def test_fetch_data():
 
 ### Adding Broker Support
 
-- Implement interface in `src/brokers/base.py`
-- Add broker-specific client in `src/brokers/`
-- Update `src/brokers/factory.py`
-- Add tests in `tests/brokers/`
+- Check existing implementations in `src/bouncehunter/` (broker.py, alpaca_broker.py, ib_broker.py)
+- Add broker-specific client in `src/core/brokers/` (e.g., ibkr_client.py)
+- Update `src/core/brokers/__init__.py` for factory pattern
+- Add tests in `tests/` directory
 - Document setup in `docs/`
 
 ## Common Issues

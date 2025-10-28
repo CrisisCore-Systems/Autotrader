@@ -1,0 +1,55 @@
+{
+  "name": "Autotrader Lightweight",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
+        "editor.formatOnSave": true,
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/node_modules/**": true,
+          "**/mlruns/**": true,
+          "**/site/**": true,
+          "**/__pycache__/**": true
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt && pip install -r requirements-dev.txt",
+  "forwardPorts": [8000, 5000, 3000],
+  "portsAttributes": {
+    "8000": {
+      "label": "API",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "MLflow",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "Dashboard",
+      "onAutoForward": "silent"
+    }
+  },
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "PYTHONUNBUFFERED": "1",
+    "ENVIRONMENT": "codespaces"
+  }
+}

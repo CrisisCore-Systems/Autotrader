@@ -1,0 +1,53 @@
+image: gitpod/workspace-python
+
+tasks:
+  - name: Setup
+    init: |
+      # Install Python dependencies
+      pip install -r requirements.txt
+      pip install -r requirements-dev.txt
+      
+      # Setup lightweight environment
+      cp .env.lightweight .env
+      
+      # Create necessary directories
+      mkdir -p artifacts logs backups backtest_results mlruns reports
+      
+      # Initialize databases
+      python scripts/db/init_dev_databases.py || echo "Database init skipped"
+      
+      echo "✅ Gitpod workspace ready!"
+    command: |
+      echo "🪶 Lightweight development mode active"
+      echo "📚 See LIGHTWEIGHT_DEVELOPMENT.md for usage guide"
+      echo ""
+      echo "Quick commands:"
+      echo "  uvicorn src.api.main:app --reload    # Start API"
+      echo "  python run_scanner_free.py           # Run scanner"
+      echo "  pytest tests/test_smoke.py -v        # Run tests"
+
+ports:
+  - port: 8000
+    onOpen: notify
+    description: API Server
+  - port: 5000
+    onOpen: ignore
+    description: MLflow (if enabled)
+  - port: 3000
+    onOpen: ignore
+    description: Dashboard (if enabled)
+
+vscode:
+  extensions:
+    - ms-python.python
+    - ms-python.vscode-pylance
+    - ms-toolsai.jupyter
+
+github:
+  prebuilds:
+    master: true
+    branches: true
+    pullRequests: true
+    pullRequestsFromForks: false
+    addCheck: true
+    addComment: false

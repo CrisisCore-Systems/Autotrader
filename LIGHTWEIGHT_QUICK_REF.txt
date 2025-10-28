@@ -1,0 +1,195 @@
+═══════════════════════════════════════════════════════════════════
+            🪶 LIGHTWEIGHT DEVELOPMENT - QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════
+
+📋 PROBLEM
+──────────
+Docker + VS Code consuming 4-8 GB RAM on your laptop? Can't develop 
+comfortably? This guide provides 3 lightweight alternatives.
+
+═══════════════════════════════════════════════════════════════════
+⚡ OPTION 1: LIGHTWEIGHT LOCAL (Recommended - 5 minutes)
+═══════════════════════════════════════════════════════════════════
+
+Quick Setup:
+───────────
+python setup_lightweight.py
+
+OR manually:
+───────────
+cp .env.lightweight .env
+pip install -r requirements.txt
+python scripts/db/init_dev_databases.py
+
+Memory Usage:
+────────────
+200-500 MB (90% less than Docker!)
+
+What Works:
+──────────
+✅ All core trading features    ✅ Backtesting
+✅ Paper trading                 ✅ Testing & linting
+✅ Signal generation             ✅ Jupyter notebooks
+✅ Risk management               ✅ Any IDE/editor
+
+What's Disabled:
+───────────────
+❌ Kafka (uses direct calls)    ❌ Prometheus (logs only)
+❌ Redis (in-memory cache)       ❌ Grafana (use CLI)
+❌ Postgres (uses SQLite)        ❌ Prefect (manual scripts)
+
+Daily Commands:
+──────────────
+uvicorn src.api.main:app --reload    # Start API
+python run_scanner_free.py           # Run scanner
+python run_pennyhunter_paper.py      # Paper trade
+pytest tests/ -v                     # Run tests
+
+═══════════════════════════════════════════════════════════════════
+☁️ OPTION 2: GITHUB CODESPACES (Zero local resources - 2 minutes)
+═══════════════════════════════════════════════════════════════════
+
+Setup:
+─────
+1. Go to: github.com/CrisisCore-Systems/Autotrader
+2. Click: Code → Codespaces → Create codespace
+3. Wait 2-3 minutes
+4. Start coding!
+
+Benefits:
+────────
+✅ 2-32 CPU cores              ✅ Access from anywhere
+✅ 4-64 GB RAM                 ✅ Same environment always
+✅ No laptop impact            ✅ 60 hours/month FREE
+✅ VS Code in browser          ✅ Works on iPad/Chromebook
+
+Cost:
+────
+FREE: 60 hours/month (personal), 120 hours/month (Pro)
+Stops after 30 min idle (saves your free hours)
+
+═══════════════════════════════════════════════════════════════════
+🌐 OPTION 3: OTHER CLOUD IDEs (Alternative)
+═══════════════════════════════════════════════════════════════════
+
+Gitpod:    gitpod.io/#github.com/CrisisCore-Systems/Autotrader
+           50 hours/month free
+
+Colab:     Great for Jupyter notebooks (unlimited free)
+
+Replit:    Quick prototyping (limited free)
+
+═══════════════════════════════════════════════════════════════════
+🤖 OPTION 4: USE CI/CD FOR TESTING (Already setup!)
+═══════════════════════════════════════════════════════════════════
+
+Don't run full stack locally - let GitHub do it!
+
+How:
+───
+git push    # CI runs automatically with full Docker stack
+            # View results in Actions tab
+
+Perfect for:
+───────────
+✅ Integration tests           ❌ Quick iteration (too slow)
+✅ Performance testing          ❌ Debugging (no access)
+✅ Security scans              ❌ Learning (use lightweight)
+✅ Before merging PRs
+
+═══════════════════════════════════════════════════════════════════
+🔧 SWITCHING MODES
+═══════════════════════════════════════════════════════════════════
+
+To Lightweight:                To Full Docker:
+──────────────                ──────────────
+docker compose down           cp .env.example .env
+cp .env.lightweight .env      docker compose up -d
+python run_scanner_free.py    
+
+Hybrid (Some Docker):
+────────────────────
+docker compose -f docker-compose.lightweight.yml up -d
+# Only runs: Postgres (~100MB) + optionally Redis/MLflow
+
+═══════════════════════════════════════════════════════════════════
+📊 COMPARISON TABLE
+═══════════════════════════════════════════════════════════════════
+
+Feature              Lightweight  Codespaces  Full Docker
+──────────────────── ────────────────────────────────────
+Core Trading         ✅           ✅          ✅
+Setup Time           5 min        2 min       10 min
+RAM Usage            300 MB       0 MB*       6 GB
+Laptop Impact        Low          Zero        High
+Cost                 Free         Free**      Free
+Works Offline        ✅           ❌          ✅
+Integration Tests    Limited      Full        Full
+
+* Uses cloud resources
+** 60-120 hours/month free
+
+═══════════════════════════════════════════════════════════════════
+🆘 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+"I ran out of Codespaces hours"
+→ Switch to lightweight local for rest of month
+→ Use Gitpod (50 hours/month)
+
+"Lightweight mode missing feature X"
+→ Check LIGHTWEIGHT_DEVELOPMENT.md - most features work!
+→ Use CI/CD for full integration tests
+
+"Tests failing in lightweight mode"
+→ python scripts/db/init_dev_databases.py
+→ cp .env.lightweight .env
+→ pip install -r requirements.txt
+
+"Still slow"
+→ Close other apps
+→ Use VS Code instead of full IDEs
+→ Disable file watchers (see guide)
+
+═══════════════════════════════════════════════════════════════════
+💡 BEST PRACTICES
+═══════════════════════════════════════════════════════════════════
+
+✅ DO:
+  • Start with lightweight mode
+  • Use Codespaces for uninterrupted dev
+  • Let CI test full stack
+  • Commit small changes often
+  • Test locally for fast feedback
+
+❌ DON'T:
+  • Run Docker on weak laptop
+  • Try to run everything locally
+  • Avoid cloud tools (they're free!)
+  • Wait for CI for every change
+  • Give up! You have options now!
+
+═══════════════════════════════════════════════════════════════════
+🎯 RECOMMENDED PATH
+═══════════════════════════════════════════════════════════════════
+
+Week 1-2:   Start lightweight → Learn codebase
+Week 3-4:   Use Codespaces → Build features
+Ongoing:    CI/CD validation → Merge with confidence
+Optional:   Full Docker only if you need specific infrastructure
+
+═══════════════════════════════════════════════════════════════════
+📚 MORE INFO
+═══════════════════════════════════════════════════════════════════
+
+Full Guide:           LIGHTWEIGHT_DEVELOPMENT.md
+Setup Script:         python setup_lightweight.py
+Lightweight Docker:   docker-compose.lightweight.yml
+Main README:          README.md
+
+═══════════════════════════════════════════════════════════════════
+
+💪 This project is 75% complete. With lightweight development, 
+   you'll finish the remaining 25% without upgrading your laptop!
+
+═══════════════════════════════════════════════════════════════════

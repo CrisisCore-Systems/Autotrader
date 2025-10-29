@@ -76,9 +76,7 @@ class TreeOfThoughtReasoner:
     def __init__(self, memory=None):
         self.memory = memory
 
-    def reason(
-        self, signal: Dict[str, Any], context: Dict[str, Any]
-    ) -> ThoughtTree:
+    def reason(self, signal: Dict[str, Any], context: Dict[str, Any]) -> ThoughtTree:
         """
         Generate a tree of thought for a trading signal.
 
@@ -98,9 +96,7 @@ class TreeOfThoughtReasoner:
         branches = []
 
         # Branch 1: Technical Analysis
-        tech_branch = self._technical_analysis_branch(
-            ticker, bcs, rsi2, dist_200
-        )
+        tech_branch = self._technical_analysis_branch(ticker, bcs, rsi2, dist_200)
         branches.append(tech_branch)
 
         # Branch 2: Historical Pattern Matching
@@ -129,9 +125,7 @@ class TreeOfThoughtReasoner:
             agreement_score=agreement_score,
         )
 
-    def _technical_analysis_branch(
-        self, ticker: str, bcs: float, rsi2: float, dist_200: float
-    ) -> ReasoningBranch:
+    def _technical_analysis_branch(self, ticker: str, bcs: float, rsi2: float, dist_200: float) -> ReasoningBranch:
         """Technical indicators reasoning path."""
         evidence = []
         reasoning_chain = []
@@ -140,9 +134,7 @@ class TreeOfThoughtReasoner:
         # RSI analysis
         if rsi2 < 10:
             evidence.append(f"RSI2 extremely oversold ({rsi2:.1f})")
-            reasoning_chain.append(
-                "Extreme oversold on RSI2 suggests panic selling"
-            )
+            reasoning_chain.append("Extreme oversold on RSI2 suggests panic selling")
             score += 30
         elif rsi2 < 20:
             evidence.append(f"RSI2 oversold ({rsi2:.1f})")
@@ -156,9 +148,7 @@ class TreeOfThoughtReasoner:
         # BCS analysis
         if bcs >= 0.70:
             evidence.append(f"High BCS score ({bcs:.2f})")
-            reasoning_chain.append(
-                "BCS above 70% suggests strong historical bounce pattern"
-            )
+            reasoning_chain.append("BCS above 70% suggests strong historical bounce pattern")
             score += 30
         elif bcs >= 0.60:
             evidence.append(f"Good BCS score ({bcs:.2f})")
@@ -172,9 +162,7 @@ class TreeOfThoughtReasoner:
         # Distance from 200DMA
         if dist_200 > -10 and dist_200 < -2:
             evidence.append(f"Near 200DMA support ({dist_200:.1%})")
-            reasoning_chain.append(
-                "Price near but above major support is favorable"
-            )
+            reasoning_chain.append("Price near but above major support is favorable")
             score += 15
         elif dist_200 < -15:
             evidence.append(f"Far below 200DMA ({dist_200:.1%})")
@@ -192,63 +180,73 @@ class TreeOfThoughtReasoner:
             reasoning_chain=reasoning_chain,
         )
 
-    def _historical_pattern_branch(
-        self, ticker: str, signal: Dict, context: Dict
-    ) -> ReasoningBranch:
+    def _calculate_hit_rate_score(self, hit_rate: float) -> int:
+        """Calculate score based on historical hit rate."""
+        if hit_rate >= 0.60:
+            return 30
+        elif hit_rate >= 0.50:
+            return 15
+        else:
+            return -20
+
+    def _analyze_regime_performance(
+        self, similar_trades: List[Dict], current_regime: str, evidence: List[str], reasoning_chain: List[str]
+    ) -> float:
+        """Analyze performance in current regime."""
+        regime_trades = [t for t in similar_trades if t.get("regime") == current_regime]
+        if not regime_trades:
+            return 0.0
+
+        regime_wins = sum(1 for t in regime_trades if t.get("pnl", 0) > 0)
+        regime_hit_rate = regime_wins / len(regime_trades)
+        evidence.append(f"In {current_regime} regime: {regime_hit_rate:.0%} hit rate")
+        reasoning_chain.append(f"Regime-specific performance: {regime_hit_rate:.0%}")
+        return (regime_hit_rate - 0.5) * 40
+
+    def _historical_pattern_branch(self, ticker: str, signal: Dict, context: Dict) -> ReasoningBranch:
         """Historical pattern matching reasoning path."""
         evidence = []
         reasoning_chain = []
         score = 0
 
-        # Query historical similar setups
-        if self.memory:
-            similar_trades = self.memory.get_similar_signals(
-                ticker, signal, limit=20
-            )
-
-            if similar_trades and len(similar_trades) >= 5:
-                wins = sum(1 for t in similar_trades if t.get("pnl", 0) > 0)
-                hit_rate = wins / len(similar_trades)
-
-                evidence.append(
-                    f"Historical: {wins}/{len(similar_trades)} similar setups won ({hit_rate:.0%})"
-                )
-                reasoning_chain.append(
-                    f"Found {len(similar_trades)} similar setups with {hit_rate:.0%} success rate"
-                )
-
-                if hit_rate >= 0.60:
-                    score += 30
-                elif hit_rate >= 0.50:
-                    score += 15
-                else:
-                    score -= 20
-
-                # Check regime alignment
-                current_regime = context.get("regime", "normal")
-                regime_trades = [
-                    t for t in similar_trades if t.get("regime") == current_regime
-                ]
-                if regime_trades:
-                    regime_wins = sum(1 for t in regime_trades if t.get("pnl", 0) > 0)
-                    regime_hit_rate = regime_wins / len(regime_trades)
-                    evidence.append(
-                        f"In {current_regime} regime: {regime_hit_rate:.0%} hit rate"
-                    )
-                    reasoning_chain.append(
-                        f"Regime-specific performance: {regime_hit_rate:.0%}"
-                    )
-                    score += (regime_hit_rate - 0.5) * 40
-            else:
-                evidence.append("Insufficient historical data")
-                reasoning_chain.append(
-                    "Not enough similar setups for strong confidence"
-                )
-                score -= 10
-        else:
+        if not self.memory:
             evidence.append("No memory available")
             reasoning_chain.append("Cannot assess historical patterns")
-            score = 0
+            confidence = 0.5
+            return ReasoningBranch(
+                name="historical_patterns",
+                hypothesis="Historical patterns oppose entry",
+                evidence=evidence,
+                confidence=confidence,
+                score=score,
+                reasoning_chain=reasoning_chain,
+            )
+
+        similar_trades = self.memory.get_similar_signals(ticker, signal, limit=20)
+
+        if not similar_trades or len(similar_trades) < 5:
+            evidence.append("Insufficient historical data")
+            reasoning_chain.append("Not enough similar setups for strong confidence")
+            score = -10
+            confidence = 0.4
+            return ReasoningBranch(
+                name="historical_patterns",
+                hypothesis="Historical patterns oppose entry",
+                evidence=evidence,
+                confidence=confidence,
+                score=score,
+                reasoning_chain=reasoning_chain,
+            )
+
+        wins = sum(1 for t in similar_trades if t.get("pnl", 0) > 0)
+        hit_rate = wins / len(similar_trades)
+
+        evidence.append(f"Historical: {wins}/{len(similar_trades)} similar setups won ({hit_rate:.0%})")
+        reasoning_chain.append(f"Found {len(similar_trades)} similar setups with {hit_rate:.0%} success rate")
+
+        score = self._calculate_hit_rate_score(hit_rate)
+        current_regime = context.get("regime", "normal")
+        score += self._analyze_regime_performance(similar_trades, current_regime, evidence, reasoning_chain)
 
         confidence = min(1.0, max(0.0, (score + 50) / 100))
 
@@ -261,9 +259,7 @@ class TreeOfThoughtReasoner:
             reasoning_chain=reasoning_chain,
         )
 
-    def _risk_adjusted_branch(
-        self, signal: Dict, context: Dict
-    ) -> ReasoningBranch:
+    def _risk_adjusted_branch(self, signal: Dict, context: Dict) -> ReasoningBranch:
         """Risk-reward reasoning path."""
         evidence = []
         reasoning_chain = []
@@ -333,9 +329,7 @@ class TreeOfThoughtReasoner:
             reasoning_chain=reasoning_chain,
         )
 
-    def _regime_aware_branch(
-        self, signal: Dict, context: Dict, vix_pct: float
-    ) -> ReasoningBranch:
+    def _regime_aware_branch(self, signal: Dict, context: Dict, vix_pct: float) -> ReasoningBranch:
         """Regime-aware reasoning path."""
         evidence = []
         reasoning_chain = []
@@ -350,14 +344,10 @@ class TreeOfThoughtReasoner:
 
         # Regime assessment
         if regime == "high_vix":
-            reasoning_chain.append(
-                "High VIX regime increases volatility and risk"
-            )
+            reasoning_chain.append("High VIX regime increases volatility and risk")
             score -= 20
         elif regime == "low_spy":
-            reasoning_chain.append(
-                "Weak SPY trend suggests defensive positioning"
-            )
+            reasoning_chain.append("Weak SPY trend suggests defensive positioning")
             score -= 15
         else:
             reasoning_chain.append("Normal regime is favorable for mean reversion")
@@ -370,9 +360,7 @@ class TreeOfThoughtReasoner:
             score += 15
         elif vix_pct > 0.8:
             evidence.append("High VIX (stressed market)")
-            reasoning_chain.append(
-                "High volatility increases false positive risk"
-            )
+            reasoning_chain.append("High volatility increases false positive risk")
             score -= 25
 
         # SPY trend alignment
@@ -459,9 +447,7 @@ class MetacognitiveReflector:
 
         return reflections
 
-    def _check_calibration(
-        self, thought_tree: ThoughtTree
-    ) -> Optional[MetaReflection]:
+    def _check_calibration(self, thought_tree: ThoughtTree) -> Optional[MetaReflection]:
         """Check if historical confidence matches actual outcomes."""
         if not self.memory:
             return None
@@ -486,9 +472,7 @@ class MetacognitiveReflector:
 
         return None
 
-    def _check_distribution(
-        self, signal: Dict, context: Dict
-    ) -> Optional[MetaReflection]:
+    def _check_distribution(self, signal: Dict, context: Dict) -> Optional[MetaReflection]:
         """Check if current conditions match training distribution."""
         vix_pct = context.get("vix_percentile", 0.5)
 
@@ -520,18 +504,12 @@ class MetacognitiveReflector:
 
         return None
 
-    def _check_agent_agreement(
-        self, agent_outputs: List[Dict]
-    ) -> Optional[MetaReflection]:
+    def _check_agent_agreement(self, agent_outputs: List[Dict]) -> Optional[MetaReflection]:
         """Check if agents agree or disagree significantly."""
         if not agent_outputs:
             return None
 
-        confidences = [
-            a.get("confidence", 0.5)
-            for a in agent_outputs
-            if "confidence" in a
-        ]
+        confidences = [a.get("confidence", 0.5) for a in agent_outputs if "confidence" in a]
         if len(confidences) < 2:
             return None
 
@@ -554,9 +532,7 @@ class MetacognitiveReflector:
 
         return None
 
-    def _check_branch_agreement(
-        self, thought_tree: ThoughtTree
-    ) -> Optional[MetaReflection]:
+    def _check_branch_agreement(self, thought_tree: ThoughtTree) -> Optional[MetaReflection]:
         """Check if reasoning branches agree."""
         if thought_tree.agreement_score < 0.7:
             return MetaReflection(
@@ -617,9 +593,7 @@ class CounterfactualTracker:
     def __init__(self, memory):
         self.memory = memory
 
-    def log_veto(
-        self, signal: Dict, vetoing_agent: str, reason: str
-    ) -> str:
+    def log_veto(self, signal: Dict, vetoing_agent: str, reason: str) -> str:
         """Log a vetoed signal for later resolution."""
         counterfactual_id = f"CF-{signal['ticker']}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 

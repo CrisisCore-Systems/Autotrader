@@ -93,6 +93,94 @@ class TwitterAggregator:
         """
         self.twitter = twitter_client or TwitterClientV2()
 
+    def _create_empty_snapshot(
+        self, token_symbol: str, timestamp: datetime, hours_back: int, query: str
+    ) -> TwitterSentimentSnapshot:
+        """Create an empty sentiment snapshot."""
+        return TwitterSentimentSnapshot(
+            token_symbol=token_symbol,
+            timestamp=timestamp,
+            time_window_hours=hours_back,
+            total_tweets=0,
+            unique_authors=0,
+            verified_tweets=0,
+            total_engagement=0,
+            avg_engagement_per_tweet=0.0,
+            top_tweet_engagement=0,
+            tweet_velocity=0.0,
+            data_quality_score=0.0,
+            query_used=query,
+        )
+
+    def _calculate_engagement_metrics(self, tweet_metrics: Dict[str, int]) -> tuple[int, int, int, int, int]:
+        """Extract engagement metrics from tweet public_metrics."""
+        likes = tweet_metrics.get("like_count", 0)
+        retweets = tweet_metrics.get("retweet_count", 0)
+        replies = tweet_metrics.get("reply_count", 0)
+        quotes = tweet_metrics.get("quote_count", 0)
+        total = likes + retweets + replies + quotes
+        return likes, retweets, replies, quotes, total
+
+    def _calculate_derived_scores(
+        self, timestamp: datetime, created_at: datetime, engagement: int, followers: int, verified: bool
+    ) -> tuple[float, float, float]:
+        """Calculate velocity, influence, and engagement scores."""
+        hours_ago = (timestamp - created_at).total_seconds() / 3600
+        velocity_score = engagement / max(hours_ago, 0.1)
+        influence_score = (followers**0.5) * (2.0 if verified else 1.0)
+
+        # Note: engagement passed here is raw total, we'll calculate weighted in caller
+        return velocity_score, influence_score, 0.0  # engagement_score calculated separately
+
+    def _process_tweet_to_signal(
+        self, tweet: Dict, users_map: Dict[str, Dict], timestamp: datetime
+    ) -> Optional[TweetSignal]:
+        """Process a single tweet into a TweetSignal."""
+        author_id = tweet.get("author_id", "")
+        user_data = users_map.get(author_id, {})
+
+        # Parse timestamp
+        created_str = tweet.get("created_at", "")
+        try:
+            created_at = datetime.strptime(created_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except ValueError:
+            created_at = timestamp
+
+        # Extract metrics
+        metrics = tweet.get("public_metrics", {})
+        likes, retweets, replies, quotes, engagement = self._calculate_engagement_metrics(metrics)
+
+        # Author metrics
+        username = user_data.get("username", "unknown")
+        verified = user_data.get("verified", False)
+        followers = user_data.get("public_metrics", {}).get("followers_count", 0)
+
+        # Calculate derived scores
+        velocity_score, influence_score, _ = self._calculate_derived_scores(
+            timestamp, created_at, engagement, followers, verified
+        )
+
+        # Weighted engagement score
+        engagement_score = likes * 1.0 + retweets * 2.0 + replies * 1.5 + quotes * 2.5
+
+        return TweetSignal(
+            tweet_id=tweet["id"],
+            created_at=created_at,
+            text=tweet.get("text", ""),
+            author_username=username,
+            author_verified=verified,
+            author_followers=followers,
+            likes=likes,
+            retweets=retweets,
+            replies=replies,
+            quotes=quotes,
+            engagement_score=engagement_score,
+            velocity_score=velocity_score,
+            influence_score=influence_score,
+            entities=tweet.get("entities", {}),
+            referenced_tweets=[ref["id"] for ref in tweet.get("referenced_tweets", [])],
+        )
+
     def aggregate_token_sentiment(
         self,
         token_symbol: str,
@@ -115,8 +203,6 @@ class TwitterAggregator:
             TwitterSentimentSnapshot with aggregated metrics
         """
         timestamp = datetime.utcnow()
-
-        # Build query
         query = self.twitter.build_crypto_query(
             token_symbol=token_symbol,
             token_name=include_token_name,
@@ -128,7 +214,6 @@ class TwitterAggregator:
             query += f" (min_faves:{min_engagement} OR min_retweets:{min_engagement})"
 
         try:
-            # Fetch tweets
             result = self.twitter.fetch_sentiment_signals(
                 token_symbol=token_symbol,
                 hours_back=hours_back,
@@ -140,25 +225,10 @@ class TwitterAggregator:
             includes = result.get("includes", {})
 
             if not tweets_data:
-                return TwitterSentimentSnapshot(
-                    token_symbol=token_symbol,
-                    timestamp=timestamp,
-                    time_window_hours=hours_back,
-                    total_tweets=0,
-                    unique_authors=0,
-                    verified_tweets=0,
-                    total_engagement=0,
-                    avg_engagement_per_tweet=0.0,
-                    top_tweet_engagement=0,
-                    tweet_velocity=0.0,
-                    data_quality_score=0.0,
-                    query_used=query,
-                )
+                return self._create_empty_snapshot(token_symbol, timestamp, hours_back, query)
 
             # Build user lookup
-            users_map: Dict[str, Dict[str, Any]] = {}
-            for user in includes.get("users", []):
-                users_map[user["id"]] = user
+            users_map = {user["id"]: user for user in includes.get("users", [])}
 
             # Process tweets into signals
             signals: List[TweetSignal] = []
@@ -167,73 +237,14 @@ class TwitterAggregator:
             total_engagement = 0
 
             for tweet in tweets_data:
-                author_id = tweet.get("author_id", "")
-                user_data = users_map.get(author_id, {})
+                signal = self._process_tweet_to_signal(tweet, users_map, timestamp)
+                if signal:
+                    signals.append(signal)
+                    unique_authors.add(tweet.get("author_id", ""))
+                    if signal.author_verified:
+                        verified_count += 1
+                    total_engagement += signal.likes + signal.retweets + signal.replies + signal.quotes
 
-                # Parse timestamp
-                created_str = tweet.get("created_at", "")
-                try:
-                    created_at = datetime.strptime(created_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-                except ValueError:
-                    created_at = timestamp
-
-                # Extract metrics
-                metrics = tweet.get("public_metrics", {})
-                likes = metrics.get("like_count", 0)
-                retweets = metrics.get("retweet_count", 0)
-                replies = metrics.get("reply_count", 0)
-                quotes = metrics.get("quote_count", 0)
-
-                engagement = likes + retweets + replies + quotes
-                total_engagement += engagement
-
-                # Author metrics
-                username = user_data.get("username", "unknown")
-                verified = user_data.get("verified", False)
-                followers = user_data.get("public_metrics", {}).get("followers_count", 0)
-
-                unique_authors.add(author_id)
-                if verified:
-                    verified_count += 1
-
-                # Calculate derived scores
-                hours_ago = (timestamp - created_at).total_seconds() / 3600
-                velocity_score = engagement / max(hours_ago, 0.1)  # Engagement per hour
-
-                # Influence score: log-scaled followers + verified bonus
-                influence_score = (followers ** 0.5) * (2.0 if verified else 1.0)
-
-                # Weighted engagement score
-                engagement_score = (
-                    likes * 1.0 +
-                    retweets * 2.0 +  # Retweets are stronger signal
-                    replies * 1.5 +
-                    quotes * 2.5  # Quotes indicate strong reaction
-                )
-
-                signal = TweetSignal(
-                    tweet_id=tweet["id"],
-                    created_at=created_at,
-                    text=tweet.get("text", ""),
-                    author_username=username,
-                    author_verified=verified,
-                    author_followers=followers,
-                    likes=likes,
-                    retweets=retweets,
-                    replies=replies,
-                    quotes=quotes,
-                    engagement_score=engagement_score,
-                    velocity_score=velocity_score,
-                    influence_score=influence_score,
-                    entities=tweet.get("entities", {}),
-                    referenced_tweets=[
-                        ref["id"] for ref in tweet.get("referenced_tweets", [])
-                    ],
-                )
-
-                signals.append(signal)
-
-            # Sort by engagement score
             signals.sort(key=lambda s: s.engagement_score, reverse=True)
 
             # Calculate aggregate metrics
@@ -242,7 +253,7 @@ class TwitterAggregator:
             tweet_velocity = len(signals) / hours_back
             verified_pct = (verified_count / len(signals) * 100) if signals else 0.0
 
-            # Top influencers (by influence score)
+            # Top influencers
             sorted_by_influence = sorted(signals, key=lambda s: s.influence_score, reverse=True)
             top_influencers = [s.author_username for s in sorted_by_influence[:5]]
 
@@ -259,27 +270,14 @@ class TwitterAggregator:
                 tweet_velocity=tweet_velocity,
                 verified_author_pct=verified_pct,
                 top_influencer_usernames=top_influencers,
-                top_tweets=signals[:10],  # Top 10 by engagement
+                top_tweets=signals[:10],
                 data_quality_score=1.0 if len(signals) >= 10 else 0.5,
                 query_used=query,
             )
 
         except Exception as e:
             print(f"Warning: Failed to aggregate Twitter sentiment: {e}")
-            return TwitterSentimentSnapshot(
-                token_symbol=token_symbol,
-                timestamp=timestamp,
-                time_window_hours=hours_back,
-                total_tweets=0,
-                unique_authors=0,
-                verified_tweets=0,
-                total_engagement=0,
-                avg_engagement_per_tweet=0.0,
-                top_tweet_engagement=0,
-                tweet_velocity=0.0,
-                data_quality_score=0.0,
-                query_used=query,
-            )
+            return self._create_empty_snapshot(token_symbol, timestamp, hours_back, query)
 
     def monitor_real_time_mentions(
         self,

@@ -1333,6 +1333,86 @@ def create_broker(broker_type: str, **kwargs) -> BrokerAPI:
         raise ValueError(f"Unknown broker type: {broker_type}")
 
 
+def _load_questrade_from_env() -> Optional[Dict]:
+    """Load Questrade credentials from environment variables."""
+    refresh_token = os.getenv("QUESTRADE_REFRESH_TOKEN")
+    if refresh_token:
+        return {
+            "refresh_token": refresh_token,
+            "paper": os.getenv("QUESTRADE_PAPER", "false").lower() == "true",
+        }
+    return None
+
+
+def _load_alpaca_from_env() -> Optional[Dict]:
+    """Load Alpaca credentials from environment variables."""
+    api_key = os.getenv("ALPACA_API_KEY")
+    api_secret = os.getenv("ALPACA_API_SECRET")
+    if api_key and api_secret:
+        return {
+            "api_key": api_key,
+            "secret_key": api_secret,
+            "paper": os.getenv("ALPACA_PAPER", "true").lower() == "true",
+        }
+    return None
+
+
+def _load_ibkr_from_env() -> Optional[Dict]:
+    """Load IBKR credentials from environment variables."""
+    account_id = os.getenv("IBKR_ACCOUNT_ID")
+    if account_id:
+        return {
+            "host": os.getenv("IBKR_HOST", "127.0.0.1"),
+            "port": int(os.getenv("IBKR_PORT", "7497")),
+            "client_id": int(os.getenv("IBKR_CLIENT_ID", "1")),
+            "account_id": account_id,
+        }
+    return None
+
+
+def _load_credentials_from_env(broker_type: str) -> Optional[Dict]:
+    """Load credentials from environment variables."""
+    loaders = {
+        "questrade": _load_questrade_from_env,
+        "alpaca": _load_alpaca_from_env,
+        "ibkr": _load_ibkr_from_env,
+    }
+    
+    loader = loaders.get(broker_type)
+    if loader:
+        return loader()
+    return None
+
+
+def _extract_broker_credentials(broker_type: str, broker_config: Dict) -> Dict:
+    """Extract credentials from broker config based on broker type."""
+    if broker_type == "questrade":
+        return {
+            "refresh_token": broker_config["refresh_token"],
+            "paper": broker_config.get("practice_account", False),
+        }
+    elif broker_type == "alpaca":
+        return {
+            "api_key": broker_config["api_key"],
+            "secret_key": broker_config["api_secret"],
+            "paper": broker_config.get("paper_trading", True),
+        }
+    elif broker_type == "ibkr":
+        return {
+            "host": broker_config.get("host", "127.0.0.1"),
+            "port": broker_config.get("port", 7497),
+            "client_id": broker_config.get("client_id", 7),  # Default to 7 as suggested
+            "account_id": broker_config.get("account_id"),
+            "allow_simulation": broker_config.get("allow_simulation", True),
+        }
+    elif broker_type == "paper":
+        return {
+            "initial_cash": broker_config.get("initial_capital", 100_000.0),
+        }
+    else:
+        raise ValueError(f"Unknown broker type: {broker_type}")
+
+
 def load_broker_credentials(broker_type: str) -> Dict:
     """Load broker credentials from YAML file or environment variables.
 
@@ -1353,31 +1433,9 @@ def load_broker_credentials(broker_type: str) -> Dict:
     broker_type = broker_type.lower()
 
     # Try environment variables first (production)
-    if broker_type == "questrade":
-        refresh_token = os.getenv("QUESTRADE_REFRESH_TOKEN")
-        if refresh_token:
-            return {
-                "refresh_token": refresh_token,
-                "paper": os.getenv("QUESTRADE_PAPER", "false").lower() == "true",
-            }
-    elif broker_type == "alpaca":
-        api_key = os.getenv("ALPACA_API_KEY")
-        api_secret = os.getenv("ALPACA_API_SECRET")
-        if api_key and api_secret:
-            return {
-                "api_key": api_key,
-                "secret_key": api_secret,
-                "paper": os.getenv("ALPACA_PAPER", "true").lower() == "true",
-            }
-    elif broker_type == "ibkr":
-        account_id = os.getenv("IBKR_ACCOUNT_ID")
-        if account_id:
-            return {
-                "host": os.getenv("IBKR_HOST", "127.0.0.1"),
-                "port": int(os.getenv("IBKR_PORT", "7497")),
-                "client_id": int(os.getenv("IBKR_CLIENT_ID", "1")),
-                "account_id": account_id,
-            }
+    env_creds = _load_credentials_from_env(broker_type)
+    if env_creds:
+        return env_creds
 
     # Fall back to credentials file (development)
     creds_path = Path("configs/broker_credentials.yaml")
@@ -1409,29 +1467,4 @@ def load_broker_credentials(broker_type: str) -> Dict:
             f"Set 'enabled: true' to use this broker."
         )
 
-    # Extract credentials based on broker type
-    if broker_type == "questrade":
-        return {
-            "refresh_token": broker_config["refresh_token"],
-            "paper": broker_config.get("practice_account", False),
-        }
-    elif broker_type == "alpaca":
-        return {
-            "api_key": broker_config["api_key"],
-            "secret_key": broker_config["api_secret"],
-            "paper": broker_config.get("paper_trading", True),
-        }
-    elif broker_type == "ibkr":
-        return {
-            "host": broker_config.get("host", "127.0.0.1"),
-            "port": broker_config.get("port", 7497),
-            "client_id": broker_config.get("client_id", 7),  # Default to 7 as suggested
-            "account_id": broker_config.get("account_id"),
-            "allow_simulation": broker_config.get("allow_simulation", True),
-        }
-    elif broker_type == "paper":
-        return {
-            "initial_cash": broker_config.get("initial_capital", 100_000.0),
-        }
-    else:
-        raise ValueError(f"Unknown broker type: {broker_type}")
+    return _extract_broker_credentials(broker_type, broker_config)

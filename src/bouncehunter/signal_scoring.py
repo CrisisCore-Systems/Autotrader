@@ -54,6 +54,92 @@ class SignalScorer:
 
         logger.info(f"SignalScorer initialized: min_threshold={min_score_threshold}/{max_score}")
 
+    def _score_gap_size(self, gap_pct: float) -> float:
+        """Score gap size (0-3 points)."""
+        if gap_pct >= 50:
+            return 3.0
+        elif gap_pct >= 30:
+            return 2.0
+        elif gap_pct >= 20:
+            return 1.0
+        else:
+            return 0.0
+    
+    def _score_volume_spike(self, volume_spike: float) -> float:
+        """Score volume spike (0-2 points)."""
+        if volume_spike >= 5.0:
+            return 2.0
+        elif volume_spike >= 3.0:
+            return 1.5
+        elif volume_spike >= 2.5:
+            return 1.0
+        else:
+            return 0.5
+    
+    def _score_float(self, float_millions: Optional[float]) -> float:
+        """Score float size (0-2 points)."""
+        if float_millions is None:
+            return 0.0
+        if float_millions < 10:
+            return 2.0
+        elif float_millions < 20:
+            return 1.5
+        elif float_millions < 50:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_rsi(self, rsi: Optional[float]) -> float:
+        """Score RSI recovery (0-1 point)."""
+        if rsi is None:
+            return 0.0
+        if rsi > 50:
+            return 1.0
+        elif rsi > 30:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_market_regime(self, spy_green: bool, vix_level: float) -> float:
+        """Score market regime (0-1 point)."""
+        if spy_green and vix_level < 20:
+            return 1.0
+        elif spy_green or vix_level < 25:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_pm_volume(self, premarket_volume_mult: Optional[float]) -> float:
+        """Score premarket volume (0-1 point, bonus)."""
+        if premarket_volume_mult is None:
+            return 0.0
+        if premarket_volume_mult >= 3.0:
+            return 1.0
+        elif premarket_volume_mult >= 2.0:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_confirmation_bars(self, confirmation_bars: int) -> float:
+        """Score confirmation bars (0-1 point, bonus)."""
+        if confirmation_bars >= 2:
+            return 1.0
+        elif confirmation_bars == 1:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _get_recommendation(self, total_score: float) -> str:
+        """Get recommendation based on total score."""
+        if total_score >= 8.5:
+            return "STRONG BUY - High probability setup"
+        elif total_score >= 7.0:
+            return "BUY - Good setup"
+        elif total_score >= 5.0:
+            return "WATCH - Monitor for improvement"
+        else:
+            return "PASS - Low probability"
+    
     def score_runner_vwap(
         self,
         ticker: str,
@@ -85,94 +171,22 @@ class SignalScorer:
         Returns:
             SignalScore with breakdown
         """
-        components = {}
-
-        # 1. Gap size (0-3 points)
-        if gap_pct >= 50:
-            components['gap'] = 3.0
-        elif gap_pct >= 30:
-            components['gap'] = 2.0
-        elif gap_pct >= 20:
-            components['gap'] = 1.0
-        else:
-            components['gap'] = 0.0
-
-        # 2. Volume spike (0-2 points)
-        if volume_spike >= 5.0:
-            components['volume'] = 2.0
-        elif volume_spike >= 3.0:
-            components['volume'] = 1.5
-        elif volume_spike >= 2.5:
-            components['volume'] = 1.0
-        else:
-            components['volume'] = 0.5
-
-        # 3. Float (0-2 points)
-        if float_millions is not None:
-            if float_millions < 10:
-                components['float'] = 2.0
-            elif float_millions < 20:
-                components['float'] = 1.5
-            elif float_millions < 50:
-                components['float'] = 0.5
-            else:
-                components['float'] = 0.0
-        else:
-            components['float'] = 0.0  # Unknown float = no points
-
-        # 4. VWAP reclaim (0-1 point)
-        components['vwap_reclaim'] = 1.0 if vwap_reclaim else 0.0
-
-        # 5. RSI recovery (0-1 point)
-        if rsi is not None:
-            if rsi > 50:
-                components['rsi'] = 1.0
-            elif rsi > 30:
-                components['rsi'] = 0.5
-            else:
-                components['rsi'] = 0.0
-        else:
-            components['rsi'] = 0.0
-
-        # 6. Market regime (0-1 point)
-        if spy_green and vix_level < 20:
-            components['market_regime'] = 1.0
-        elif spy_green or vix_level < 25:
-            components['market_regime'] = 0.5
-        else:
-            components['market_regime'] = 0.0
-
-        # 7. Premarket strength (0-1 point, bonus)
-        if premarket_volume_mult is not None:
-            if premarket_volume_mult >= 3.0:
-                components['pm_volume'] = 1.0
-            elif premarket_volume_mult >= 2.0:
-                components['pm_volume'] = 0.5
-            else:
-                components['pm_volume'] = 0.0
-
-        # 8. Confirmation bars (0-1 point, bonus)
-        if confirmation_bars >= 2:
-            components['confirmation'] = 1.0
-        elif confirmation_bars == 1:
-            components['confirmation'] = 0.5
-        else:
-            components['confirmation'] = 0.0
+        components = {
+            'gap': self._score_gap_size(gap_pct),
+            'volume': self._score_volume_spike(volume_spike),
+            'float': self._score_float(float_millions),
+            'vwap_reclaim': 1.0 if vwap_reclaim else 0.0,
+            'rsi': self._score_rsi(rsi),
+            'market_regime': self._score_market_regime(spy_green, vix_level),
+            'pm_volume': self._score_pm_volume(premarket_volume_mult),
+            'confirmation': self._score_confirmation_bars(confirmation_bars),
+        }
 
         # Calculate total
         total_score = sum(components.values())
         confidence_pct = (total_score / self.max_score) * 100
         passed = total_score >= self.min_score_threshold
-
-        # Generate recommendation
-        if total_score >= 8.5:
-            recommendation = "STRONG BUY - High probability setup"
-        elif total_score >= 7.0:
-            recommendation = "BUY - Good setup"
-        elif total_score >= 5.0:
-            recommendation = "WATCH - Monitor for improvement"
-        else:
-            recommendation = "PASS - Low probability"
+        recommendation = self._get_recommendation(total_score)
 
         score = SignalScore(
             ticker=ticker,
@@ -193,6 +207,89 @@ class SignalScorer:
 
         return score
 
+    def _score_prior_strength(self, prior_range_mult_atr: float) -> float:
+        """Score prior day strength (0-2 points)."""
+        if prior_range_mult_atr >= 4.0:
+            return 2.0
+        elif prior_range_mult_atr >= 3.0:
+            return 1.5
+        elif prior_range_mult_atr >= 2.5:
+            return 1.0
+        else:
+            return 0.5
+    
+    def _score_gap_down(self, gap_pct: float) -> float:
+        """Score gap size (0-2 points)."""
+        gap_abs = abs(gap_pct)
+        if gap_abs >= 15:
+            return 2.0
+        elif gap_abs >= 10:
+            return 1.5
+        elif gap_abs >= 5:
+            return 1.0
+        else:
+            return 0.5
+    
+    def _score_rsi2(self, rsi2: float) -> float:
+        """Score RSI(2) oversold (0-2 points)."""
+        if rsi2 < 3:
+            return 2.0
+        elif rsi2 < 5:
+            return 1.5
+        elif rsi2 < 10:
+            return 1.0
+        else:
+            return 0.0
+    
+    def _score_vwap_band(self, z_score: float) -> float:
+        """Score VWAP band touch (0-1 point)."""
+        if z_score <= -2.0:
+            return 1.0
+        elif z_score <= -1.5:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_volume_climax(self, volume_climax: float) -> float:
+        """Score volume climax (0-1 point)."""
+        if volume_climax >= 4.0:
+            return 1.0
+        elif volume_climax >= 2.5:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_float_frd(self, float_millions: Optional[float]) -> float:
+        """Score float for FRD bounce (0-1 point)."""
+        if float_millions is None:
+            return 0.0
+        if float_millions < 20:
+            return 1.0
+        elif float_millions < 50:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _score_market_regime_frd(self, spy_green: bool, vix_level: float) -> float:
+        """Score market regime for FRD (0-1 point)."""
+        if spy_green and vix_level < 25:
+            return 1.0
+        elif spy_green or vix_level < 30:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _get_frd_recommendation(self, total_score: float) -> str:
+        """Get recommendation for FRD bounce based on total score."""
+        if total_score >= 8.5:
+            return "STRONG BUY - High probability bounce"
+        elif total_score >= 7.0:
+            return "BUY - Good bounce setup"
+        elif total_score >= 5.0:
+            return "WATCH - Monitor for confirmation"
+        else:
+            return "PASS - Low probability"
+    
     def score_frd_bounce(
         self,
         ticker: str,
@@ -226,99 +323,23 @@ class SignalScorer:
         Returns:
             SignalScore with breakdown
         """
-        components = {}
-
-        # 1. Prior day strength (0-2 points)
-        if prior_range_mult_atr >= 4.0:
-            components['prior_strength'] = 2.0
-        elif prior_range_mult_atr >= 3.0:
-            components['prior_strength'] = 1.5
-        elif prior_range_mult_atr >= 2.5:
-            components['prior_strength'] = 1.0
-        else:
-            components['prior_strength'] = 0.5
-
-        # 2. Gap size (0-2 points)
-        gap_abs = abs(gap_pct)
-        if gap_abs >= 15:
-            components['gap'] = 2.0
-        elif gap_abs >= 10:
-            components['gap'] = 1.5
-        elif gap_abs >= 5:
-            components['gap'] = 1.0
-        else:
-            components['gap'] = 0.5
-
-        # 3. RSI(2) oversold (0-2 points)
-        if rsi2 < 3:
-            components['rsi2'] = 2.0
-        elif rsi2 < 5:
-            components['rsi2'] = 1.5
-        elif rsi2 < 10:
-            components['rsi2'] = 1.0
-        else:
-            components['rsi2'] = 0.0
-
-        # 4. VWAP band touch (0-1 point)
-        if z_score <= -2.0:
-            components['vwap_band'] = 1.0
-        elif z_score <= -1.5:
-            components['vwap_band'] = 0.5
-        else:
-            components['vwap_band'] = 0.0
-
-        # 5. Volume climax (0-1 point)
-        if volume_climax >= 4.0:
-            components['volume_climax'] = 1.0
-        elif volume_climax >= 2.5:
-            components['volume_climax'] = 0.5
-        else:
-            components['volume_climax'] = 0.0
-
-        # 6. Float (0-1 point)
-        if float_millions is not None:
-            if float_millions < 20:
-                components['float'] = 1.0
-            elif float_millions < 50:
-                components['float'] = 0.5
-            else:
-                components['float'] = 0.0
-        else:
-            components['float'] = 0.0
-
-        # 7. Support confluence (0-1 point)
-        components['support'] = 1.0 if support_confluence else 0.0
-
-        # 8. Market regime (0-1 point)
-        if spy_green and vix_level < 25:
-            components['market_regime'] = 1.0
-        elif spy_green or vix_level < 30:
-            components['market_regime'] = 0.5
-        else:
-            components['market_regime'] = 0.0
-
-        # 9. Confirmation bars (0-1 point, bonus)
-        if confirmation_bars >= 2:
-            components['confirmation'] = 1.0
-        elif confirmation_bars == 1:
-            components['confirmation'] = 0.5
-        else:
-            components['confirmation'] = 0.0
+        components = {
+            'prior_strength': self._score_prior_strength(prior_range_mult_atr),
+            'gap': self._score_gap_down(gap_pct),
+            'rsi2': self._score_rsi2(rsi2),
+            'vwap_band': self._score_vwap_band(z_score),
+            'volume_climax': self._score_volume_climax(volume_climax),
+            'float': self._score_float_frd(float_millions),
+            'support': 1.0 if support_confluence else 0.0,
+            'market_regime': self._score_market_regime_frd(spy_green, vix_level),
+            'confirmation': self._score_confirmation_bars(confirmation_bars),
+        }
 
         # Calculate total
         total_score = sum(components.values())
         confidence_pct = (total_score / self.max_score) * 100
         passed = total_score >= self.min_score_threshold
-
-        # Generate recommendation
-        if total_score >= 8.5:
-            recommendation = "STRONG BUY - High probability bounce"
-        elif total_score >= 7.0:
-            recommendation = "BUY - Good bounce setup"
-        elif total_score >= 5.0:
-            recommendation = "WATCH - Monitor for confirmation"
-        else:
-            recommendation = "PASS - Low probability"
+        recommendation = self._get_frd_recommendation(total_score)
 
         score = SignalScore(
             ticker=ticker,

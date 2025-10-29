@@ -82,6 +82,33 @@ class AlertCondition:
     threshold: Any
     description: Optional[str] = None
     
+    def _compare_values(self, value: Any) -> bool:
+        """Compare value against threshold using operator.
+        
+        Args:
+            value: Value to compare
+            
+        Returns:
+            Comparison result
+        """
+        comparisons = {
+            ConditionOperator.GT: lambda: value > self.threshold,
+            ConditionOperator.LT: lambda: value < self.threshold,
+            ConditionOperator.GTE: lambda: value >= self.threshold,
+            ConditionOperator.LTE: lambda: value <= self.threshold,
+            ConditionOperator.EQ: lambda: value == self.threshold,
+            ConditionOperator.NEQ: lambda: value != self.threshold,
+            ConditionOperator.IN: lambda: value in self.threshold,
+            ConditionOperator.CONTAINS: lambda: self.threshold in value,
+        }
+        
+        comparison_func = comparisons.get(self.operator)
+        if comparison_func is None:
+            logger.error("unknown_operator", operator=self.operator)
+            return False
+        
+        return comparison_func()
+    
     def evaluate(self, context: Dict[str, Any]) -> bool:
         """Evaluate condition against context.
         
@@ -102,25 +129,7 @@ class AlertCondition:
         value = context[self.metric]
         
         try:
-            if self.operator == ConditionOperator.GT:
-                return value > self.threshold
-            elif self.operator == ConditionOperator.LT:
-                return value < self.threshold
-            elif self.operator == ConditionOperator.GTE:
-                return value >= self.threshold
-            elif self.operator == ConditionOperator.LTE:
-                return value <= self.threshold
-            elif self.operator == ConditionOperator.EQ:
-                return value == self.threshold
-            elif self.operator == ConditionOperator.NEQ:
-                return value != self.threshold
-            elif self.operator == ConditionOperator.IN:
-                return value in self.threshold
-            elif self.operator == ConditionOperator.CONTAINS:
-                return self.threshold in value
-            else:
-                logger.error("unknown_operator", operator=self.operator)
-                return False
+            return self._compare_values(value)
         except Exception as e:
             logger.error(
                 "condition_evaluation_failed",

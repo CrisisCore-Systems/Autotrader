@@ -293,6 +293,24 @@ class SummaryReportGenerator:
         
         return warnings
     
+    def _get_feature_recommendation(self, feature_name: str) -> Optional[str]:
+        """Get recommendation for a specific feature.
+        
+        Args:
+            feature_name: Feature name
+            
+        Returns:
+            Recommendation string or None
+        """
+        recommendations_map = {
+            "LiquidityDepth": "💧 Consider deeper liquidity pools to reduce slippage risk",
+            "ContractSafety": "🔐 Review contract code and obtain security audit",
+            "AccumulationScore": "📊 Monitor whale activity and accumulation patterns",
+            "SentimentScore": "💬 Review recent news and community sentiment",
+            "OnchainActivity": "⛓️  Track on-chain metrics for activity trends",
+        }
+        return recommendations_map.get(feature_name)
+    
     def _generate_recommendations(
         self,
         gem_score: GemScoreResult,
@@ -327,16 +345,9 @@ class SummaryReportGenerator:
         
         # Feature-specific recommendations
         for feature_name, _ in top_negative_drivers[:3]:
-            if feature_name == "LiquidityDepth":
-                recommendations.append("💧 Consider deeper liquidity pools to reduce slippage risk")
-            elif feature_name == "ContractSafety":
-                recommendations.append("🔐 Review contract code and obtain security audit")
-            elif feature_name == "AccumulationScore":
-                recommendations.append("📊 Monitor whale activity and accumulation patterns")
-            elif feature_name == "SentimentScore":
-                recommendations.append("💬 Review recent news and community sentiment")
-            elif feature_name == "OnchainActivity":
-                recommendations.append("⛓️  Track on-chain metrics for activity trends")
+            recommendation = self._get_feature_recommendation(feature_name)
+            if recommendation:
+                recommendations.append(recommendation)
         
         # Always recommend verification
         recommendations.append("🔬 Always verify findings with independent research")

@@ -17,24 +17,24 @@ class OrderBookFeatures:
     """Features derived from L2 order book."""
 
     timestamp: float
-    
+
     # Imbalance metrics
     imbalance_top5: float  # (bid_vol - ask_vol) / (bid_vol + ask_vol) for top 5
     imbalance_top10: float  # Same for top 10
-    
+
     # Microprice and drift
     microprice: float  # Volume-weighted mid price
     microprice_drift: float  # Change vs previous
-    
+
     # Spread metrics
     spread_bps: float  # Spread in basis points
     spread_compression: float  # Spread / rolling mean spread
-    
+
     # Depth metrics
     bid_depth: float  # Total bid volume
     ask_depth: float  # Total ask volume
     depth_ratio: float  # bid_depth / ask_depth
-    
+
     # Price levels
     best_bid: float
     best_ask: float
@@ -46,27 +46,27 @@ class TradeFeatures:
     """Features derived from trade flow."""
 
     timestamp: float
-    
+
     # Imbalance across windows
     trade_imbalance_1s: float  # Buy volume - sell volume (1s)
     trade_imbalance_5s: float  # Same for 5s
     trade_imbalance_30s: float  # Same for 30s
-    
+
     # Volume metrics
     volume_1s: float
     volume_5s: float
     volume_30s: float
-    
+
     # Volume z-scores (standardized bursts)
     volume_zscore_1s: float
     volume_zscore_5s: float
     volume_zscore_30s: float
-    
+
     # Volatility
     realized_vol_1s: float  # Realized volatility from tick changes
     realized_vol_5s: float
     realized_vol_30s: float
-    
+
     # Trade intensity
     trade_count_1s: int
     trade_count_5s: int
@@ -80,12 +80,12 @@ class MicrostructureFeatures:
     timestamp: float
     orderbook: OrderBookFeatures
     trades: TradeFeatures
-    
+
     # Time-of-day features
     hour_of_day: int
     minute_of_hour: int
     is_market_open: bool  # For traditional markets; always True for crypto
-    
+
     # Regime indicators (to be filled by BOCPD)
     regime_id: Optional[int] = None
     changepoint_prob: Optional[float] = None
@@ -97,7 +97,7 @@ class OrderBookFeatureExtractor:
     def __init__(self, lookback: int = 100, enable_bocpd: bool = True):
         """
         Initialize feature extractor.
-        
+
         Args:
             lookback: Number of historical snapshots for rolling stats
             enable_bocpd: Whether to run BOCPD regime detection
@@ -107,7 +107,7 @@ class OrderBookFeatureExtractor:
         self.history: Deque[OrderBookSnapshot] = deque(maxlen=lookback)
         self.microprice_history: Deque[float] = deque(maxlen=lookback)
         self.spread_history: Deque[float] = deque(maxlen=lookback)
-        
+
         # BOCPD detectors
         if enable_bocpd:
             self.bocpd_imbalance = BOCPDDetector(hazard_rate=0.01, threshold=0.5)
@@ -115,6 +115,51 @@ class OrderBookFeatureExtractor:
         else:
             self.bocpd_imbalance = None
             self.bocpd_spread = None
+
+    def _calculate_basic_metrics(self, snapshot: OrderBookSnapshot) -> tuple[float, float, float, float]:
+        """Calculate basic price and spread metrics."""
+        best_bid = snapshot.bids[0][0]
+        best_ask = snapshot.asks[0][0]
+        mid_price = (best_bid + best_ask) / 2
+        spread_bps = ((best_ask - best_bid) / mid_price) * 10000
+        return best_bid, best_ask, mid_price, spread_bps
+
+    def _calculate_microprice(
+        self, best_bid: float, best_ask: float, mid_price: float, snapshot: OrderBookSnapshot
+    ) -> tuple[float, float]:
+        """Calculate microprice and drift."""
+        bid_vol_5 = sum(size for _, size in snapshot.bids[:5])
+        ask_vol_5 = sum(size for _, size in snapshot.asks[:5])
+        total_vol = bid_vol_5 + ask_vol_5
+
+        if total_vol > 0:
+            microprice = (best_bid * ask_vol_5 + best_ask * bid_vol_5) / total_vol
+        else:
+            microprice = mid_price
+
+        self.microprice_history.append(microprice)
+
+        if len(self.microprice_history) >= 2:
+            microprice_drift = microprice - self.microprice_history[-2]
+        else:
+            microprice_drift = 0.0
+
+        return microprice, microprice_drift
+
+    def _calculate_spread_compression(self, spread_bps: float) -> float:
+        """Calculate spread compression metric."""
+        self.spread_history.append(spread_bps)
+        if len(self.spread_history) >= 10:
+            mean_spread = np.mean(self.spread_history)
+            return spread_bps / mean_spread if mean_spread > 0 else 1.0
+        return 1.0
+
+    def _calculate_depth_metrics(self, snapshot: OrderBookSnapshot) -> tuple[float, float, float]:
+        """Calculate depth metrics."""
+        bid_depth = sum(size for _, size in snapshot.bids)
+        ask_depth = sum(size for _, size in snapshot.asks)
+        depth_ratio = bid_depth / ask_depth if ask_depth > 0 else 1.0
+        return bid_depth, ask_depth, depth_ratio
 
     def extract(self, snapshot: OrderBookSnapshot) -> OrderBookFeatures:
         """Extract features from order book snapshot."""
@@ -124,45 +169,20 @@ class OrderBookFeatureExtractor:
         if not snapshot.bids or not snapshot.asks:
             return self._empty_features(snapshot.timestamp)
 
-        best_bid = snapshot.bids[0][0]
-        best_ask = snapshot.asks[0][0]
-        mid_price = (best_bid + best_ask) / 2
-        spread_bps = ((best_ask - best_bid) / mid_price) * 10000
+        best_bid, best_ask, mid_price, spread_bps = self._calculate_basic_metrics(snapshot)
 
         # Imbalance calculations
         imbalance_top5 = self._compute_imbalance(snapshot.bids[:5], snapshot.asks[:5])
         imbalance_top10 = self._compute_imbalance(snapshot.bids[:10], snapshot.asks[:10])
 
-        # Microprice (volume-weighted mid)
-        bid_vol_5 = sum(size for _, size in snapshot.bids[:5])
-        ask_vol_5 = sum(size for _, size in snapshot.asks[:5])
-        total_vol = bid_vol_5 + ask_vol_5
-        
-        if total_vol > 0:
-            microprice = (best_bid * ask_vol_5 + best_ask * bid_vol_5) / total_vol
-        else:
-            microprice = mid_price
-
-        self.microprice_history.append(microprice)
-        
-        # Microprice drift
-        if len(self.microprice_history) >= 2:
-            microprice_drift = microprice - self.microprice_history[-2]
-        else:
-            microprice_drift = 0.0
+        # Microprice
+        microprice, microprice_drift = self._calculate_microprice(best_bid, best_ask, mid_price, snapshot)
 
         # Spread compression
-        self.spread_history.append(spread_bps)
-        if len(self.spread_history) >= 10:
-            mean_spread = np.mean(self.spread_history)
-            spread_compression = spread_bps / mean_spread if mean_spread > 0 else 1.0
-        else:
-            spread_compression = 1.0
+        spread_compression = self._calculate_spread_compression(spread_bps)
 
         # Depth metrics
-        bid_depth = sum(size for _, size in snapshot.bids)
-        ask_depth = sum(size for _, size in snapshot.asks)
-        depth_ratio = bid_depth / ask_depth if ask_depth > 0 else 1.0
+        bid_depth, ask_depth, depth_ratio = self._calculate_depth_metrics(snapshot)
 
         # Update BOCPD detectors (optional)
         if self.enable_bocpd and self.bocpd_imbalance and self.bocpd_spread:
@@ -191,10 +211,10 @@ class OrderBookFeatureExtractor:
         bid_vol = sum(size for _, size in bids)
         ask_vol = sum(size for _, size in asks)
         total_vol = bid_vol + ask_vol
-        
+
         if total_vol == 0:
             return 0.0
-        
+
         return (bid_vol - ask_vol) / total_vol
 
     def _empty_features(self, timestamp: float) -> OrderBookFeatures:
@@ -218,23 +238,23 @@ class OrderBookFeatureExtractor:
     def get_regime_info(self) -> Optional[tuple[int, float]]:
         """
         Get current regime information from BOCPD.
-        
+
         Returns:
             (regime_id, changepoint_prob) or None if BOCPD disabled
         """
         if not self.enable_bocpd or not self.bocpd_imbalance:
             return None
-        
+
         # Use imbalance detector as primary regime indicator
         regime_stats = self.bocpd_imbalance.get_regime_stats()
         regime_id = regime_stats["current_regime"]
-        
+
         # Get latest changepoint probability
         if self.bocpd_imbalance.changepoint_probs:
             cp_prob = self.bocpd_imbalance.changepoint_probs[-1]
         else:
             cp_prob = 0.0
-        
+
         return regime_id, cp_prob
 
 
@@ -314,13 +334,13 @@ class TradeFeatureExtractor:
         """Compute z-score of value vs history."""
         if len(history) < 2:
             return 0.0
-        
+
         mean = np.mean(history)
         std = np.std(history)
-        
+
         if std == 0:
             return 0.0
-        
+
         return float((value - mean) / std)
 
     @staticmethod
@@ -328,13 +348,13 @@ class TradeFeatureExtractor:
         """Compute realized volatility from trade prices."""
         if len(trades) < 2:
             return 0.0
-        
+
         prices = np.array([t.price for t in trades])
         returns = np.diff(np.log(prices))
-        
+
         if len(returns) == 0:
             return 0.0
-        
+
         return float(np.std(returns) * np.sqrt(len(returns)))
 
     def _empty_features(self, timestamp: float) -> TradeFeatures:

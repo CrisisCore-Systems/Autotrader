@@ -1748,7 +1748,6 @@ async def get_orders(
         raise HTTPException(status_code=500, detail=f"Failed to fetch orders: {str(e)}")
 
 
-@app.get("/api/trading/broker-status", tags=["Trading"])
 def _check_broker_connection(broker_type: str, broker_name: str, create_fn, **create_kwargs) -> Dict[str, Any]:
     """Check a single broker's connection status."""
     try:
@@ -1838,6 +1837,7 @@ def _check_ibkr_connection(create_broker_fn) -> Dict[str, Any]:
         }
 
 
+@app.get("/api/trading/broker-status", tags=["Trading"])
 async def get_broker_status() -> Dict[str, Any]:
     """Get broker connectivity status for all supported brokers.
 

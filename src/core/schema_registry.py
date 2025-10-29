@@ -168,21 +168,20 @@ class SchemaVersion:
     
     def _validate_constraint(self, value: Any, constraint: str, constraint_value: Any) -> bool:
         """Validate a specific constraint."""
-        if constraint == "min":
-            return value >= constraint_value
-        elif constraint == "max":
-            return value <= constraint_value
-        elif constraint == "min_length":
-            return len(value) >= constraint_value
-        elif constraint == "max_length":
-            return len(value) <= constraint_value
-        elif constraint == "pattern":
-            import re
-            return bool(re.match(constraint_value, str(value)))
-        elif constraint == "enum":
-            return value in constraint_value
+        validators = {
+            "min": lambda v, cv: v >= cv,
+            "max": lambda v, cv: v <= cv,
+            "min_length": lambda v, cv: len(v) >= cv,
+            "max_length": lambda v, cv: len(v) <= cv,
+            "pattern": lambda v, cv: bool(__import__('re').match(cv, str(v))),
+            "enum": lambda v, cv: v in cv,
+        }
         
-        return True  # Unknown constraint, skip
+        validator = validators.get(constraint)
+        if validator is None:
+            return True  # Unknown constraint, skip
+        
+        return validator(value, constraint_value)
 
 
 class SchemaRegistry:

@@ -427,6 +427,161 @@ class ExitConfigManager:
             ExitConfigManager._validate_regime_detector_config(config['regime_detector'])
     
     @staticmethod
+    @staticmethod
+    def _validate_volatility_config(vol: Dict) -> None:
+        """Validate volatility configuration section."""
+        # VIX thresholds
+        vix_low = vol.get('vix_low_threshold', 15)
+        vix_normal = vol.get('vix_normal_threshold', 20)
+        vix_high = vol.get('vix_high_threshold', 30)
+        
+        if not (0 < vix_low < 100):
+            raise ConfigValidationError(f"vix_low_threshold must be 0-100, got {vix_low}")
+        if not (0 < vix_normal < 100):
+            raise ConfigValidationError(f"vix_normal_threshold must be 0-100, got {vix_normal}")
+        if not (0 < vix_high < 100):
+            raise ConfigValidationError(f"vix_high_threshold must be 0-100, got {vix_high}")
+        
+        if not (vix_low < vix_normal < vix_high):
+            raise ConfigValidationError(
+                f"VIX thresholds must be ordered: low < normal < high. "
+                f"Got low={vix_low}, normal={vix_normal}, high={vix_high}"
+            )
+        
+        # Adjustment ranges (should be reasonable: -10% to +10%)
+        adjustment_keys = [
+            'tier1_adjustment_low', 'tier1_adjustment_normal', 'tier1_adjustment_high',
+            'tier1_adjustment_extreme', 'tier2_adjustment_low', 'tier2_adjustment_normal',
+            'tier2_adjustment_high', 'tier2_adjustment_extreme'
+        ]
+        for key in adjustment_keys:
+            value = vol.get(key, 0.0)
+            if not (-10.0 <= value <= 10.0):
+                raise ConfigValidationError(f"volatility.{key} must be -10 to +10, got {value}")
+        
+        # Cache TTL
+        cache_ttl = vol.get('cache_ttl_seconds', 300)
+        if cache_ttl < 0:
+            raise ConfigValidationError(f"cache_ttl_seconds must be >= 0, got {cache_ttl}")
+        
+        # Fallback VIX
+        fallback_vix = vol.get('fallback_vix', 20.0)
+        if not (0 < fallback_vix < 100):
+            raise ConfigValidationError(f"fallback_vix must be 0-100, got {fallback_vix}")
+    
+    @staticmethod
+    def _validate_time_decay_config(time_decay: Dict) -> None:
+        """Validate time decay configuration section."""
+        # Decay percentages (negative or zero, within reasonable range)
+        for key in ['tier1_max_decay_pct', 'tier2_max_decay_pct']:
+            value = time_decay.get(key, 0.0)
+            if not (-10.0 <= value <= 0.0):
+                raise ConfigValidationError(f"time_decay.{key} must be -10 to 0, got {value}")
+    
+    @staticmethod
+    def _validate_regime_config(regime: Dict) -> None:
+        """Validate regime configuration section."""
+        # SMA windows
+        short_window = regime.get('short_window', 20)
+        long_window = regime.get('long_window', 50)
+        
+        if short_window < 1:
+            raise ConfigValidationError(f"short_window must be >= 1, got {short_window}")
+        if long_window < 1:
+            raise ConfigValidationError(f"long_window must be >= 1, got {long_window}")
+        if short_window >= long_window:
+            raise ConfigValidationError(
+                f"short_window must be < long_window. Got short={short_window}, long={long_window}"
+            )
+        
+        # Sideways threshold
+        sideways_threshold = regime.get('sideways_threshold_pct', 0.5)
+        if not (0.0 <= sideways_threshold <= 10.0):
+            raise ConfigValidationError(f"sideways_threshold_pct must be 0-10, got {sideways_threshold}")
+        
+        # Adjustment ranges
+        adjustment_keys = [
+            'tier1_adjustment_bull', 'tier1_adjustment_bear', 'tier1_adjustment_sideways',
+            'tier2_adjustment_bull', 'tier2_adjustment_bear', 'tier2_adjustment_sideways'
+        ]
+        for key in adjustment_keys:
+            value = regime.get(key, 0.0)
+            if not (-10.0 <= value <= 10.0):
+                raise ConfigValidationError(f"regime.{key} must be -10 to +10, got {value}")
+        
+        # Cache TTL
+        cache_ttl = regime.get('cache_ttl_hours', 24)
+        if cache_ttl < 0:
+            raise ConfigValidationError(f"cache_ttl_hours must be >= 0, got {cache_ttl}")
+    
+    @staticmethod
+    def _validate_symbol_learning_config(learning: Dict) -> None:
+        """Validate symbol learning configuration section."""
+        # Min exits threshold
+        min_exits = learning.get('min_exits_for_adjustment', 5)
+        if min_exits < 1:
+            raise ConfigValidationError(f"min_exits_for_adjustment must be >= 1, got {min_exits}")
+        
+        # Win rate threshold
+        win_rate = learning.get('win_rate_threshold', 0.60)
+        if not (0.0 <= win_rate <= 1.0):
+            raise ConfigValidationError(f"win_rate_threshold must be 0.0-1.0, got {win_rate}")
+        
+        # Adjustment magnitude
+        magnitude = learning.get('adjustment_magnitude_pct', 0.5)
+        if not (0.0 <= magnitude <= 5.0):
+            raise ConfigValidationError(f"adjustment_magnitude_pct must be 0-5, got {magnitude}")
+        
+        # Save interval
+        save_interval = learning.get('save_interval_seconds', 300)
+        if save_interval < 0:
+            raise ConfigValidationError(f"save_interval_seconds must be >= 0, got {save_interval}")
+        
+        # Max symbols
+        max_symbols = learning.get('max_symbols_tracked', 500)
+        if max_symbols < 1:
+            raise ConfigValidationError(f"max_symbols_tracked must be >= 1, got {max_symbols}")
+    
+    @staticmethod
+    def _validate_combination_config(combo: Dict) -> None:
+        """Validate combination configuration section."""
+        # Tier1 bounds
+        tier1_min = combo.get('tier1_min_target_pct', 2.0)
+        tier1_max = combo.get('tier1_max_target_pct', 8.0)
+        
+        if tier1_min < 0:
+            raise ConfigValidationError(f"tier1_min_target_pct must be >= 0, got {tier1_min}")
+        if tier1_max <= tier1_min:
+            raise ConfigValidationError(
+                f"tier1_max_target_pct must be > tier1_min_target_pct. "
+                f"Got min={tier1_min}, max={tier1_max}"
+            )
+        
+        # Tier2 bounds
+        tier2_min = combo.get('tier2_min_target_pct', 5.0)
+        tier2_max = combo.get('tier2_max_target_pct', 15.0)
+        
+        if tier2_min < 0:
+            raise ConfigValidationError(f"tier2_min_target_pct must be >= 0, got {tier2_min}")
+        if tier2_max <= tier2_min:
+            raise ConfigValidationError(
+                f"tier2_max_target_pct must be > tier2_min_target_pct. "
+                f"Got min={tier2_min}, max={tier2_max}"
+            )
+        
+        # Tier2 min should be >= Tier1 min (logical ordering)
+        if tier2_min < tier1_min:
+            raise ConfigValidationError(
+                f"tier2_min_target_pct should be >= tier1_min_target_pct. "
+                f"Got tier1_min={tier1_min}, tier2_min={tier2_min}"
+            )
+        
+        # Rounding decimal places
+        decimal_places = combo.get('round_to_decimal_places', 1)
+        if not (0 <= decimal_places <= 4):
+            raise ConfigValidationError(f"round_to_decimal_places must be 0-4, got {decimal_places}")
+    
+    @staticmethod
     def _validate_adjustment_config(adj_config: Dict) -> None:
         """
         Validate adjustment configuration.
@@ -437,178 +592,21 @@ class ExitConfigManager:
         Raises:
             ConfigValidationError: If adjustment config is invalid
         """
-        # Volatility config validation
+        # Validate each section if present
         if 'volatility' in adj_config:
-            vol = adj_config['volatility']
-            
-            # VIX thresholds
-            vix_low = vol.get('vix_low_threshold', 15)
-            vix_normal = vol.get('vix_normal_threshold', 20)
-            vix_high = vol.get('vix_high_threshold', 30)
-            
-            if not (0 < vix_low < 100):
-                raise ConfigValidationError(f"vix_low_threshold must be 0-100, got {vix_low}")
-            if not (0 < vix_normal < 100):
-                raise ConfigValidationError(f"vix_normal_threshold must be 0-100, got {vix_normal}")
-            if not (0 < vix_high < 100):
-                raise ConfigValidationError(f"vix_high_threshold must be 0-100, got {vix_high}")
-            
-            if not (vix_low < vix_normal < vix_high):
-                raise ConfigValidationError(
-                    f"VIX thresholds must be ordered: low < normal < high. "
-                    f"Got low={vix_low}, normal={vix_normal}, high={vix_high}"
-                )
-            
-            # Adjustment ranges (should be reasonable: -10% to +10%)
-            for key in ['tier1_adjustment_low', 'tier1_adjustment_normal', 'tier1_adjustment_high', 
-                       'tier1_adjustment_extreme', 'tier2_adjustment_low', 'tier2_adjustment_normal',
-                       'tier2_adjustment_high', 'tier2_adjustment_extreme']:
-                value = vol.get(key, 0.0)
-                if not (-10.0 <= value <= 10.0):
-                    raise ConfigValidationError(
-                        f"volatility.{key} must be -10 to +10, got {value}"
-                    )
-            
-            # Cache TTL
-            cache_ttl = vol.get('cache_ttl_seconds', 300)
-            if cache_ttl < 0:
-                raise ConfigValidationError(f"cache_ttl_seconds must be >= 0, got {cache_ttl}")
-            
-            # Fallback VIX
-            fallback_vix = vol.get('fallback_vix', 20.0)
-            if not (0 < fallback_vix < 100):
-                raise ConfigValidationError(f"fallback_vix must be 0-100, got {fallback_vix}")
+            ExitConfigManager._validate_volatility_config(adj_config['volatility'])
         
-        # Time decay config validation
         if 'time_decay' in adj_config:
-            time_decay = adj_config['time_decay']
-            
-            # Decay percentages (negative or zero, within reasonable range)
-            for key in ['tier1_max_decay_pct', 'tier2_max_decay_pct']:
-                value = time_decay.get(key, 0.0)
-                if not (-10.0 <= value <= 0.0):
-                    raise ConfigValidationError(
-                        f"time_decay.{key} must be -10 to 0, got {value}"
-                    )
+            ExitConfigManager._validate_time_decay_config(adj_config['time_decay'])
         
-        # Regime config validation
         if 'regime' in adj_config:
-            regime = adj_config['regime']
-            
-            # SMA windows
-            short_window = regime.get('short_window', 20)
-            long_window = regime.get('long_window', 50)
-            
-            if short_window < 1:
-                raise ConfigValidationError(f"short_window must be >= 1, got {short_window}")
-            if long_window < 1:
-                raise ConfigValidationError(f"long_window must be >= 1, got {long_window}")
-            if short_window >= long_window:
-                raise ConfigValidationError(
-                    f"short_window must be < long_window. Got short={short_window}, long={long_window}"
-                )
-            
-            # Sideways threshold
-            sideways_threshold = regime.get('sideways_threshold_pct', 0.5)
-            if not (0.0 <= sideways_threshold <= 10.0):
-                raise ConfigValidationError(
-                    f"sideways_threshold_pct must be 0-10, got {sideways_threshold}"
-                )
-            
-            # Adjustment ranges
-            for key in ['tier1_adjustment_bull', 'tier1_adjustment_bear', 'tier1_adjustment_sideways',
-                       'tier2_adjustment_bull', 'tier2_adjustment_bear', 'tier2_adjustment_sideways']:
-                value = regime.get(key, 0.0)
-                if not (-10.0 <= value <= 10.0):
-                    raise ConfigValidationError(
-                        f"regime.{key} must be -10 to +10, got {value}"
-                    )
-            
-            # Cache TTL
-            cache_ttl = regime.get('cache_ttl_hours', 24)
-            if cache_ttl < 0:
-                raise ConfigValidationError(f"cache_ttl_hours must be >= 0, got {cache_ttl}")
+            ExitConfigManager._validate_regime_config(adj_config['regime'])
         
-        # Symbol learning config validation
         if 'symbol_learning' in adj_config:
-            learning = adj_config['symbol_learning']
-            
-            # Min exits threshold
-            min_exits = learning.get('min_exits_for_adjustment', 5)
-            if min_exits < 1:
-                raise ConfigValidationError(
-                    f"min_exits_for_adjustment must be >= 1, got {min_exits}"
-                )
-            
-            # Win rate threshold
-            win_rate = learning.get('win_rate_threshold', 0.60)
-            if not (0.0 <= win_rate <= 1.0):
-                raise ConfigValidationError(
-                    f"win_rate_threshold must be 0.0-1.0, got {win_rate}"
-                )
-            
-            # Adjustment magnitude
-            magnitude = learning.get('adjustment_magnitude_pct', 0.5)
-            if not (0.0 <= magnitude <= 5.0):
-                raise ConfigValidationError(
-                    f"adjustment_magnitude_pct must be 0-5, got {magnitude}"
-                )
-            
-            # Save interval
-            save_interval = learning.get('save_interval_seconds', 300)
-            if save_interval < 0:
-                raise ConfigValidationError(
-                    f"save_interval_seconds must be >= 0, got {save_interval}"
-                )
-            
-            # Max symbols
-            max_symbols = learning.get('max_symbols_tracked', 500)
-            if max_symbols < 1:
-                raise ConfigValidationError(
-                    f"max_symbols_tracked must be >= 1, got {max_symbols}"
-                )
+            ExitConfigManager._validate_symbol_learning_config(adj_config['symbol_learning'])
         
-        # Combination config validation
         if 'combination' in adj_config:
-            combo = adj_config['combination']
-            
-            # Tier1 bounds
-            tier1_min = combo.get('tier1_min_target_pct', 2.0)
-            tier1_max = combo.get('tier1_max_target_pct', 8.0)
-            
-            if tier1_min < 0:
-                raise ConfigValidationError(f"tier1_min_target_pct must be >= 0, got {tier1_min}")
-            if tier1_max <= tier1_min:
-                raise ConfigValidationError(
-                    f"tier1_max_target_pct must be > tier1_min_target_pct. "
-                    f"Got min={tier1_min}, max={tier1_max}"
-                )
-            
-            # Tier2 bounds
-            tier2_min = combo.get('tier2_min_target_pct', 5.0)
-            tier2_max = combo.get('tier2_max_target_pct', 15.0)
-            
-            if tier2_min < 0:
-                raise ConfigValidationError(f"tier2_min_target_pct must be >= 0, got {tier2_min}")
-            if tier2_max <= tier2_min:
-                raise ConfigValidationError(
-                    f"tier2_max_target_pct must be > tier2_min_target_pct. "
-                    f"Got min={tier2_min}, max={tier2_max}"
-                )
-            
-            # Tier2 min should be >= Tier1 min (logical ordering)
-            if tier2_min < tier1_min:
-                raise ConfigValidationError(
-                    f"tier2_min_target_pct should be >= tier1_min_target_pct. "
-                    f"Got tier1_min={tier1_min}, tier2_min={tier2_min}"
-                )
-            
-            # Rounding decimal places
-            decimal_places = combo.get('round_to_decimal_places', 1)
-            if not (0 <= decimal_places <= 4):
-                raise ConfigValidationError(
-                    f"round_to_decimal_places must be 0-4, got {decimal_places}"
-                )
+            ExitConfigManager._validate_combination_config(adj_config['combination'])
     
     @staticmethod
     def _validate_vix_provider_config(vix_config: Dict) -> None:

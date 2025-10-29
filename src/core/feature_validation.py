@@ -119,25 +119,8 @@ class FeatureValidator:
     description: Optional[str] = None
     severity: str = "error"  # "error" or "warning"
     
-    def validate(
-        self,
-        value: Any,
-        timestamp: Optional[float] = None,
-        history: Optional[List[Tuple[float, Any]]] = None,
-    ) -> ValidationResult:
-        """Validate a feature value.
-        
-        Args:
-            value: Value to validate
-            timestamp: Timestamp of the value (for freshness checks)
-            history: Historical values as list of (timestamp, value) tuples
-        
-        Returns:
-            ValidationResult with validation outcome
-        """
-        warnings = []
-        
-        # Check if value is None
+    def _check_null_validation(self, value: Any) -> Optional[ValidationResult]:
+        """Check if null value is valid. Returns ValidationResult if validation should end, None otherwise."""
         if value is None:
             if not self.nullable:
                 record_validation_failure(self.feature_name, "null_check", self.severity)
@@ -154,30 +137,53 @@ class FeatureValidator:
             # None is acceptable
             record_validation_success(self.feature_name)
             return ValidationResult(is_valid=True)
+        return None
+    
+    def _perform_type_validation(
+        self,
+        value: Any,
+        timestamp: Optional[float],
+        history: Optional[List[Tuple[float, Any]]],
+    ) -> ValidationResult:
+        """Perform validation based on type."""
+        validators = {
+            ValidationType.RANGE: lambda: self._validate_range(value),
+            ValidationType.MONOTONIC: lambda: self._validate_monotonic(value, history),
+            ValidationType.FRESHNESS: lambda: self._validate_freshness(timestamp),
+            ValidationType.NON_NULL: lambda: ValidationResult(is_valid=True),
+            ValidationType.ENUM: lambda: self._validate_enum(value),
+            ValidationType.CUSTOM: lambda: self._validate_custom(value),
+        }
+        
+        validator = validators.get(self.validation_type)
+        if validator is None:
+            return ValidationResult(is_valid=True)
+        
+        return validator()
+    
+    def validate(
+        self,
+        value: Any,
+        timestamp: Optional[float] = None,
+        history: Optional[List[Tuple[float, Any]]] = None,
+    ) -> ValidationResult:
+        """Validate a feature value.
+        
+        Args:
+            value: Value to validate
+            timestamp: Timestamp of the value (for freshness checks)
+            history: Historical values as list of (timestamp, value) tuples
+        
+        Returns:
+            ValidationResult with validation outcome
+        """
+        # Check if value is None
+        null_result = self._check_null_validation(value)
+        if null_result is not None:
+            return null_result
         
         # Perform validation based on type
-        result = None
-        if self.validation_type == ValidationType.RANGE:
-            result = self._validate_range(value)
-        
-        elif self.validation_type == ValidationType.MONOTONIC:
-            result = self._validate_monotonic(value, history)
-        
-        elif self.validation_type == ValidationType.FRESHNESS:
-            result = self._validate_freshness(timestamp)
-        
-        elif self.validation_type == ValidationType.NON_NULL:
-            # Already checked above
-            result = ValidationResult(is_valid=True)
-        
-        elif self.validation_type == ValidationType.ENUM:
-            result = self._validate_enum(value)
-        
-        elif self.validation_type == ValidationType.CUSTOM:
-            result = self._validate_custom(value)
-        
-        else:
-            result = ValidationResult(is_valid=True)
+        result = self._perform_type_validation(value, timestamp, history)
         
         # Record metrics
         if result.is_valid:
@@ -222,6 +228,33 @@ class FeatureValidator:
         
         return ValidationResult(is_valid=True)
     
+    def _check_monotonic_sequence(
+        self,
+        sequence: List[float],
+        direction: MonotonicDirection,
+    ) -> Optional[str]:
+        """Check if sequence follows monotonic direction.
+        
+        Returns error message if validation fails, None otherwise.
+        """
+        checkers = {
+            MonotonicDirection.INCREASING: lambda i: sequence[i+1] < sequence[i],
+            MonotonicDirection.DECREASING: lambda i: sequence[i+1] > sequence[i],
+            MonotonicDirection.STRICTLY_INCREASING: lambda i: sequence[i+1] <= sequence[i],
+            MonotonicDirection.STRICTLY_DECREASING: lambda i: sequence[i+1] >= sequence[i],
+        }
+        
+        checker = checkers.get(direction)
+        if checker is None:
+            return None
+        
+        for i in range(len(sequence) - 1):
+            if checker(i):
+                direction_name = direction.name.lower().replace('_', ' ')
+                return f"{self.feature_name}: Expected {direction_name} sequence, but {sequence[i+1]} violates at position {i+1}"
+        
+        return None
+    
     def _validate_monotonic(
         self,
         value: Any,
@@ -251,43 +284,14 @@ class FeatureValidator:
         recent_history = sorted(recent_history, key=lambda x: x[0])  # Sort ascending
         
         # Add current value
-        current_time = time.time()
         sequence = [float(v) for _, v in recent_history] + [numeric_value]
         
         # Check monotonic property
-        direction = self.monotonic_direction
+        error_message = self._check_monotonic_sequence(sequence, self.monotonic_direction)
+        if error_message:
+            return ValidationResult(is_valid=False, error_message=error_message)
         
-        if direction == MonotonicDirection.INCREASING:
-            for i in range(len(sequence) - 1):
-                if sequence[i+1] < sequence[i]:
-                    return ValidationResult(
-                        is_valid=False,
-                        error_message=f"{self.feature_name}: Expected increasing sequence, but {sequence[i+1]} < {sequence[i]}"
-                    )
-        
-        elif direction == MonotonicDirection.DECREASING:
-            for i in range(len(sequence) - 1):
-                if sequence[i+1] > sequence[i]:
-                    return ValidationResult(
-                        is_valid=False,
-                        error_message=f"{self.feature_name}: Expected decreasing sequence, but {sequence[i+1]} > {sequence[i]}"
-                    )
-        
-        elif direction == MonotonicDirection.STRICTLY_INCREASING:
-            for i in range(len(sequence) - 1):
-                if sequence[i+1] <= sequence[i]:
-                    return ValidationResult(
-                        is_valid=False,
-                        error_message=f"{self.feature_name}: Expected strictly increasing sequence, but {sequence[i+1]} <= {sequence[i]}"
-                    )
-        
-        elif direction == MonotonicDirection.STRICTLY_DECREASING:
-            for i in range(len(sequence) - 1):
-                if sequence[i+1] >= sequence[i]:
-                    return ValidationResult(
-                        is_valid=False,
-                        error_message=f"{self.feature_name}: Expected strictly decreasing sequence, but {sequence[i+1]} >= {sequence[i]}"
-                    )
+        return ValidationResult(is_valid=True)
         
         return ValidationResult(is_valid=True)
     

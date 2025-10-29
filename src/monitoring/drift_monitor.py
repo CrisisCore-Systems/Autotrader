@@ -684,6 +684,61 @@ class DriftMonitor:
         
         return report
     
+    def _calculate_drift_severity(self, pct_change: float) -> DriftSeverity:
+        """Calculate drift severity based on percentage change.
+        
+        Args:
+            pct_change: Percentage change value
+            
+        Returns:
+            Drift severity level
+        """
+        if pct_change > 50:
+            return DriftSeverity.CRITICAL
+        elif pct_change > 30:
+            return DriftSeverity.HIGH
+        elif pct_change > 20:
+            return DriftSeverity.MEDIUM
+        elif pct_change > 10:
+            return DriftSeverity.LOW
+        else:
+            return DriftSeverity.NONE
+    
+    def _analyze_metric_drift(
+        self,
+        metric_name: str,
+        current_value: float,
+        baseline_value: float,
+        threshold_pct: float,
+    ) -> Optional[DriftStatistics]:
+        """Analyze drift for a single metric.
+        
+        Args:
+            metric_name: Name of the metric
+            current_value: Current metric value
+            baseline_value: Baseline metric value
+            threshold_pct: Percentage threshold for drift
+            
+        Returns:
+            Drift statistics if baseline is non-zero, None otherwise
+        """
+        if baseline_value == 0:
+            return None
+        
+        pct_change = abs((current_value - baseline_value) / baseline_value * 100)
+        is_drifted = pct_change > threshold_pct
+        severity = self._calculate_drift_severity(pct_change)
+        
+        return DriftStatistics(
+            test_name=f"{metric_name}_change",
+            statistic=pct_change,
+            p_value=0.0,
+            threshold=threshold_pct,
+            is_drifted=is_drifted,
+            severity=severity,
+            description=f"{metric_name}: {pct_change:.2f}% change",
+        )
+    
     def detect_performance_drift(
         self,
         current_metrics: Dict[str, float],
@@ -706,39 +761,23 @@ class DriftMonitor:
         max_severity = DriftSeverity.NONE
         
         for metric_name, current_value in current_metrics.items():
-            if metric_name in self.baseline.performance_metrics:
-                baseline_value = self.baseline.performance_metrics[metric_name]
-                
-                if baseline_value != 0:
-                    pct_change = abs((current_value - baseline_value) / baseline_value * 100)
-                    
-                    is_drifted = pct_change > threshold_pct
-                    
-                    if pct_change > 50:
-                        severity = DriftSeverity.CRITICAL
-                    elif pct_change > 30:
-                        severity = DriftSeverity.HIGH
-                    elif pct_change > 20:
-                        severity = DriftSeverity.MEDIUM
-                    elif pct_change > 10:
-                        severity = DriftSeverity.LOW
-                    else:
-                        severity = DriftSeverity.NONE
-                    
-                    statistics.append(DriftStatistics(
-                        test_name=f"{metric_name}_change",
-                        statistic=pct_change,
-                        p_value=0.0,
-                        threshold=threshold_pct,
-                        is_drifted=is_drifted,
-                        severity=severity,
-                        description=f"{metric_name}: {pct_change:.2f}% change",
-                    ))
-                    
-                    if is_drifted:
-                        drift_detected = True
-                        if list(DriftSeverity).index(severity) > list(DriftSeverity).index(max_severity):
-                            max_severity = severity
+            if metric_name not in self.baseline.performance_metrics:
+                continue
+            
+            baseline_value = self.baseline.performance_metrics[metric_name]
+            stat = self._analyze_metric_drift(
+                metric_name, current_value, baseline_value, threshold_pct
+            )
+            
+            if stat is None:
+                continue
+            
+            statistics.append(stat)
+            
+            if stat.is_drifted:
+                drift_detected = True
+                if list(DriftSeverity).index(stat.severity) > list(DriftSeverity).index(max_severity):
+                    max_severity = stat.severity
         
         recommendations = []
         if drift_detected:

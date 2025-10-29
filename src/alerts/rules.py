@@ -46,20 +46,28 @@ class SimpleCondition:
         value = context[self.metric]
         
         try:
-            if self.operator in ("lt", "<"):
-                return value < self.threshold
-            elif self.operator in ("gt", ">"):
-                return value > self.threshold
-            elif self.operator in ("lte", "<=", "le"):
-                return value <= self.threshold
-            elif self.operator in ("gte", ">=", "ge"):
-                return value >= self.threshold
-            elif self.operator in ("eq", "=="):
-                return value == self.threshold
-            elif self.operator in ("neq", "!="):
-                return value != self.threshold
-            else:
+            operators_map = {
+                "lt": lambda v, t: v < t,
+                "<": lambda v, t: v < t,
+                "gt": lambda v, t: v > t,
+                ">": lambda v, t: v > t,
+                "lte": lambda v, t: v <= t,
+                "<=": lambda v, t: v <= t,
+                "le": lambda v, t: v <= t,
+                "gte": lambda v, t: v >= t,
+                ">=": lambda v, t: v >= t,
+                "ge": lambda v, t: v >= t,
+                "eq": lambda v, t: v == t,
+                "==": lambda v, t: v == t,
+                "neq": lambda v, t: v != t,
+                "!=": lambda v, t: v != t,
+            }
+            
+            compare_func = operators_map.get(self.operator)
+            if compare_func is None:
                 return False
+            
+            return compare_func(value, self.threshold)
         except (TypeError, ValueError):
             return False
 

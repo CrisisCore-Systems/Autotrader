@@ -543,6 +543,13 @@ pre { white-space: pre-wrap; }
 
     news_html = _format_news_section_html(news_items)
 
+    # Prepare momentum display value
+    momentum_display = (
+        escape(_format_number(momentum, precision=3))
+        if momentum is not None
+        else '<span class="muted">N/A</span>'
+    )
+    
     sections = [
         (
             "Executive Summary",
@@ -555,7 +562,7 @@ pre { white-space: pre-wrap; }
                     f"  <p><strong>NVI:</strong> {escape(nvi)}</p>",
                     f"  <p><strong>Flags:</strong> {flag_badges}</p>",
                     f"  <p><strong>Sentiment:</strong> {escape(sentiment)}</p>",
-                    f"  <p><strong>Momentum:</strong> {escape(_format_number(momentum, precision=3)) if momentum is not None else '<span class=\"muted\">N/A</span>'}</p>",
+                    f"  <p><strong>Momentum:</strong> {momentum_display}</p>",
                     "</div>",
                     _render_list_html(summary_items),
                 ]

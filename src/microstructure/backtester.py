@@ -100,6 +100,124 @@ class TickBacktester:
         """Initialize backtester with configuration."""
         self.config = config
         logger.info("backtester_initialized", config=config)
+    
+    def _apply_slippage(self, price: float, direction: str, entry: bool = True) -> float:
+        """Apply slippage to price based on direction.
+        
+        Args:
+            price: Base price
+            direction: 'long' or 'short'
+            entry: True for entry, False for exit
+            
+        Returns:
+            Price with slippage applied
+        """
+        slippage_pct = self.config.slippage_bps / 10000.0
+        
+        if direction == "long":
+            return price * (1 + slippage_pct) if entry else price * (1 - slippage_pct)
+        else:
+            return price * (1 - slippage_pct) if entry else price * (1 + slippage_pct)
+    
+    def _calculate_pnl(self, position: Dict, exit_price: float) -> Tuple[float, float]:
+        """Calculate gross and net PnL for a position.
+        
+        Args:
+            position: Position dictionary
+            exit_price: Exit price
+            
+        Returns:
+            Tuple of (gross_pnl, net_pnl)
+        """
+        if position["direction"] == "long":
+            gross_pnl = (
+                position["position_value"]
+                * (exit_price - position["entry_price"])
+                / position["entry_price"]
+            )
+        else:
+            gross_pnl = (
+                position["position_value"]
+                * (position["entry_price"] - exit_price)
+                / position["entry_price"]
+            )
+        
+        exit_fees = position["position_value"] * self.config.fee_rate
+        net_pnl = gross_pnl - exit_fees
+        
+        return gross_pnl, net_pnl
+    
+    def _check_position_barriers(
+        self, 
+        position: Dict, 
+        price: float, 
+        timestamp: float
+    ) -> Optional[Tuple[float, ExitReason]]:
+        """Check if position hit any barrier (profit target, stop loss, or timeout).
+        
+        Args:
+            position: Position dictionary
+            price: Current price
+            timestamp: Current timestamp
+            
+        Returns:
+            Tuple of (exit_price, exit_reason) if barrier hit, None otherwise
+        """
+        direction = position["direction"]
+        
+        # Check profit target
+        if direction == "long" and price >= position["profit_target"]:
+            return price, ExitReason.PROFIT_TARGET
+        elif direction == "short" and price <= position["profit_target"]:
+            return price, ExitReason.PROFIT_TARGET
+        
+        # Check stop loss
+        if direction == "long" and price <= position["stop_loss"]:
+            return price, ExitReason.STOP_LOSS
+        elif direction == "short" and price >= position["stop_loss"]:
+            return price, ExitReason.STOP_LOSS
+        
+        # Check timeout
+        if timestamp >= position["timeout"]:
+            return price, ExitReason.TIMEOUT
+        
+        return None
+    
+    def _create_trade(
+        self,
+        position: Dict,
+        exit_price: float,
+        exit_time: float,
+        exit_reason: ExitReason,
+        net_pnl: float,
+    ) -> Trade:
+        """Create a trade record from position.
+        
+        Args:
+            position: Position dictionary
+            exit_price: Exit price
+            exit_time: Exit timestamp
+            exit_reason: Reason for exit
+            net_pnl: Net profit/loss
+            
+        Returns:
+            Trade record
+        """
+        exit_fees = position["position_value"] * self.config.fee_rate
+        return_pct = net_pnl / position["position_value"]
+        
+        return Trade(
+            entry_time=position["entry_time"],
+            entry_price=position["entry_price"],
+            exit_time=exit_time,
+            exit_price=exit_price,
+            position_size=position["position_value"],
+            pnl=net_pnl,
+            pnl_pct=return_pct * 100,
+            fees=position["entry_fees"] + exit_fees,
+            signal=position["signal"],
+            exit_reason=exit_reason.value,
+        )
 
     def run(
         self,
@@ -163,13 +281,12 @@ class TickBacktester:
                 continue
             
             # Apply slippage based on direction
-            slippage_pct = self.config.slippage_bps / 10000.0
             if signal.signal_type == "buy_imbalance":
-                entry_price = base_price * (1 + slippage_pct)
                 direction = "long"
             else:
-                entry_price = base_price * (1 - slippage_pct)
                 direction = "short"
+            
+            entry_price = self._apply_slippage(base_price, direction, entry=True)
             
             # Calculate position size
             position_value = capital * self.config.position_size_pct
@@ -208,69 +325,25 @@ class TickBacktester:
             positions_to_close = []
             
             for pos in active_positions:
-                direction = pos["direction"]
-                
-                # Check profit target
-                if direction == "long" and price >= pos["profit_target"]:
-                    positions_to_close.append((pos, price, ExitReason.PROFIT_TARGET))
-                elif direction == "short" and price <= pos["profit_target"]:
-                    positions_to_close.append((pos, price, ExitReason.PROFIT_TARGET))
-                
-                # Check stop loss
-                elif direction == "long" and price <= pos["stop_loss"]:
-                    positions_to_close.append((pos, price, ExitReason.STOP_LOSS))
-                elif direction == "short" and price >= pos["stop_loss"]:
-                    positions_to_close.append((pos, price, ExitReason.STOP_LOSS))
-                
-                # Check timeout
-                elif timestamp >= pos["timeout"]:
-                    positions_to_close.append((pos, price, ExitReason.TIMEOUT))
+                barrier_result = self._check_position_barriers(pos, price, timestamp)
+                if barrier_result is not None:
+                    exit_price, exit_reason = barrier_result
+                    positions_to_close.append((pos, exit_price, exit_reason))
             
             # Close positions that hit barriers
             for pos, exit_price, exit_reason in positions_to_close:
                 # Apply slippage on exit
-                slippage_pct = self.config.slippage_bps / 10000.0
-                if pos["direction"] == "long":
-                    exit_price = exit_price * (1 - slippage_pct)
-                else:
-                    exit_price = exit_price * (1 + slippage_pct)
+                exit_price = self._apply_slippage(exit_price, pos["direction"], entry=False)
                 
                 # Calculate PnL
-                if pos["direction"] == "long":
-                    gross_pnl = (
-                        pos["position_value"]
-                        * (exit_price - pos["entry_price"])
-                        / pos["entry_price"]
-                    )
-                else:
-                    gross_pnl = (
-                        pos["position_value"]
-                        * (pos["entry_price"] - exit_price)
-                        / pos["entry_price"]
-                    )
-                
-                exit_fees = pos["position_value"] * self.config.fee_rate
-                net_pnl = gross_pnl - exit_fees
+                gross_pnl, net_pnl = self._calculate_pnl(pos, exit_price)
                 
                 # Update capital
                 capital += net_pnl
                 
                 # Create trade record
                 holding_seconds = timestamp - pos["entry_time"]
-                return_pct = net_pnl / pos["position_value"]
-                
-                trade = Trade(
-                    entry_time=pos["entry_time"],
-                    entry_price=pos["entry_price"],
-                    exit_time=timestamp,
-                    exit_price=exit_price,
-                    position_size=pos["position_value"],
-                    pnl=net_pnl,
-                    pnl_pct=return_pct * 100,
-                    fees=pos["entry_fees"] + exit_fees,
-                    signal=pos["signal"],
-                    exit_reason=exit_reason.value,
-                )
+                trade = self._create_trade(pos, exit_price, timestamp, exit_reason, net_pnl)
                 
                 trades.append(trade)
                 active_positions.remove(pos)
@@ -292,43 +365,11 @@ class TickBacktester:
         final_time = float(price_data["timestamp"].iloc[-1])
         
         for pos in active_positions:
-            slippage_pct = self.config.slippage_bps / 10000.0
-            exit_price = (
-                final_price * (1 - slippage_pct)
-                if pos["direction"] == "long"
-                else final_price * (1 + slippage_pct)
-            )
-            
-            if pos["direction"] == "long":
-                gross_pnl = (
-                    pos["position_value"]
-                    * (exit_price - pos["entry_price"])
-                    / pos["entry_price"]
-                )
-            else:
-                gross_pnl = (
-                    pos["position_value"]
-                    * (pos["entry_price"] - exit_price)
-                    / pos["entry_price"]
-                )
-            
-            exit_fees = pos["position_value"] * self.config.fee_rate
-            net_pnl = gross_pnl - exit_fees
+            exit_price = self._apply_slippage(final_price, pos["direction"], entry=False)
+            gross_pnl, net_pnl = self._calculate_pnl(pos, exit_price)
             capital += net_pnl
             
-            trade = Trade(
-                entry_time=pos["entry_time"],
-                entry_price=pos["entry_price"],
-                exit_time=final_time,
-                exit_price=exit_price,
-                position_size=pos["position_value"],
-                pnl=net_pnl,
-                pnl_pct=(net_pnl / pos["position_value"]) * 100,
-                fees=pos["entry_fees"] + exit_fees,
-                signal=pos["signal"],
-                exit_reason=ExitReason.TIMEOUT.value,
-            )
-            
+            trade = self._create_trade(pos, exit_price, final_time, ExitReason.TIMEOUT, net_pnl)
             trades.append(trade)
         
         # Calculate metrics

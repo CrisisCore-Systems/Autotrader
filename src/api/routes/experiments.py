@@ -12,8 +12,16 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from src.utils.experiment_tracker import ExperimentConfig, ExperimentRegistry
-from backtest.harness import BacktestResult
-from backtest.extended_metrics import ExtendedBacktestMetrics
+
+# Optional backtest imports - only load if available
+try:
+    from backtest.harness import BacktestResult
+    from backtest.extended_metrics import ExtendedBacktestMetrics
+    BACKTEST_AVAILABLE = True
+except ImportError:
+    BacktestResult = None
+    ExtendedBacktestMetrics = None
+    BACKTEST_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 

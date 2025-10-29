@@ -18,6 +18,9 @@ from .routes.tokens import router as tokens_router
 from .routes.health import router as health_router
 from .routes.experiments import router as experiments_router
 from .routes.monitoring import router as monitoring_router
+from .routes.scan import router as scan_router
+from .routes.bouncehunter import router as bouncehunter_router
+from .routes.llm import router as llm_router
 
 # Import observability components
 from src.core.logging_config import setup_structured_logging, get_logger
@@ -166,6 +169,9 @@ app.include_router(tokens_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(experiments_router, prefix="/api")
 app.include_router(monitoring_router, prefix="/api")
+app.include_router(scan_router, prefix="/api")
+app.include_router(bouncehunter_router, prefix="/api")
+app.include_router(llm_router, prefix="/api")
 
 
 @app.get("/")

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Any
 
 import math
 import warnings
@@ -14,6 +16,7 @@ import yfinance as yf
 
 from .config import BounceHunterConfig
 from .report import SignalReport
+from .model_cache import ModelCache, CachedModel
 
 
 _FEATURE_COLUMNS = [
@@ -38,18 +41,61 @@ class TrainingArtifact:
 class BounceHunter:
     """Scanner that scores mean-reversion opportunities."""
 
-    def __init__(self, config: Optional[BounceHunterConfig] = None) -> None:
+    def __init__(
+        self,
+        config: Optional[BounceHunterConfig] = None,
+        use_cache: bool = True,
+        cache_dir: Optional[Path] = None,
+        max_cache_age_hours: int = 24,
+    ) -> None:
+        """Initialize BounceHunter scanner.
+        
+        Args:
+            config: Configuration for scanner
+            use_cache: Whether to use model caching
+            cache_dir: Directory for cached models
+            max_cache_age_hours: Maximum age before model refresh
+        """
         self.config = config or BounceHunterConfig()
+        self.use_cache = use_cache
+        self.max_cache_age_hours = max_cache_age_hours
         self._model: Optional["CalibratedClassifierCV"] = None
         self._artifacts: Dict[str, TrainingArtifact] = {}
         self._vix_cache: Optional[pd.Series] = None
+        self._cache: Optional[ModelCache] = None
+        self._training_data: Optional[pd.DataFrame] = None
+        
+        if use_cache:
+            self._cache = ModelCache(cache_dir)
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def fit(self) -> pd.DataFrame:
-        """Download data, build features, and train the probability model."""
+    def fit(self, force_refresh: bool = False) -> pd.DataFrame:
+        """Download data, build features, and train the probability model.
+        
+        Args:
+            force_refresh: Force retraining even if valid cache exists
+            
+        Returns:
+            Training dataframe
+        """
+        # Try to load from cache
+        if self.use_cache and self._cache and not force_refresh:
+            cached = self._cache.load(
+                self.config,
+                max_age_hours=self.max_cache_age_hours,
+                force_refresh=force_refresh,
+            )
+            if cached is not None:
+                # Restore from cache
+                self._model = cached.model
+                self._artifacts = cached.artifacts
+                self._vix_cache = cached.vix_cache
+                self._training_data = cached.training_data
+                return cached.training_data
 
+        # Train from scratch
         datasets: List[pd.DataFrame] = []
         self._artifacts.clear()
 
@@ -72,8 +118,91 @@ class BounceHunter:
             raise RuntimeError("No instruments satisfied the training filters")
 
         train_df = pd.concat(datasets, ignore_index=True)
+        self._training_data = train_df
         self._model = self._train_classifier(train_df)
+        
+        # Save to cache
+        if self.use_cache and self._cache:
+            self._cache.save(
+                model=self._model,
+                training_data=train_df,
+                artifacts=self._artifacts,
+                config=self.config,
+                feature_columns=_FEATURE_COLUMNS,
+                vix_cache=self._vix_cache,
+            )
+        
         return train_df
+    
+    def fit_incremental(self, new_tickers: Optional[List[str]] = None) -> pd.DataFrame:
+        """Incrementally update model with new tickers or fresh data.
+        
+        Args:
+            new_tickers: Additional tickers to add to training
+            
+        Returns:
+            Combined training dataframe
+        """
+        if not self.use_cache or not self._cache:
+            raise RuntimeError("Incremental training requires caching to be enabled")
+        
+        # Load existing cache
+        cached = self._cache.load(self.config, max_age_hours=self.max_cache_age_hours)
+        if cached is None:
+            # No cache exists, do full training
+            return self.fit(force_refresh=True)
+        
+        # Determine tickers to train
+        if new_tickers:
+            tickers_to_train = new_tickers
+        else:
+            # Retrain existing tickers with fresh data
+            tickers_to_train = list(self.config.tickers)
+        
+        # Train new data
+        new_datasets: List[pd.DataFrame] = []
+        new_artifacts: Dict[str, TrainingArtifact] = {}
+        
+        for ticker in tickers_to_train:
+            history = self._download_history(ticker)
+            if history is None:
+                continue
+            if not self._passes_universe_filters(history):
+                continue
+            earnings = self._fetch_earnings_dates(ticker)
+            history = self._apply_earnings_window(history, earnings)
+            feats = self._label_events(history)
+            if feats.empty or len(feats) < self.config.min_event_samples:
+                continue
+            feats = feats.assign(ticker=ticker)
+            new_datasets.append(feats)
+            new_artifacts[ticker] = TrainingArtifact(ticker, history, feats, earnings)
+        
+        if not new_datasets:
+            # No new data, return cached
+            self._model = cached.model
+            self._artifacts = cached.artifacts
+            self._vix_cache = cached.vix_cache
+            self._training_data = cached.training_data
+            return cached.training_data
+        
+        new_train_df = pd.concat(new_datasets, ignore_index=True)
+        
+        # Update incrementally
+        updated_cached = self._cache.update_incremental(
+            cached=cached,
+            new_training_data=new_train_df,
+            new_artifacts=new_artifacts,
+            config=self.config,
+        )
+        
+        # Update instance state
+        self._model = updated_cached.model
+        self._artifacts = updated_cached.artifacts
+        self._vix_cache = updated_cached.vix_cache
+        self._training_data = updated_cached.training_data
+        
+        return updated_cached.training_data
 
     def scan(self, as_of: Optional[pd.Timestamp] = None) -> List[SignalReport]:
         """Produce candidate signals for the latest available session."""
@@ -89,6 +218,63 @@ class BounceHunter:
             if signal:
                 reports.append(signal)
         return reports
+    
+    # ------------------------------------------------------------------
+    # Cache management
+    # ------------------------------------------------------------------
+    def get_cache_info(self) -> Optional[Dict[str, Any]]:
+        """Get information about cached model."""
+        if not self.use_cache or not self._cache:
+            return None
+        
+        cached = self._cache.load(self.config, max_age_hours=self.max_cache_age_hours)
+        if cached is None:
+            return {"cached": False, "reason": "No cache found"}
+        
+        return {
+            "cached": True,
+            "version": cached.metadata.version,
+            "created_at": cached.metadata.created_at.isoformat(),
+            "last_updated": cached.metadata.last_updated.isoformat(),
+            "age_hours": (datetime.now() - cached.metadata.last_updated).total_seconds() / 3600,
+            "is_stale": cached.metadata.is_stale(self.max_cache_age_hours),
+            "tickers": cached.metadata.tickers,
+            "training_samples": cached.metadata.training_samples,
+            "model_hash": cached.metadata.model_hash,
+            "performance_metrics": cached.metadata.performance_metrics,
+        }
+    
+    def clear_cache(self, older_than_days: Optional[int] = None) -> int:
+        """Clear cached models.
+        
+        Args:
+            older_than_days: Only clear models older than this many days
+            
+        Returns:
+            Number of models cleared
+        """
+        if not self.use_cache or not self._cache:
+            return 0
+        return self._cache.clear_cache(older_than_days)
+    
+    def list_cached_models(self) -> List[Dict[str, Any]]:
+        """List all cached models."""
+        if not self.use_cache or not self._cache:
+            return []
+        
+        models = self._cache.list_cached_models()
+        return [
+            {
+                "version": m.version,
+                "created_at": m.created_at.isoformat(),
+                "last_updated": m.last_updated.isoformat(),
+                "tickers": m.tickers,
+                "training_samples": m.training_samples,
+                "config_hash": m.config_hash,
+                "model_hash": m.model_hash,
+            }
+            for m in models
+        ]
 
     # ------------------------------------------------------------------
     # Training helpers

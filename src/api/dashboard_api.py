@@ -31,11 +31,11 @@ logger = logging.getLogger(__name__)
 # Example: export GROQ_API_KEY="your-key-here"
 # Example: export ETHERSCAN_API_KEY="your-key-here"
 # Example: export COINGECKO_API_KEY="your-key-here"
-if not os.environ.get('GROQ_API_KEY'):
+if not os.environ.get("GROQ_API_KEY"):
     logger.warning("GROQ_API_KEY not set in environment variables")
-if not os.environ.get('ETHERSCAN_API_KEY'):
+if not os.environ.get("ETHERSCAN_API_KEY"):
     logger.warning("ETHERSCAN_API_KEY not set in environment variables")
-if not os.environ.get('COINGECKO_API_KEY'):
+if not os.environ.get("COINGECKO_API_KEY"):
     logger.warning("COINGECKO_API_KEY not set in environment variables")
 
 
@@ -43,17 +43,20 @@ if not os.environ.get('COINGECKO_API_KEY'):
 # Data Models
 # ============================================================================
 
+
 class DataSourceInfo(BaseModel):
     """Information about a data source with freshness."""
+
     source_name: str = Field(..., description="Name of data source")
     last_updated: str = Field(..., description="ISO timestamp of last update")
     data_age_seconds: float = Field(..., description="Age of data in seconds")
     freshness_level: str = Field(..., description="Freshness classification")
     is_free: bool = Field(default=True, description="Whether this is a FREE data source")
-    
-    
+
+
 class ProvenanceInfo(BaseModel):
     """Provenance information for token data."""
+
     artifact_id: Optional[str] = Field(None, description="Unique artifact identifier")
     data_sources: List[str] = Field(default_factory=list, description="List of data sources used")
     pipeline_version: Optional[str] = Field(None, description="Pipeline version")
@@ -62,6 +65,7 @@ class ProvenanceInfo(BaseModel):
 
 class TokenResponse(BaseModel):
     """Scanner token summary response."""
+
     symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
     price: float = Field(..., gt=0, description="Token price in USD")
     liquidity_usd: float = Field(..., ge=0, description="Liquidity in USD")
@@ -75,26 +79,27 @@ class TokenResponse(BaseModel):
     updated_at: str = Field(..., description="ISO timestamp of last update")
     provenance: Optional[ProvenanceInfo] = Field(None, description="Data provenance information")
     freshness: Optional[Dict[str, DataSourceInfo]] = Field(None, description="Data freshness by source")
-    
-    @field_validator('symbol')
+
+    @field_validator("symbol")
     @classmethod
     def symbol_uppercase(cls, v: str) -> str:
         """Ensure symbol is uppercase."""
         return v.upper()
-    
-    @field_validator('updated_at')
+
+    @field_validator("updated_at")
     @classmethod
     def validate_timestamp(cls, v: str) -> str:
         """Validate ISO timestamp format."""
         try:
-            datetime.fromisoformat(v.replace('Z', '+00:00'))
+            datetime.fromisoformat(v.replace("Z", "+00:00"))
         except ValueError:
-            raise ValueError('Invalid ISO timestamp format')
+            raise ValueError("Invalid ISO timestamp format")
         return v
 
 
 class AnomalyAlert(BaseModel):
     """Anomaly detection alert."""
+
     alert_id: str = Field(..., min_length=1, description="Unique alert identifier")
     token_symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
     alert_type: Literal["price_spike", "volume_surge", "liquidity_drain", "sentiment_shift"] = Field(
@@ -104,8 +109,8 @@ class AnomalyAlert(BaseModel):
     message: str = Field(..., min_length=1, description="Human-readable alert message")
     timestamp: float = Field(..., gt=0, description="Unix timestamp of alert")
     metrics: Dict[str, Any] = Field(default_factory=dict, description="Additional metrics")
-    
-    @field_validator('token_symbol')
+
+    @field_validator("token_symbol")
     @classmethod
     def symbol_uppercase(cls, v: str) -> str:
         """Ensure symbol is uppercase."""
@@ -114,23 +119,25 @@ class AnomalyAlert(BaseModel):
 
 class ConfidenceInterval(BaseModel):
     """Confidence interval for a metric."""
+
     value: float = Field(..., description="Measured value")
     lower_bound: float = Field(..., description="Lower confidence bound")
     upper_bound: float = Field(..., description="Upper confidence bound")
     confidence_level: float = Field(..., gt=0, le=1, description="Confidence level (e.g., 0.95)")
-    
-    @model_validator(mode='after')
+
+    @model_validator(mode="after")
     def validate_bounds(self):
         """Ensure bounds are ordered correctly."""
         if self.lower_bound > self.upper_bound:
-            raise ValueError('lower_bound must be <= upper_bound')
+            raise ValueError("lower_bound must be <= upper_bound")
         if not (self.lower_bound <= self.value <= self.upper_bound):
-            raise ValueError('value must be between lower_bound and upper_bound')
+            raise ValueError("value must be between lower_bound and upper_bound")
         return self
 
 
 class SLAStatus(BaseModel):
     """SLA status for a data source."""
+
     source_name: str = Field(..., min_length=1, description="Data source name")
     status: Literal["HEALTHY", "DEGRADED", "FAILED"] = Field(..., description="Current status")
     latency_p50: Optional[float] = Field(None, ge=0, description="50th percentile latency (ms)")
@@ -142,6 +149,7 @@ class SLAStatus(BaseModel):
 
 class CircuitBreakerStatus(BaseModel):
     """Circuit breaker status."""
+
     breaker_name: str = Field(..., min_length=1, description="Circuit breaker name")
     state: Literal["CLOSED", "OPEN", "HALF_OPEN"] = Field(..., description="Current state")
     failure_count: int = Field(..., ge=0, description="Number of failures")
@@ -149,12 +157,13 @@ class CircuitBreakerStatus(BaseModel):
 
 class TokenCorrelation(BaseModel):
     """Cross-token correlation data."""
+
     token_a: str = Field(..., min_length=1, max_length=20, description="First token symbol")
     token_b: str = Field(..., min_length=1, max_length=20, description="Second token symbol")
     correlation: float = Field(..., ge=-1, le=1, description="Correlation coefficient")
     metric: Literal["price", "volume", "sentiment"] = Field(..., description="Metric type")
-    
-    @field_validator('token_a', 'token_b')
+
+    @field_validator("token_a", "token_b")
     @classmethod
     def symbol_uppercase(cls, v: str) -> str:
         """Ensure symbols are uppercase."""
@@ -163,6 +172,7 @@ class TokenCorrelation(BaseModel):
 
 class OrderFlowSnapshot(BaseModel):
     """Order flow depth chart data."""
+
     token_symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
     timestamp: float = Field(..., gt=0, description="Unix timestamp")
     bids: List[tuple[float, float]] = Field(..., description="Bid levels [(price, volume), ...]")
@@ -170,8 +180,8 @@ class OrderFlowSnapshot(BaseModel):
     bid_depth_usd: float = Field(..., ge=0, description="Total bid depth in USD")
     ask_depth_usd: float = Field(..., ge=0, description="Total ask depth in USD")
     imbalance: float = Field(..., ge=-1, le=1, description="Order book imbalance")
-    
-    @field_validator('token_symbol')
+
+    @field_validator("token_symbol")
     @classmethod
     def symbol_uppercase(cls, v: str) -> str:
         """Ensure symbol is uppercase."""
@@ -180,29 +190,30 @@ class OrderFlowSnapshot(BaseModel):
 
 class SentimentTrend(BaseModel):
     """Twitter sentiment trend data."""
+
     token_symbol: str = Field(..., min_length=1, max_length=20, description="Token symbol")
     timestamps: List[float] = Field(..., min_length=1, description="Unix timestamps")
     sentiment_scores: List[float] = Field(..., min_length=1, description="Sentiment scores")
     tweet_volumes: List[int] = Field(..., min_length=1, description="Tweet volumes")
     engagement_scores: List[float] = Field(..., min_length=1, description="Engagement scores")
-    
-    @field_validator('token_symbol')
+
+    @field_validator("token_symbol")
     @classmethod
     def symbol_uppercase(cls, v: str) -> str:
         """Ensure symbol is uppercase."""
         return v.upper()
-    
-    @model_validator(mode='after')
+
+    @model_validator(mode="after")
     def validate_list_lengths(self):
         """Ensure all lists have the same length."""
         lengths = [
             len(self.timestamps),
             len(self.sentiment_scores),
             len(self.tweet_volumes),
-            len(self.engagement_scores)
+            len(self.engagement_scores),
         ]
         if len(set(lengths)) > 1:
-            raise ValueError('All trend data lists must have the same length')
+            raise ValueError("All trend data lists must have the same length")
         return self
 
 
@@ -240,15 +251,16 @@ alert_storage = AlertStorage(db_path="alerts.db")
 # Scanner cache class to hold scan results
 class ScannerCache:
     """Cache for scanner results."""
+
     def __init__(self):
         self.results: List[Any] = []
         self.last_updated: float = 0.0
-    
+
     def update(self, results: List[Any]) -> None:
         """Update cache with new results."""
         self.results = results
         self.last_updated = time.time()
-    
+
     def clear(self) -> None:
         """Clear the cache."""
         self.results = []
@@ -262,6 +274,7 @@ _scanner_cache = ScannerCache()
 # ============================================================================
 # Scanner Helper Functions
 # ============================================================================
+
 
 def _parse_iso_timestamp(value: str) -> datetime:
     """Parse ISO timestamp string."""
@@ -319,10 +332,10 @@ def _get_cached(symbol: str) -> Dict[str, Any] | None:
 
     # Make both datetimes timezone-naive for comparison
     now = datetime.utcnow()
-    if hasattr(timestamp, 'tzinfo') and timestamp.tzinfo is not None:
+    if hasattr(timestamp, "tzinfo") and timestamp.tzinfo is not None:
         # If timestamp is timezone-aware, convert to naive UTC
         timestamp = timestamp.replace(tzinfo=None)
-    
+
     if (now - timestamp).total_seconds() > CACHE_TTL_SECONDS:
         return None
 
@@ -336,7 +349,7 @@ def init_scanner():
         scanner = HiddenGemScanner(
             coin_client=CoinGeckoClient(),
             defi_client=DefiLlamaClient(),
-            etherscan_client=EtherscanClient(api_key=os.environ.get('ETHERSCAN_API_KEY', '')),
+            etherscan_client=EtherscanClient(api_key=os.environ.get("ETHERSCAN_API_KEY", "")),
         )
     return scanner
 
@@ -348,17 +361,17 @@ def serialize_tree_node(node) -> Dict[str, Any]:
         "title": node.title,
         "description": node.description,
         "outcome": None,
-        "children": []
+        "children": [],
     }
 
-    if hasattr(node, 'outcome') and node.outcome:
+    if hasattr(node, "outcome") and node.outcome:
         serialized["outcome"] = {
             "status": node.outcome.status,
             "summary": node.outcome.summary,
-            "data": node.outcome.data if hasattr(node.outcome, 'data') else {}
+            "data": node.outcome.data if hasattr(node.outcome, "data") else {},
         }
 
-    if hasattr(node, 'children'):
+    if hasattr(node, "children"):
         serialized["children"] = [serialize_tree_node(child) for child in node.children]
 
     return serialized
@@ -410,52 +423,47 @@ def scan_token_full(symbol: str, coingecko_id: str, defillama_slug: str, address
             "sentiment_score": narrative.sentiment_score if narrative else 0.5,
             "holders": snap.holders if snap.holders else 0,
             "updated_at": scanned_at.isoformat() + "Z",
-
             # Detailed fields
             "raw_features": result.raw_features if result.raw_features else {},
             "adjusted_features": result.adjusted_features if result.adjusted_features else {},
-            "contributions": gem_score.contributions if gem_score and hasattr(gem_score, 'contributions') else {},
-
+            "contributions": gem_score.contributions if gem_score and hasattr(gem_score, "contributions") else {},
             "market_snapshot": {
                 "symbol": snap.symbol,
-                "timestamp": snap.timestamp.isoformat() if hasattr(snap.timestamp, 'isoformat') else str(snap.timestamp),
+                "timestamp": (
+                    snap.timestamp.isoformat() if hasattr(snap.timestamp, "isoformat") else str(snap.timestamp)
+                ),
                 "price": snap.price,
                 "volume_24h": snap.volume_24h,
                 "liquidity_usd": snap.liquidity_usd,
                 "holders": snap.holders if snap.holders else 0,
-                "onchain_metrics": snap.onchain_metrics if hasattr(snap, 'onchain_metrics') else {},
-                "narratives": snap.narratives if hasattr(snap, 'narratives') else []
+                "onchain_metrics": snap.onchain_metrics if hasattr(snap, "onchain_metrics") else {},
+                "narratives": snap.narratives if hasattr(snap, "narratives") else [],
             },
-
             "narrative": {
                 "sentiment_score": narrative.sentiment_score if narrative else 0.5,
                 "momentum": narrative.momentum if narrative else 0.5,
-                "themes": narrative.themes if narrative and hasattr(narrative, 'themes') else [],
-                "volatility": narrative.volatility if narrative and hasattr(narrative, 'volatility') else 0.5,
-                "meme_momentum": narrative.meme_momentum if narrative and hasattr(narrative, 'meme_momentum') else 0.0
+                "themes": narrative.themes if narrative and hasattr(narrative, "themes") else [],
+                "volatility": narrative.volatility if narrative and hasattr(narrative, "volatility") else 0.5,
+                "meme_momentum": narrative.meme_momentum if narrative and hasattr(narrative, "meme_momentum") else 0.0,
             },
-
             "safety_report": {
                 "score": safety.score if safety else 0.5,
                 "severity": safety.severity if safety else "unknown",
-                "findings": safety.findings if safety and hasattr(safety, 'findings') else [],
-                "flags": safety.flags if safety and hasattr(safety, 'flags') else {}
+                "findings": safety.findings if safety and hasattr(safety, "findings") else [],
+                "flags": safety.flags if safety and hasattr(safety, "flags") else {},
             },
-
             "news_items": result.news_items if result.news_items else [],
             "sentiment_metrics": result.sentiment_metrics if result.sentiment_metrics else {},
             "technical_metrics": result.technical_metrics if result.technical_metrics else {},
             "security_metrics": result.security_metrics if result.security_metrics else {},
             "unlock_events": [],
-            "narratives": narrative.themes if narrative and hasattr(narrative, 'themes') else [],
+            "narratives": narrative.themes if narrative and hasattr(narrative, "themes") else [],
             "keywords": [],
-
             "artifact": {
                 "markdown": result.artifact_markdown if result.artifact_markdown else "",
-                "html": result.artifact_html if result.artifact_html else ""
+                "html": result.artifact_html if result.artifact_html else "",
             },
-
-            "tree": serialize_tree_node(tree)
+            "tree": serialize_tree_node(tree),
         }
 
     except Exception as e:
@@ -469,6 +477,7 @@ def scan_token_full(symbol: str, coingecko_id: str, defillama_slug: str, address
 # ============================================================================
 # Scanner Endpoints (Token Discovery)
 # ============================================================================
+
 
 @app.get("/", tags=["Root"])
 def root():
@@ -488,7 +497,7 @@ def get_tokens(
     include_freshness: bool = True,
 ):
     """Get all scanned tokens with summary information and filters.
-    
+
     Args:
         min_score: Minimum final score (0-1)
         min_confidence: Minimum confidence level (0-1)
@@ -511,7 +520,7 @@ def get_tokens(
 
     summaries: List[Dict[str, Any]] = []
     freshness_tracker = get_freshness_tracker()
-    
+
     for symbol, cg_id, df_slug, addr in tokens:
         entry = _get_cached(symbol)
         if entry:
@@ -524,7 +533,7 @@ def get_tokens(
                 continue
             entry = _cache_token(symbol, detail)
             summary = entry["summary"].copy()
-        
+
         # Apply filters
         if min_score is not None and summary["final_score"] < min_score:
             continue
@@ -539,11 +548,11 @@ def get_tokens(
         if safety_filter == "flagged" and not summary["flagged"]:
             continue
         if time_window_hours is not None:
-            updated_at = datetime.fromisoformat(summary["updated_at"].replace('Z', '+00:00'))
+            updated_at = datetime.fromisoformat(summary["updated_at"].replace("Z", "+00:00"))
             age_hours = (datetime.utcnow() - updated_at.replace(tzinfo=None)).total_seconds() / 3600
             if age_hours > time_window_hours:
                 continue
-        
+
         # Add provenance if requested
         if include_provenance:
             summary["provenance"] = {
@@ -552,24 +561,22 @@ def get_tokens(
                 "pipeline_version": "2.0.0",
                 "created_at": summary["updated_at"],
             }
-        
+
         # Add freshness if requested
         if include_freshness:
             # Record updates for tracked sources
             freshness_tracker.record_update("coingecko")
             freshness_tracker.record_update("dexscreener")
             freshness_tracker.record_update("blockscout")
-            
+
             freshness_data = {}
             for source in ["coingecko", "dexscreener", "blockscout"]:
                 freshness = freshness_tracker.get_freshness(
-                    source,
-                    is_free=True,
-                    update_frequency_seconds=300  # 5 minutes
+                    source, is_free=True, update_frequency_seconds=300  # 5 minutes
                 )
                 freshness_data[source] = freshness.to_dict()
             summary["freshness"] = freshness_data
-        
+
         summaries.append(summary)
 
     return summaries
@@ -623,12 +630,12 @@ def get_token(
             logger.error(f"Error in get_token for {symbol}: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
-    
+
     # Enhance with provenance and freshness
     if include_provenance:
         freshness_tracker = get_freshness_tracker()
         provenance_tracker = get_provenance_tracker()
-        
+
         # Add provenance information
         detail["provenance"] = {
             "artifact_id": f"token_{symbol}_{int(time.time())}",
@@ -639,47 +646,51 @@ def get_token(
                 "coingecko": f"https://www.coingecko.com/en/coins/{token_map[symbol][0]}",
                 "dexscreener": f"https://dexscreener.com/ethereum/{token_map[symbol][2]}",
                 "blockscout": f"https://eth.blockscout.com/token/{token_map[symbol][2]}",
-            }
+            },
         }
-        
+
         # Add freshness badges
         if include_freshness:
             freshness_tracker.record_update("coingecko")
             freshness_tracker.record_update("dexscreener")
             freshness_tracker.record_update("blockscout")
-            
+
             freshness_data = {}
             for source in ["coingecko", "dexscreener", "blockscout"]:
-                freshness = freshness_tracker.get_freshness(
-                    source,
-                    is_free=True,
-                    update_frequency_seconds=300
-                )
+                freshness = freshness_tracker.get_freshness(source, is_free=True, update_frequency_seconds=300)
                 freshness_data[source] = freshness.to_dict()
             detail["freshness"] = freshness_data
-        
+
         # Add evidence panels with confidence levels
         detail["evidence_panels"] = {
             "price_volume": {
                 "title": "Price & Volume Analysis",
                 "confidence": detail["confidence"],
-                "freshness": freshness_data.get("coingecko", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "freshness": (
+                    freshness_data.get("coingecko", {}).get("freshness_level", "recent")
+                    if include_freshness
+                    else "recent"
+                ),
                 "source": "coingecko",
                 "is_free": True,
                 "data": {
                     "price": detail["price"],
                     "volume_24h": detail["market_snapshot"]["volume_24h"],
-                }
+                },
             },
             "liquidity": {
                 "title": "Liquidity Analysis",
                 "confidence": detail["confidence"],
-                "freshness": freshness_data.get("dexscreener", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "freshness": (
+                    freshness_data.get("dexscreener", {}).get("freshness_level", "recent")
+                    if include_freshness
+                    else "recent"
+                ),
                 "source": "dexscreener",
                 "is_free": True,
                 "data": {
                     "liquidity_usd": detail["liquidity_usd"],
-                }
+                },
             },
             "narrative": {
                 "title": "Narrative Analysis (NVI)",
@@ -687,35 +698,44 @@ def get_token(
                 "freshness": "fresh",
                 "source": "groq_ai",
                 "is_free": True,
-                "data": detail["narrative"]
+                "data": detail["narrative"],
             },
             "tokenomics": {
                 "title": "Tokenomics & Unlocks",
                 "confidence": detail["confidence"],
-                "freshness": freshness_data.get("blockscout", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "freshness": (
+                    freshness_data.get("blockscout", {}).get("freshness_level", "recent")
+                    if include_freshness
+                    else "recent"
+                ),
                 "source": "blockscout",
                 "is_free": True,
                 "data": {
                     "holders": detail["holders"],
                     "unlock_events": detail["unlock_events"],
-                }
+                },
             },
             "safety": {
                 "title": "Contract Safety Checks",
                 "confidence": detail["confidence"],
-                "freshness": freshness_data.get("blockscout", {}).get("freshness_level", "recent") if include_freshness else "recent",
+                "freshness": (
+                    freshness_data.get("blockscout", {}).get("freshness_level", "recent")
+                    if include_freshness
+                    else "recent"
+                ),
                 "source": "blockscout",
                 "is_free": True,
-                "data": detail["safety_report"]
-            }
+                "data": detail["safety_report"],
+            },
         }
-    
+
     return detail
 
 
 # ============================================================================
 # Anomaly Detection Endpoints
 # ============================================================================
+
 
 @app.get("/api/anomalies", response_model=List[AnomalyAlert], tags=["Monitoring"])
 async def get_anomalies(
@@ -746,15 +766,17 @@ async def get_anomalies(
         # Check price momentum
         momentum = feature_store.read_feature("price_momentum_1h", token)
         if momentum and abs(momentum.value) > 0.05:  # 5% move
-            alerts.append(AnomalyAlert(
-                alert_id=f"price_spike_{token}_{int(current_time)}",
-                token_symbol=token,
-                alert_type="price_spike",
-                severity="high" if abs(momentum.value) > 0.10 else "medium",
-                message=f"{token} price moved {momentum.value:.2%} in 1 hour",
-                timestamp=current_time,
-                metrics={"momentum": momentum.value},
-            ))
+            alerts.append(
+                AnomalyAlert(
+                    alert_id=f"price_spike_{token}_{int(current_time)}",
+                    token_symbol=token,
+                    alert_type="price_spike",
+                    severity="high" if abs(momentum.value) > 0.10 else "medium",
+                    message=f"{token} price moved {momentum.value:.2%} in 1 hour",
+                    timestamp=current_time,
+                    metrics={"momentum": momentum.value},
+                )
+            )
 
     # Filter by severity if provided
     if severity:
@@ -780,6 +802,7 @@ async def acknowledge_anomaly(alert_id: str) -> Dict[str, str]:
 # ============================================================================
 # Confidence Interval Endpoints
 # ============================================================================
+
 
 @app.get("/api/confidence/gem-score/{token_symbol}", response_model=ConfidenceInterval, tags=["Analytics"])
 async def get_gem_score_confidence(token_symbol: str) -> ConfidenceInterval:
@@ -842,6 +865,7 @@ async def get_liquidity_confidence(token_symbol: str) -> ConfidenceInterval:
 # SLA Monitoring Endpoints
 # ============================================================================
 
+
 @app.get("/api/sla/status", response_model=List[SLAStatus], tags=["Monitoring"])
 async def get_sla_status() -> List[SLAStatus]:
     """Get SLA status for all data sources.
@@ -855,15 +879,17 @@ async def get_sla_status() -> List[SLAStatus]:
         metrics = monitor.get_metrics()
         status = monitor.get_metrics().status
 
-        statuses.append(SLAStatus(
-            source_name=source_name,
-            status=status.value.upper(),
-            latency_p50=metrics.latency_p50 if metrics else None,
-            latency_p95=metrics.latency_p95 if metrics else None,
-            latency_p99=metrics.latency_p99 if metrics else None,
-            success_rate=metrics.success_rate if metrics else None,
-            uptime_percentage=metrics.uptime_percentage if metrics else None,
-        ))
+        statuses.append(
+            SLAStatus(
+                source_name=source_name,
+                status=status.value.upper(),
+                latency_p50=metrics.latency_p50 if metrics else None,
+                latency_p95=metrics.latency_p95 if metrics else None,
+                latency_p99=metrics.latency_p99 if metrics else None,
+                success_rate=metrics.success_rate if metrics else None,
+                uptime_percentage=metrics.uptime_percentage if metrics else None,
+            )
+        )
 
     return statuses
 
@@ -878,11 +904,13 @@ async def get_circuit_breaker_status() -> List[CircuitBreakerStatus]:
     statuses = []
 
     for breaker_name, breaker in CIRCUIT_REGISTRY.get_all().items():
-        statuses.append(CircuitBreakerStatus(
-            breaker_name=breaker_name,
-            state=breaker.state.value.upper(),
-            failure_count=breaker._failure_count,
-        ))
+        statuses.append(
+            CircuitBreakerStatus(
+                breaker_name=breaker_name,
+                state=breaker.state.value.upper(),
+                failure_count=breaker._failure_count,
+            )
+        )
 
     return statuses
 
@@ -900,6 +928,7 @@ async def get_overall_health() -> Dict[str, Any]:
 # ============================================================================
 # Cross-Token Correlation Endpoints
 # ============================================================================
+
 
 @app.get("/api/correlation/matrix", response_model=List[TokenCorrelation], tags=["Analytics"])
 async def get_correlation_matrix(
@@ -941,7 +970,7 @@ async def get_correlation_matrix(
     import numpy as np
 
     for i, token_a in enumerate(tokens):
-        for token_b in tokens[i + 1:]:
+        for token_b in tokens[i + 1 :]:
             if token_a in token_data and token_b in token_data:
                 data_a = token_data[token_a]
                 data_b = token_data[token_b]
@@ -951,12 +980,14 @@ async def get_correlation_matrix(
                 if min_len > 1:
                     corr = np.corrcoef(data_a[:min_len], data_b[:min_len])[0, 1]
 
-                    correlations.append(TokenCorrelation(
-                        token_a=token_a,
-                        token_b=token_b,
-                        correlation=float(corr),
-                        metric=metric,
-                    ))
+                    correlations.append(
+                        TokenCorrelation(
+                            token_a=token_a,
+                            token_b=token_b,
+                            correlation=float(corr),
+                            metric=metric,
+                        )
+                    )
 
     return correlations
 
@@ -964,6 +995,7 @@ async def get_correlation_matrix(
 # ============================================================================
 # Order Flow Visualization Endpoints
 # ============================================================================
+
 
 @app.get("/api/orderflow/{token_symbol}", response_model=OrderFlowSnapshot, tags=["Analytics"])
 async def get_orderflow_depth(token_symbol: str) -> OrderFlowSnapshot:
@@ -1003,6 +1035,7 @@ async def get_orderflow_depth(token_symbol: str) -> OrderFlowSnapshot:
 # ============================================================================
 # Twitter Sentiment Endpoints
 # ============================================================================
+
 
 @app.get("/api/sentiment/trend/{token_symbol}", response_model=SentimentTrend, tags=["Analytics"])
 async def get_sentiment_trend(token_symbol: str, hours: int = 24) -> SentimentTrend:
@@ -1053,20 +1086,23 @@ async def get_sentiment_trend(token_symbol: str, hours: int = 24) -> SentimentTr
         limit=100,
     )
 
-    engagement_scores = [fv.value for fv in reversed(engagement_history)] if engagement_history else [0.0] * len(history)
+    engagement_scores = (
+        [fv.value for fv in reversed(engagement_history)] if engagement_history else [0.0] * len(history)
+    )
 
     return SentimentTrend(
         token_symbol=token_symbol,
         timestamps=[fv.timestamp for fv in history],
         sentiment_scores=[fv.value for fv in history],
-        tweet_volumes=tweet_volumes[:len(history)],
-        engagement_scores=engagement_scores[:len(history)],
+        tweet_volumes=tweet_volumes[: len(history)],
+        engagement_scores=engagement_scores[: len(history)],
     )
 
 
 # ============================================================================
 # Feature Store Endpoints
 # ============================================================================
+
 
 @app.get("/api/features/schema", tags=["Feature Store"])
 async def get_feature_schema() -> List[Dict[str, Any]]:
@@ -1111,10 +1147,11 @@ async def get_token_features(token_symbol: str) -> Dict[str, Any]:
 # GemScore Delta Explainability Endpoints
 # ============================================================================
 
+
 @app.get("/api/gemscore/delta/{token_symbol}", tags=["Analytics"])
 async def get_gemscore_delta(token_symbol: str) -> Dict[str, Any]:
     """Get GemScore delta explanation for a token.
-    
+
     Returns the most recent score change with detailed feature contributions.
 
     Args:
@@ -1125,22 +1162,16 @@ async def get_gemscore_delta(token_symbol: str) -> Dict[str, Any]:
     """
     # Get current snapshot
     current_snapshot = feature_store.read_snapshot(token_symbol)
-    
+
     if not current_snapshot:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No GemScore snapshots found for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"No GemScore snapshots found for {token_symbol}")
+
     # Compute delta
     delta = feature_store.compute_score_delta(token_symbol, current_snapshot)
-    
+
     if not delta:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Insufficient history to compute delta for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Insufficient history to compute delta for {token_symbol}")
+
     return delta.get_summary(top_n=5)
 
 
@@ -1155,21 +1186,15 @@ async def get_gemscore_delta_narrative(token_symbol: str) -> Dict[str, str]:
         Narrative explanation
     """
     current_snapshot = feature_store.read_snapshot(token_symbol)
-    
+
     if not current_snapshot:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No GemScore snapshots found for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"No GemScore snapshots found for {token_symbol}")
+
     delta = feature_store.compute_score_delta(token_symbol, current_snapshot)
-    
+
     if not delta:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Insufficient history to compute delta for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Insufficient history to compute delta for {token_symbol}")
+
     return {
         "token": token_symbol,
         "narrative": delta.get_narrative(),
@@ -1192,23 +1217,17 @@ async def get_gemscore_delta_detailed(
         Detailed delta explanation
     """
     from src.core.score_explainer import ScoreExplainer
-    
+
     current_snapshot = feature_store.read_snapshot(token_symbol)
-    
+
     if not current_snapshot:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No GemScore snapshots found for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"No GemScore snapshots found for {token_symbol}")
+
     delta = feature_store.compute_score_delta(token_symbol, current_snapshot)
-    
+
     if not delta:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Insufficient history to compute delta for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Insufficient history to compute delta for {token_symbol}")
+
     explainer = ScoreExplainer()
     return explainer.explain_score_change(delta, threshold=threshold)
 
@@ -1231,13 +1250,10 @@ async def get_gemscore_history(
         token_symbol=token_symbol,
         limit=limit,
     )
-    
+
     if not snapshots:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No history found for {token_symbol}"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"No history found for {token_symbol}")
+
     return [
         {
             "timestamp": snapshot.timestamp,
@@ -1265,29 +1281,28 @@ async def get_gemscore_delta_series(
         List of delta summaries
     """
     from src.core.score_explainer import ScoreExplainer
-    
+
     snapshots = feature_store.read_snapshot_history(
         token_symbol=token_symbol,
         limit=limit + 1,  # Need one extra for comparisons
     )
-    
+
     if len(snapshots) < 2:
         raise HTTPException(
-            status_code=404,
-            detail=f"Insufficient history for delta series (need at least 2 snapshots)"
+            status_code=404, detail=f"Insufficient history for delta series (need at least 2 snapshots)"
         )
-    
+
     explainer = ScoreExplainer()
     deltas = []
-    
+
     # Compute deltas between consecutive snapshots
     for i in range(len(snapshots) - 1):
         current = snapshots[i]
         previous = snapshots[i + 1]  # List is sorted descending
-        
+
         delta = explainer.compute_delta(previous, current)
         deltas.append(delta.get_summary(top_n=3))
-    
+
     return deltas
 
 
@@ -1295,10 +1310,11 @@ async def get_gemscore_delta_series(
 # Summary Reports
 # ============================================================================
 
+
 @app.get("/api/summary/{token_symbol}", tags=["Summary"])
 async def get_token_summary_report(token_symbol: str) -> Dict[str, Any]:
     """Get comprehensive summary report for a token.
-    
+
     Returns score, top drivers, risk flags, and recommendations.
 
     Args:
@@ -1308,26 +1324,20 @@ async def get_token_summary_report(token_symbol: str) -> Dict[str, Any]:
         Summary report data
     """
     from src.cli.summary_report import SummaryReportGenerator
-    
+
     # Find scan result
-    if not hasattr(_scanner_cache, 'results') or not _scanner_cache.results:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No scan results found for {token_symbol}"
-        )
-    
+    if not hasattr(_scanner_cache, "results") or not _scanner_cache.results:
+        raise HTTPException(status_code=404, detail=f"No scan results found for {token_symbol}")
+
     result = None
     for r in _scanner_cache.results:
         if r.token.upper() == token_symbol.upper():
             result = r
             break
-    
+
     if result is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Token {token_symbol} not found"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Token {token_symbol} not found")
+
     # Generate summary report
     generator = SummaryReportGenerator(color_enabled=False)
     report = generator.generate_report(
@@ -1342,7 +1352,7 @@ async def get_token_summary_report(token_symbol: str) -> Dict[str, Any]:
         flagged=result.flag,
         debug_info=result.debug,
     )
-    
+
     # Convert to JSON
     return generator.export_json(report)
 
@@ -1355,13 +1365,13 @@ async def get_all_summaries() -> List[Dict[str, Any]]:
         List of summary reports
     """
     from src.cli.summary_report import SummaryReportGenerator
-    
-    if not hasattr(_scanner_cache, 'results') or not _scanner_cache.results:
+
+    if not hasattr(_scanner_cache, "results") or not _scanner_cache.results:
         return []
-    
+
     generator = SummaryReportGenerator(color_enabled=False)
     summaries = []
-    
+
     for result in _scanner_cache.results:
         report = generator.generate_report(
             token_symbol=result.token,
@@ -1376,10 +1386,10 @@ async def get_all_summaries() -> List[Dict[str, Any]]:
             debug_info=result.debug,
         )
         summaries.append(generator.export_json(report))
-    
+
     # Sort by final score descending
-    summaries.sort(key=lambda x: x['scores']['final_score'], reverse=True)
-    
+    summaries.sort(key=lambda x: x["scores"]["final_score"], reverse=True)
+
     return summaries
 
 
@@ -1387,19 +1397,20 @@ async def get_all_summaries() -> List[Dict[str, Any]]:
 # Trading Endpoints (BounceHunter/PennyHunter)
 # ============================================================================
 
+
 @app.get("/api/trading/regime", tags=["Trading"])
 async def get_market_regime() -> Dict[str, Any]:
     """Get current market regime for penny trading decisions.
-    
+
     Returns:
         Market regime data including SPY/VIX status and trading permission
     """
     from src.bouncehunter.market_regime import MarketRegimeDetector
-    
+
     try:
         detector = MarketRegimeDetector()
         regime = detector.get_regime()
-        
+
         return {
             "timestamp": regime.timestamp.isoformat(),
             "regime": regime.regime,
@@ -1425,50 +1436,50 @@ async def get_market_regime() -> Dict[str, Any]:
 @app.get("/api/trading/phase2-progress", tags=["Trading"])
 async def get_phase2_progress() -> Dict[str, Any]:
     """Get Phase 2 validation progress tracker.
-    
+
     Returns:
         Current progress toward 20-trade validation goal
     """
     from src.bouncehunter.pennyhunter_memory import PennyHunterMemory
     from pathlib import Path
     import json
-    
+
     try:
         memory = PennyHunterMemory()
-        
+
         # Load cumulative history if exists
         cumulative_file = Path(__file__).parent.parent.parent / "reports" / "pennyhunter_cumulative_history.json"
-        
+
         trades_completed = 0
         win_rate = 0.0
         total_pnl = 0.0
         active_trades = 0
-        
+
         if cumulative_file.exists():
-            with open(cumulative_file, 'r') as f:
+            with open(cumulative_file, "r") as f:
                 data = json.load(f)
-                trades = data.get('trades', [])
-                
+                trades = data.get("trades", [])
+
                 # Count completed trades
                 for trade in trades:
-                    if trade.get('status') == 'completed':
+                    if trade.get("status") == "completed":
                         trades_completed += 1
-                        if trade.get('pnl', 0) > 0:
+                        if trade.get("pnl", 0) > 0:
                             win_rate += 1
-                        total_pnl += trade.get('pnl', 0)
-                    elif trade.get('status') == 'active':
+                        total_pnl += trade.get("pnl", 0)
+                    elif trade.get("status") == "active":
                         active_trades += 1
-                
+
                 if trades_completed > 0:
                     win_rate = (win_rate / trades_completed) * 100
-        
+
         # Phase 2 targets
         target_trades = 20
         target_win_rate_min = 65.0
         target_win_rate_max = 75.0
-        
+
         progress_pct = (trades_completed / target_trades) * 100 if target_trades > 0 else 0
-        
+
         # Status determination
         if trades_completed < target_trades:
             status = "in_progress"
@@ -1476,7 +1487,7 @@ async def get_phase2_progress() -> Dict[str, Any]:
             status = "success"
         else:
             status = "needs_review"
-        
+
         return {
             "phase": "Phase 2",
             "status": status,
@@ -1501,71 +1512,73 @@ async def get_trading_signals(
     include_filters: bool = True,
 ) -> List[Dict[str, Any]]:
     """Get filtered trading signals queue.
-    
+
     Args:
         min_quality: Minimum quality score (0-10 scale)
         include_filters: Include advanced filter pass/fail details
-    
+
     Returns:
         List of signals that passed quality gates
     """
     from src.bouncehunter.pennyhunter_scanner import GapScanner
     from src.bouncehunter.signal_scoring import SignalScorer
     from src.bouncehunter.advanced_filters import AdvancedFilterEngine
-    
+
     try:
         # Default ticker universe
         tickers = ["INTR", "ADT", "SAN", "COMP", "CLOV", "EVGO"]
-        
+
         scanner = GapScanner()
         scorer = SignalScorer()
         filter_engine = AdvancedFilterEngine() if include_filters else None
-        
+
         # Scan for gaps
         raw_signals = scanner.scan(tickers)
-        
+
         # Score and filter signals
         scored_signals = []
         for signal in raw_signals:
             # Score the signal
             score_result = scorer.score_signal(signal)
-            
+
             # Apply quality gate
-            if score_result['total_score'] < min_quality:
+            if score_result["total_score"] < min_quality:
                 continue
-            
+
             # Apply advanced filters if requested
             filter_results = {}
             passes_filters = True
-            
+
             if include_filters and filter_engine:
                 filter_results = filter_engine.evaluate_all(signal)
-                passes_filters = filter_results.get('overall_pass', True)
-            
+                passes_filters = filter_results.get("overall_pass", True)
+
             if not passes_filters:
                 continue
-            
+
             # Build response
-            scored_signals.append({
-                "ticker": signal.get('ticker'),
-                "gap_pct": signal.get('gap_pct', 0),
-                "volume": signal.get('volume', 0),
-                "market_cap": signal.get('market_cap', 0),
-                "quality_score": score_result['total_score'],
-                "score_breakdown": score_result.get('breakdown', {}),
-                "entry_price": signal.get('entry_price', signal.get('current_price', 0)),
-                "stop_price": signal.get('stop_price', 0),
-                "target_price": signal.get('target_price', 0),
-                "risk_reward": signal.get('risk_reward', 0),
-                "filter_results": filter_results if include_filters else None,
-                "timestamp": datetime.now().isoformat(),
-            })
-        
+            scored_signals.append(
+                {
+                    "ticker": signal.get("ticker"),
+                    "gap_pct": signal.get("gap_pct", 0),
+                    "volume": signal.get("volume", 0),
+                    "market_cap": signal.get("market_cap", 0),
+                    "quality_score": score_result["total_score"],
+                    "score_breakdown": score_result.get("breakdown", {}),
+                    "entry_price": signal.get("entry_price", signal.get("current_price", 0)),
+                    "stop_price": signal.get("stop_price", 0),
+                    "target_price": signal.get("target_price", 0),
+                    "risk_reward": signal.get("risk_reward", 0),
+                    "filter_results": filter_results if include_filters else None,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+
         # Sort by quality score descending
-        scored_signals.sort(key=lambda x: x['quality_score'], reverse=True)
-        
+        scored_signals.sort(key=lambda x: x["quality_score"], reverse=True)
+
         return scored_signals
-        
+
     except Exception as e:
         logger.error(f"Error fetching trading signals: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch signals: {str(e)}")
@@ -1574,27 +1587,27 @@ async def get_trading_signals(
 @app.post("/api/trading/paper-order", tags=["Trading"])
 async def place_paper_order(order_request: Dict[str, Any]) -> Dict[str, Any]:
     """Place a paper trade order with two-step confirmation.
-    
+
     Args:
         order_request: Order details including ticker, quantity, prices, confirmation
-    
+
     Returns:
         Order confirmation with bracket order IDs
     """
     from src.bouncehunter.broker import create_broker, OrderSide
-    
+
     try:
         # Validate required fields
-        ticker = order_request.get('ticker')
-        quantity = order_request.get('quantity')
-        entry_price = order_request.get('entry_price')
-        stop_price = order_request.get('stop_price')
-        target_price = order_request.get('target_price')
-        confirmed = order_request.get('confirmed', False)
-        
+        ticker = order_request.get("ticker")
+        quantity = order_request.get("quantity")
+        entry_price = order_request.get("entry_price")
+        stop_price = order_request.get("stop_price")
+        target_price = order_request.get("target_price")
+        confirmed = order_request.get("confirmed", False)
+
         if not all([ticker, quantity, entry_price, stop_price, target_price]):
             raise HTTPException(status_code=400, detail="Missing required order fields")
-        
+
         # Two-step confirmation
         if not confirmed:
             return {
@@ -1608,13 +1621,15 @@ async def place_paper_order(order_request: Dict[str, Any]) -> Dict[str, Any]:
                     "target_price": target_price,
                     "risk_amount": (entry_price - stop_price) * quantity,
                     "profit_target": (target_price - entry_price) * quantity,
-                    "risk_reward_ratio": (target_price - entry_price) / (entry_price - stop_price) if entry_price > stop_price else 0,
-                }
+                    "risk_reward_ratio": (
+                        (target_price - entry_price) / (entry_price - stop_price) if entry_price > stop_price else 0
+                    ),
+                },
             }
-        
+
         # Create paper broker
         broker = create_broker("paper", initial_cash=100000.0)
-        
+
         # Place bracket order
         bracket = broker.place_bracket_order(
             ticker=ticker,
@@ -1623,16 +1638,16 @@ async def place_paper_order(order_request: Dict[str, Any]) -> Dict[str, Any]:
             stop_price=stop_price,
             target_price=target_price,
         )
-        
+
         return {
             "status": "success",
             "message": f"Paper order placed for {ticker}",
-            "entry_order_id": bracket['entry'].order_id,
-            "stop_order_id": bracket['stop'].order_id,
-            "target_order_id": bracket['target'].order_id,
+            "entry_order_id": bracket["entry"].order_id,
+            "stop_order_id": bracket["stop"].order_id,
+            "target_order_id": bracket["target"].order_id,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1643,30 +1658,33 @@ async def place_paper_order(order_request: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/trading/positions", tags=["Trading"])
 async def get_positions() -> List[Dict[str, Any]]:
     """Get current positions with P&L and exposure.
-    
+
     Returns:
         List of active positions with real-time P&L
     """
     from src.bouncehunter.broker import create_broker
-    
+
     try:
         broker = create_broker("paper")
         positions = broker.get_positions()
-        
+
         # Calculate total exposure
         total_exposure = sum(p.market_value for p in positions)
-        
-        return [{
-            "ticker": p.ticker,
-            "shares": p.shares,
-            "avg_price": p.avg_price,
-            "current_price": p.current_price,
-            "market_value": p.market_value,
-            "unrealized_pnl": p.unrealized_pnl,
-            "unrealized_pnl_pct": p.unrealized_pnl_pct,
-            "exposure_pct": (p.market_value / total_exposure * 100) if total_exposure > 0 else 0,
-        } for p in positions]
-        
+
+        return [
+            {
+                "ticker": p.ticker,
+                "shares": p.shares,
+                "avg_price": p.avg_price,
+                "current_price": p.current_price,
+                "market_value": p.market_value,
+                "unrealized_pnl": p.unrealized_pnl,
+                "unrealized_pnl_pct": p.unrealized_pnl_pct,
+                "exposure_pct": (p.market_value / total_exposure * 100) if total_exposure > 0 else 0,
+            }
+            for p in positions
+        ]
+
     except Exception as e:
         logger.error(f"Error fetching positions: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch positions: {str(e)}")
@@ -1678,162 +1696,112 @@ async def get_orders(
     limit: int = 50,
 ) -> List[Dict[str, Any]]:
     """Get all orders with status tracking.
-    
+
     Args:
         status_filter: Filter by status (pending, submitted, filled, cancelled)
         limit: Maximum number of orders to return
-    
+
     Returns:
         List of orders with status and timestamps
     """
     from src.bouncehunter.broker import create_broker
-    
+
     try:
         broker = create_broker("paper")
-        
+
         # Get all orders (PaperBroker stores orders in memory)
-        if hasattr(broker, 'orders'):
+        if hasattr(broker, "orders"):
             all_orders = list(broker.orders.values())
-            
+
             # Apply status filter
             if status_filter:
                 all_orders = [o for o in all_orders if o.status.value.lower() == status_filter.lower()]
-            
+
             # Sort by submitted_at descending
             all_orders.sort(key=lambda o: o.submitted_at or "", reverse=True)
-            
+
             # Limit results
             all_orders = all_orders[:limit]
-            
-            return [{
-                "order_id": o.order_id,
-                "ticker": o.ticker,
-                "side": o.side.value,
-                "order_type": o.order_type.value,
-                "quantity": o.quantity,
-                "filled_qty": o.filled_qty,
-                "limit_price": o.limit_price,
-                "stop_price": o.stop_price,
-                "filled_price": o.filled_price,
-                "status": o.status.value,
-                "submitted_at": o.submitted_at,
-                "filled_at": o.filled_at,
-            } for o in all_orders]
-        
+
+            return [
+                {
+                    "order_id": o.order_id,
+                    "ticker": o.ticker,
+                    "side": o.side.value,
+                    "order_type": o.order_type.value,
+                    "quantity": o.quantity,
+                    "filled_qty": o.filled_qty,
+                    "limit_price": o.limit_price,
+                    "stop_price": o.stop_price,
+                    "filled_price": o.filled_price,
+                    "status": o.status.value,
+                    "submitted_at": o.submitted_at,
+                    "filled_at": o.filled_at,
+                }
+                for o in all_orders
+            ]
+
         return []
-        
+
     except Exception as e:
         logger.error(f"Error fetching orders: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch orders: {str(e)}")
 
 
 @app.get("/api/trading/broker-status", tags=["Trading"])
-async def get_broker_status() -> Dict[str, Any]:
-    """Get broker connectivity status for all supported brokers.
-    
-    Returns:
-        Connection status for Paper, Alpaca, Questrade, IBKR
-    """
-    from src.bouncehunter.broker import create_broker
+def _check_broker_connection(broker_type: str, broker_name: str, create_fn, **create_kwargs) -> Dict[str, Any]:
+    """Check a single broker's connection status."""
+    try:
+        broker = create_fn(broker_type, **create_kwargs)
+        account = broker.get_account()
+        return {
+            "name": broker_name,
+            "connected": True,
+            "status": "online",
+            "account_value": float(account.portfolio_value),
+            "cash": float(account.cash),
+            **create_kwargs.get("extra_status", {}),
+        }
+    except Exception as e:
+        error_msg = str(e)
+        is_not_configured = "not found" in error_msg.lower() or "FileNotFoundError" in error_msg
+        return {
+            "name": broker_name,
+            "connected": False,
+            "status": "not_configured" if is_not_configured else "error",
+            "error": error_msg,
+            **create_kwargs.get("extra_error", {}),
+        }
+
+
+def _check_ibkr_connection(create_broker_fn) -> Dict[str, Any]:
+    """Check IBKR connection with special config handling."""
     from pathlib import Path
     import json
-    
-    brokers_status = {}
-    
-    # Check Paper broker (always available)
+
     try:
-        paper_broker = create_broker("paper")
-        account = paper_broker.get_account()
-        brokers_status["paper"] = {
-            "name": "Paper Trading",
-            "connected": True,
-            "status": "online",
-            "account_value": float(account.portfolio_value),
-            "cash": float(account.cash),
-            "message": "Paper trading simulator"
-        }
-    except Exception as e:
-        brokers_status["paper"] = {
-            "name": "Paper Trading",
-            "connected": False,
-            "status": "error",
-            "error": str(e),
-        }
-    
-    # Check Alpaca (if configured)
-    try:
-        alpaca_broker = create_broker("alpaca")
-        account = alpaca_broker.get_account()
-        brokers_status["alpaca"] = {
-            "name": "Alpaca Markets",
-            "connected": True,
-            "status": "online",
-            "account_value": float(account.portfolio_value),
-            "cash": float(account.cash),
-            "message": "Connected to Alpaca API"
-        }
-    except Exception as e:
-        error_msg = str(e)
-        brokers_status["alpaca"] = {
-            "name": "Alpaca Markets",
-            "connected": False,
-            "status": "not_configured" if "not found" in error_msg.lower() or "FileNotFoundError" in error_msg else "error",
-            "error": error_msg,
-            "message": "Configure API keys in configs/broker_credentials.yaml or environment variables"
-        }
-    
-    # Check Questrade (if configured)
-    try:
-        questrade_broker = create_broker("questrade")
-        account = questrade_broker.get_account()
-        brokers_status["questrade"] = {
-            "name": "Questrade",
-            "connected": True,
-            "status": "online",
-            "account_value": float(account.portfolio_value),
-            "cash": float(account.cash),
-            "message": "Connected to Questrade API"
-        }
-    except Exception as e:
-        error_msg = str(e)
-        brokers_status["questrade"] = {
-            "name": "Questrade",
-            "connected": False,
-            "status": "not_configured" if "not found" in error_msg.lower() or "FileNotFoundError" in error_msg else "error",
-            "error": error_msg,
-            "message": "Configure refresh token in configs/broker_credentials.yaml"
-        }
-    
-    # Check IBKR (if configured)
-    try:
-        # Load IBKR config
         config_path = Path(__file__).parent.parent.parent / "ibkr_config.json"
-        
         if not config_path.exists():
             raise FileNotFoundError("ibkr_config.json not found")
-        
-        with open(config_path, 'r') as f:
+
+        with open(config_path, "r") as f:
             config = json.load(f)
-        
+
         ibkr_config = config.get("ibkr", {})
-        
         if not ibkr_config.get("enabled", False):
             raise ValueError("IBKR is disabled in config")
-        
-        # Try to connect
-        ibkr_broker = create_broker(
+
+        ibkr_broker = create_broker_fn(
             "ibkr",
             host=ibkr_config.get("host", "127.0.0.1"),
             port=ibkr_config.get("port", 7497),
             client_id=ibkr_config.get("client_id", 1),
             account_id=ibkr_config.get("account_id"),
-            allow_simulation=not ibkr_config.get("readonly", False)
+            allow_simulation=not ibkr_config.get("readonly", False),
         )
-        
-        # Test connection
+
         account = ibkr_broker.get_account()
-        
-        brokers_status["ibkr"] = {
+        return {
             "name": "Interactive Brokers",
             "connected": True,
             "status": "online",
@@ -1842,102 +1810,145 @@ async def get_broker_status() -> Dict[str, Any]:
             "account_id": ibkr_config.get("account_id", "N/A"),
             "host": f"{ibkr_config.get('host')}:{ibkr_config.get('port')}",
             "readonly": ibkr_config.get("readonly", False),
-            "message": "Connected to IBKR TWS/Gateway"
+            "message": "Connected to IBKR TWS/Gateway",
         }
-    except FileNotFoundError as e:
-        brokers_status["ibkr"] = {
+    except FileNotFoundError:
+        return {
             "name": "Interactive Brokers",
             "connected": False,
             "status": "not_configured",
             "error": "Configuration file not found",
-            "message": "Create ibkr_config.json with your TWS connection settings"
+            "message": "Create ibkr_config.json with your TWS connection settings",
         }
     except Exception as e:
         error_msg = str(e)
-        is_connection_error = any(x in error_msg.lower() for x in ["connection", "refused", "timeout", "tws", "gateway"])
-        
-        brokers_status["ibkr"] = {
+        is_connection_error = any(
+            x in error_msg.lower() for x in ["connection", "refused", "timeout", "tws", "gateway"]
+        )
+        return {
             "name": "Interactive Brokers",
             "connected": False,
             "status": "connection_error" if is_connection_error else "error",
             "error": error_msg,
-            "message": "Ensure TWS or IB Gateway is running and API is enabled" if is_connection_error else "Check configuration and logs"
+            "message": (
+                "Ensure TWS or IB Gateway is running and API is enabled"
+                if is_connection_error
+                else "Check configuration and logs"
+            ),
         }
-    
+
+
+async def get_broker_status() -> Dict[str, Any]:
+    """Get broker connectivity status for all supported brokers.
+
+    Returns:
+        Connection status for Paper, Alpaca, Questrade, IBKR
+    """
+    from src.bouncehunter.broker import create_broker
+
+    brokers_status = {}
+
+    # Check Paper broker
+    brokers_status["paper"] = _check_broker_connection(
+        "paper",
+        "Paper Trading",
+        create_broker,
+        extra_status={"message": "Paper trading simulator"},
+    )
+
+    # Check Alpaca
+    brokers_status["alpaca"] = _check_broker_connection(
+        "alpaca",
+        "Alpaca Markets",
+        create_broker,
+        extra_status={"message": "Connected to Alpaca API"},
+        extra_error={"message": "Configure API keys in configs/broker_credentials.yaml or environment variables"},
+    )
+
+    # Check Questrade
+    brokers_status["questrade"] = _check_broker_connection(
+        "questrade",
+        "Questrade",
+        create_broker,
+        extra_status={"message": "Connected to Questrade API"},
+        extra_error={"message": "Configure refresh token in configs/broker_credentials.yaml"},
+    )
+
+    # Check IBKR (special handling)
+    brokers_status["ibkr"] = _check_ibkr_connection(create_broker)
+
     return brokers_status
 
 
 @app.get("/api/trading/history", tags=["Trading"])
-async def get_trade_history(
-    limit: int = 100,
-    offset: int = 0,
-    status: Optional[str] = None
-) -> Dict[str, Any]:
+async def get_trade_history(limit: int = 100, offset: int = 0, status: Optional[str] = None) -> Dict[str, Any]:
     """Get trading history with pagination.
-    
+
     Args:
         limit: Maximum number of trades to return (default 100)
         offset: Number of trades to skip (default 0)
         status: Filter by status: 'completed', 'active', or None for all
-    
+
     Returns:
         Trade history with pagination info
     """
     from pathlib import Path
     import json
-    
+
     try:
         cumulative_file = Path(__file__).parent.parent.parent / "reports" / "pennyhunter_cumulative_history.json"
-        
+
         trades = []
         if cumulative_file.exists():
-            with open(cumulative_file, 'r') as f:
+            with open(cumulative_file, "r") as f:
                 data = json.load(f)
-                trades = data.get('trades', [])
-        
+                trades = data.get("trades", [])
+
         # Filter by status if specified
         if status:
-            trades = [t for t in trades if t.get('status') == status]
-        
+            trades = [t for t in trades if t.get("status") == status]
+
         # Sort by timestamp descending (most recent first)
-        trades.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-        
+        trades.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+
         # Calculate totals
         total_trades = len(trades)
-        completed_trades = [t for t in trades if t.get('status') == 'completed']
-        wins = sum(1 for t in completed_trades if t.get('pnl', 0) > 0)
-        losses = sum(1 for t in completed_trades if t.get('pnl', 0) < 0)
-        total_pnl = sum(t.get('pnl', 0) for t in completed_trades)
+        completed_trades = [t for t in trades if t.get("status") == "completed"]
+        wins = sum(1 for t in completed_trades if t.get("pnl", 0) > 0)
+        losses = sum(1 for t in completed_trades if t.get("pnl", 0) < 0)
+        total_pnl = sum(t.get("pnl", 0) for t in completed_trades)
         win_rate = (wins / len(completed_trades) * 100) if completed_trades else 0.0
-        
+
         # Pagination
-        paginated_trades = trades[offset:offset + limit]
-        
+        paginated_trades = trades[offset : offset + limit]
+
         # Format trades for frontend
         formatted_trades = []
         for trade in paginated_trades:
-            formatted_trades.append({
-                "id": trade.get('trade_id', 'N/A'),
-                "timestamp": trade.get('timestamp', ''),
-                "symbol": trade.get('ticker', trade.get('symbol', 'N/A')),
-                "side": trade.get('side', 'BUY'),
-                "quantity": trade.get('quantity', 0),
-                "entry_price": trade.get('entry_price', 0.0),
-                "exit_price": trade.get('exit_price', 0.0),
-                "pnl": trade.get('pnl', 0.0),
-                "pnl_percent": trade.get('pnl_percent', 0.0),
-                "strategy": trade.get('strategy', 'PennyHunter'),
-                "status": trade.get('status', 'active'),
-                "notes": trade.get('notes', '')
-            })
-        
+            formatted_trades.append(
+                {
+                    "id": trade.get("trade_id", "N/A"),
+                    "timestamp": trade.get("timestamp", ""),
+                    "symbol": trade.get("ticker", trade.get("symbol", "N/A")),
+                    "side": trade.get("side", "BUY"),
+                    "quantity": trade.get("quantity", 0),
+                    "entry_price": trade.get("entry_price", 0.0),
+                    "exit_price": trade.get("exit_price", 0.0),
+                    "pnl": trade.get("pnl", 0.0),
+                    "pnl_percent": trade.get("pnl_percent", 0.0),
+                    "strategy": trade.get("strategy", "PennyHunter"),
+                    "status": trade.get("status", "active"),
+                    "notes": trade.get("notes", ""),
+                }
+            )
+
         return {
             "trades": formatted_trades,
             "pagination": {
                 "total": total_trades,
                 "limit": limit,
                 "offset": offset,
-                "has_more": (offset + limit) < total_trades
+                "has_more": (offset + limit) < total_trades,
             },
             "summary": {
                 "total_trades": total_trades,
@@ -1945,8 +1956,8 @@ async def get_trade_history(
                 "wins": wins,
                 "losses": losses,
                 "win_rate": round(win_rate, 1),
-                "total_pnl": round(total_pnl, 2)
-            }
+                "total_pnl": round(total_pnl, 2),
+            },
         }
     except Exception as e:
         logger.error(f"Error fetching trade history: {e}")
@@ -1956,38 +1967,35 @@ async def get_trade_history(
 @app.post("/api/trading/validate", tags=["Trading"])
 async def mark_trade_for_validation(validation_request: Dict[str, Any]) -> Dict[str, str]:
     """Mark a trade for Phase 2 validation tracking.
-    
+
     Args:
         validation_request: Trade details including ticker, outcome, pnl
-    
+
     Returns:
         Validation confirmation
     """
     from src.bouncehunter.pennyhunter_memory import PennyHunterMemory
     from pathlib import Path
     import json
-    
+
     try:
-        ticker = validation_request.get('ticker')
-        outcome = validation_request.get('outcome')  # 'win' or 'loss'
-        pnl = validation_request.get('pnl', 0.0)
-        notes = validation_request.get('notes', '')
-        
+        ticker = validation_request.get("ticker")
+        outcome = validation_request.get("outcome")  # 'win' or 'loss'
+        pnl = validation_request.get("pnl", 0.0)
+        notes = validation_request.get("notes", "")
+
         if not all([ticker, outcome]):
             raise HTTPException(status_code=400, detail="Missing required validation fields")
-        
+
         # Record in memory system
         memory = PennyHunterMemory()
         memory.record_trade_outcome(
-            ticker=ticker,
-            win=(outcome == 'win'),
-            pnl=pnl,
-            trade_date=datetime.now().strftime('%Y-%m-%d')
+            ticker=ticker, win=(outcome == "win"), pnl=pnl, trade_date=datetime.now().strftime("%Y-%m-%d")
         )
-        
+
         # Also append to cumulative history
         cumulative_file = Path(__file__).parent.parent.parent / "reports" / "pennyhunter_cumulative_history.json"
-        
+
         trade_record = {
             "ticker": ticker,
             "outcome": outcome,
@@ -1996,28 +2004,28 @@ async def mark_trade_for_validation(validation_request: Dict[str, Any]) -> Dict[
             "status": "completed",
             "validated_at": datetime.now().isoformat(),
         }
-        
+
         # Load existing history
         if cumulative_file.exists():
-            with open(cumulative_file, 'r') as f:
+            with open(cumulative_file, "r") as f:
                 data = json.load(f)
         else:
             data = {"trades": []}
-        
+
         # Append new trade
         data["trades"].append(trade_record)
-        
+
         # Save updated history
         cumulative_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(cumulative_file, 'w') as f:
+        with open(cumulative_file, "w") as f:
             json.dump(data, f, indent=2)
-        
+
         return {
             "status": "success",
             "message": f"Trade validated: {ticker} ({outcome})",
             "ticker": ticker,
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2029,13 +2037,14 @@ async def mark_trade_for_validation(validation_request: Dict[str, Any]) -> Dict[
 # Alert Rules CRUD Endpoints
 # ============================================================================
 
+
 @app.post("/api/alerts/rules", tags=["Alerts"])
 async def create_alert_rule(rule_data: Dict[str, Any]) -> Dict[str, Any]:
     """Create a new alert rule.
-    
+
     Args:
         rule_data: Alert rule configuration
-    
+
     Returns:
         Created alert rule
     """
@@ -2043,10 +2052,10 @@ async def create_alert_rule(rule_data: Dict[str, Any]) -> Dict[str, Any]:
         # Generate ID if not provided
         if "id" not in rule_data:
             rule_data["id"] = f"rule_{int(time.time())}_{rule_data.get('description', 'alert')[:20].replace(' ', '_')}"
-        
+
         rule = AlertRuleModel.from_dict(rule_data)
         created_rule = alert_storage.create_rule(rule)
-        
+
         return created_rule.to_dict()
     except Exception as e:
         logger.error(f"Error creating alert rule: {e}")
@@ -2056,10 +2065,10 @@ async def create_alert_rule(rule_data: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/alerts/rules", tags=["Alerts"])
 async def list_alert_rules(enabled_only: bool = False) -> List[Dict[str, Any]]:
     """List all alert rules.
-    
+
     Args:
         enabled_only: Only return enabled rules
-    
+
     Returns:
         List of alert rules
     """
@@ -2074,10 +2083,10 @@ async def list_alert_rules(enabled_only: bool = False) -> List[Dict[str, Any]]:
 @app.get("/api/alerts/rules/{rule_id}", tags=["Alerts"])
 async def get_alert_rule(rule_id: str) -> Dict[str, Any]:
     """Get a specific alert rule.
-    
+
     Args:
         rule_id: Rule identifier
-    
+
     Returns:
         Alert rule details
     """
@@ -2090,11 +2099,11 @@ async def get_alert_rule(rule_id: str) -> Dict[str, Any]:
 @app.put("/api/alerts/rules/{rule_id}", tags=["Alerts"])
 async def update_alert_rule(rule_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """Update an existing alert rule.
-    
+
     Args:
         rule_id: Rule identifier
         updates: Fields to update
-    
+
     Returns:
         Updated alert rule
     """
@@ -2113,10 +2122,10 @@ async def update_alert_rule(rule_id: str, updates: Dict[str, Any]) -> Dict[str, 
 @app.delete("/api/alerts/rules/{rule_id}", tags=["Alerts"])
 async def delete_alert_rule(rule_id: str) -> Dict[str, str]:
     """Delete an alert rule.
-    
+
     Args:
         rule_id: Rule identifier
-    
+
     Returns:
         Deletion confirmation
     """
@@ -2130,6 +2139,7 @@ async def delete_alert_rule(rule_id: str) -> Dict[str, str]:
 # Alerts Inbox Endpoints
 # ============================================================================
 
+
 @app.get("/api/alerts/inbox", tags=["Alerts"])
 async def list_inbox_alerts(
     status: Optional[str] = None,
@@ -2138,13 +2148,13 @@ async def list_inbox_alerts(
     offset: int = 0,
 ) -> Dict[str, Any]:
     """List alerts from inbox with pagination and filters.
-    
+
     Args:
         status: Filter by status (pending, acknowledged, snoozed, resolved)
         severity: Filter by severity (info, warning, high, critical)
         limit: Maximum number of alerts to return
         offset: Pagination offset
-    
+
     Returns:
         List of alerts with pagination metadata
     """
@@ -2155,7 +2165,7 @@ async def list_inbox_alerts(
             limit=limit,
             offset=offset,
         )
-        
+
         return {
             "alerts": [alert.to_dict() for alert in alerts],
             "total": len(alerts),
@@ -2170,10 +2180,10 @@ async def list_inbox_alerts(
 @app.post("/api/alerts/inbox/{alert_id}/acknowledge", tags=["Alerts"])
 async def acknowledge_alert(alert_id: str) -> Dict[str, Any]:
     """Acknowledge an alert.
-    
+
     Args:
         alert_id: Alert identifier
-    
+
     Returns:
         Updated alert
     """
@@ -2186,11 +2196,11 @@ async def acknowledge_alert(alert_id: str) -> Dict[str, Any]:
 @app.post("/api/alerts/inbox/{alert_id}/snooze", tags=["Alerts"])
 async def snooze_alert(alert_id: str, duration_seconds: int = 3600) -> Dict[str, Any]:
     """Snooze an alert for a specified duration.
-    
+
     Args:
         alert_id: Alert identifier
         duration_seconds: Snooze duration in seconds (default: 1 hour)
-    
+
     Returns:
         Updated alert
     """
@@ -2203,11 +2213,11 @@ async def snooze_alert(alert_id: str, duration_seconds: int = 3600) -> Dict[str,
 @app.put("/api/alerts/inbox/{alert_id}/labels", tags=["Alerts"])
 async def update_alert_labels(alert_id: str, labels: List[str]) -> Dict[str, Any]:
     """Update labels for an alert.
-    
+
     Args:
         alert_id: Alert identifier
         labels: New list of labels
-    
+
     Returns:
         Updated alert
     """
@@ -2221,10 +2231,11 @@ async def update_alert_labels(alert_id: str, labels: List[str]) -> Dict[str, Any
 # Alert Analytics Endpoints
 # ============================================================================
 
+
 @app.get("/api/alerts/analytics/delivery", tags=["Alerts"])
 async def get_delivery_analytics() -> Dict[str, Any]:
     """Get alert delivery latency metrics.
-    
+
     Returns:
         Delivery metrics including average latency
     """
@@ -2239,32 +2250,32 @@ async def get_delivery_analytics() -> Dict[str, Any]:
 @app.get("/api/alerts/analytics/performance", tags=["Alerts"])
 async def get_alert_performance() -> Dict[str, Any]:
     """Get alert rule performance metrics.
-    
+
     Returns:
         Performance metrics including alerts by rule and severity
     """
     try:
         # Get all alerts
         all_alerts = alert_storage.list_alerts(limit=1000)
-        
+
         # Count by severity
         alerts_by_severity = {}
         for alert in all_alerts:
             severity = alert.severity.value if isinstance(alert.severity, AlertSeverity) else alert.severity
             alerts_by_severity[severity] = alerts_by_severity.get(severity, 0) + 1
-        
+
         # Count by rule
         alerts_by_rule = {}
         for alert in all_alerts:
             alerts_by_rule[alert.rule_id] = alerts_by_rule.get(alert.rule_id, 0) + 1
-        
+
         # Calculate acknowledgement rate
         acknowledged = sum(1 for alert in all_alerts if alert.status == AlertStatus.ACKNOWLEDGED)
         acknowledgement_rate = (acknowledged / len(all_alerts) * 100) if all_alerts else 0.0
-        
+
         # Get delivery metrics
         delivery_metrics = alert_storage.get_delivery_metrics()
-        
+
         return {
             "total_alerts": len(all_alerts),
             "alerts_by_severity": alerts_by_severity,
@@ -2282,6 +2293,7 @@ async def get_alert_performance() -> Dict[str, Any]:
 # Health Check
 # ============================================================================
 
+
 @app.get("/health", tags=["Health"])
 async def health_check() -> Dict[str, str]:
     """Health check endpoint.
@@ -2298,9 +2310,11 @@ async def health_check() -> Dict[str, str]:
 
 # Import and include experiments router
 from src.api.routes.experiments import router as experiments_router
+
 app.include_router(experiments_router, prefix="/api")
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8001)

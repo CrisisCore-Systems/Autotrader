@@ -177,91 +177,97 @@ class NarrativeAnalyzer:
             meme_momentum=meme_momentum,
         )
 
-    def _request_analysis(self, prompt: str, texts: Sequence[str]) -> dict[str, Any]:
-        """Invoke the LLM and parse the JSON payload with strict Pydantic validation.
-        
-        This method enforces JSON schema validation using Pydantic models.
-        Invalid payloads trigger fail-fast behavior with structured logging.
-        """
+    def _check_semantic_cache(self, prompt: str) -> Optional[dict]:
+        """Check semantic cache for cached response."""
+        if self._semantic_cache is None:
+            return None
+        payload = self._semantic_cache.get(prompt, task_type=self._semantic_task_type)
+        return dict(payload) if payload is not None else None
 
-        if not self._use_llm or self._llm_client is None:
-            return {}
+    def _check_prompt_cache(self, cache_key: Optional[str]) -> Optional[dict]:
+        """Check prompt cache for cached response."""
+        if not (cache_key and self._prompt_cache):
+            return None
+        cached = self._prompt_cache.get(cache_key)
+        return dict(cached) if cached is not None else None
 
-        cache_key = self._prompt_cache.hash_prompt(prompt, model=self._model) if self._prompt_cache else None
-
-        semantic_payload = None
-        if self._semantic_cache is not None:
-            semantic_payload = self._semantic_cache.get(prompt, task_type=self._semantic_task_type)
-            if semantic_payload is not None:
-                return dict(semantic_payload)
-
-        if cache_key and self._prompt_cache:
-            cached = self._prompt_cache.get(cache_key)
-            if cached is not None:
-                return dict(cached)
-
+    def _handle_llm_invocation(self, prompt: str, texts: Sequence[str]) -> Optional[str]:
+        """Invoke LLM with error handling."""
         try:
-            response_content = self._invoke_completion(prompt)
+            return self._invoke_completion(prompt)
         except BudgetExceeded:
-            logger.warning(
-                "llm_budget_exceeded",
-                extra={"context": "narrative_analysis", "fallback": "heuristics"}
-            )
-            return self._fallback_payload(texts)
+            logger.warning("llm_budget_exceeded", extra={"context": "narrative_analysis", "fallback": "heuristics"})
+            return None
         except Exception as e:
-            logger.error(
-                "llm_invocation_error",
-                extra={"context": "narrative_analysis", "error": str(e)}
-            )
-            return {}
+            logger.error("llm_invocation_error", extra={"context": "narrative_analysis", "error": str(e)})
+            return None
 
-        # Clean markdown formatting from LLM response
+    def _validate_and_cache_response(
+        self, response_content: str, cache_key: Optional[str], prompt: str
+    ) -> Optional[dict]:
+        """Validate LLM response and cache if valid."""
         cleaned = _clean_json_response(response_content)
-        
-        # Validate with Pydantic schema (fail-fast on invalid payloads)
-        validated_response = validate_llm_response(
-            cleaned,
-            NarrativeAnalysisResponse,
-            context="narrative_analysis"
-        )
-        
+        validated_response = validate_llm_response(cleaned, NarrativeAnalysisResponse, context="narrative_analysis")
+
         if validated_response is None:
-            # Validation failed - log detailed error and use fallback
             logger.warning(
                 "llm_validation_failed_using_fallback",
-                extra={
-                    "context": "narrative_analysis",
-                    "response_preview": cleaned[:200]
-                }
+                extra={"context": "narrative_analysis", "response_preview": cleaned[:200]},
             )
-            return self._fallback_payload(texts)
-        
-        # Convert validated Pydantic model to dict for backward compatibility
+            return None
+
         data = validated_response.model_dump()
-        
+
         # Cache the validated data
         if cache_key and self._prompt_cache:
             self._prompt_cache.set(cache_key, data, ttl=self._cache_ttl)
         if self._semantic_cache is not None:
-            ttl_override = self._semantic_cache_ttl
             self._semantic_cache.set(
-                prompt,
-                data,
-                task_type=self._semantic_task_type,
-                ttl_seconds=ttl_override,
+                prompt, data, task_type=self._semantic_task_type, ttl_seconds=self._semantic_cache_ttl
             )
-        
+
         logger.info(
             "llm_response_validated",
             extra={
                 "context": "narrative_analysis",
                 "sentiment": data.get("sentiment"),
                 "sentiment_score": data.get("sentiment_score"),
-                "themes_count": len(data.get("emergent_themes", []))
-            }
+                "themes_count": len(data.get("emergent_themes", [])),
+            },
         )
-        
         return data
+
+    def _request_analysis(self, prompt: str, texts: Sequence[str]) -> dict[str, Any]:
+        """Invoke the LLM and parse the JSON payload with strict Pydantic validation.
+
+        This method enforces JSON schema validation using Pydantic models.
+        Invalid payloads trigger fail-fast behavior with structured logging.
+        """
+        if not self._use_llm or self._llm_client is None:
+            return {}
+
+        cache_key = self._prompt_cache.hash_prompt(prompt, model=self._model) if self._prompt_cache else None
+
+        # Check caches
+        semantic_result = self._check_semantic_cache(prompt)
+        if semantic_result is not None:
+            return semantic_result
+
+        prompt_result = self._check_prompt_cache(cache_key)
+        if prompt_result is not None:
+            return prompt_result
+
+        # Invoke LLM
+        response_content = self._handle_llm_invocation(prompt, texts)
+        if response_content is None:
+            return self._fallback_payload(texts)
+
+        # Validate and cache
+        validated_data = self._validate_and_cache_response(response_content, cache_key, prompt)
+        if validated_data is None:
+            return self._fallback_payload(texts)
+
+        return validated_data
 
     def _invoke_completion(self, prompt: str) -> str:
         """Call the Groq client (or injected stub) to score the provided narratives."""
@@ -270,7 +276,7 @@ class NarrativeAnalyzer:
             return ""
         if self._cost_guardrail is not None:
             self._cost_guardrail.reserve(prompt)
-        
+
         try:
             completion = self._llm_client.chat.completions.create(
                 model=self._model,
@@ -285,12 +291,12 @@ class NarrativeAnalyzer:
         except Exception as e:
             # Try to get more details from the error
             error_details = str(e)
-            if hasattr(e, 'response') and e.response:
+            if hasattr(e, "response") and e.response:
                 try:
                     error_details = f"{error_details} - Response: {e.response.text}"
                 except:
                     pass
-            
+
             logger.error(
                 "groq_api_error",
                 extra={
@@ -298,8 +304,8 @@ class NarrativeAnalyzer:
                     "error_message": error_details,
                     "model": self._model,
                     "prompt_length": len(prompt),
-                    "prompt_preview": prompt[:200] + "..." if len(prompt) > 200 else prompt
-                }
+                    "prompt_preview": prompt[:200] + "..." if len(prompt) > 200 else prompt,
+                },
             )
             raise
 

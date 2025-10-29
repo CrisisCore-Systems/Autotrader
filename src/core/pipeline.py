@@ -43,6 +43,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from src.services.social import SocialAggregator, SocialPost
     from src.services.tokenomics import TokenomicsAggregator, TokenomicsSnapshot
     from src.services.news import NewsAggregator
+
     # Phase 3: Derivatives & On-Chain Flow
     from src.services.onchain_monitor import OnChainAlert
     from src.services.derivatives import DerivativesAggregator
@@ -189,15 +190,15 @@ class HiddenGemScanner:
 
     def scan(self, config: TokenConfig) -> ScanResult:
         """Scan a token and produce a comprehensive analysis result.
-        
+
         Args:
             config: Token configuration
-            
+
         Returns:
             Scan result with scores, metrics, and artifacts
         """
         start_time = time.time()
-        
+
         # Log scan initiation
         logger.info(
             "scan_started",
@@ -205,36 +206,36 @@ class HiddenGemScanner:
             token_id=config.coingecko_id,
             contract_address=config.contract_address,
         )
-        
+
         try:
             with trace_operation(
                 "scanner.scan",
                 attributes={
                     "token.symbol": config.symbol,
                     "token.contract": config.contract_address,
-                }
+                },
             ):
                 context = ScanContext(config=config)
                 tree = self._build_execution_tree(context)
                 tree.run(context)
-                
+
                 if context.result is None:
                     raise RuntimeError("Scan execution did not produce a result")
-                
+
                 self._post_process(context)
-                
+
                 # Calculate duration
                 duration = time.time() - start_time
-                
+
                 # Record metrics
                 record_scan_request(config.symbol, "success")
                 record_scan_duration(config.symbol, duration, "success")
                 record_gem_score(config.symbol, context.result.gem_score.score)
                 record_confidence_score(config.symbol, context.result.gem_score.confidence)
-                
+
                 if context.result.flag:
                     record_flagged_token(config.symbol, "security_concern")
-                
+
                 # Log completion
                 logger.info(
                     "scan_completed",
@@ -244,26 +245,26 @@ class HiddenGemScanner:
                     flagged=context.result.flag,
                     duration_seconds=duration,
                 )
-                
+
                 # Add trace attributes
                 add_span_attributes(
                     gem_score=context.result.gem_score.score,
                     confidence=context.result.gem_score.confidence,
                     flagged=context.result.flag,
                 )
-                
+
                 return context.result
-                
+
         except Exception as e:
             # Calculate duration even on failure
             duration = time.time() - start_time
-            
+
             # Record error metrics
             error_type = type(e).__name__
             record_scan_request(config.symbol, "failure")
             record_scan_duration(config.symbol, duration, "failure")
             record_scan_error(config.symbol, error_type)
-            
+
             # Log error
             logger.error(
                 "scan_failed",
@@ -273,7 +274,7 @@ class HiddenGemScanner:
                 duration_seconds=duration,
                 exc_info=True,
             )
-            
+
             raise
 
     def scan_with_tree(self, config: TokenConfig) -> tuple[ScanResult, TreeNode]:
@@ -716,7 +717,9 @@ class HiddenGemScanner:
         try:
             # Use FREE Blockscout if available, otherwise fall back to Etherscan
             if self.blockscout_client:
-                context.contract_metadata = self.blockscout_client.fetch_contract_source(context.config.contract_address)
+                context.contract_metadata = self.blockscout_client.fetch_contract_source(
+                    context.config.contract_address
+                )
                 verified = str((context.contract_metadata or {}).get("is_verified", "false")).lower() == "true"
                 return NodeOutcome(
                     status="success",
@@ -756,7 +759,9 @@ class HiddenGemScanner:
             data={"active_streams": ["A1", "A2", "A3", "A5"], "deferred": ["A4", "A6"]},
         )
 
-    def _action_wallet_clustering_deferred(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+    def _action_wallet_clustering_deferred(
+        self, context: ScanContext
+    ) -> NodeOutcome:  # noqa: D401 - documentation node
         return NodeOutcome(
             status="skipped",
             summary="Wallet clustering scheduled for enrichment sprint",
@@ -915,16 +920,14 @@ class HiddenGemScanner:
             logger.warning("market_chart is None, using empty data for snapshot")
         if context.protocol_metrics is None:
             logger.warning("protocol_metrics is None, using empty data for snapshot")
-            
+
         context.holders = self._extract_holder_count(context.contract_metadata or {}, context.protocol_metrics or {})
         combined_narratives = list(context.config.narratives)
         combined_narratives.extend(item.title for item in context.news_items[:3])
 
         snapshot = MarketSnapshot(
             symbol=context.config.symbol,
-            timestamp=context.price_series.index[-1]
-            if not context.price_series.empty
-            else datetime.now(timezone.utc),
+            timestamp=context.price_series.index[-1] if not context.price_series.empty else datetime.now(timezone.utc),
             price=float(context.price_series.iloc[-1]) if not context.price_series.empty else 0.0,
             volume_24h=self._extract_volume(context.market_chart) if context.market_chart else 0.0,
             liquidity_usd=context.onchain_metrics.get("current_tvl", 0.0) if context.onchain_metrics else 0.0,
@@ -945,9 +948,7 @@ class HiddenGemScanner:
             base_narratives = list(context.config.narratives)
             if context.news_items:
                 news_texts = [
-                    f"{item.source}: {item.title}. {item.summary}"
-                    if item.summary
-                    else f"{item.source}: {item.title}"
+                    f"{item.source}: {item.title}. {item.summary}" if item.summary else f"{item.source}: {item.title}"
                     for item in context.news_items
                 ]
                 base_narratives.extend(news_texts)
@@ -966,6 +967,7 @@ class HiddenGemScanner:
             # Create default narrative when LLM fails (e.g., rate limits)
             logger.warning(f"Could not perform narrative analysis: {exc}", exc_info=True)
             from src.core.narrative import NarrativeInsight
+
             context.narrative = NarrativeInsight(
                 sentiment_score=0.5,
                 momentum=0.5,
@@ -1057,7 +1059,13 @@ class HiddenGemScanner:
         return NodeOutcome(
             status="success",
             summary="Applied safety penalties",
-            data={"penalized_keys": [k for k in context.feature_vector if context.adjusted_features.get(k) != context.feature_vector.get(k)]},
+            data={
+                "penalized_keys": [
+                    k
+                    for k in context.feature_vector
+                    if context.adjusted_features.get(k) != context.feature_vector.get(k)
+                ]
+            },
         )
 
     def _action_record_static_analysis(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
@@ -1104,11 +1112,11 @@ class HiddenGemScanner:
                 proceed=False,
             )
         context.gem_score = compute_gem_score(context.adjusted_features)
-        
+
         # Store snapshot and compute delta if feature store is available
         if self.feature_store is not None:
             from src.core.score_explainer import create_snapshot_from_result
-            
+
             # Create and store snapshot
             snapshot = create_snapshot_from_result(
                 token_symbol=context.config.symbol,
@@ -1117,13 +1125,13 @@ class HiddenGemScanner:
                 timestamp=context.snapshot.timestamp if context.snapshot else None,
             )
             self.feature_store.write_snapshot(snapshot)
-            
+
             # Compute delta explanation if we have previous history
             delta = self.feature_store.compute_score_delta(
                 token_symbol=context.config.symbol,
                 current_snapshot=snapshot,
             )
-            
+
             # Log delta if available
             if delta:
                 logger.info(
@@ -1135,7 +1143,7 @@ class HiddenGemScanner:
                     top_positive=[fd.feature_name for fd in delta.top_positive_contributors[:3]],
                     top_negative=[fd.feature_name for fd in delta.top_negative_contributors[:3]],
                 )
-        
+
         return NodeOutcome(
             status="success",
             summary=f"GemScore {context.gem_score.score:.2f} (confidence {context.gem_score.confidence:.1f})",
@@ -1188,7 +1196,9 @@ class HiddenGemScanner:
             data={"coverage_ratio": coverage},
         )
 
-    def _action_tokenomics_adjustment_summary(self, context: ScanContext) -> NodeOutcome:  # noqa: D401 - documentation node
+    def _action_tokenomics_adjustment_summary(
+        self, context: ScanContext
+    ) -> NodeOutcome:  # noqa: D401 - documentation node
         if not context.feature_vector or not context.adjusted_features:
             return NodeOutcome(
                 status="failure",
@@ -1255,7 +1265,8 @@ class HiddenGemScanner:
             data=context.debug,
         )
 
-    def _action_build_artifact(self, context: ScanContext) -> NodeOutcome:
+    def _validate_artifact_prerequisites(self, context: ScanContext) -> Optional[NodeOutcome]:
+        """Validate required data is present before building artifact."""
         missing_fields = []
         if context.gem_score is None:
             missing_fields.append("gem_score")
@@ -1265,7 +1276,7 @@ class HiddenGemScanner:
             missing_fields.append("narrative")
         if context.safety_report is None:
             missing_fields.append("safety_report")
-            
+
         if missing_fields:
             logger.error(
                 "artifact_build_failed_missing_data",
@@ -1278,6 +1289,68 @@ class HiddenGemScanner:
                 data={"missing_fields": missing_fields},
                 proceed=False,
             )
+        return None
+
+    def _enrich_payload_with_events(self, payload: Dict, context: ScanContext) -> None:
+        """Enrich payload with GitHub events if available."""
+        if not context.github_events:
+            return
+
+        payload["github_activity"] = [
+            {
+                "id": event.id,
+                "repo": event.repo,
+                "type": event.type,
+                "title": event.title,
+                "url": event.url,
+                "event_at": event.event_at.isoformat() if event.event_at else None,
+            }
+            for event in context.github_events[:10]
+        ]
+
+    def _enrich_payload_with_social(self, payload: Dict, context: ScanContext) -> None:
+        """Enrich payload with social posts if available."""
+        if not context.social_posts:
+            return
+
+        payload["social_posts"] = [
+            {
+                "id": post.id,
+                "platform": post.platform,
+                "author": post.author,
+                "content": post.content,
+                "url": post.url,
+                "posted_at": post.posted_at.isoformat() if post.posted_at else None,
+                "metrics": dict(post.metrics),
+            }
+            for post in context.social_posts[:10]
+        ]
+
+    def _enrich_payload_with_tokenomics(self, payload: Dict, context: ScanContext) -> None:
+        """Enrich payload with tokenomics metrics if available."""
+        if not context.tokenomics_metrics:
+            return
+
+        payload["tokenomics_metrics"] = [
+            {
+                "token": snapshot.token,
+                "metric": snapshot.metric,
+                "value": snapshot.value,
+                "unit": snapshot.unit,
+                "source": snapshot.source,
+                "recorded_at": snapshot.recorded_at.isoformat() if snapshot.recorded_at else None,
+                "metadata": dict(snapshot.metadata),
+            }
+            for snapshot in context.tokenomics_metrics[:20]
+        ]
+
+    def _action_build_artifact(self, context: ScanContext) -> NodeOutcome:
+        # Validate prerequisites
+        validation_error = self._validate_artifact_prerequisites(context)
+        if validation_error:
+            return validation_error
+
+        # Build base payload
         payload = self._build_artifact_payload(
             context.config,
             context.snapshot,
@@ -1293,49 +1366,17 @@ class HiddenGemScanner:
             context.security_metrics,
             context.final_score,
         )
-        markdown = render_markdown_artifact(payload)
-        context.artifact_payload = payload
-        context.artifact_markdown = markdown
-        if context.github_events:
-            payload["github_activity"] = [
-                {
-                    "id": event.id,
-                    "repo": event.repo,
-                    "type": event.type,
-                    "title": event.title,
-                    "url": event.url,
-                    "event_at": event.event_at.isoformat() if event.event_at else None,
-                }
-                for event in context.github_events[:10]
-            ]
-        if context.social_posts:
-            payload["social_posts"] = [
-                {
-                    "id": post.id,
-                    "platform": post.platform,
-                    "author": post.author,
-                    "content": post.content,
-                    "url": post.url,
-                    "posted_at": post.posted_at.isoformat() if post.posted_at else None,
-                    "metrics": dict(post.metrics),
-                }
-                for post in context.social_posts[:10]
-            ]
-        if context.tokenomics_metrics:
-            payload["tokenomics_metrics"] = [
-                {
-                    "token": snapshot.token,
-                    "metric": snapshot.metric,
-                    "value": snapshot.value,
-                    "unit": snapshot.unit,
-                    "source": snapshot.source,
-                    "recorded_at": snapshot.recorded_at.isoformat() if snapshot.recorded_at else None,
-                    "metadata": dict(snapshot.metadata),
-                }
-                for snapshot in context.tokenomics_metrics[:20]
-            ]
+
+        # Enrich with optional data
+        self._enrich_payload_with_events(payload, context)
+        self._enrich_payload_with_social(payload, context)
+        self._enrich_payload_with_tokenomics(payload, context)
+
+        # Render artifacts
         markdown = render_markdown_artifact(payload)
         html = render_html_artifact(payload)
+
+        # Update context
         context.artifact_payload = payload
         context.artifact_markdown = markdown
         context.artifact_html = html
@@ -1361,9 +1402,9 @@ class HiddenGemScanner:
             social_posts=context.social_posts,
             tokenomics_metrics=context.tokenomics_metrics,
             # Phase 3: Derivatives & On-Chain Flow
-            derivatives_data=getattr(context, 'derivatives_data', {}),
-            onchain_alerts=getattr(context, 'onchain_alerts', []),
-            liquidation_spikes=getattr(context, 'liquidation_spikes', {}),
+            derivatives_data=getattr(context, "derivatives_data", {}),
+            onchain_alerts=getattr(context, "onchain_alerts", []),
+            liquidation_spikes=getattr(context, "liquidation_spikes", {}),
         )
         return NodeOutcome(
             status="success",
@@ -1406,11 +1447,11 @@ class HiddenGemScanner:
         try:
             snapshot = self.derivatives_aggregator.generate_snapshot(context.config.symbol)
             context.derivatives_data = snapshot
-            context.liquidation_spikes = snapshot.get('liquidation_spikes', {})
-            
-            total_exchanges = len(snapshot.get('funding_rates', {}))
-            total_oi = sum(snapshot.get('open_interest', {}).values())
-            
+            context.liquidation_spikes = snapshot.get("liquidation_spikes", {})
+
+            total_exchanges = len(snapshot.get("funding_rates", {}))
+            total_oi = sum(snapshot.get("open_interest", {}).values())
+
             return NodeOutcome(
                 status="success",
                 summary=f"Fetched derivatives data from {total_exchanges} exchanges",
@@ -1439,7 +1480,7 @@ class HiddenGemScanner:
         try:
             alerts = self.onchain_monitor.scan_transfers(context.config.contract_address)
             context.onchain_alerts = alerts
-            
+
             return NodeOutcome(
                 status="success",
                 summary=f"Scanned on-chain transfers, found {len(alerts)} alerts",
@@ -1494,14 +1535,20 @@ class HiddenGemScanner:
         prices = market_chart.get("prices", [])
         if not prices:
             return pd.Series(dtype=float)
-        data = {datetime.fromtimestamp(point[0] / 1000, tz=timezone.utc): point[1] for point in prices if len(point) >= 2}
+        data = {
+            datetime.fromtimestamp(point[0] / 1000, tz=timezone.utc): point[1] for point in prices if len(point) >= 2
+        }
         series = pd.Series(data)
         series.sort_index(inplace=True)
         return series
 
-    def _derive_onchain_metrics(self, protocol_metrics: Dict[str, object], unlocks: Sequence[UnlockEvent]) -> Dict[str, float]:
+    def _derive_onchain_metrics(
+        self, protocol_metrics: Dict[str, object], unlocks: Sequence[UnlockEvent]
+    ) -> Dict[str, float]:
         tvl_points = protocol_metrics.get("tvl", []) or []
-        tvl_values = [float(point.get("totalLiquidityUSD", 0.0)) for point in tvl_points if "totalLiquidityUSD" in point]
+        tvl_values = [
+            float(point.get("totalLiquidityUSD", 0.0)) for point in tvl_points if "totalLiquidityUSD" in point
+        ]
         current_tvl = tvl_values[-1] if tvl_values else 0.0
         previous_tvl = tvl_values[-2] if len(tvl_values) >= 2 else current_tvl
         reference_tvl = tvl_values[-8] if len(tvl_values) >= 8 else (tvl_values[0] if tvl_values else 0.0)
@@ -1758,34 +1805,32 @@ class HiddenGemScanner:
     def _artifact_hash(self, config: TokenConfig, snapshot: MarketSnapshot, gem_score: GemScoreResult) -> str:
         """Generate artifact hash using cryptographic signature."""
         from src.security.artifact_integrity import get_signer
-        
+
         data = f"{config.symbol}|{snapshot.timestamp.isoformat()}|{gem_score.score:.2f}|{gem_score.confidence:.2f}"
         signer = get_signer()
         return signer.compute_hash(data, algorithm="sha256")[:16]  # First 16 chars for readability
-    
+
     def _get_source_commit(self) -> str:
         """Get current git commit hash for reproducibility."""
         try:
             import subprocess
-            result = subprocess.run(
-                ['git', 'rev-parse', 'HEAD'],
-                capture_output=True,
-                text=True,
-                timeout=2
-            )
+
+            result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=2)
             if result.returncode == 0:
                 return result.stdout.strip()[:8]
         except Exception:
             pass
         return "unknown"
-    
+
     def _compute_feature_set_hash(self, features: Dict[str, Any]) -> str:
         """Compute hash of feature names and values for provenance."""
         import hashlib
-        feature_str = "|".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" 
-                               for k, v in sorted(features.items()))
+
+        feature_str = "|".join(
+            f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" for k, v in sorted(features.items())
+        )
         return hashlib.sha256(feature_str.encode()).hexdigest()[:16]
-    
+
     def _classify_score(self, score: float) -> str:
         """Classify GemScore into categories."""
         if score >= 80:

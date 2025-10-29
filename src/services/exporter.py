@@ -51,6 +51,8 @@ def render_markdown_artifact(payload: Dict[str, str]) -> str:
     lore = payload.get("lore", "")
     snapshot = payload.get("data_snapshot", []) or []
     actions = payload.get("actions", []) or []
+
+
 def _dedupe_preserve_order(items: Iterable[str]) -> List[str]:
     """Return ``items`` with duplicates removed while keeping order."""
 
@@ -180,8 +182,7 @@ def _mapping_rows(
         return []
 
     items: List[tuple[str, float | None, str]] = [
-        (key, numeric, _format_number(display, precision=precision))
-        for key, numeric, display in normalised
+        (key, numeric, _format_number(display, precision=precision)) for key, numeric, display in normalised
     ]
 
     if limit is not None and len(items) > limit:
@@ -265,16 +266,16 @@ def _format_news_section_html(items: Sequence[Mapping[str, object]]) -> str:
     """Return HTML for the news section."""
 
     if not items:
-        return "<p class=\"muted\">- None</p>"
+        return '<p class="muted">- None</p>'
 
-    fragments: List[str] = ["<ul class=\"news-list\">"]
+    fragments: List[str] = ['<ul class="news-list">']
     for item in items:
         source = escape(str(item.get("source") or "News"))
         title = escape(str(item.get("title") or "Update"))
         published = item.get("published_at")
         header = f"<strong>{source}</strong> — {title}"
         if published:
-            header += f" <span class=\"muted\">({escape(str(published))})</span>"
+            header += f' <span class="muted">({escape(str(published))})</span>'
 
         fragments.append("  <li><article>")
         fragments.append(f"    <h4>{header}</h4>")
@@ -296,7 +297,7 @@ def _format_news_section_html(items: Sequence[Mapping[str, object]]) -> str:
 
 def _render_table_html(rows: Sequence[tuple[str, str]]) -> str:
     if not rows:
-        return "<p class=\"muted\">-</p>"
+        return '<p class="muted">-</p>'
 
     fragments = [
         "<table>",
@@ -304,9 +305,7 @@ def _render_table_html(rows: Sequence[tuple[str, str]]) -> str:
         "  <tbody>",
     ]
     for label, value in rows:
-        fragments.append(
-            f"    <tr><td>{escape(label)}</td><td>{escape(value)}</td></tr>"
-        )
+        fragments.append(f"    <tr><td>{escape(label)}</td><td>{escape(value)}</td></tr>")
     fragments.append("  </tbody>")
     fragments.append("</table>")
     return "\n".join(fragments)
@@ -314,13 +313,135 @@ def _render_table_html(rows: Sequence[tuple[str, str]]) -> str:
 
 def _render_list_html(items: Sequence[str]) -> str:
     if not items:
-        return "<p class=\"muted\">-</p>"
+        return '<p class="muted">-</p>'
 
     fragments = ["<ul>"]
     for item in items:
         fragments.append(f"  <li>{escape(item)}</li>")
     fragments.append("</ul>")
     return "\n".join(fragments)
+
+
+def _extract_core_fields(payload: Dict[str, object]) -> Dict[str, any]:
+    """Extract core fields from payload with defaults."""
+    return {
+        "title": payload.get("title", "Untitled Artifact"),
+        "timestamp": payload.get("timestamp") or payload.get("date", "1970-01-01T00:00:00Z"),
+        "glyph": payload.get("glyph", "⧗⟡"),
+        "gem_score": _format_number(payload.get("gem_score", "N/A"), precision=2),
+        "confidence": _format_number(payload.get("confidence", "N/A"), precision=2),
+        "final_score": _format_number(payload.get("final_score", "N/A"), precision=2),
+        "nvi": _format_number(payload.get("nvi", 0.0), precision=2),
+        "flags": _coerce_lines(payload.get("flags", [])),
+        "lore": payload.get("lore", ""),
+    }
+
+
+def _build_header_section(fields: Dict[str, any]) -> List[str]:
+    """Build the YAML front matter header."""
+    header_lines = [
+        "---",
+        f'title: "{fields["title"]}"',
+        f'date: {fields["timestamp"]}',
+        f'glyph: "{fields["glyph"]}"',
+        f'GemScore: {fields["gem_score"]}',
+        f'Confidence: {fields["confidence"]}',
+        f'NVI: {fields["nvi"]}',
+        "Flags:",
+    ]
+    flag_lines = [f"  - {flag}" for flag in fields["flags"]]
+    header_lines.extend(flag_lines)
+    return header_lines
+
+
+def _build_summary_section(fields: Dict[str, any], payload: Dict[str, object]) -> List[str]:
+    """Build executive summary section."""
+    sentiment = payload.get("narrative_sentiment", "unknown")
+    momentum = payload.get("narrative_momentum")
+
+    summary_lines = [
+        f'GemScore: {fields["gem_score"]} (confidence {fields["confidence"]})',
+        f'Final Score: {fields["final_score"]}',
+        f'Flags: {", ".join(fields["flags"]) if fields["flags"] else "None"}',
+        f"Narrative Sentiment: {sentiment}",
+    ]
+    if momentum is not None:
+        summary_lines.append(f"Narrative Momentum: {_format_number(momentum, precision=3)}")
+    return summary_lines
+
+
+def _build_market_section(payload: Dict[str, object]) -> List[str]:
+    """Build market snapshot section."""
+    market_rows = [
+        ("Price", payload.get("price")),
+        ("24h Volume", payload.get("volume_24h")),
+        ("Liquidity", payload.get("liquidity")),
+        ("Holders", payload.get("holders")),
+    ]
+    market_rows = [(label, _format_number(value)) for label, value in market_rows if value is not None]
+    return _format_table(market_rows)
+
+
+def _build_narrative_section(payload: Dict[str, object]) -> List[str]:
+    """Build narrative signals section."""
+    sentiment = payload.get("narrative_sentiment", "unknown")
+    momentum = payload.get("narrative_momentum")
+    narratives = _coerce_lines(payload.get("narratives", []))
+
+    narrative_section_lines = _make_bullet_list([f"**Sentiment:** {sentiment}"])
+    if momentum is not None:
+        narrative_section_lines.append(f"- **Momentum:** {_format_number(momentum, precision=3)}")
+    if narratives:
+        narrative_section_lines.append("- **Themes:**")
+        narrative_section_lines.extend(_make_bullet_list(narratives, indent=2))
+    return narrative_section_lines
+
+
+def _build_all_sections(fields: Dict[str, any], payload: Dict[str, object]) -> List[List[str]]:
+    """Build all document sections."""
+    snapshot = _coerce_lines(payload.get("data_snapshot", []))
+    actions = _coerce_lines(payload.get("actions", []))
+
+    return [
+        _build_header_section(fields),
+        Section("Executive Summary", _build_summary_section(fields, payload), level=1).render(),
+        Section("Market Snapshot", _build_market_section(payload), level=2).render(),
+        Section("Narrative Signals", _build_narrative_section(payload), level=2).render(),
+        Section(
+            "Sentiment Metrics", _format_mapping_section(payload.get("sentiment_metrics"), precision=3), level=2
+        ).render(),
+        Section(
+            "Technical Metrics", _format_mapping_section(payload.get("technical_metrics"), precision=3), level=2
+        ).render(),
+        Section(
+            "Security Metrics", _format_mapping_section(payload.get("security_metrics"), precision=3), level=2
+        ).render(),
+        Section("News Highlights", _format_news_section(payload.get("news_items", [])), level=2).render(),
+        Section(
+            "Feature Vector Highlights",
+            _format_mapping_section(payload.get("features"), precision=3, limit=12),
+            level=2,
+        ).render(),
+        Section("Diagnostics", _format_mapping_section(payload.get("debug"), precision=3, limit=12), level=2).render(),
+        Section("Lore", [fields["lore"]] if fields["lore"] else ["-"], level=1).render(),
+        Section("Data Snapshot", _make_bullet_list(snapshot) if snapshot else ["-"], level=1).render(),
+        Section("Action Notes", _make_bullet_list(actions) if actions else ["-"], level=1).render(),
+    ]
+
+
+def _append_signature(template: str, fields: Dict[str, any]) -> str:
+    """Sign and append signature section to artifact."""
+    signer = get_signer()
+    signature = signer.sign_artifact(
+        template, metadata={"title": fields["title"], "timestamp": fields["timestamp"], "type": "markdown_artifact"}
+    )
+
+    template += "\n\n---\n\n# Artifact Signature\n\n"
+    template += f"**Hash Algorithm:** {signature.hash_algorithm}\n\n"
+    template += f"**Content Hash (SHA-256):**\n```\n{signature.content_hash}\n```\n\n"
+    template += f"**HMAC Signature:**\n```\n{signature.hmac_signature}\n```\n\n"
+    template += f"**Signed At:** {signature.timestamp}\n"
+    return template
 
 
 def render_markdown_artifact(payload: Dict[str, object]) -> str:
@@ -331,107 +452,10 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
     dashboard that surfaces the main KPIs, narrative insights, feature vector,
     diagnostic data, and the original lore and action notes.
     """
+    fields = _extract_core_fields(payload)
+    sections = _build_all_sections(fields, payload)
 
-    title = payload.get("title", "Untitled Artifact")
-    timestamp = payload.get("timestamp") or payload.get("date", "1970-01-01T00:00:00Z")
-    glyph = payload.get("glyph", "⧗⟡")
-    gem_score = _format_number(payload.get("gem_score", "N/A"), precision=2)
-    confidence = _format_number(payload.get("confidence", "N/A"), precision=2)
-    final_score = _format_number(payload.get("final_score", "N/A"), precision=2)
-    nvi = _format_number(payload.get("nvi", 0.0), precision=2)
-    flags = _coerce_lines(payload.get("flags", []))
-    lore = payload.get("lore", "")
-    snapshot = _coerce_lines(payload.get("data_snapshot", []))
-    actions = _coerce_lines(payload.get("actions", []))
-    narratives = _coerce_lines(payload.get("narratives", []))
-    hash_value = payload.get("hash")
-    news_section_lines = _format_news_section(payload.get("news_items", []))
-    sentiment_metric_lines = _format_mapping_section(payload.get("sentiment_metrics"), precision=3)
-    technical_metric_lines = _format_mapping_section(payload.get("technical_metrics"), precision=3)
-    security_metric_lines = _format_mapping_section(payload.get("security_metrics"), precision=3)
-
-    header_lines = [
-        "---",
-        f'title: "{title}"',
-        f"date: {timestamp}",
-        f'glyph: "{glyph}"',
-        f"GemScore: {gem_score}",
-        f"Confidence: {confidence}",
-        f"NVI: {nvi}",
-        "Flags:",
-    ]
-    flag_lines = [f"  - {flag}" for flag in flags]
-    header_lines.extend(flag_lines)
-
-    # Use full implementation with all sections including news
-    momentum = payload.get("narrative_momentum")
-    sentiment = payload.get("narrative_sentiment", "unknown")
-
-    market_rows = [
-        ("Price", payload.get("price")),
-        ("24h Volume", payload.get("volume_24h")),
-        ("Liquidity", payload.get("liquidity")),
-        ("Holders", payload.get("holders")),
-    ]
-    market_rows = [
-        (label, _format_number(value))
-        for label, value in market_rows
-        if value is not None
-    ]
-
-    summary_lines = [
-        f"GemScore: {gem_score} (confidence {confidence})",
-        f"Final Score: {final_score}",
-        f"Flags: {', '.join(flags) if flags else 'None'}",
-        f"Narrative Sentiment: {sentiment}",
-    ]
-    if momentum is not None:
-        summary_lines.append(f"Narrative Momentum: {_format_number(momentum, precision=3)}")
-
-    market_section_lines = _format_table(market_rows)
-
-    narrative_section_lines = _make_bullet_list(
-        [f"**Sentiment:** {sentiment}"]
-    )
-    if momentum is not None:
-        narrative_section_lines.append(
-            f"- **Momentum:** {_format_number(momentum, precision=3)}"
-        )
-    if narratives:
-        narrative_section_lines.append("- **Themes:**")
-        narrative_section_lines.extend(_make_bullet_list(narratives, indent=2))
-
-    feature_lines = _format_mapping_section(
-        payload.get("features"), precision=3, limit=12
-    )
-
-    debug_lines = _format_mapping_section(
-        payload.get("debug"), precision=3, limit=12
-    )
-
-    snapshot_lines = _make_bullet_list(snapshot) if snapshot else ["-"]
-    action_lines = _make_bullet_list(actions) if actions else ["-"]
-
-    lore_lines = [lore] if lore else ["-"]
-
-    sections: List[List[str]] = [
-        header_lines,
-        Section("Executive Summary", summary_lines, level=1).render(),
-        Section("Market Snapshot", market_section_lines, level=2).render(),
-        Section("Narrative Signals", narrative_section_lines, level=2).render(),
-        Section("Sentiment Metrics", sentiment_metric_lines, level=2).render(),
-        Section("Technical Metrics", technical_metric_lines, level=2).render(),
-        Section("Security Metrics", security_metric_lines, level=2).render(),
-        Section("News Highlights", news_section_lines, level=2).render(),
-        Section("Feature Vector Highlights", feature_lines, level=2).render(),
-        Section("Diagnostics", debug_lines, level=2).render(),
-        Section("Lore", lore_lines, level=1).render(),
-        Section("Data Snapshot", snapshot_lines, level=1).render(),
-        Section("Action Notes", action_lines, level=1).render(),
-    ]
-
-    # Separate sections with blank lines but avoid trailing whitespace by
-    # pruning empty lists.
+    # Separate sections with blank lines but avoid trailing whitespace
     rendered: List[str] = []
     for block in sections:
         if not block:
@@ -441,23 +465,7 @@ def render_markdown_artifact(payload: Dict[str, object]) -> str:
         rendered.extend(block)
 
     template = "\n".join(rendered)
-    
-    # Sign the artifact with cryptographic signature
-    signer = get_signer()
-    signature = signer.sign_artifact(template, metadata={
-        "title": title,
-        "timestamp": timestamp,
-        "type": "markdown_artifact"
-    })
-    
-    # Append signature section
-    template += "\n\n---\n\n# Artifact Signature\n\n"
-    template += f"**Hash Algorithm:** {signature.hash_algorithm}\n\n"
-    template += f"**Content Hash (SHA-256):**\n```\n{signature.content_hash}\n```\n\n"
-    template += f"**HMAC Signature:**\n```\n{signature.hmac_signature}\n```\n\n"
-    template += f"**Signed At:** {signature.timestamp}\n"
-
-    return template
+    return _append_signature(template, fields)
 
 
 def render_html_artifact(payload: Dict[str, object]) -> str:
@@ -486,11 +494,7 @@ def render_html_artifact(payload: Dict[str, object]) -> str:
         ("Liquidity", payload.get("liquidity")),
         ("Holders", payload.get("holders")),
     ]
-    market_rows = [
-        (label, _format_number(value))
-        for label, value in market_rows
-        if value is not None
-    ]
+    market_rows = [(label, _format_number(value)) for label, value in market_rows if value is not None]
 
     feature_rows = _mapping_rows(payload.get("features"), precision=3, limit=12)
     debug_rows = _mapping_rows(payload.get("debug"), precision=3, limit=12)
@@ -505,14 +509,12 @@ def render_html_artifact(payload: Dict[str, object]) -> str:
         f"Narrative Sentiment: {sentiment}",
     ]
     if momentum is not None:
-        summary_items.append(
-            f"Narrative Momentum: {_format_number(momentum, precision=3)}"
-        )
+        summary_items.append(f"Narrative Momentum: {_format_number(momentum, precision=3)}")
 
     flag_badges = (
-        "".join(f"<span class=\"flag\">{escape(flag)}</span>" for flag in flags)
+        "".join(f'<span class="flag">{escape(flag)}</span>' for flag in flags)
         if flags
-        else "<span class=\"muted\">None</span>"
+        else '<span class="muted">None</span>'
     )
 
     css = """
@@ -545,17 +547,15 @@ pre { white-space: pre-wrap; }
 
     # Prepare momentum display value
     momentum_display = (
-        escape(_format_number(momentum, precision=3))
-        if momentum is not None
-        else '<span class="muted">N/A</span>'
+        escape(_format_number(momentum, precision=3)) if momentum is not None else '<span class="muted">N/A</span>'
     )
-    
+
     sections = [
         (
             "Executive Summary",
             "\n".join(
                 [
-                    "<div class=\"summary-grid\">",
+                    '<div class="summary-grid">',
                     f"  <p><strong>GemScore:</strong> {escape(gem_score)}</p>",
                     f"  <p><strong>Confidence:</strong> {escape(confidence)}</p>",
                     f"  <p><strong>Final Score:</strong> {escape(final_score)}</p>",
@@ -577,9 +577,9 @@ pre { white-space: pre-wrap; }
                     (
                         f"<p><strong>Momentum:</strong> {escape(_format_number(momentum, precision=3))}</p>"
                         if momentum is not None
-                        else "<p class=\"muted\">Momentum unavailable</p>"
+                        else '<p class="muted">Momentum unavailable</p>'
                     ),
-                    "<div class=\"themes\">",
+                    '<div class="themes">',
                     _render_list_html(narratives),
                     "</div>",
                 ]
@@ -601,7 +601,7 @@ pre { white-space: pre-wrap; }
     for title_text, content in sections:
         body_fragments.append("  <section>")
         body_fragments.append(f"    <h2>{escape(title_text)}</h2>")
-        body_fragments.append("    <div class=\"content\">")
+        body_fragments.append('    <div class="content">')
         body_fragments.append(content)
         body_fragments.append("    </div>")
         body_fragments.append("  </section>")
@@ -616,7 +616,7 @@ pre { white-space: pre-wrap; }
         f"<style>{css}</style>",
         "</head>",
         "<body>",
-        "<header class=\"artifact-header\">",
+        '<header class="artifact-header">',
         f"  <h1>{escape(glyph)} {escape(title)}</h1>",
         f"  <p>{escape(timestamp)}</p>",
         "</header>",
@@ -624,36 +624,34 @@ pre { white-space: pre-wrap; }
         "</body>",
         "</html>",
     ]
-    
+
     html_string = "\n".join(html_content)
-    
+
     # Sign the complete HTML artifact
     signer = get_signer()
-    signature = signer.sign_artifact(html_string, metadata={
-        "title": title,
-        "timestamp": timestamp,
-        "type": "html_artifact"
-    })
-    
+    signature = signer.sign_artifact(
+        html_string, metadata={"title": title, "timestamp": timestamp, "type": "html_artifact"}
+    )
+
     # Insert signature section before closing body tag
     signature_section = [
-        "  <section class=\"signature-section\">",
+        '  <section class="signature-section">',
         "    <h2>🔐 Artifact Signature</h2>",
-        "    <div class=\"content\">",
+        '    <div class="content">',
         f"      <p><strong>Hash Algorithm:</strong> {escape(signature.hash_algorithm)}</p>",
         f"      <p><strong>Content Hash (SHA-256):</strong></p>",
-        f"      <pre style=\"font-size: 0.85em; overflow-wrap: break-word;\">{escape(signature.content_hash)}</pre>",
+        f'      <pre style="font-size: 0.85em; overflow-wrap: break-word;">{escape(signature.content_hash)}</pre>',
         f"      <p><strong>HMAC Signature:</strong></p>",
-        f"      <pre style=\"font-size: 0.85em; overflow-wrap: break-word;\">{escape(signature.hmac_signature)}</pre>",
+        f'      <pre style="font-size: 0.85em; overflow-wrap: break-word;">{escape(signature.hmac_signature)}</pre>',
         f"      <p><strong>Signed At:</strong> {escape(signature.timestamp)}</p>",
-        f"      <p class=\"muted\" style=\"font-size: 0.9em; margin-top: 1rem;\">This cryptographic signature ensures the integrity of this artifact. Any tampering will be detected during verification.</p>",
+        f'      <p class="muted" style="font-size: 0.9em; margin-top: 1rem;">This cryptographic signature ensures the integrity of this artifact. Any tampering will be detected during verification.</p>',
         "    </div>",
         "  </section>",
     ]
-    
+
     # Insert signature before </body></html>
     final_html = html_string.replace("</body>", "\n".join(signature_section) + "\n</body>")
-    
+
     return final_html
 
 

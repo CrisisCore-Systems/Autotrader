@@ -32,6 +32,70 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class CurriculumConfig:
+    """
+    3-Phase curriculum configuration for progressive learning.
+    
+    Phase 1 (Steps 0-10K): Trading Filters & Dynamic Sizing
+    - Implement quality filters (spread, volume, volatility)
+    - Dynamic position sizing based on conviction
+    - Enhanced regime detection
+    - Target: ~50 trades/day
+    
+    Phase 2 (Steps 10K-35K): Adaptive Profit Taking
+    - Volatility-adjusted profit targets
+    - Time-based scaling
+    - Market condition rewards
+    - Multi-objective optimization
+    
+    Phase 3 (Steps 35K+): Advanced Risk Management
+    - Drawdown controls
+    - Correlation-based sizing
+    - Multi-timeframe analysis
+    - Portfolio-level optimization
+    """
+    phase_1_steps: int = 10000
+    phase_2_steps: int = 35000
+    
+    # Phase 1: Trading filters
+    enable_quality_filters: bool = True
+    enable_dynamic_sizing: bool = True
+    enable_regime_filters: bool = True
+    min_spread_bps: float = 5.0  # Min 5 bps spread
+    min_volume_ratio: float = 0.5  # 50% of avg volume
+    min_conviction_score: float = 2.0  # Minimum conviction for trade
+    
+    # Phase 2: Adaptive profit taking
+    enable_adaptive_targets: bool = False
+    enable_time_scaling: bool = False
+    enable_condition_rewards: bool = False
+    
+    # Phase 3: Advanced risk management
+    enable_drawdown_controls: bool = False
+    enable_correlation_sizing: bool = False
+    enable_multi_timeframe: bool = False
+    max_daily_drawdown_pct: float = 0.02  # 2% daily DD limit
+    
+    def update_phase(self, total_steps: int):
+        """Update curriculum phase based on training progress."""
+        if total_steps < self.phase_1_steps:
+            # Phase 1: Basic filters
+            self.enable_quality_filters = True
+            self.enable_dynamic_sizing = True
+            self.enable_regime_filters = True
+        elif total_steps < self.phase_2_steps:
+            # Phase 2: Add adaptive systems
+            self.enable_adaptive_targets = True
+            self.enable_time_scaling = True
+            self.enable_condition_rewards = True
+        else:
+            # Phase 3: Full risk management
+            self.enable_drawdown_controls = True
+            self.enable_correlation_sizing = True
+            self.enable_multi_timeframe = True
+
+
+@dataclass
 class CostModel:
     """
     IBKR cost modeling for intraday trading.
@@ -112,6 +176,7 @@ class IntradayTradingEnv(gym.Env):
         max_trades_per_day: int = 30,
         cost_model: Optional[CostModel] = None,
         enable_tot_reasoning: bool = True,
+        curriculum_config: Optional[CurriculumConfig] = None,
     ):
         super().__init__()
         
@@ -119,6 +184,10 @@ class IntradayTradingEnv(gym.Env):
         self.pipeline = pipeline
         self.microstructure = microstructure
         self.momentum = momentum
+        
+        # Curriculum configuration
+        self.curriculum = curriculum_config or CurriculumConfig()
+        self.total_steps_trained = 0  # Track across episodes
         
         # Tree of Thought reasoning
         self.enable_tot_reasoning = enable_tot_reasoning
@@ -165,8 +234,8 @@ class IntradayTradingEnv(gym.Env):
         # Cost model
         self.cost_model = cost_model or CostModel()
         
-        # Intelligent profit-taking system
-        profit_config = ProfitTakeConfig(
+        # Intelligent profit-taking system (will be adjusted dynamically in Phase 2)
+        self.base_profit_config = ProfitTakeConfig(
             initial_target_rr=2.0,  # 2:1 risk-reward (more realistic for intraday with wider stop)
             enable_trailing=True,
             trailing_activation=1.2,  # Start trailing at 1.2R
@@ -176,7 +245,7 @@ class IntradayTradingEnv(gym.Env):
             profit_lock_time=30,  # Lock profits after 30 bars
             min_profit_lock=0.5,  # Minimum 0.5R to lock
         )
-        self.profit_taker = ProfitTaker(profit_config)
+        self.profit_taker = ProfitTaker(self.base_profit_config)
         
         # Observation noise (used by several environment variants). Default to 0.0
         # so derived envs that reference `obs_noise_std` won't fail if they
@@ -205,6 +274,11 @@ class IntradayTradingEnv(gym.Env):
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[np.ndarray, dict]:
         """Reset environment to initial state."""
         super().reset(seed=seed)
+        
+        # Update curriculum phase
+        if options and "total_steps_trained" in options:
+            self.total_steps_trained = options["total_steps_trained"]
+            self.curriculum.update_phase(self.total_steps_trained)
         
         # Portfolio state
         self.capital = self.initial_capital
@@ -361,29 +435,60 @@ class IntradayTradingEnv(gym.Env):
                         # Too soon to open new position, skip
                         pass
                     else:
-                        # Ensure target_qty respects max_position limit
-                        if target_qty > 0:
-                            target_qty = min(target_qty, self.max_position)
-                        else:
-                            target_qty = max(target_qty, -self.max_position)
+                        # PHASE 1: Quality filters
+                        if self.position_qty == 0:  # Only filter new position entries
+                            quality_signals = self._compute_quality_signals()
+                            passes_filter, filter_reason = self._check_quality_filters(quality_signals)
+                            
+                            if not passes_filter:
+                                logger.debug(f"Trade rejected by quality filter: {filter_reason}")
+                                # Treat as hold
+                                pass
+                            else:
+                                # PHASE 1: Dynamic position sizing
+                                target_qty = self._calculate_dynamic_position_size(quality_signals, target_qty)
+                                
+                                # Ensure target_qty respects max_position limit
+                                if target_qty > 0:
+                                    target_qty = min(target_qty, self.max_position)
+                                else:
+                                    target_qty = max(target_qty, -self.max_position)
 
-                        if abs(target_qty) == 0:
-                            logger.debug("Skipping trade because target_qty=%s", target_qty)
-                        elif self.position_qty == 0:
-                            # Open new position (long or short)
-                            self._open_position(current_price, target_qty, action_type)
-                            self.last_trade_step = self.steps
-                        elif (self.position_qty > 0 and target_qty < 0) or (self.position_qty < 0 and target_qty > 0):
-                            # Position direction reversal: close current, then open opposite
-                            realized_pnl_close, commission_close = self._close_position(current_price)
-                            realized_pnl += realized_pnl_close
-                            commission += commission_close
-                            self._open_position(current_price, target_qty, action_type)
-                            self.last_trade_step = self.steps
+                                if abs(target_qty) == 0:
+                                    logger.debug("Skipping trade because target_qty=%s", target_qty)
+                                else:
+                                    # Open new position (long or short)
+                                    self._open_position(current_price, target_qty, action_type)
+                                    self.last_trade_step = self.steps
                         else:
-                            # Already in a position of same direction: treat as hold/update drawdown
-                            unrealized = self._calculate_unrealized_pnl(current_price)
-                            self.max_position_drawdown = min(self.max_position_drawdown, unrealized)
+                            # Already in position
+                            # Ensure target_qty respects max_position limit
+                            if target_qty > 0:
+                                target_qty = min(target_qty, self.max_position)
+                            else:
+                                target_qty = max(target_qty, -self.max_position)
+
+                            if abs(target_qty) == 0:
+                                logger.debug("Skipping trade because target_qty=%s", target_qty)
+                            elif (self.position_qty > 0 and target_qty < 0) or (self.position_qty < 0 and target_qty > 0):
+                                # Position direction reversal: close current, then open opposite
+                                realized_pnl_close, commission_close = self._close_position(current_price)
+                                realized_pnl += realized_pnl_close
+                                commission += commission_close
+                                
+                                # Apply filters to new position
+                                quality_signals = self._compute_quality_signals()
+                                passes_filter, filter_reason = self._check_quality_filters(quality_signals)
+                                
+                                if passes_filter:
+                                    target_qty = self._calculate_dynamic_position_size(quality_signals, target_qty)
+                                    self._open_position(current_price, target_qty, action_type)
+                                
+                                self.last_trade_step = self.steps
+                            else:
+                                # Already in a position of same direction: treat as hold/update drawdown
+                                unrealized = self._calculate_unrealized_pnl(current_price)
+                                self.max_position_drawdown = min(self.max_position_drawdown, unrealized)
 
         # Update realized PnL after action
         if realized_pnl != 0.0:
@@ -803,6 +908,95 @@ class IntradayTradingEnv(gym.Env):
             conviction,
         ])
     
+    def _check_quality_filters(self, quality_signals: np.ndarray) -> Tuple[bool, str]:
+        """
+        PHASE 1: Check if trade passes quality filters.
+        
+        Returns:
+            (passes, reason)
+        """
+        if not self.curriculum.enable_quality_filters:
+            return True, "filters_disabled"
+        
+        bid_ask_spread, order_imbalance, rsi, ret_from_vwap, atr, conviction = quality_signals
+        
+        # Filter 1: Spread too wide (poor liquidity)
+        spread_bps = bid_ask_spread * 10000
+        if spread_bps > self.curriculum.min_spread_bps:
+            return False, f"spread_too_wide_{spread_bps:.1f}bps"
+        
+        # Filter 2: Volume too low (checked via tick activity)
+        bars = self.pipeline.get_latest_bars(20)
+        if len(bars) >= 20:
+            recent_volume = sum(b.volume for b in bars[-5:])
+            avg_volume = sum(b.volume for b in bars[-20:]) / 20
+            volume_ratio = recent_volume / (5 * avg_volume) if avg_volume > 0 else 0
+            
+            if volume_ratio < self.curriculum.min_volume_ratio:
+                return False, f"volume_too_low_{volume_ratio:.2f}"
+        
+        # Filter 3: Conviction too low
+        if conviction < self.curriculum.min_conviction_score:
+            return False, f"low_conviction_{conviction:.2f}"
+        
+        # Filter 4: Regime check (avoid choppy markets)
+        if self.curriculum.enable_regime_filters:
+            regime_features = self._compute_regime_features()
+            trend_strength = regime_features[0]
+            vol_regime = regime_features[4]
+            
+            # Don't trade in high volatility + low trend (choppy)
+            if vol_regime == 2 and abs(trend_strength) < 0.3:
+                return False, "choppy_market"
+        
+        return True, "pass"
+    
+    def _calculate_dynamic_position_size(self, quality_signals: np.ndarray, base_qty: int) -> int:
+        """
+        PHASE 1: Calculate position size based on conviction and market conditions.
+        
+        Args:
+            quality_signals: Array of quality metrics
+            base_qty: Base position size from action
+        
+        Returns:
+            Adjusted position size
+        """
+        if not self.curriculum.enable_dynamic_sizing:
+            return base_qty
+        
+        bid_ask_spread, order_imbalance, rsi, ret_from_vwap, atr, conviction = quality_signals
+        
+        # Base multiplier: 1.0x
+        size_multiplier = 1.0
+        
+        # Increase size for high conviction (up to 1.5x)
+        if conviction > 5.0:
+            size_multiplier *= 1.3
+        elif conviction > 3.0:
+            size_multiplier *= 1.1
+        
+        # Reduce size in high volatility (down to 0.5x)
+        vol_features = self._compute_volatility_features()
+        vol_percentile = vol_features[4]
+        if vol_percentile > 0.8:  # 80th percentile
+            size_multiplier *= 0.6
+        elif vol_percentile > 0.6:  # 60th percentile
+            size_multiplier *= 0.8
+        
+        # Reduce size for wide spreads
+        spread_bps = bid_ask_spread * 10000
+        if spread_bps > 3.0:
+            size_multiplier *= 0.7
+        
+        # Apply multiplier
+        adjusted_qty = int(base_qty * size_multiplier)
+        
+        # Ensure minimum size of 5 shares
+        adjusted_qty = max(abs(adjusted_qty), 5) * (1 if base_qty > 0 else -1)
+        
+        return adjusted_qty
+    
     def _open_position(self, price: float, qty: int, action_type: str):
         """Open new position with cost modeling. qty can be negative for shorts."""
         # Calculate costs (use abs(qty) for commission calc)
@@ -849,6 +1043,13 @@ class IntradayTradingEnv(gym.Env):
         else:  # Short
             stop_loss = effective_price + stop_distance
         
+        # PHASE 2: Adaptive profit targets based on volatility
+        if self.curriculum.enable_adaptive_targets:
+            profit_config = self._get_adaptive_profit_config(atr, effective_price)
+            self.profit_taker = ProfitTaker(profit_config)
+        else:
+            self.profit_taker = ProfitTaker(self.base_profit_config)
+        
         # Initialize profit taker
         self.profit_taker.on_position_open(
             entry_price=effective_price,
@@ -864,6 +1065,49 @@ class IntradayTradingEnv(gym.Env):
             f"commission=${commission:.2f}, slippage=${slippage:.4f}, "
             f"SL=${stop_loss:.2f}, TP=${self.profit_taker.take_profit:.2f}"
         )
+    
+    def _get_adaptive_profit_config(self, atr: float, entry_price: float) -> ProfitTakeConfig:
+        """
+        PHASE 2: Dynamically adjust profit targets based on market conditions.
+        
+        High volatility → wider targets
+        Low volatility → tighter targets
+        """
+        # Calculate volatility percentile
+        vol_features = self._compute_volatility_features()
+        vol_percentile = vol_features[4]
+        
+        # Base config
+        config = ProfitTakeConfig(
+            initial_target_rr=2.0,
+            enable_trailing=True,
+            trailing_activation=1.2,
+            trailing_distance=0.4,
+            enable_partial=False,
+            max_hold_bars=60,
+            profit_lock_time=30,
+            min_profit_lock=0.5,
+        )
+        
+        # Adjust based on volatility
+        if vol_percentile > 0.8:  # High volatility
+            config.initial_target_rr = 2.5  # Wider target
+            config.trailing_activation = 1.5
+            config.max_hold_bars = 45  # Exit sooner
+        elif vol_percentile < 0.3:  # Low volatility
+            config.initial_target_rr = 1.5  # Tighter target
+            config.trailing_activation = 1.0
+            config.max_hold_bars = 75  # Can hold longer
+        
+        # Adjust based on regime
+        regime_features = self._compute_regime_features()
+        trend_strength = regime_features[0]
+        
+        if abs(trend_strength) > 0.7:  # Strong trend
+            config.max_hold_bars = 90  # Let it run
+            config.trailing_distance = 0.3  # Tighter trail
+        
+        return config
     
     def _close_position(self, price: float) -> Tuple[float, float]:
         """
@@ -946,12 +1190,11 @@ class IntradayTradingEnv(gym.Env):
         current_price: float,
     ) -> float:
         """
-        SIMPLIFIED reward function for curriculum learning.
+        MULTI-PHASE reward function with curriculum progression.
         
-        Bootstrap Phase: Teach agent to HOLD and let profit taker work.
-        Key insight: Reward based on TRADE DURATION when closed, not current hold time.
-        
-        Current focus: PnL per trade + patience bonus for closed trades.
+        Phase 1 (0-10K): Basic PnL + patience bonus
+        Phase 2 (10K-35K): Add market condition bonuses
+        Phase 3 (35K+): Add risk-adjusted metrics
         """
         reward = 0.0
         
@@ -980,6 +1223,10 @@ class IntradayTradingEnv(gym.Env):
                     logger.info(f"🎯 Patience bonus! Held {trade_duration} bars, reward={reward:.3f}")
                 else:
                     reward = base_reward
+                
+                # PHASE 2: Market condition bonus
+                if self.curriculum.enable_condition_rewards:
+                    reward += self._calculate_condition_bonus(trade_duration, realized_pnl)
             else:
                 # Penalty for losses (but not too harsh to allow exploration)
                 # Scale: -$26 loss → -0.52 reward
@@ -997,10 +1244,24 @@ class IntradayTradingEnv(gym.Env):
         elif self.position_qty != 0:
             hold_duration = self.steps - self.entry_time
             
-            # Small continuous reward for holding in the sweet spot
-            if 15 <= hold_duration <= 70:
-                holding_reward = 0.005  # Small constant reward per step
+            # PHASE 2: Time-scaled holding reward
+            if self.curriculum.enable_time_scaling:
+                # Reward increases with time up to optimal hold (30 bars)
+                optimal_hold = 30
+                if hold_duration <= optimal_hold:
+                    scaling_factor = hold_duration / optimal_hold
+                else:
+                    # Decay after optimal hold
+                    scaling_factor = 1.0 - ((hold_duration - optimal_hold) / 40.0)
+                    scaling_factor = max(scaling_factor, 0.2)
+                
+                holding_reward = 0.01 * scaling_factor
                 reward += holding_reward
+            else:
+                # Phase 1: Simple holding reward
+                if 15 <= hold_duration <= 70:
+                    holding_reward = 0.005  # Small constant reward per step
+                    reward += holding_reward
         
         # TERTIARY SIGNAL: Overtrading penalty
         # Penalize excessive trading (>50 trades per episode)
@@ -1019,8 +1280,78 @@ class IntradayTradingEnv(gym.Env):
             commission_penalty = -commission / self.initial_capital * 10.0
             reward += max(commission_penalty, -0.1)  # Cap at -0.1
         
+        # PHASE 3: Risk-adjusted returns
+        if self.curriculum.enable_drawdown_controls:
+            reward += self._calculate_risk_adjusted_bonus()
+        
         # Final clipping for safety
         return float(np.clip(reward, -2.0, 2.0))
+    
+    def _calculate_condition_bonus(self, trade_duration: int, realized_pnl: float) -> float:
+        """
+        PHASE 2: Calculate bonus based on market conditions.
+        
+        Rewards trading with the trend and in favorable conditions.
+        """
+        bonus = 0.0
+        
+        # Get regime features
+        regime_features = self._compute_regime_features()
+        trend_strength = regime_features[0]
+        trend_direction = regime_features[1]
+        vol_regime = regime_features[4]
+        
+        # Bonus for trading with strong trend
+        if abs(trend_strength) > 0.5 and realized_pnl > 0:
+            trend_bonus = 0.1 * abs(trend_strength)
+            bonus += trend_bonus
+        
+        # Bonus for avoiding high volatility losses
+        if vol_regime == 2 and realized_pnl > 0:
+            # Survived high vol → extra credit
+            bonus += 0.15
+        
+        # Bonus for optimal timing (held through favorable conditions)
+        if trade_duration >= 25 and realized_pnl > 0:
+            timing_bonus = 0.1
+            bonus += timing_bonus
+        
+        return min(bonus, 0.3)  # Cap at +0.3
+    
+    def _calculate_risk_adjusted_bonus(self) -> float:
+        """
+        PHASE 3: Calculate risk-adjusted performance bonus.
+        
+        Considers Sharpe ratio, max drawdown, win rate consistency.
+        """
+        bonus = 0.0
+        
+        if len(self.trade_history) < 10:
+            return 0.0
+        
+        # Calculate recent Sharpe ratio (last 10 trades)
+        recent_pnls = [t['pnl'] for t in self.trade_history[-10:]]
+        if len(recent_pnls) >= 10:
+            mean_pnl = np.mean(recent_pnls)
+            std_pnl = np.std(recent_pnls)
+            
+            if std_pnl > 0:
+                sharpe = mean_pnl / std_pnl
+                # Bonus for Sharpe > 1.0
+                if sharpe > 1.0:
+                    bonus += 0.1 * min(sharpe - 1.0, 1.0)
+        
+        # Bonus for low drawdown
+        if self.max_position_drawdown > -50:  # Less than $50 max DD
+            bonus += 0.05
+        
+        # Win rate consistency bonus
+        wins = sum(1 for t in self.trade_history[-10:] if t['pnl'] > 0)
+        win_rate = wins / min(len(self.trade_history), 10)
+        if win_rate >= 0.6:  # 60%+ win rate
+            bonus += 0.15
+        
+        return min(bonus, 0.3)  # Cap at +0.3
     
     def _get_tot_decision(self) -> Optional[ToTDecision]:
         """Get Tree of Thought decision for current state."""

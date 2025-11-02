@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrader Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .card h3 {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+        .card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .card .subvalue {
+            font-size: 1.1em;
+            opacity: 0.7;
+        }
+        .chart-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .reasons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .reason-pill {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .ppo-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-small {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .metric-small .label {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        .metric-small .value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .note-box {
+            background: rgba(255,255,255,0.1);
+            border-left: 4px solid #4ade80;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        .green { color: #4ade80; }
+        .red { color: #f87171; }
+        .yellow { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AutoTrader Live Dashboard</h1>
+        
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="pulse" id="statusPulse"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <div id="phaseText" data-current-phase="">Waiting for training...</div>
+        </div>
+
+        <!-- BC Collection Stats -->
+        <div id="bcSection" style="display: none;">
+            <h2 style="margin-bottom: 20px;">📊 Behavior Cloning Collection</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Episodes</h3>
+                    <div class="value" id="bcEpisodes">0</div>
+                    <div class="subvalue">of <span id="bcTotalEpisodes">100</span></div>
+                </div>
+                <div class="card">
+                    <h3>Trades Collected</h3>
+                    <div class="value" id="bcTrades">0</div>
+                    <div class="subvalue"><span class="green" id="bcWins">0</span> W / <span class="red" id="bcLosses">0</span> L</div>
+                </div>
+                <div class="card">
+                    <h3>Win Rate</h3>
+                    <div class="value" id="bcHitRate">0%</div>
+                    <div class="subvalue">Target: 50%+</div>
+                </div>
+                <div class="card">
+                    <h3>Profit Factor</h3>
+                    <div class="value" id="bcPF">0.00</div>
+                    <div class="subvalue">Target: 1.1+</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🚫 Block Reasons (Why Expert Rejected Trades)</h3>
+                <div class="reasons" id="bcReasons">
+                    <span class="reason-pill">Waiting for data...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PPO Training Stats -->
+        <div id="ppoSection" style="display: none;">
+            <h2 style="margin-bottom: 20px;">🧠 PPO Fine-Tuning</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Training Steps</h3>
+                    <div class="value" id="ppoSteps">0</div>
+                    <div class="subvalue">of <span id="ppoTotalSteps">200k</span></div>
+                </div>
+                <div class="card">
+                    <h3>Mean Reward</h3>
+                    <div class="value" id="ppoReward">0.00</div>
+                    <div class="subvalue">Episode avg</div>
+                </div>
+                <div class="card">
+                    <h3>KL Divergence</h3>
+                    <div class="value" id="ppoKL">0.000</div>
+                    <div class="subvalue">Target: &lt;0.05</div>
+                </div>
+                <div class="card">
+                    <h3>Entropy</h3>
+                    <div class="value" id="ppoEntropy">0.000</div>
+                    <div class="subvalue">Target: &gt;0.02</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📈 Loss Metrics</h3>
+                <div class="ppo-metrics">
+                    <div class="metric-small">
+                        <div class="label">Policy Loss</div>
+                        <div class="value" id="ppoPolicyLoss">0.000</div>
+                    </div>
+                    <div class="metric-small">
+                        <div class="label">Value Loss</div>
+                        <div class="value" id="ppoValueLoss">0.000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Equity Chart -->
+        <div class="chart-container">
+            <h3 style="margin-bottom: 15px;">💰 Equity Curve</h3>
+            <canvas id="equityChart"></canvas>
+        </div>
+
+        <!-- Status Notes -->
+        <div class="note-box" id="noteBox" style="display: none;">
+            <strong>Latest Update:</strong> <span id="noteText"></span>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws;
+        const wsUrl = `ws://${window.location.host}/ws`;
+        
+        // Chart.js setup
+        const ctx = document.getElementById('equityChart').getContext('2d');
+        const equityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Equity ($)',
+                    data: [],
+                    borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 3,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                },
+                scales: {
+                    x: { 
+                        ticks: { color: '#fff' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: { 
+                        ticks: { color: '#fff' },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function connectWebSocket() {
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                document.getElementById('statusText').textContent = 'Connected';
+                document.getElementById('statusPulse').style.background = '#4ade80';
+            };
+            
+            ws.onmessage = (event) => {
+                if (!event.data || event.data === 'pong') {
+                    return;
+                }
+
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (err) {
+                    console.warn('Non-JSON websocket payload ignored:', event.data);
+                    return;
+                }
+                
+                if (data.type === 'connected') {
+                    console.log('Dashboard connected');
+                    return;
+                }
+                
+                // Update phase indicator
+                if (data.phase) {
+                    const phaseEl = document.getElementById('phaseText');
+                    const newPhase = data.phase;
+                    const currentPhase = phaseEl.getAttribute('data-current-phase');
+
+                    phaseEl.textContent = newPhase === 'BC' ? '📊 Collecting BC Demos' : '🧠 Training PPO';
+                    phaseEl.setAttribute('data-current-phase', newPhase);
+
+                    // Reset equity chart when phase switches (BC <-> PPO)
+                    if (currentPhase && currentPhase !== newPhase) {
+                        equityChart.data.labels = [];
+                        equityChart.data.datasets[0].data = [];
+                        equityChart.update('none');
+                        console.log(`Phase changed from ${currentPhase} to ${newPhase}. Equity chart reset.`);
+                    }
+                }
+                
+                // Handle BC metrics
+                if (data.phase === 'BC') {
+                    document.getElementById('bcSection').style.display = 'block';
+                    document.getElementById('ppoSection').style.display = 'none';
+                    
+                    if (data.episode !== undefined) {
+                        document.getElementById('bcEpisodes').textContent = data.episode;
+                    }
+                    if (data.total_episodes !== undefined) {
+                        document.getElementById('bcTotalEpisodes').textContent = data.total_episodes;
+                    }
+                    if (data.trades !== undefined) {
+                        document.getElementById('bcTrades').textContent = data.trades;
+                    }
+                    if (data.wins !== undefined) {
+                        document.getElementById('bcWins').textContent = data.wins;
+                    }
+                    if (data.losses !== undefined) {
+                        document.getElementById('bcLosses').textContent = data.losses;
+                    }
+                    if (data.hit_rate !== undefined) {
+                        const hitRate = (data.hit_rate * 100).toFixed(1);
+                        document.getElementById('bcHitRate').textContent = hitRate + '%';
+                        document.getElementById('bcHitRate').className = 
+                            data.hit_rate >= 0.5 ? 'value green' : 'value yellow';
+                    }
+                    if (data.pf !== undefined) {
+                        document.getElementById('bcPF').textContent = data.pf.toFixed(2);
+                        document.getElementById('bcPF').className = 
+                            data.pf >= 1.1 ? 'value green' : 'value red';
+                    }
+                    
+                    // Block reasons
+                    if (data.reasons) {
+                        const reasonsDiv = document.getElementById('bcReasons');
+                        reasonsDiv.innerHTML = '';
+                        for (const [key, value] of Object.entries(data.reasons)) {
+                            const pill = document.createElement('span');
+                            pill.className = 'reason-pill';
+                            pill.textContent = `${key}: ${value}`;
+                            reasonsDiv.appendChild(pill);
+                        }
+                    }
+                    
+                    // Update equity chart
+                    if (data.equity !== undefined && data.episode !== undefined) {
+                        equityChart.data.labels.push(`E${data.episode}`);
+                        equityChart.data.datasets[0].data.push(data.equity);
+                        
+                        // Keep last 100 points
+                        if (equityChart.data.labels.length > 100) {
+                            equityChart.data.labels.shift();
+                            equityChart.data.datasets[0].data.shift();
+                        }
+                        
+                        equityChart.update('none');
+                    }
+                }
+                
+                // Handle PPO metrics
+                if (data.phase === 'PPO') {
+                    document.getElementById('bcSection').style.display = 'none';
+                    document.getElementById('ppoSection').style.display = 'block';
+                    
+                    if (data.steps !== undefined) {
+                        const stepsText = data.steps >= 1000 
+                            ? (data.steps / 1000).toFixed(1) + 'k' 
+                            : String(data.steps);
+                        document.getElementById('ppoSteps').textContent = stepsText;
+                    }
+                    if (data.total_steps !== undefined) {
+                        document.getElementById('ppoTotalSteps').textContent = 
+                            (data.total_steps/1000).toFixed(0) + 'k';
+                    }
+                    if (data.reward_mean !== undefined) {
+                        document.getElementById('ppoReward').textContent = data.reward_mean.toFixed(2);
+                    }
+                    if (data.kl !== undefined) {
+                        document.getElementById('ppoKL').textContent = data.kl.toFixed(4);
+                        document.getElementById('ppoKL').className = 
+                            data.kl < 0.05 ? 'value green' : 'value yellow';
+                    }
+                    if (data.entropy !== undefined) {
+                        document.getElementById('ppoEntropy').textContent = data.entropy.toFixed(4);
+                        document.getElementById('ppoEntropy').className = 
+                            data.entropy > 0.02 ? 'value green' : 'value yellow';
+                    }
+                    if (data.loss_policy !== undefined) {
+                        document.getElementById('ppoPolicyLoss').textContent = data.loss_policy.toFixed(4);
+                    }
+                    if (data.loss_value !== undefined) {
+                        document.getElementById('ppoValueLoss').textContent = data.loss_value.toFixed(4);
+                    }
+                }
+                
+                // Show notes
+                if (data.note) {
+                    document.getElementById('noteBox').style.display = 'block';
+                    document.getElementById('noteText').textContent = data.note;
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                document.getElementById('statusText').textContent = 'Connection Error';
+                document.getElementById('statusPulse').style.background = '#f87171';
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('statusText').textContent = 'Disconnected';
+                document.getElementById('statusPulse').style.background = '#fbbf24';
+                
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            // Ping every 30 seconds to keep connection alive
+            setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send('ping');
+                }
+            }, 30000);
+        }
+        
+        // Initialize
+        connectWebSocket();
+    </script>
+</body>
+</html>

@@ -6,6 +6,14 @@ __pycache__/
 node_modules/
 dashboard/node_modules/
 
+# Virtual environments
+venv/
+venv_*/
+.venv/
+.venv_*/
+env/
+ENV/
+
 # Database files (SQLite, PostgreSQL dumps, etc.)
 *.db
 *.sqlite

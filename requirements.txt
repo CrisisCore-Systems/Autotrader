@@ -11,7 +11,7 @@ jsonschema==4.23.0
 respx==0.20.2
 uvicorn[standard]==0.29.0
 requests==2.31.0
-python-dotenv==1.1.1
+python-dotenv==1.2.1
 
 # ML & Data Science
 scikit-learn==1.7.2

@@ -47,7 +47,7 @@ ccxt==4.5.12
 ccxt.pro==4.5.12  # For WebSocket streaming
 
 # Visualization (Optional)
-matplotlib==3.8.0
+matplotlib==3.10.7
 plotly==5.18.0
 
 # Trading Brokers & Market Data (Canadian-Friendly)

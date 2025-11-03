@@ -10,7 +10,7 @@ pyyaml==6.0.3
 jsonschema==4.23.0
 respx==0.20.2
 uvicorn[standard]==0.29.0
-requests==2.31.0
+requests==2.32.5
 python-dotenv==1.1.1
 
 # ML & Data Science

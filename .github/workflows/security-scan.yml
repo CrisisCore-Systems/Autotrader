@@ -39,7 +39,7 @@ jobs:
       
       - name: Upload Semgrep SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb  # v3.13.1
+        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee  # v3.13.1
         with:
           sarif_file: semgrep.sarif
           category: semgrep
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a # v4.9.1
         with:
           python-version: '3.11'
       
@@ -63,7 +63,7 @@ jobs:
       
       - name: Upload Bandit SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb  # v3.13.1
+        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee  # v3.13.1
         with:
           sarif_file: bandit-results.sarif
           category: bandit
@@ -89,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a # v4.9.1
         with:
           python-version: '3.11'
       
@@ -129,7 +129,7 @@ jobs:
       
       - name: Upload Trivy SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v3.24.6
+        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v3.24.6
         with:
           sarif_file: trivy-results.sarif
           category: trivy-filesystem
@@ -206,7 +206,7 @@ jobs:
       
       - name: Upload Grype SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v3.24.6
+        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v3.24.6
         with:
           sarif_file: ${{ steps.grype-scan.outputs.sarif }}
           category: grype-sbom
@@ -218,7 +218,7 @@ jobs:
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a # v4.9.1
         with:
           python-version: '3.11'
       
@@ -251,7 +251,7 @@ jobs:
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a # v4.9.1
         with:
           python-version: '3.11'
       
@@ -267,7 +267,7 @@ jobs:
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a # v4.9.1
         with:
           python-version: '3.11'
       

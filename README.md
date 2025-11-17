@@ -6,6 +6,12 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=CrisisCore-Systems/Autotrader)
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CrisisCore-Systems/Autotrader)
 
+## 🎨 Live Training Dashboard
+
+![AutoTrader Live Dashboard](docs/assets/dashboard-preview.png)
+
+*Real-time visualization of Behavior Cloning collection and PPO fine-tuning progress with comprehensive training metrics.*
+
 > **🪶 NEW: [Lightweight Development Guide](docs/LIGHTWEIGHT_DEVELOPMENT.md)** - Don't let Docker slow you down! Develop on resource-constrained laptops, use GitHub Codespaces, or skip Docker entirely. **90% less RAM usage!**
 
 > **📖 [Understanding What You've Created](docs/OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!

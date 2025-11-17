@@ -2,6 +2,10 @@
 
 Real-time web dashboard for monitoring BC collection and PPO training.
 
+![Dashboard Preview](../docs/assets/dashboard-preview.png)
+
+*Beautiful real-time visualization of training metrics with glassmorphism design.*
+
 ## Quick Start
 
 1. **Install dependencies** (in venv_trading):

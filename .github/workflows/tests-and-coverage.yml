@@ -17,8 +17,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493  # v4.1.1
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c  # v4.9.1
+      - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e  # v4.1.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a  # v4.9.1
         with:
           python-version: '3.11'
       - name: Install dependencies
@@ -49,8 +49,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493  # v4.1.1
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c  # v4.9.1
+      - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e  # v4.1.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a  # v4.9.1
         with:
           python-version: '3.11'
       
@@ -71,8 +71,8 @@ jobs:
   llm-validation-coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493  # v4.1.1
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c  # v4.9.1
+      - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e  # v4.1.1
+      - uses: actions/setup-python@cfd55ca82492758d853442341ad4d8010466803a  # v4.9.1
         with:
           python-version: '3.11'
       

@@ -32,7 +32,7 @@ jobs:
     outputs:
       notebooks: ${{ steps.find.outputs.notebooks }}
     steps:
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493  # v4.1.1
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v4.1.1
       
       - name: Find notebooks
         id: find
@@ -59,9 +59,9 @@ jobs:
         notebook: ${{ fromJson(needs.discover-notebooks.outputs.notebooks) }}
     
     steps:
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493  # v4.1.1
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v4.1.1
       
-      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c  # v4.9.1
+      - uses: actions/setup-python@bfc4944b43a5d84377eca3cf6ab5b7992ba61923  # v4.9.1
         with:
           python-version: '3.11'
           cache: 'pip'

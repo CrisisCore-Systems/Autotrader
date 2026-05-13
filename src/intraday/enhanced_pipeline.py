@@ -71,6 +71,8 @@ class EnhancedDataPipeline:
         # Historical mode params
         duration: str = "1 D",
         replay_speed: float = 1.0,
+        random_start: bool = False,  # Enable random windowing for data diversity
+        window_size: Optional[int] = None,  # Episode window size (e.g., 400 bars)
         # Simulated mode params
         initial_price: float = 580.0,
         tick_interval: float = 0.05,
@@ -87,8 +89,10 @@ class EnhancedDataPipeline:
             currency: Currency
             tick_buffer_size: Max ticks in memory
             bar_buffer_size: Max bars in memory
-            duration: Historical data duration (e.g., "1 D", "5 D")
+            duration: Historical data duration (e.g., "1 D", "5 D", "60 D")
             replay_speed: Historical replay speed multiplier
+            random_start: Enable random windowing for data diversity (historical mode)
+            window_size: Episode window size in bars for random windowing (e.g., 400)
             initial_price: Starting price for simulated mode
             tick_interval: Seconds between simulated ticks
             volatility: Per-tick volatility for simulated mode
@@ -145,6 +149,8 @@ class EnhancedDataPipeline:
                 replay_speed=replay_speed,
                 exchange=exchange,
                 currency=currency,
+                random_start=random_start,  # NEW: Pass random windowing params
+                window_size=window_size,
             )
         
         elif mode == "simulated":
@@ -168,6 +174,33 @@ class EnhancedDataPipeline:
             logger.info(f"✅ Started {self.mode} data feed for {self.symbol}")
         else:
             raise RuntimeError("No data source configured")
+    
+    def restart(self):
+        """
+        Restart data feed (for random windowing between episodes).
+        
+        For historical mode with random_start=True, this will select
+        a new random window and replay different bars.
+        
+        NOTE: We do NOT clear bar_buffer - the environment needs those
+        historical bars for feature calculation. We only clear the tick
+        buffer to start fresh tick processing.
+        """
+        if self.data_source and self.mode == "historical":
+            # Stop current replay
+            self.data_source.stop()
+            
+            # Clear ONLY tick buffer - keep bar_buffer intact for features
+            self.tick_buffer.clear()
+            self.current_bar_ticks = []
+            self.current_bar_start = None
+            
+            # Restart replay with cached bars (no re-fetch from IBKR)
+            self.data_source.restart_replay()
+            logger.debug(f"🔄 Restarted historical replay for {self.symbol} (kept {len(self.bar_buffer)} bars)")
+        else:
+            # For live/simulated, restart doesn't make sense
+            logger.warning(f"Restart not applicable for mode={self.mode}")
     
     def stop(self):
         """Stop data feed."""

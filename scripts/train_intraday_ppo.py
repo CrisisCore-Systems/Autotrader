@@ -99,6 +99,182 @@ def build_microstructure_features(
     return engine
 
 
+class LearningProofCallback(BaseCallback):
+    """
+    COMPREHENSIVE LEARNING TRACKER - Proves RL agent is learning over time.
+    
+    Tracks and logs evidence of learning:
+    1. Episode-by-episode improvement
+    2. Action distribution evolution
+    3. Behavioral patterns (holding time, trade selectivity)
+    4. Comparison with past performance (episode N vs episode N-10)
+    """
+    
+    def __init__(self, check_freq: int = 500, verbose: int = 1):
+        super().__init__(verbose)
+        self.check_freq = check_freq
+        
+        # Episode tracking (detailed)
+        self.episode_data = []  # List of dicts with full episode stats
+        self.current_episode_actions = []
+        self.current_episode_rewards = []
+        
+    def _on_step(self) -> bool:
+        # Track every action and reward
+        if 'actions' in self.locals:
+            actions = np.atleast_1d(self.locals['actions'])
+            for action in actions:
+                self.current_episode_actions.append(int(action))
+        
+        if 'rewards' in self.locals:
+            rewards = np.atleast_1d(self.locals['rewards'])
+            for reward in rewards:
+                self.current_episode_rewards.append(float(reward))
+        
+        # Detect episode completion
+        for info in self.locals.get('infos', []):
+            if 'episode' in info:
+                # Episode just finished - record all data
+                episode_stats = {
+                    'episode_num': len(self.episode_data) + 1,
+                    'total_steps': self.n_calls,
+                    'episode_length': len(self.current_episode_actions),
+                    'total_reward': sum(self.current_episode_rewards),
+                    'avg_reward': np.mean(self.current_episode_rewards) if self.current_episode_rewards else 0,
+                    'actions_taken': self.current_episode_actions.copy(),
+                    'pnl': info.get('daily_pnl', 0),
+                    'trades': info.get('daily_trades', 0),
+                    'direction_changes': info.get('direction_changes', 0),
+                    'action_distribution': self._calculate_action_dist(self.current_episode_actions),
+                }
+                
+                self.episode_data.append(episode_stats)
+                
+                # Reset for next episode
+                self.current_episode_actions = []
+                self.current_episode_rewards = []
+                
+                # Log episode completion with learning indicators
+                self._log_episode_learning(episode_stats)
+        
+        # Periodic comprehensive learning report
+        if self.n_calls % self.check_freq == 0 and len(self.episode_data) > 0:
+            self._log_learning_progress()
+        
+        return True
+    
+    def _calculate_action_dist(self, actions):
+        """Calculate action distribution percentages."""
+        if not actions:
+            return {0: 0, 1: 0, 2: 0}
+        
+        counts = {0: 0, 1: 0, 2: 0}
+        for action in actions:
+            if action in counts:
+                counts[action] += 1
+        
+        total = len(actions)
+        return {k: (v/total)*100 for k, v in counts.items()}
+    
+    def _log_episode_learning(self, stats):
+        """Log individual episode with comparison to recent history."""
+        ep_num = stats['episode_num']
+        
+        # Compare with previous episodes
+        if ep_num > 10:
+            # Compare last 5 episodes vs previous 5 episodes
+            recent_5 = self.episode_data[-5:]
+            previous_5 = self.episode_data[-10:-5]
+            
+            recent_pnl = np.mean([e['pnl'] for e in recent_5])
+            previous_pnl = np.mean([e['pnl'] for e in previous_5])
+            pnl_improvement = ((recent_pnl - previous_pnl) / abs(previous_pnl + 0.01)) * 100
+            
+            recent_trades = np.mean([e['trades'] for e in recent_5])
+            previous_trades = np.mean([e['trades'] for e in previous_5])
+            trade_change = recent_trades - previous_trades
+            
+            logger.info(
+                f"📊 Episode {ep_num}: PnL=${stats['pnl']:.2f} | Trades={stats['trades']} | "
+                f"Reward={stats['total_reward']:.2f} | "
+                f"🔄 Improvement: PnL {pnl_improvement:+.1f}% | Trades {trade_change:+.1f}"
+            )
+        else:
+            logger.info(
+                f"📊 Episode {ep_num}: PnL=${stats['pnl']:.2f} | Trades={stats['trades']} | "
+                f"Reward={stats['total_reward']:.2f} (baseline)"
+            )
+    
+    def _log_learning_progress(self):
+        """Log comprehensive learning progress report."""
+        total_episodes = len(self.episode_data)
+        
+        if total_episodes < 5:
+            logger.info(f"\n🎓 LEARNING PROGRESS: Collecting baseline data ({total_episodes} episodes)...")
+            return
+        
+        # Calculate learning indicators
+        # 1. PnL trend (last 20 episodes)
+        recent_20 = self.episode_data[-20:] if total_episodes >= 20 else self.episode_data
+        pnl_values = [e['pnl'] for e in recent_20]
+        pnl_trend = np.polyfit(range(len(pnl_values)), pnl_values, 1)[0]  # Linear slope
+        
+        # 2. Win rate progression
+        win_rate_early = np.mean([1 if e['pnl'] > 0 else 0 for e in self.episode_data[:10]]) * 100 if total_episodes >= 10 else 0
+        win_rate_recent = np.mean([1 if e['pnl'] > 0 else 0 for e in recent_20]) * 100
+        win_rate_improvement = win_rate_recent - win_rate_early
+        
+        # 3. Trade selectivity (fewer trades = better)
+        trades_early = np.mean([e['trades'] for e in self.episode_data[:10]]) if total_episodes >= 10 else 0
+        trades_recent = np.mean([e['trades'] for e in recent_20])
+        trade_reduction = trades_early - trades_recent
+        
+        # 4. Reward accumulation
+        rewards_early = np.mean([e['total_reward'] for e in self.episode_data[:10]]) if total_episodes >= 10 else 0
+        rewards_recent = np.mean([e['total_reward'] for e in recent_20])
+        reward_improvement = rewards_recent - rewards_early
+        
+        # 5. Action distribution evolution
+        actions_early = self._aggregate_actions(self.episode_data[:10]) if total_episodes >= 10 else {0: 33, 1: 33, 2: 33}
+        actions_recent = self._aggregate_actions(recent_20)
+        
+        # 6. Best episode so far
+        best_episode = max(self.episode_data, key=lambda e: e['pnl'])
+        
+        # Log comprehensive report
+        logger.info(
+            f"\n{'='*80}\n"
+            f"🎓 LEARNING PROGRESS REPORT (Step {self.n_calls:,} | {total_episodes} episodes)\n"
+            f"{'='*80}\n"
+            f"\n📈 PERFORMANCE TRENDS:\n"
+            f"  • PnL Trend: {'📈 IMPROVING' if pnl_trend > 0 else '📉 DECLINING'} (${pnl_trend:.2f}/episode)\n"
+            f"  • Win Rate: {win_rate_recent:.1f}% (vs {win_rate_early:.1f}% early = {win_rate_improvement:+.1f}% change)\n"
+            f"  • Trade Selectivity: {trades_recent:.1f} trades/ep (vs {trades_early:.1f} early = {trade_reduction:+.1f} change)\n"
+            f"  • Reward Accumulation: {rewards_recent:.2f} (vs {rewards_early:.2f} early = {reward_improvement:+.2f} improvement)\n"
+            f"\n🎯 ACTION EVOLUTION:\n"
+            f"  • Early Episodes: FLAT {actions_early[0]:.1f}% | LONG {actions_early[1]:.1f}% | SHORT {actions_early[2]:.1f}%\n"
+            f"  • Recent Episodes: FLAT {actions_recent[0]:.1f}% | LONG {actions_recent[1]:.1f}% | SHORT {actions_recent[2]:.1f}%\n"
+            f"\n🏆 BEST PERFORMANCE:\n"
+            f"  • Episode {best_episode['episode_num']}: ${best_episode['pnl']:.2f} PnL, {best_episode['trades']} trades\n"
+            f"\n{'='*80}\n"
+        )
+        
+        # TensorBoard logging
+        if self.logger:
+            self.logger.record('learning/pnl_trend', pnl_trend)
+            self.logger.record('learning/win_rate_improvement', win_rate_improvement)
+            self.logger.record('learning/trade_reduction', trade_reduction)
+            self.logger.record('learning/reward_improvement', reward_improvement)
+            self.logger.record('learning/best_pnl', best_episode['pnl'])
+    
+    def _aggregate_actions(self, episodes):
+        """Aggregate action distribution across multiple episodes."""
+        all_actions = []
+        for ep in episodes:
+            all_actions.extend(ep['actions_taken'])
+        return self._calculate_action_dist(all_actions)
+
+
 class WinRateCallback(BaseCallback):
     """
     Monitor win rate and other trading metrics during training.
@@ -133,32 +309,33 @@ class WinRateCallback(BaseCallback):
                 if 0 <= action < 8:
                     self.action_counts[action] += 1
         
-        # Collect episode stats
-        if 'episode' in self.locals:
-            ep_info = self.locals['episode']
-            if ep_info:
-                for info in self.locals.get('infos', []):
-                    if 'episode' in info:
-                        ep_rew = info['episode']['r']
-                        ep_len = info['episode']['l']
-                        
-                        self.episode_rewards.append(ep_rew)
-                        self.episode_lengths.append(ep_len)
-                        
-                        # Extract trading metrics from info
-                        if 'daily_pnl' in info:
-                            pnl = info['daily_pnl']
-                            trades = info.get('daily_trades', 0)
-                            
-                            self.episode_pnls.append(pnl)
-                            self.episode_wins.append(1 if pnl > 0 else 0)
-                            self.episode_trades.append(trades)
-                            
-                            # Log episode completion
-                            logger.debug(
-                                f"Episode {len(self.episode_pnls)} completed: "
-                                f"PnL=${pnl:.2f}, trades={trades}, win={pnl > 0}"
-                            )
+        # Collect episode stats from vectorized environment
+        # Check 'infos' directly (works for both DummyVecEnv and VecNormalize)
+        infos = self.locals.get('infos', [])
+        for info in infos:
+            # Episode completion is signaled by 'episode' key in info dict
+            if 'episode' in info:
+                ep_rew = info['episode']['r']
+                ep_len = info['episode']['l']
+                
+                self.episode_rewards.append(ep_rew)
+                self.episode_lengths.append(ep_len)
+                
+                # Extract trading metrics from info
+                # These come from the base environment, not the Monitor wrapper
+                if 'daily_pnl' in info:
+                    pnl = info['daily_pnl']
+                    trades = info.get('daily_trades', 0)
+                    
+                    self.episode_pnls.append(pnl)
+                    self.episode_wins.append(1 if pnl > 0 else 0)
+                    self.episode_trades.append(trades)
+                    
+                    # Log episode completion
+                    logger.info(
+                        f"📊 Episode {len(self.episode_pnls)} completed: "
+                        f"PnL=${pnl:.2f}, trades={trades}, reward={ep_rew:.2f}, win={pnl > 0}"
+                    )
         
         # Log every check_freq steps
         if self.n_calls % self.check_freq == 0:
@@ -892,6 +1069,20 @@ def create_env(
             enable_per_trade_stop=False,  # Disable per-trade stops to allow exploration
         )
         inner_env.reward_profile = reward_profile
+        
+        # CRITICAL: Store pipeline reference for random windowing restarts
+        inner_env._pipeline_ref = pipeline
+        
+        # Monkey-patch reset to restart pipeline (enables new random window each episode)
+        original_reset = inner_env.reset
+        def reset_with_pipeline_restart(seed=None, options=None):
+            # Restart pipeline to get new random window (if random_start=True)
+            if hasattr(inner_env, '_pipeline_ref'):
+                inner_env._pipeline_ref.restart()
+                # No sleep needed - bar_buffer kept intact, only tick buffer cleared
+            return original_reset(seed=seed, options=options)
+        
+        inner_env.reset = reset_with_pipeline_restart
         base_env_holder['env'] = inner_env
         return Monitor(inner_env)
 
@@ -917,19 +1108,19 @@ def train_ppo(
     symbol: str = 'SPY',
     duration: str = '30 D',
     total_timesteps: int = 1_000_000,
-    learning_rate: float = 1e-4,  # Reduced from 3e-4 for calmer updates
-    final_learning_rate: float = 5e-5,  # Reduced from 1e-4
-    n_steps: int = 4096,  # Increased from 2048 for longer rollouts
-    batch_size: int = 8192,  # Increased from 64 for smoother gradients (if RAM allows, else 4096)
-    n_epochs: int = 10,
+    learning_rate: float = 0.000854,  # OPTIMIZED: From hyperparameter tuning Trial #2 (36% win rate)
+    final_learning_rate: float = 1e-4,  # TUNED: Higher final LR to prevent premature convergence
+    n_steps: int = 2048,  # OPTIMIZED: From hyperparameter tuning
+    batch_size: int = 1024,  # OPTIMIZED: From hyperparameter tuning (was 512)
+    n_epochs: int = 9,  # OPTIMIZED: From hyperparameter tuning (was 10)
     save_freq: int = 100_000,
     device: str = 'auto',
     microstructure_mode: str = 'legacy',
     microstructure_norm: str = 'off',
     reward_profile: str = 'stable',
     curriculum_enabled: bool = True,
-    final_ent_coef: float = 0.0005,  # Reduced from 0.005 for less randomness
-    early_stop_patience: int = 4,
+    final_ent_coef: float = 0.01,  # TUNED: Increased from 0.0005 for more exploration (Thought 2.5)
+    early_stop_patience: int = 6,  # TUNED: Increased from 4 for more patience
     curriculum_check_freq: int = 5000,
 ):
     """
@@ -955,7 +1146,7 @@ def train_ppo(
         early_stop_patience: Early stopping tolerance (check intervals)
         curriculum_check_freq: Step frequency for curriculum/scheduler checks
     """
-    initial_ent_coef = 0.01
+    initial_ent_coef = 0.0414  # OPTIMIZED: From hyperparameter tuning Trial #2 (was 0.05)
     
     # Set deterministic seed for reproducibility
     seed = 42
@@ -1000,6 +1191,8 @@ def train_ppo(
         replay_speed=100.0,  # 100x faster
         tick_buffer_size=10000,
         bar_buffer_size=500,
+        random_start=True,  # Enable random windowing for infinite episode diversity
+        window_size=400,  # 400-bar episodes from 11,700 total bars
     )
     
     pipeline.start()
@@ -1061,26 +1254,38 @@ def train_ppo(
         CurriculumStage(
             name="stage_01_confidence",
             min_timesteps=10_000,
-            target_win_rate=25.0,  # REDUCED from 52% to 25% - more achievable initial target
+            target_win_rate=15.0,  # LOWERED: 15% win rate to allow progression (Thought 2.4)
             reward_profile=reward_profile,
             obs_noise_std=0.002,
             max_trades_per_day=20,  # Reduced from 30 to encourage quality
             max_daily_loss=500.0,
             tp_multiplier=2.8,
             sl_atr_multiplier=1.4,
-            description="Build confidence with 25% win rate target",
+            description="Build confidence with 15% win rate target (achievable early learning)",
         ),
         CurriculumStage(
-            name="stage_02_production",
+            name="stage_02_intermediate",
             min_timesteps=50_000,
-            target_win_rate=40.0,  # REDUCED from 58% to 40% - realistic long-term target
+            target_win_rate=30.0,  # NEW: Intermediate stage at 30% win rate
+            reward_profile=reward_profile,
+            obs_noise_std=0.003,
+            max_trades_per_day=18,
+            max_daily_loss=500.0,
+            tp_multiplier=2.9,
+            sl_atr_multiplier=1.45,
+            description="Intermediate stage - 30% win rate target",
+        ),
+        CurriculumStage(
+            name="stage_03_production",
+            min_timesteps=100_000,
+            target_win_rate=45.0,  # FINAL: 45% win rate (realistic long-term target)
             reward_profile=reward_profile,
             obs_noise_std=0.004,
             max_trades_per_day=15,  # Reduced to encourage selectivity
             max_daily_loss=500.0,
             tp_multiplier=3.0,
             sl_atr_multiplier=1.5,
-            description="Production-ready with 40% win rate target",
+            description="Production-ready with 45% win rate target",
         ),
     ]
 
@@ -1110,9 +1315,16 @@ def train_ppo(
     )
 
     win_rate_callback = WinRateCallback(check_freq=1000)
+    
+    # ✅ ADD COMPREHENSIVE LEARNING TRACKER
+    learning_proof_callback = LearningProofCallback(check_freq=500)
 
     metrics_provider = win_rate_callback.get_recent_metrics
-    callbacks_chain: List[BaseCallback] = [checkpoint_callback, win_rate_callback]
+    callbacks_chain: List[BaseCallback] = [
+        checkpoint_callback, 
+        win_rate_callback,
+        learning_proof_callback,  # ✅ Track learning progress in detail
+    ]
 
     scheduler_check_freq = max(curriculum_check_freq // 2, 1000)
     callbacks_chain.append(
@@ -1170,19 +1382,19 @@ def train_ppo(
         env,
         learning_rate=learning_rate,
         n_steps=n_steps,
-        batch_size=n_steps,  # For single env: batch_size = n_steps (buffer size)
+        batch_size=batch_size,  # TUNED: Use configured batch_size for mini-batches (Thought 2.5)
         n_epochs=n_epochs,
-        gamma=0.995,  # Slightly increased from 0.99 for longer-term planning
-        gae_lambda=0.95,
-        clip_range=0.10,  # Maintain tight clipping
+        gamma=0.962,  # OPTIMIZED: From hyperparameter tuning (Trial #2: 36% win rate)
+        gae_lambda=0.960,  # OPTIMIZED: From hyperparameter tuning
+        clip_range=0.282,  # OPTIMIZED: From hyperparameter tuning (was 0.2)
         clip_range_vf=None,
         normalize_advantage=True,
-        ent_coef=0.0005,  # Reduced from 0.001 to 0.0005 for tighter exploration
+        ent_coef=initial_ent_coef,  # TUNED: Start with higher entropy (0.05 - Thought 2.5)
         vf_coef=0.5,
-        max_grad_norm=0.5,
-        target_kl=0.08,  # Relaxed to reduce early stopping frequency
+        max_grad_norm=0.664,  # OPTIMIZED: From hyperparameter tuning (was 0.5)
+        target_kl=None,  # TUNED: Disable target_kl to prevent early stopping (Thought 2.5)
         policy_kwargs=dict(
-            net_arch=[256, 256, 128],  # Larger network
+            net_arch=[256, 256, 128],  # OPTIMIZED: "large" architecture from tuning
             activation_fn=torch.nn.ReLU,
         ),
         tensorboard_log=str(log_dir),
@@ -1248,9 +1460,9 @@ def main():
     parser.add_argument('--symbol', type=str, default='SPY', help='Trading symbol')
     parser.add_argument('--duration', type=str, default='30 D', help='Historical data duration')
     parser.add_argument('--timesteps', type=int, default=1_000_000, help='Total training timesteps')
-    parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate (lowered for stability)')
-    parser.add_argument('--n-steps', type=int, default=4096, help='Steps per rollout (increased for longer episodes)')
-    parser.add_argument('--batch-size', type=int, default=4096, help='Minibatch size (must equal n_steps for single env)')
+    parser.add_argument('--lr', type=float, default=3e-4, help='Learning rate (TUNED: 3e-4 for faster learning)')
+    parser.add_argument('--n-steps', type=int, default=2048, help='Steps per rollout (TUNED: 2048 for frequent updates)')
+    parser.add_argument('--batch-size', type=int, default=512, help='Minibatch size (TUNED: 512 for better gradients)')
     parser.add_argument('--save-freq', type=int, default=100_000, help='Save frequency')
     parser.add_argument('--device', type=str, default='auto', help='Device (cpu/cuda/auto)')
     parser.add_argument(
@@ -1270,9 +1482,9 @@ def main():
     parser.add_argument('--host', type=str, default='127.0.0.1', help='IBKR host')
     parser.add_argument('--port', type=int, default=7497, help='IBKR port (7497=paper, 7496=live)')
     parser.add_argument('--reward-profile', type=str, choices=['stable', 'legacy'], default='stable', help='Reward shaping strategy')
-    parser.add_argument('--final-lr', type=float, default=5e-5, help='Final learning rate for scheduler')
-    parser.add_argument('--final-ent', type=float, default=0.0005, help='Final entropy coefficient for scheduler')
-    parser.add_argument('--early-stop-patience', type=int, default=4, help='Early stopping patience (check intervals)')
+    parser.add_argument('--final-lr', type=float, default=1e-4, help='Final learning rate for scheduler (TUNED: 1e-4)')
+    parser.add_argument('--final-ent', type=float, default=0.01, help='Final entropy coefficient for scheduler (TUNED: 0.01)')
+    parser.add_argument('--early-stop-patience', type=int, default=6, help='Early stopping patience (TUNED: 6 for more patience)')
     parser.add_argument('--disable-curriculum', action='store_true', help='Disable curriculum progression callbacks')
     parser.add_argument('--curriculum-check-freq', type=int, default=5000, help='Frequency for curriculum/metric checks')
     

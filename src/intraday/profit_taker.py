@@ -178,11 +178,11 @@ class ProfitTaker:
         self.partial_exits_taken = []
         self.is_active = True
         
-        logger.info(
-            f"🎯 Profit taker initialized: "
-            f"{'LONG' if self.is_long else 'SHORT'} {self.initial_qty} @ ${entry_price:.2f}, "
+        logger.debug(
+            f"📊 Exit management activated for {'LONG' if self.is_long else 'SHORT'} position: "
+            f"{self.initial_qty} shares @ ${entry_price:.2f}, "
             f"SL=${stop_loss:.2f}, TP=${self.take_profit:.2f}, "
-            f"Risk=${self.initial_risk:.2f}/share (R={self.config.initial_target_rr})"
+            f"Risk=${self.initial_risk:.2f}/share ({self.config.initial_target_rr}:1 RR)"
         )
     
     def check_exit(

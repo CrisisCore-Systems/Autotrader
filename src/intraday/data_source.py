@@ -162,6 +162,8 @@ class HistoricalDataSource(DataSource):
         replay_speed: float = 1.0,  # 1.0 = real-time, 10.0 = 10x faster
         exchange: str = "SMART",
         currency: str = "USD",
+        random_start: bool = False,  # Enable random windowing for data diversity
+        window_size: Optional[int] = None,  # Number of bars per episode (e.g., 400)
     ):
         self.ib = ib
         self.symbol = symbol
@@ -171,12 +173,54 @@ class HistoricalDataSource(DataSource):
         self.replay_speed = replay_speed
         self.exchange = exchange
         self.currency = currency
+        self.random_start = random_start  # NEW: Enable random start position
+        self.window_size = window_size  # NEW: Episode window size
         
         self.bars: List[Bar] = []
         self.current_bar_idx = 0
         self._is_running = False
         self._stop_requested = False
         self._thread: Optional[threading.Thread] = None
+        self._bars_fetched = False  # Track if we've fetched bars from IBKR
+    
+    def restart_replay(self):
+        """
+        Restart replay with new random window (WITHOUT re-fetching from IBKR).
+        
+        This is much faster than start() because it reuses already-fetched bars.
+        Use this for random windowing between episodes.
+        """
+        if not self._bars_fetched:
+            # First time - need to fetch
+            self.start()
+            return
+        
+        # Stop current replay if running
+        if self._is_running:
+            self._stop_requested = True
+            if self._thread and self._thread.is_alive():
+                self._thread.join(timeout=2.0)
+        
+        # Reset state for new replay
+        self._is_running = True
+        self._stop_requested = False
+        
+        # Start new replay thread
+        def _launch_replay():
+            try:
+                self._replay_bars()
+            except Exception as exc:
+                logger.exception(f"Historical replay error for {self.symbol}: {exc}")
+            finally:
+                self._is_running = False
+        
+        self._thread = threading.Thread(
+            target=_launch_replay,
+            name=f"HistoricalReplay-{self.symbol}",
+            daemon=True,
+        )
+        self._thread.start()
+        logger.debug(f"🔄 Restarted replay for {self.symbol} (reusing cached bars)")
     
     def start(self):
         """Fetch historical bars and start replay."""
@@ -269,6 +313,9 @@ class HistoricalDataSource(DataSource):
         except Exception:
             pass
         
+        # Mark bars as successfully fetched for restart_replay()
+        self._bars_fetched = True
+        
         self._is_running = True
         self._stop_requested = False
 
@@ -301,8 +348,31 @@ class HistoricalDataSource(DataSource):
         return self._is_running
     
     def _replay_bars(self):
-        """Replay bars as simulated ticks."""
-        for bar in self.bars:
+        """
+        Replay bars as simulated ticks.
+        
+        With random_start=True, each replay starts from a random position
+        in the historical data, providing infinite data diversity.
+        """
+        # Determine start position
+        if self.random_start and self.window_size and len(self.bars) > self.window_size:
+            # Calculate valid start positions (leave room for full window)
+            max_start = len(self.bars) - self.window_size
+            start_idx = random.randint(0, max_start)
+            end_idx = start_idx + self.window_size
+            
+            logger.info(
+                f"🎲 Random window: bars [{start_idx}:{end_idx}] "
+                f"of {len(self.bars)} total (window={self.window_size})"
+            )
+            
+            replay_bars = self.bars[start_idx:end_idx]
+        else:
+            # Sequential replay (original behavior)
+            replay_bars = self.bars
+        
+        # Replay selected bars
+        for bar in replay_bars:
             if self._stop_requested:
                 break
             
@@ -318,7 +388,7 @@ class HistoricalDataSource(DataSource):
                 # Sleep to simulate real-time (adjusted by replay_speed)
                 time.sleep(0.05 / self.replay_speed)  # 50ms per tick
         
-        logger.info(f"📺 Replay complete: {len(self.bars)} bars processed")
+        logger.info(f"📺 Replay complete: {len(replay_bars)} bars processed")
         self._is_running = False
     
     def _bar_to_ticks(self, bar: Bar, num_ticks: int = 20) -> List[TickData]:

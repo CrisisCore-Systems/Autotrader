@@ -5,11 +5,15 @@ OpenAI Gym environment for training PPO agents on intraday trading.
 
 Features:
 - Dynamic state space (microstructure + momentum + volatility + regime + position)
-- 8 discrete actions (CLOSE, HOLD, LONG_SMALL/MED/LARGE, SHORT_SMALL/MED/LARGE)
+- SIMPLIFIED 3 discrete actions (FLAT, LONG, SHORT) with fixed 100-share position size
 - Tree of Thought reasoning for long/short decision assistance
 - Multi-objective reward function (PnL, Sharpe, costs)
 - Realistic cost modeling (IBKR commissions + slippage)
 - Position limits and risk controls
+
+DESIGN PHILOSOPHY:
+Start simple with fixed position sizing (100 shares) and clear directional actions.
+Once agent learns profitable behavior, can graduate to dynamic sizing and more actions.
 """
 
 from __future__ import annotations
@@ -79,10 +83,11 @@ class CurriculumConfig:
     def update_phase(self, total_steps: int):
         """Update curriculum phase based on training progress."""
         if total_steps < self.phase_1_steps:
-            # Phase 1: Basic filters
-            self.enable_quality_filters = True
-            self.enable_dynamic_sizing = True
-            self.enable_regime_filters = True
+            # Phase 1: DISABLE FILTERS for exploration
+            # Let agent learn through trial and error
+            self.enable_quality_filters = False  # DISABLED for learning
+            self.enable_dynamic_sizing = False
+            self.enable_regime_filters = False
         elif total_steps < self.phase_2_steps:
             # Phase 2: Add adaptive systems
             self.enable_adaptive_targets = True
@@ -223,8 +228,21 @@ class IntradayTradingEnv(gym.Env):
         self.max_daily_loss = max_daily_loss
         self.max_trades_per_day = max_trades_per_day
         
-        # Trade throttling: prevent spam trading
-        self.min_bars_between_trades = 10  # Increased from 5 to 10 bars (10 min) between trades
+        # Trade throttling: prevent spam trading (AGGRESSIVE throttle for learning)
+        # EVOLUTION:
+        # - 3 bars → 228 trades/episode ($884 costs) = IMPOSSIBLE
+        # - 10 bars → 67 trades/episode ($260 costs) = TOO HIGH
+        # - 20 bars → 36 trades/episode ($140 costs) = STILL TOO HIGH (agent learned to exploit it!)
+        # - 40 bars → ~10 trades/episode ($39 costs) = SUSTAINABLE & FORCES QUALITY
+        #
+        # OBSERVATION: Agent is LEARNING! It discovered the 20-bar cooldown and times
+        # trades at exactly 21-26 bars to maximize frequency. This proves the PPO model
+        # is NOT "resetting knowledge every 400 steps" - it's actively optimizing!
+        #
+        # TARGET: ~10 trades per episode (400 steps ÷ 40 bars = 10 max trades)
+        # ECONOMICS: 10 trades × $3.88 = $39 costs (7.8% of $500 budget) = SUSTAINABLE
+        # FOCUS: Forces agent to learn HIGH-QUALITY setups, not spam trading
+        self.min_bars_between_trades = 40  # 40 bars (40 min) between trades
         self.last_trade_step = -999
         
         # Direction consistency: prevent flip-flopping
@@ -260,8 +278,12 @@ class IntradayTradingEnv(gym.Env):
             dtype=np.float32,
         )
         
-        # Action space: 0=CLOSE, 1=HOLD, 2-4=LONG (small/med/large), 5-7=SHORT (small/med/large)
-        self.action_space = spaces.Discrete(8)
+        # SIMPLIFIED ACTION SPACE: 3 discrete actions with fixed position size
+        # 0=FLAT (close/stay flat), 1=LONG (fixed size), 2=SHORT (fixed size)
+        self.action_space = spaces.Discrete(3)
+        
+        # Fixed position size for simplified learning
+        self.fixed_position_size = 100  # 100 shares per trade
         
         # Episode state
         self.reset()
@@ -293,7 +315,7 @@ class IntradayTradingEnv(gym.Env):
         
         # Trade throttling
         self.last_trade_step = -999  # Initialize far in past
-        self.min_steps_between_trades = 10  # Increased from 5 to 10 steps between trades
+        self.min_steps_between_trades = 3  # 3 steps between trades - allow learning
         
         # Direction consistency
         self.last_direction = 0
@@ -321,11 +343,10 @@ class IntradayTradingEnv(gym.Env):
     
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, dict]:
         """
-        Execute one timestep.
+        Execute one timestep with SIMPLIFIED action space.
         
         Args:
-            action: 0=CLOSE, 1=HOLD, 2=LONG_SMALL, 3=LONG_MED, 4=LONG_LARGE,
-                   5=SHORT_SMALL, 6=SHORT_MED, 7=SHORT_LARGE
+            action: 0=FLAT (close/stay flat), 1=LONG (fixed 100 shares), 2=SHORT (fixed -100 shares)
         
         Returns:
             (observation, reward, terminated, truncated, info)
@@ -346,6 +367,43 @@ class IntradayTradingEnv(gym.Env):
             # Invalid price - return neutral
             return self._get_observation(), 0.0, False, False, self._get_info()
         
+        # ========== EARLY TERMINATION CHECK (CRITICAL BUG FIX) ==========
+        # Check termination conditions BEFORE executing any trading logic
+        # This prevents trades from executing after daily stop is hit
+        done_reason = None
+        terminated = False
+        truncated = False
+        
+        # Check daily stop loss FIRST (before any trading)
+        if self.daily_pnl <= -self.max_daily_loss:
+            terminated = True
+            done_reason = "daily_stop"
+            logger.warning(
+                f"⛔ Daily stop triggered at step {self.steps}: "
+                f"daily_pnl=${self.daily_pnl:.2f} <= -${self.max_daily_loss:.2f}"
+            )
+            # Return immediately without executing action
+            obs = self._get_observation()
+            info = self._get_info()
+            info["done_reason"] = done_reason
+            return obs, -1.0, terminated, truncated, info  # Large penalty for hitting stop
+        
+        # Check episode horizon (400 steps = ~1 trading day)
+        bars_available = len(self.pipeline.get_latest_bars(500))
+        
+        if self.steps >= 400:
+            truncated = True
+            done_reason = "horizon"
+            logger.info(f"Episode horizon reached at step {self.steps}")
+        elif bars_available < 250:
+            truncated = True
+            done_reason = "insufficient_data"
+            logger.warning(f"Insufficient data at step {self.steps}: {bars_available} bars remaining")
+        
+        # If truncated, still execute this final step but mark as done
+        # (This is standard Gym behavior - final step is valid)
+        # ================================================================
+        
         # CHECK PROFIT TAKER FIRST (before executing action)
         # This ensures we lock in profits at optimal points
         if self.profit_taker.is_active and self.position_qty != 0:
@@ -362,6 +420,9 @@ class IntradayTradingEnv(gym.Env):
                     # Full exit
                     realized_pnl, commission = self._close_position(current_price)
                     self.daily_pnl += realized_pnl
+                    
+                    # ✅ FIX: Update throttle timestamp to prevent immediate re-entry
+                    self.last_trade_step = self.steps
                     
                     # Add bonus reward for profitable exits
                     base_reward = self._calculate_reward(realized_pnl, commission, current_price)
@@ -387,108 +448,129 @@ class IntradayTradingEnv(gym.Env):
                     # For simplicity, we'll treat partial exits as holds with info
                     pass
         
-        # Execute action
+        # Execute action with SIMPLIFIED action space
         realized_pnl = 0.0
         commission = 0.0
         
-        if action == 0:  # CLOSE
+        if action == 0:  # FLAT - close position if any, or stay flat
             if self.position_qty != 0:
                 realized_pnl, commission = self._close_position(current_price)
-        
-        elif action == 1:  # HOLD
-            if self.position_qty != 0:
-                unrealized = self._calculate_unrealized_pnl(current_price)
-                self.max_position_drawdown = min(self.max_position_drawdown, unrealized)
+                # ✅ FIX: Update throttle even on FLAT action to prevent immediate re-entry
+                self.last_trade_step = self.steps
+                logger.debug(f"🔵 FLAT action: Closed position, PnL=${realized_pnl:.2f}")
+            # else: already flat, do nothing
 
-        else:
-            # Actions 2-7: LONG or SHORT positions
+        elif action == 1:  # LONG - fixed 100 shares
+            target_qty = self.fixed_position_size
+            
             # Check trade throttling
             bars_since_last_trade = self.steps - self.last_trade_step
             can_trade = bars_since_last_trade >= self.min_bars_between_trades
             
-            if not can_trade and self.position_qty == 0:
-                # Throttled: can't open new position yet
-                logger.debug(f"Trade throttled: {bars_since_last_trade}/{self.min_bars_between_trades} bars since last trade")
-                # Treat as hold
-                pass
-            else:
-                action_map = {
-                    2: ("long_small", 10),   # Reduced from 100 to 10 shares
-                    3: ("long_med", 15),     # Reduced from 200 to 15 shares
-                    4: ("long_large", 25),   # Reduced from 300 to 25 shares
-                    5: ("short_small", -10), # Reduced from -100 to -10 shares
-                    6: ("short_med", -15),   # Reduced from -200 to -15 shares
-                    7: ("short_large", -25), # Reduced from -300 to -25 shares
-                }
-                action_meta = action_map.get(action)
-
-                if action_meta is None:
-                    logger.warning("Received invalid action %s", action)
+            if self.position_qty == 0:
+                # Opening new long position
+                if not can_trade:
+                    if self.steps % 100 == 0:  # Log occasionally
+                        logger.debug(f"Trade throttled: {bars_since_last_trade}/{self.min_bars_between_trades} bars")
                 else:
-                    action_type, target_qty = action_meta
+                    # Check quality filters
+                    quality_signals = self._compute_quality_signals()
+                    passes_filter, filter_reason = self._check_quality_filters(quality_signals)
                     
-                    # Trade throttling check
-                    steps_since_last_trade = self.steps - self.last_trade_step
-                    can_trade = (self.position_qty != 0) or (steps_since_last_trade >= self.min_steps_between_trades)
-                    
-                    if not can_trade:
-                        # Too soon to open new position, skip
-                        pass
+                    if passes_filter:
+                        self._open_position(current_price, target_qty, "fixed")
+                        self.last_trade_step = self.steps
+                        # Detailed logging now in _open_position()
                     else:
-                        # PHASE 1: Quality filters
-                        if self.position_qty == 0:  # Only filter new position entries
-                            quality_signals = self._compute_quality_signals()
-                            passes_filter, filter_reason = self._check_quality_filters(quality_signals)
-                            
-                            if not passes_filter:
-                                logger.debug(f"Trade rejected by quality filter: {filter_reason}")
-                                # Treat as hold
-                                pass
-                            else:
-                                # PHASE 1: Dynamic position sizing
-                                target_qty = self._calculate_dynamic_position_size(quality_signals, target_qty)
-                                
-                                # Ensure target_qty respects max_position limit
-                                if target_qty > 0:
-                                    target_qty = min(target_qty, self.max_position)
-                                else:
-                                    target_qty = max(target_qty, -self.max_position)
+                        if self.steps % 100 == 0:  # Log occasionally
+                            logger.debug(f"Trade rejected: {filter_reason}")
+            
+            elif self.position_qty < 0:
+                # Currently short, need to close and reverse to long
+                # ✅ FIX: Check throttle before allowing reversal
+                bars_since_last_trade = self.steps - self.last_trade_step
+                can_trade = bars_since_last_trade >= self.min_bars_between_trades
+                
+                if not can_trade:
+                    # Cannot reverse yet - just close the short and wait
+                    realized_pnl, commission = self._close_position(current_price)
+                    # ✅ FIX: Update throttle timestamp when closing position
+                    self.last_trade_step = self.steps
+                    logger.debug(f"SHORT closed, reversal throttled: {bars_since_last_trade}/{self.min_bars_between_trades} bars")
+                else:
+                    realized_pnl, commission = self._close_position(current_price)
+                    
+                    # Open new long position (if filters pass)
+                    quality_signals = self._compute_quality_signals()
+                    passes_filter, filter_reason = self._check_quality_filters(quality_signals)
+                    
+                    if passes_filter:
+                        self._open_position(current_price, target_qty, "fixed")
+                        self.last_trade_step = self.steps
+                        logger.debug(f"🔄 Reversed SHORT→LONG: {target_qty} shares @ ${current_price:.2f}")
+                    else:
+                        logger.debug(f"Reverse rejected: {filter_reason}")
+            
+            else:
+                # Already long, maintain position and update unrealized
+                unrealized = self._calculate_unrealized_pnl(current_price)
+                self.max_position_drawdown = min(self.max_position_drawdown, unrealized)
 
-                                if abs(target_qty) == 0:
-                                    logger.debug("Skipping trade because target_qty=%s", target_qty)
-                                else:
-                                    # Open new position (long or short)
-                                    self._open_position(current_price, target_qty, action_type)
-                                    self.last_trade_step = self.steps
-                        else:
-                            # Already in position
-                            # Ensure target_qty respects max_position limit
-                            if target_qty > 0:
-                                target_qty = min(target_qty, self.max_position)
-                            else:
-                                target_qty = max(target_qty, -self.max_position)
-
-                            if abs(target_qty) == 0:
-                                logger.debug("Skipping trade because target_qty=%s", target_qty)
-                            elif (self.position_qty > 0 and target_qty < 0) or (self.position_qty < 0 and target_qty > 0):
-                                # Position direction reversal: close current, then open opposite
-                                realized_pnl_close, commission_close = self._close_position(current_price)
-                                realized_pnl += realized_pnl_close
-                                commission += commission_close
-                                
-                                # Apply filters to new position
-                                quality_signals = self._compute_quality_signals()
-                                passes_filter, filter_reason = self._check_quality_filters(quality_signals)
-                                
-                                if passes_filter:
-                                    target_qty = self._calculate_dynamic_position_size(quality_signals, target_qty)
-                                    self._open_position(current_price, target_qty, action_type)
-                                
-                                self.last_trade_step = self.steps
-                            else:
-                                # Already in a position of same direction: treat as hold/update drawdown
-                                unrealized = self._calculate_unrealized_pnl(current_price)
-                                self.max_position_drawdown = min(self.max_position_drawdown, unrealized)
+        elif action == 2:  # SHORT - fixed -100 shares
+            target_qty = -self.fixed_position_size
+            
+            # Check trade throttling
+            bars_since_last_trade = self.steps - self.last_trade_step
+            can_trade = bars_since_last_trade >= self.min_bars_between_trades
+            
+            if self.position_qty == 0:
+                # Opening new short position
+                if not can_trade:
+                    if self.steps % 100 == 0:  # Log occasionally
+                        logger.debug(f"Trade throttled: {bars_since_last_trade}/{self.min_bars_between_trades} bars")
+                else:
+                    # Check quality filters
+                    quality_signals = self._compute_quality_signals()
+                    passes_filter, filter_reason = self._check_quality_filters(quality_signals)
+                    
+                    if passes_filter:
+                        self._open_position(current_price, target_qty, "fixed")
+                        self.last_trade_step = self.steps
+                        # Detailed logging now in _open_position()
+                    else:
+                        if self.steps % 100 == 0:  # Log occasionally
+                            logger.debug(f"Trade rejected: {filter_reason}")
+            
+            elif self.position_qty > 0:
+                # Currently long, need to close and reverse to short
+                # ✅ FIX: Check throttle before allowing reversal
+                bars_since_last_trade = self.steps - self.last_trade_step
+                can_trade = bars_since_last_trade >= self.min_bars_between_trades
+                
+                if not can_trade:
+                    # Cannot reverse yet - just close the long and wait
+                    realized_pnl, commission = self._close_position(current_price)
+                    # ✅ FIX: Update throttle timestamp when closing position
+                    self.last_trade_step = self.steps
+                    logger.debug(f"LONG closed, reversal throttled: {bars_since_last_trade}/{self.min_bars_between_trades} bars")
+                else:
+                    realized_pnl, commission = self._close_position(current_price)
+                    
+                    # Open new short position (if filters pass)
+                    quality_signals = self._compute_quality_signals()
+                    passes_filter, filter_reason = self._check_quality_filters(quality_signals)
+                    
+                    if passes_filter:
+                        self._open_position(current_price, target_qty, "fixed")
+                        self.last_trade_step = self.steps
+                        logger.debug(f"🔄 Reversed LONG→SHORT: {target_qty} shares @ ${current_price:.2f}")
+                    else:
+                        logger.debug(f"Reverse rejected: {filter_reason}")
+            
+            else:
+                # Already short, maintain position and update unrealized
+                unrealized = self._calculate_unrealized_pnl(current_price)
+                self.max_position_drawdown = min(self.max_position_drawdown, unrealized)
 
         # Update realized PnL after action
         if realized_pnl != 0.0:
@@ -501,6 +583,8 @@ class IntradayTradingEnv(gym.Env):
             self.daily_pnl += realized_pnl_forced
             realized_pnl += realized_pnl_forced  # Add to realized_pnl for reward calculation
             commission += commission_forced
+            # ✅ FIX: Update throttle timestamp to prevent immediate re-entry
+            self.last_trade_step = self.steps
             logger.info(
                 f"Forced close after {MAX_HOLD_BARS} bars: "
                 f"PnL=${realized_pnl_forced:.2f}, commission=${commission_forced:.2f}"
@@ -508,28 +592,6 @@ class IntradayTradingEnv(gym.Env):
 
         # Calculate reward using full RL-optimized method
         reward = self._calculate_reward(realized_pnl, commission, current_price)
-        
-        # Check termination conditions - ONLY daily stop (no trade limit during exploration)
-        done_reason = None
-        terminated = False
-        
-        if self.daily_pnl <= -self.max_daily_loss:
-            terminated = True
-            done_reason = "daily_stop"
-        
-        # Truncate at fixed horizon (400 steps) OR if running low on data
-        # This guarantees long episodes for exploration
-        bars_available = len(self.pipeline.get_latest_bars(500))
-        truncated = False
-        
-        if self.steps >= 400:  # Fixed 400-step horizon (~1 trading day)
-            truncated = True
-            if done_reason is None:
-                done_reason = "horizon"
-        elif bars_available < 250:  # Running low on historical data
-            truncated = True
-            if done_reason is None:
-                done_reason = "insufficient_data"
         
         # Get next observation
         obs = self._get_observation()
@@ -912,42 +974,34 @@ class IntradayTradingEnv(gym.Env):
         """
         PHASE 1: Check if trade passes quality filters.
         
+        SIMPLIFIED FOR LEARNING: During Phase 1, disable strict filters to allow exploration.
+        Agent needs to learn through trial and error, not be blocked by filters.
+        
         Returns:
             (passes, reason)
         """
         if not self.curriculum.enable_quality_filters:
             return True, "filters_disabled"
         
+        # DURING LEARNING: Only apply minimal filters
+        # Let the agent explore and learn from mistakes
+        # The reward function will teach it to avoid bad setups
+        
         bid_ask_spread, order_imbalance, rsi, ret_from_vwap, atr, conviction = quality_signals
         
-        # Filter 1: Spread too wide (poor liquidity)
+        # Filter 1: Only block on extreme spread (illiquid market)
         spread_bps = bid_ask_spread * 10000
-        if spread_bps > self.curriculum.min_spread_bps:
-            return False, f"spread_too_wide_{spread_bps:.1f}bps"
+        if spread_bps > 50.0:  # Very wide spread (was 5.0)
+            return False, f"spread_extreme_{spread_bps:.1f}bps"
         
-        # Filter 2: Volume too low (checked via tick activity)
-        bars = self.pipeline.get_latest_bars(20)
-        if len(bars) >= 20:
-            recent_volume = sum(b.volume for b in bars[-5:])
-            avg_volume = sum(b.volume for b in bars[-20:]) / 20
-            volume_ratio = recent_volume / (5 * avg_volume) if avg_volume > 0 else 0
-            
-            if volume_ratio < self.curriculum.min_volume_ratio:
-                return False, f"volume_too_low_{volume_ratio:.2f}"
+        # Filter 2: Removed volume check during learning phase
+        # Agent will learn optimal volume conditions through reward
         
-        # Filter 3: Conviction too low
-        if conviction < self.curriculum.min_conviction_score:
-            return False, f"low_conviction_{conviction:.2f}"
+        # Filter 3: Removed conviction check during learning phase
+        # Agent will learn conviction thresholds through experience
         
-        # Filter 4: Regime check (avoid choppy markets)
-        if self.curriculum.enable_regime_filters:
-            regime_features = self._compute_regime_features()
-            trend_strength = regime_features[0]
-            vol_regime = regime_features[4]
-            
-            # Don't trade in high volatility + low trend (choppy)
-            if vol_regime == 2 and abs(trend_strength) < 0.3:
-                return False, "choppy_market"
+        # Filter 4: Removed regime check during learning phase
+        # Agent will learn to identify choppy markets through losses
         
         return True, "pass"
     
@@ -998,10 +1052,22 @@ class IntradayTradingEnv(gym.Env):
         return adjusted_qty
     
     def _open_position(self, price: float, qty: int, action_type: str):
-        """Open new position with cost modeling. qty can be negative for shorts."""
+        """
+        Open new position with cost modeling. qty can be negative for shorts.
+        
+        Args:
+            price: Entry price
+            qty: Position size (positive for long, negative for short)
+            action_type: 'fixed' for simplified action space
+        """
         # Calculate costs (use abs(qty) for commission calc)
         commission = self.cost_model.calculate_commission(abs(qty), price)
-        slippage = self.cost_model.calculate_slippage(abs(qty), action_type)
+        
+        # For simplified action space with fixed sizing, use minimal slippage
+        if action_type == "fixed":
+            slippage = 0.01  # 1 cent slippage for fixed 100-share orders
+        else:
+            slippage = self.cost_model.calculate_slippage(abs(qty), action_type)
         
         # Effective entry price (includes slippage)
         # For shorts, slippage works against us (we sell at worse price)
@@ -1034,9 +1100,12 @@ class IntradayTradingEnv(gym.Env):
         # Calculate stop loss (ATR-based)
         atr = self._compute_atr(14)
         if atr > 0:
-            stop_distance = atr * 4.0  # 4.0x ATR stop (wider for intraday noise)
+            # INTRADAY STOP: 1.5x ATR is reasonable for intraday noise
+            # With 2:1 R:R, this creates 3x ATR profit targets (~$4.50 on SPY)
+            # This is achievable in 30-60 minute timeframe
+            stop_distance = atr * 1.5  # 1.5x ATR stop (balanced for intraday)
         else:
-            stop_distance = effective_price * 0.005  # 0.5% stop as fallback
+            stop_distance = effective_price * 0.003  # 0.3% stop as fallback
         
         if qty > 0:  # Long
             stop_loss = effective_price - stop_distance
@@ -1044,13 +1113,19 @@ class IntradayTradingEnv(gym.Env):
             stop_loss = effective_price + stop_distance
         
         # PHASE 2: Adaptive profit targets based on volatility
+        # Only create new profit taker if adaptive targets enabled, otherwise reuse existing
         if self.curriculum.enable_adaptive_targets:
             profit_config = self._get_adaptive_profit_config(atr, effective_price)
-            self.profit_taker = ProfitTaker(profit_config)
-        else:
+            # Update config on existing instance if possible, otherwise create new
+            if hasattr(self, 'profit_taker') and self.profit_taker is not None:
+                self.profit_taker.config = profit_config
+            else:
+                self.profit_taker = ProfitTaker(profit_config)
+        # If profit taker doesn't exist yet, create it with base config
+        elif not hasattr(self, 'profit_taker') or self.profit_taker is None:
             self.profit_taker = ProfitTaker(self.base_profit_config)
         
-        # Initialize profit taker
+        # Initialize profit taker for new position
         self.profit_taker.on_position_open(
             entry_price=effective_price,
             qty=qty,
@@ -1060,10 +1135,11 @@ class IntradayTradingEnv(gym.Env):
         )
         
         position_type = "LONG" if qty > 0 else "SHORT"
-        logger.debug(
-            f"Opened {position_type} position: {abs(qty)} shares @ ${effective_price:.2f}, "
-            f"commission=${commission:.2f}, slippage=${slippage:.4f}, "
-            f"SL=${stop_loss:.2f}, TP=${self.profit_taker.take_profit:.2f}"
+        logger.info(
+            f"[Step {self.steps}] {'🟢' if qty > 0 else '🔴'} {position_type} position opened: "
+            f"{abs(qty)} shares @ ${effective_price:.2f} | "
+            f"Cost: commission=${commission:.2f} slippage=${slippage:.4f} | "
+            f"Targets: SL=${stop_loss:.2f} TP=${self.profit_taker.take_profit:.2f}"
         )
     
     def _get_adaptive_profit_config(self, atr: float, entry_price: float) -> ProfitTakeConfig:
@@ -1190,168 +1266,94 @@ class IntradayTradingEnv(gym.Env):
         current_price: float,
     ) -> float:
         """
-        MULTI-PHASE reward function with curriculum progression.
+        SIMPLIFIED REWARD FUNCTION - Direct PnL correlation with strategic penalties.
         
-        Phase 1 (0-10K): Basic PnL + patience bonus
-        Phase 2 (10K-35K): Add market condition bonuses
-        Phase 3 (35K+): Add risk-adjusted metrics
+        Design Philosophy:
+        1. PRIMARY: Reward actual profitability (realized P&L)
+        2. PENALTIES: Discourage bad behaviors (overtrading, flip-flopping, large drawdowns)
+        3. SIMPLICITY: Clear signal for learning
+        4. EXPLORATION: Small bonus for taking trades early in training to encourage exploration
+        
+        Reward Scale:
+        - Profitable trade: +0.01 to +1.0 (based on P&L size)
+        - Losing trade: -0.01 to -0.5 (symmetric but capped lower)
+        - Penalties: Up to -0.3 total for bad behaviors
+        - Exploration bonus: +0.001 for opening positions (decays with training)
         """
         reward = 0.0
         
-        # PRIMARY SIGNAL: PnL per trade (normalized)
+        # EXPLORATION BONUS: Encourage agent to try trades early in training
+        # This prevents the agent from learning "never trade" as optimal policy
+        # Bonus decays as training progresses (phases out by 10k steps)
+        if realized_pnl != 0 and self.total_steps_trained < 10000:
+            exploration_factor = 1.0 - (self.total_steps_trained / 10000)
+            exploration_bonus = 0.002 * exploration_factor  # Small bonus for taking action
+            reward += exploration_bonus
+        
+        # PRIMARY SIGNAL: Direct PnL-based reward (strongly correlates with profitability)
         if realized_pnl != 0:
-            # Get the duration of the CLOSED trade from trade history
-            if self.trade_history:
-                last_trade = self.trade_history[-1]
-                trade_duration = last_trade['duration']
-            else:
-                trade_duration = 0
-            
             # Normalize by initial capital for consistent scale
+            # $100 profit = +0.004 base reward (100/25000)
+            # Use scaling factor to make rewards more significant
             pnl_normalized = realized_pnl / self.initial_capital
             
-            # Strong positive reward for profitable trades (target 3R = ~$26)
             if realized_pnl > 0:
-                # Base reward: $26 profit → +0.52 reward (26/50)
-                base_reward = min(pnl_normalized * 50.0, 2.0)  # Cap at +2.0
-                
-                # PATIENCE BONUS: Extra reward if held for 20+ bars
-                # This teaches agent to let profit taker work
-                if trade_duration >= 20:
-                    patience_multiplier = 1.5  # 50% bonus
-                    reward = base_reward * patience_multiplier
-                    logger.info(f"🎯 Patience bonus! Held {trade_duration} bars, reward={reward:.3f}")
-                else:
-                    reward = base_reward
-                
-                # PHASE 2: Market condition bonus
-                if self.curriculum.enable_condition_rewards:
-                    reward += self._calculate_condition_bonus(trade_duration, realized_pnl)
+                # Profitable trade: Strong positive reward
+                # Scale: $25 profit → +0.05 reward, $250 profit → +0.5 reward
+                reward = pnl_normalized * 50.0
+                reward = min(reward, 1.0)  # Cap at +1.0 for very large wins
+                logger.debug(f"✅ Profitable trade: PnL=${realized_pnl:.2f}, reward=+{reward:.4f}")
             else:
-                # Penalty for losses (but not too harsh to allow exploration)
-                # Scale: -$26 loss → -0.52 reward
-                base_penalty = max(pnl_normalized * 50.0, -1.0)  # Cap at -1.0
-                
-                # IMPATIENCE PENALTY: Extra penalty if exited too quickly
-                if trade_duration < 10:
-                    impatience_multiplier = 1.5  # 50% worse
-                    reward = base_penalty * impatience_multiplier
-                else:
-                    reward = base_penalty
+                # Losing trade: Penalty (but allow exploration)
+                # Scale: -$25 loss → -0.025 penalty, -$250 loss → -0.25 penalty
+                reward = pnl_normalized * 25.0  # Half the magnitude of wins
+                reward = max(reward, -0.5)  # Cap at -0.5 for very large losses
+                logger.debug(f"❌ Losing trade: PnL=${realized_pnl:.2f}, reward={reward:.4f}")
         
-        # SECONDARY SIGNAL: Small positive reward for holding open positions
-        # This encourages not closing immediately
-        elif self.position_qty != 0:
-            hold_duration = self.steps - self.entry_time
+        # PENALTY 1: Overtrading (excessive transaction costs)
+        # Penalize more than 30 trades per episode (too many = death by 1000 cuts)
+        if self.daily_trades > 30:
+            overtrade_penalty = -0.002 * (self.daily_trades - 30)
+            overtrade_penalty = max(overtrade_penalty, -0.15)  # Cap at -0.15
+            reward += overtrade_penalty
+            logger.debug(f"⚠️ Overtrading penalty: {self.daily_trades} trades, penalty={overtrade_penalty:.4f}")
+        
+        # PENALTY 2: Direction flip-flopping (lack of conviction)
+        # Penalize excessive LONG↔SHORT reversals (wastes capital on commissions)
+        if self.direction_changes > 8:
+            flip_penalty = -0.01 * (self.direction_changes - 8)
+            flip_penalty = max(flip_penalty, -0.1)  # Cap at -0.1
+            reward += flip_penalty
+            logger.debug(f"⚠️ Flip-flop penalty: {self.direction_changes} changes, penalty={flip_penalty:.4f}")
+        
+        # PENALTY 3: Large unrealized drawdown (risk management)
+        # Penalize holding positions with large unrealized losses
+        if self.position_qty != 0:
+            unrealized_pnl = self._calculate_unrealized_pnl(current_price)
             
-            # PHASE 2: Time-scaled holding reward
-            if self.curriculum.enable_time_scaling:
-                # Reward increases with time up to optimal hold (30 bars)
-                optimal_hold = 30
-                if hold_duration <= optimal_hold:
-                    scaling_factor = hold_duration / optimal_hold
-                else:
-                    # Decay after optimal hold
-                    scaling_factor = 1.0 - ((hold_duration - optimal_hold) / 40.0)
-                    scaling_factor = max(scaling_factor, 0.2)
+            # Only penalize if underwater
+            if unrealized_pnl < 0:
+                # Normalize drawdown by initial capital
+                drawdown_pct = abs(unrealized_pnl) / self.initial_capital
                 
-                holding_reward = 0.01 * scaling_factor
-                reward += holding_reward
-            else:
-                # Phase 1: Simple holding reward
-                if 15 <= hold_duration <= 70:
-                    holding_reward = 0.005  # Small constant reward per step
-                    reward += holding_reward
+                # Start penalizing at 1% account drawdown ($250 loss on $25k account)
+                if drawdown_pct > 0.01:
+                    drawdown_penalty = -(drawdown_pct - 0.01) * 10.0
+                    drawdown_penalty = max(drawdown_penalty, -0.05)  # Cap at -0.05
+                    reward += drawdown_penalty
+                    logger.debug(f"⚠️ Drawdown penalty: ${unrealized_pnl:.2f} ({drawdown_pct*100:.2f}%), penalty={drawdown_penalty:.4f}")
         
-        # TERTIARY SIGNAL: Overtrading penalty
-        # Penalize excessive trading (>50 trades per episode)
-        if self.daily_trades > 50:
-            overtrade_penalty = -0.1 * (self.daily_trades - 50) / 100.0
-            reward += max(overtrade_penalty, -0.5)  # Cap at -0.5
-        
-        # DIRECTION FLIP-FLOP PENALTY: Discourage changing between LONG/SHORT
-        # Excessive direction changes = no conviction
-        if self.direction_changes > 10:  # More than 10 direction flips
-            flip_penalty = -0.05 * (self.direction_changes - 10)
-            reward += max(flip_penalty, -0.3)  # Cap at -0.3
-        
-        # COMMISSION AWARENESS: Deduct commission impact
+        # PENALTY 4: Commission impact (implicit in P&L, but make it explicit)
+        # This teaches agent that every trade has a cost
         if commission > 0:
-            commission_penalty = -commission / self.initial_capital * 10.0
-            reward += max(commission_penalty, -0.1)  # Cap at -0.1
+            commission_penalty = -(commission / self.initial_capital) * 5.0
+            commission_penalty = max(commission_penalty, -0.02)  # Cap at -0.02
+            reward += commission_penalty
         
-        # PHASE 3: Risk-adjusted returns
-        if self.curriculum.enable_drawdown_controls:
-            reward += self._calculate_risk_adjusted_bonus()
+        # Final clipping for safety (prevent extreme values)
+        reward = float(np.clip(reward, -1.0, 1.0))
         
-        # Final clipping for safety
-        return float(np.clip(reward, -2.0, 2.0))
-    
-    def _calculate_condition_bonus(self, trade_duration: int, realized_pnl: float) -> float:
-        """
-        PHASE 2: Calculate bonus based on market conditions.
-        
-        Rewards trading with the trend and in favorable conditions.
-        """
-        bonus = 0.0
-        
-        # Get regime features
-        regime_features = self._compute_regime_features()
-        trend_strength = regime_features[0]
-        trend_direction = regime_features[1]
-        vol_regime = regime_features[4]
-        
-        # Bonus for trading with strong trend
-        if abs(trend_strength) > 0.5 and realized_pnl > 0:
-            trend_bonus = 0.1 * abs(trend_strength)
-            bonus += trend_bonus
-        
-        # Bonus for avoiding high volatility losses
-        if vol_regime == 2 and realized_pnl > 0:
-            # Survived high vol → extra credit
-            bonus += 0.15
-        
-        # Bonus for optimal timing (held through favorable conditions)
-        if trade_duration >= 25 and realized_pnl > 0:
-            timing_bonus = 0.1
-            bonus += timing_bonus
-        
-        return min(bonus, 0.3)  # Cap at +0.3
-    
-    def _calculate_risk_adjusted_bonus(self) -> float:
-        """
-        PHASE 3: Calculate risk-adjusted performance bonus.
-        
-        Considers Sharpe ratio, max drawdown, win rate consistency.
-        """
-        bonus = 0.0
-        
-        if len(self.trade_history) < 10:
-            return 0.0
-        
-        # Calculate recent Sharpe ratio (last 10 trades)
-        recent_pnls = [t['pnl'] for t in self.trade_history[-10:]]
-        if len(recent_pnls) >= 10:
-            mean_pnl = np.mean(recent_pnls)
-            std_pnl = np.std(recent_pnls)
-            
-            if std_pnl > 0:
-                sharpe = mean_pnl / std_pnl
-                # Bonus for Sharpe > 1.0
-                if sharpe > 1.0:
-                    bonus += 0.1 * min(sharpe - 1.0, 1.0)
-        
-        # Bonus for low drawdown
-        if self.max_position_drawdown > -50:  # Less than $50 max DD
-            bonus += 0.05
-        
-        # Win rate consistency bonus
-        wins = sum(1 for t in self.trade_history[-10:] if t['pnl'] > 0)
-        win_rate = wins / min(len(self.trade_history), 10)
-        if win_rate >= 0.6:  # 60%+ win rate
-            bonus += 0.15
-        
-        return min(bonus, 0.3)  # Cap at +0.3
+        return reward
     
     def _get_tot_decision(self) -> Optional[ToTDecision]:
         """Get Tree of Thought decision for current state."""

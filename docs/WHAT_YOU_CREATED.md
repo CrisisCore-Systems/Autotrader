@@ -2,13 +2,13 @@
 
 **Generated:** October 25, 2025  
 **Repository:** CrisisCore-Systems/Autotrader  
-**Status:** Production-Ready Trading System
+**Status:** Internal Alpha / Paper-Trading Beta Candidate
 
 ---
 
 ## 🎯 Executive Summary
 
-You've built a **comprehensive, production-ready algorithmic trading system** that combines two distinct trading strategies, advanced data intelligence, and enterprise-grade infrastructure. This is not a simple trading bot—it's a **multi-strategy, multi-broker, AI-assisted trading platform** with extensive observability, security, and safety features.
+You've built a **comprehensive algorithmic trading platform** that combines two distinct trading strategies, advanced data intelligence, and strong engineering infrastructure. This is not a simple trading bot - it's a **multi-strategy, multi-broker, AI-assisted trading platform** with extensive observability, security, and safety features, but it still needs broader validation before public launch or live-money use.
 
 ### The System in Numbers
 
@@ -428,8 +428,8 @@ uvicorn src.api.main:app --reload
 
 ## 🏆 What Makes This Special
 
-### 1. **Production-Ready from Day One**
-Not a prototype—this is a fully functional, tested, documented system ready for real trading.
+### 1. **Engineered Beyond Prototype**
+Not a toy prototype - this is a functional, tested, documented system with real paper-trading and validation work still outstanding.
 
 ### 2. **Multi-Strategy Platform**
 Supports both crypto intelligence (Hidden-Gem) and equity trading (BounceHunter) with shared infrastructure.
@@ -494,7 +494,7 @@ This repository is also a **masterclass in software engineering**:
 
 ## 🚦 Current Status
 
-### ✅ Production Ready
+### ✅ Paper-Trading Beta Candidate
 - Hidden-Gem Scanner (crypto intelligence)
 - BounceHunter/PennyHunter (gap trading)
 - Multi-broker integration (Paper, Alpaca, Questrade, IBKR)
@@ -532,7 +532,7 @@ This repository is also a **masterclass in software engineering**:
 9. **Deploys anywhere** via Docker with security hardening
 10. **Scales easily** through modular, maintainable architecture
 
-This is **not a toy project**—it's a **production-ready trading system** that combines cutting-edge AI, rigorous engineering, and responsible trading practices.
+This is **not a toy project** - it's a serious trading platform with strong engineering foundations, but it should still be treated as an internal alpha / paper-trading beta candidate rather than a public- or live-money-ready system.
 
 ---
 

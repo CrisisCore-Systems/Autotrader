@@ -41,8 +41,8 @@ The master analysis document that answers three fundamental questions:
 - Provide comprehensive observability (logging, metrics, tracing)
 
 #### How FAR ALONG Is Development?
-- **80-90% complete** for core use cases
-- BounceHunter: Production-ready, Phase 2 validation at 10%
+- **Internal alpha / paper-trading beta candidate** for current launch posture
+- BounceHunter: Paper-trading candidate, Phase 2 validation at 10%
 - Hidden-Gem Scanner: Stable for research use
 - Infrastructure: Enterprise-grade observability and testing
 - Advanced Features: Experimental but functional
@@ -186,7 +186,7 @@ Visual assessment of repository maturity across multiple dimensions using the CM
 
 ### For Investors/Partners
 1. Read Executive Summary in [REPOSITORY_ANALYSIS.md](REPOSITORY_ANALYSIS.md)
-2. Review Production Readiness Score (8.5/10)
+2. Review the maturity assessment alongside the current validation gaps
 3. Examine [STRATEGIC_ROADMAP.md](STRATEGIC_ROADMAP.md) - Investment Requirements
 4. Assess risk matrix in [MATURITY_ASSESSMENT.md](MATURITY_ASSESSMENT.md)
 
@@ -201,7 +201,7 @@ Visual assessment of repository maturity across multiple dimensions using the CM
 ## Key Findings Summary
 
 ### The Good ✅
-- **Production-Ready Core**: BounceHunter trading live with real broker integrations
+- **Strong Core Infrastructure**: Broker integrations, testing, and observability are in place
 - **Exceptional Engineering**: 57K LOC, 80%+ test coverage, comprehensive observability
 - **Strong Security**: Multiple scanning tools, secret management, API rate limiting
 - **Cost-Efficient**: $0/month FREE tier operational
@@ -215,7 +215,7 @@ Visual assessment of repository maturity across multiple dimensions using the CM
 - **Enterprise Features**: Need HA, SOC2, K8s for large-scale
 
 ### The Opportunity 🚀
-- **Critical Inflection Point**: 80-90% complete, ready to scale
+- **Critical Inflection Point**: close to a controlled paper-trading beta if validation is finished
 - **Clear Roadmap**: 12-month plan to enterprise readiness
 - **Multiple Paths**: Enterprise platform, community ecosystem, or research tool
 - **Defensible Moat**: Open-source community + sophisticated architecture
@@ -328,7 +328,7 @@ Together, they enable informed decision-making about:
 - When to expect specific capabilities
 - What resources are required
 
-The analysis confirms that AutoTrader is a **sophisticated, production-ready system** at a critical juncture, with clear paths to multiple successful outcomes.
+The analysis confirms that AutoTrader is a **sophisticated system nearing paper-trading beta readiness** at a critical juncture, with clear paths to multiple successful outcomes.
 
 ---
 

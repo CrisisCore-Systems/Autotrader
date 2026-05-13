@@ -2,7 +2,7 @@
 
 Welcome! This page consolidates the most useful documentation for the CrisisCore AutoTrader Hidden Gem Scanner so you can jump straight to the guide you need. The sections are grouped by workflow and discipline. Each link points to an existing, maintained document inside this repository (or an external canonical reference when needed).
 
-> **Tip:** The system is production-ready with a fully functional "FREE" tier. Start with the **Start Here** section if this is your first visit in a while.
+> **Tip:** The system is an internal alpha / paper-trading beta candidate with a fully functional "FREE" tier. Start with the **Start Here** section if this is your first visit in a while.
 
 ---
 
@@ -11,7 +11,7 @@ Welcome! This page consolidates the most useful documentation for the CrisisCore
 - [System Snapshot](overview/PROJECT_OVERVIEW.md) – high-level context and current status.
 - [Release & Feature Progress](FEATURE_STATUS.md) – single page view of completed and planned work.
 - [Implementation Summary](IMPLEMENTATION_SUMMARY.md) – condensed overview of technical accomplishments.
-- [System Status Report (external)](https://github.com/CrisisCore-Systems/Autotrader/blob/main/STATUS_REPORT.md) – comprehensive production readiness report.
+- [System Status Report (external)](https://github.com/CrisisCore-Systems/Autotrader/blob/main/STATUS_REPORT.md) – current maturity and launch-readiness report.
 
 ## Setup & Operations
 

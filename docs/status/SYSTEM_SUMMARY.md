@@ -1,6 +1,6 @@
 # AutoTrader - Quick System Summary
 
-> **TL;DR**: You've built a production-ready, multi-strategy algorithmic trading platform with enterprise-grade infrastructure.
+> **TL;DR**: You've built a sophisticated, multi-strategy algorithmic trading platform with strong infrastructure. It is closer to a controlled paper-trading beta than a production trading launch.
 
 ## 🎯 At a Glance
 
@@ -9,7 +9,7 @@
 │                    AUTOTRADER PLATFORM                          │
 │                                                                 │
 │  Multi-Strategy Trading System with AI Intelligence            │
-│  Cost: $0/month (FREE tier) | Status: Production Ready         │
+│  Cost: $0/month (FREE tier) | Status: Paper-Trading Beta Candidate │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
@@ -239,7 +239,7 @@ uvicorn src.api.main:app --reload
 
 ## 🏆 What Makes This Special
 
-1. **Production-Ready**: Not a prototype—fully tested, documented, and deployable
+1. **Serious Engineering Foundation**: Not a toy project—well-tested, documented, and structured for controlled rollout
 2. **Multi-Strategy**: Crypto + equity in one platform
 3. **Cost-Efficient**: $0/month FREE tier with quality data
 4. **Enterprise-Grade**: Observability, security, quality gates
@@ -301,4 +301,4 @@ uvicorn src.api.main:app --reload
 
 **Generated**: October 25, 2025  
 **Repository**: https://github.com/CrisisCore-Systems/Autotrader  
-**Status**: Production-Ready 🚀
+**Status**: Internal alpha / paper-trading beta candidate

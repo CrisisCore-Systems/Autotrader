@@ -2,7 +2,7 @@
 
 **Welcome!** This is your guide to understanding what the AutoTrader system is and what it can do.
 
-> **Quick Answer**: You've built a production-ready, multi-strategy algorithmic trading platform combining crypto intelligence and equity gap trading, with enterprise-grade infrastructure, $0/month operating costs, and comprehensive documentation.
+> **Quick Answer**: You've built a sophisticated multi-strategy trading platform combining crypto intelligence and equity gap trading, with strong infrastructure, $0/month operating costs, and comprehensive documentation. Its current launch posture is internal alpha / paper-trading beta candidate, not public production.
 
 ---
 
@@ -354,7 +354,7 @@ AutoTrader Platform
 
 **Generated**: October 25, 2025  
 **Repository**: https://github.com/CrisisCore-Systems/Autotrader  
-**Status**: Production-Ready 🚀
+**Status**: Internal alpha / paper-trading beta candidate
 
 ---
 
@@ -371,4 +371,4 @@ AutoTrader Platform
 
 ---
 
-**Happy Trading! 🚀📈**
+**Happy Building!**

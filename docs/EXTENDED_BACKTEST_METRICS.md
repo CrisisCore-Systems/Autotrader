@@ -1,6 +1,6 @@
 # Extended Backtest Metrics - Information Coefficient & Risk-Adjusted Performance
 
-**Status:** ✅ **Production Ready**
+**Status:** Metrics subsystem snapshot; use `../STATUS.md` for repository-wide launch posture.
 
 **Date:** 2025-01-08
 
@@ -603,4 +603,4 @@ assert len(set(actuals)) > 1
 
 **Author:** GitHub Copilot  
 **Date:** 2025-01-08  
-**Status:** ✅ Production Ready
+**Status:** Metrics subsystem snapshot

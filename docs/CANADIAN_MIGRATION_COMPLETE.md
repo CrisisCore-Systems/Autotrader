@@ -9,7 +9,7 @@ A **drop-in replacement** for Alpaca with **Interactive Brokers (IBKR)** and **Y
 ## 📦 New Components
 
 ### 1. **IBKR Broker Adapter** (`src/core/brokers/ibkr_client.py`)
-- 600+ lines of production-ready code
+- 600+ lines of implementation-complete adapter code for this snapshot
 - Drop-in replacement for Alpaca client
 - Same interface: `place_order()`, `get_positions()`, `get_quote()`, etc.
 - Auto-detects Canadian stocks (`.TO`, `.V` suffixes)
@@ -156,7 +156,7 @@ python scripts\ibkr_smoke_test.py
 ```
 
 #### **CLI Harness** (`scripts/ibkr_connector.py`)
-- Production-ready CLI tool
+- Implementation-complete CLI diagnostic tool for this snapshot
 - Multiple diagnostic commands
 - Logging to file
 - Canadian stock support

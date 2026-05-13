@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-**Status:** Ready for deployment  
+**Status:** Deployment planning guide snapshot  
 **Date:** October 25, 2025  
 **Validation Framework:** 80% complete
 
@@ -510,4 +510,4 @@ python scripts/analysis/detect_regime_change.py
 
 **Last Updated:** October 25, 2025  
 **Version:** 1.0.0  
-**Status:** Ready for deployment
+**Status:** Deployment planning guide snapshot

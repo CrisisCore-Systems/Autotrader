@@ -463,7 +463,7 @@ To suggest additional tokens for the list:
 
 ## 🎉 Conclusion
 
-This token list provides a **production-ready foundation** for validating and operating the VoidBloom / CrisisCore Hidden-Gem Scanner. All tokens are:
+This token list provides an implementation-ready foundation for validating and operating the VoidBloom / CrisisCore Hidden-Gem Scanner in this snapshot. All tokens are:
 
 - ✅ **Analyzable with $0/month** FREE data sources
 - ✅ **Optimized for scanner's feature vectors**

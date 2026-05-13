@@ -229,9 +229,9 @@ python scripts\ibkr_connector.py --account
 
 ---
 
-## 🎯 System Status: PRODUCTION READY
+## System Status
 
-**Canadian Trading Stack:** ✅ **FULLY OPERATIONAL**
+**Canadian Trading Stack:** validated for the documented setup flow in this snapshot
 
 All core components validated:
 - ✅ IBKR connection working

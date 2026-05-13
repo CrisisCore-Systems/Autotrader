@@ -410,7 +410,7 @@ You now have **enterprise-grade compliance monitoring** with:
 
 **Total setup time**: ~10 minutes  
 **Total lines of code added**: ~1,200 (dashboard JSON, metrics, exporter)  
-**Production-ready**: Yes! ✨
+**Implementation status in this snapshot**: Complete for the documented workflow.
 
 ---
 

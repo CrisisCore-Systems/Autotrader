@@ -243,16 +243,16 @@ Extend backtest from 3 years to 6 years to:
 - ✅ **Memory system validated**: +3.6% improvement at scale
 - ✅ **Phase 1.5 confirmed**: 60% win rate (solid performance)
 - ✅ **Statistical significance**: n=85 (highly significant)
-- ✅ **Ready for deployment**: Memory integrated in live trading
+- ✅ **Deployment follow-up identified**: Memory is integrated for the documented trading workflow in this snapshot
 
 ### Reality Check:
 - ⚠️ **Baseline is 56%**, not 61% (more data revealed truth)
 - ⚠️ **Phase 2 (65%+) needs more** than memory alone
 - 📈 **Phase 3 agentic system required** for 75-85% target
-- 🎯 **Current system is production-ready** at 60% WR
+- 🎯 **Current system snapshot shows solid backtest performance** at 60% WR
 
 ### Recommendation:
-**Deploy Phase 2.5 to live paper trading** and begin **Phase 3 design** for full agentic system. Current 60% win rate with 2.12 profit factor is excellent for penny stocks and ready for real trading.
+Deploy Phase 2.5 to controlled paper trading and begin Phase 3 design for the full agentic system. Current 60% win rate with 2.12 profit factor is promising for penny stocks, but it should still be treated as a validation-stage result.
 
 ---
 

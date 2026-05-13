@@ -28,7 +28,7 @@ The observability stack consists of three pillars:
 
 ### Benefits
 
-- **Production-Ready**: All logs in JSON format for easy parsing by log aggregators
+- **Operational In This Snapshot**: All logs are in JSON format for easy parsing by log aggregators
 - **Real-time Monitoring**: Prometheus metrics for dashboards and alerting
 - **Distributed Tracing**: Track requests across services and identify bottlenecks
 - **Retrofittable**: Designed to be added incrementally without breaking changes

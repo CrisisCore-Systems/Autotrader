@@ -1,5 +1,7 @@
 # Validation Roadmap Week 2-3: Comprehensive Summary Report
 
+> Scope note: this file is a point-in-time validation program snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Report Date:** October 25, 2025  
 **Validation Period:** 6 months (182 days, ~262K bars per symbol)  
 **Symbols Analyzed:** AAPL, MSFT, NVDA, BTC-USD, ETH-USD, EURUSD, GBPUSD (7 total)  
@@ -17,7 +19,7 @@ This report documents the completion of Week 2-3 validation tasks for the AutoTr
 4. **Optuna Optimization** - Automated hyperparameter tuning with pruning
 5. **CI/CD Integration** - Automated validation pipeline via GitHub Actions
 
-All modules are production-ready and have been tested on real market data spanning 6 months (262,021 bars per symbol @ 1-minute resolution).
+All modules were implemented and tested in this validation snapshot on real market data spanning 6 months (262,021 bars per symbol @ 1-minute resolution).
 
 ---
 
@@ -375,7 +377,7 @@ Walk-forward validation captures regime changes effectively.
 
 ---
 
-## Production Readiness Assessment
+## Validation Infrastructure Assessment
 
 ### Completed Tasks ✅
 - [x] Parameter grid search (40+ combinations tested)
@@ -423,7 +425,7 @@ Walk-forward validation captures regime changes effectively.
 4. **Implement Kelly criterion** for position sizing
 
 ### Long-Term (Week 9-12)
-1. **Production deployment** with live data feeds
+1. **Deployment planning** with live data feeds
 2. **Real-time monitoring** with Grafana/Prometheus
 3. **Alert system** for performance degradation
 4. **A/B testing framework** for strategy comparison
@@ -432,7 +434,7 @@ Walk-forward validation captures regime changes effectively.
 
 ## Conclusion
 
-The Week 2-3 validation roadmap has been **successfully completed**. All deliverables are production-ready:
+The Week 2-3 validation roadmap has been successfully completed. All deliverables in this snapshot are implementation-complete:
 
 1. ✅ **Parameter Grid Search** - Identified optimal hyperparameters for all strategies
 2. ✅ **Walk-Forward Validation** - Confirmed out-of-sample performance (no overfitting)
@@ -448,7 +450,7 @@ The Week 2-3 validation roadmap has been **successfully completed**. All deliver
 - 🤖 Automated **entire validation pipeline** via GitHub Actions
 - 📈 Achieved **24,276x diversification benefit** in multi-asset portfolios
 
-**Validation Framework Status:** **80% complete** and **production-ready**
+**Validation Framework Status:** **80% complete** and ready for further validation work
 
 The agentic trading system is now equipped with a robust validation infrastructure that ensures:
 - No overfitting through walk-forward testing

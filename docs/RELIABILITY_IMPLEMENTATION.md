@@ -4,7 +4,7 @@
 
 **Objective**: Instrument latency monitoring, implement circuit breakers, add graceful degradation, and expand caching policies across all data sources.
 
-**Status**: ✅ **COMPLETED**
+**Status**: Reliability implementation snapshot completed; use `../STATUS.md` for repository-wide launch posture.
 
 **Implementation Date**: 2025
 
@@ -387,4 +387,4 @@ with breaker:
 
 ---
 
-**Implementation Complete**: All reliability infrastructure is production-ready. Ready to proceed with Task 4 (Unified Feature Store) and Task 5 (Dashboard Lift). 🎉
+**Implementation Complete**: The reliability infrastructure in this snapshot is implemented and ready for the next integration tasks, including Task 4 (Unified Feature Store) and Task 5 (Dashboard Lift).

@@ -320,7 +320,7 @@ for pos in broker.get_positions():
 
 ## Summary
 
-The broker integration is **production-ready** for paper trading. You can now:
+The broker integration is implemented for the documented paper-trading workflow in this historical snapshot. You can now:
 
 ✅ Place real bracket orders via Alpaca  
 ✅ Track positions with live P&L  

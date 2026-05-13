@@ -36,7 +36,7 @@ This document outlines a comprehensive validation framework to statistically pro
 | Baseline Strategies | ✅ VALIDATED | Sharpe 0.01-0.012, 18-split walk-forward |
 | Parameter Optimization | ✅ VALIDATED | Optuna with TPE sampler, 50-200 trials |
 | Backtesting Framework | ✅ VALIDATED | Realistic costs, slippage modeling |
-| Monitoring Stack | ✅ PRODUCTION-READY | Prometheus + Grafana + Audit Trail |
+| Monitoring Stack | ✅ IMPLEMENTED FOR THIS SNAPSHOT | Prometheus + Grafana + Audit Trail |
 
 ### 🚧 **CRITICAL GAPS** (Agentic System)
 
@@ -498,7 +498,7 @@ STAGE_3 = {
 
 ## Success Definition
 
-The agentic system is **statistically validated** and **production-ready** when:
+The agentic system should be treated as statistically validated for this plan when:
 
 ✅ **Phase 2 Complete**: All 5 statistical tests show p < 0.05 (significant improvement)  
 ✅ **Win Rate**: ≥ 65% with ≥ 140 trades (backtest) and ≥ 20 trades (paper trading)  

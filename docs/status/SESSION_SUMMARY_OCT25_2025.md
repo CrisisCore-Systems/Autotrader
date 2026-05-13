@@ -1,12 +1,14 @@
 # Session Summary - October 25, 2025
 
+> Scope note: this file is a historical session summary in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 ## Work Completed
 
-### 1. Production Worker Scaffolding ✅ COMPLETE
+### 1. Worker Scaffolding ✅ COMPLETE
 
 **Problem**: Docker worker service running placeholder command (`python -m src.cli.main --help`)
 
-**Solution**: Built complete production worker infrastructure
+**Solution**: Built complete worker infrastructure for this snapshot
 
 **Deliverables**:
 - `src/cli/worker.py` (730 lines) - Worker CLI with 3 modes (ingestion, backtest, optimize)
@@ -23,7 +25,7 @@
 - ✅ Docker Compose profiles (production, validation, optimization, workers)
 - ✅ Resource limits and configuration management
 
-**Status**: 80% production-ready (monitoring dashboards pending)
+**Status**: 80% complete for this snapshot (monitoring dashboards pending)
 
 ---
 
@@ -77,7 +79,7 @@
 | `WORKER_SCAFFOLDING_COMPLETE.md` | 350 | Implementation summary |
 | `AGENTIC_SYSTEM_VALIDATION_PLAN.md` | 52KB | 8-week validation plan |
 | `VALIDATION_GAP_CRITICAL.md` | 18KB | Gap analysis and risk |
-| **Total** | **2,300+** | **Production infrastructure + Validation** |
+| **Total** | **2,300+** | **Worker infrastructure + Validation** |
 
 ### Modified (3 files)
 
@@ -189,7 +191,7 @@
 - Health checks and auto-restart
 - Gradual rollout via Docker profiles
 
-**Recommendation**: Deploy to production (non-agentic workloads)
+**Recommendation**: Consider controlled deployment planning for non-agentic workloads
 
 ### Agentic System: HIGH RISK ⚠️
 
@@ -238,7 +240,7 @@
 ### Progress
 - **Worker Scaffolding**: 80% complete (monitoring pending)
 - **Validation Plan**: 100% complete (execution pending)
-- **Overall System**: 85% ready for baseline production, 40% ready for agentic deployment
+- **Overall System**: 85% ready for baseline deployment planning, 40% ready for agentic deployment planning
 
 ### Time Allocation
 - Worker infrastructure: ~60% of session
@@ -250,12 +252,12 @@
 
 Today's session addressed two critical infrastructure gaps:
 
-1. **✅ Production Worker Scaffolding**: Replaced placeholder Docker command with production-grade worker system. System now capable of processing jobs, emitting metrics, and running reliably in containers.
+1. **✅ Worker Scaffolding**: Replaced placeholder Docker command with a worker system capable of processing jobs, emitting metrics, and running reliably in containers.
 
 2. **⚠️ Agentic Validation Gap**: Identified that Phase 9 LLM orchestration lacks statistical validation. Created comprehensive 8-week plan to validate win rate (≥65%), sample size (≥195 trades), and statistical significance (p < 0.05) before live deployment.
 
 **Status**:
-- Baseline system: **Production-ready** ✅
+- Baseline system: implementation-complete in this snapshot ✅
 - Worker infrastructure: **80% complete** 🟡
 - Agentic system: **Validation pending** ⚠️
 

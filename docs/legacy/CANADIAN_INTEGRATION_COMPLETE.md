@@ -309,4 +309,4 @@ For issues:
 
 ---
 
-**Status**: ✅ Complete and production-ready for Canadian traders!
+**Status**: ✅ Complete for this historical Canadian-trading snapshot

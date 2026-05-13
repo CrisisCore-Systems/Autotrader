@@ -293,7 +293,7 @@ pytest tests/test_smoke.py -vv -s
 | Date | Coverage | Tests Passing | Notes |
 |------|----------|---------------|-------|
 | Jan 2025 | 9% | 29 | Initial baseline established |
-| Target | 75% | 100+ | Production-ready target |
+| Target | 75% | 100+ | Broader-deployment target |
 
 ---
 

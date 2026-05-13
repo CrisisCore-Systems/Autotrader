@@ -391,7 +391,7 @@ Remove-Item logs\* -Force
 
 ---
 
-**Status:** ✅ PRODUCTION READY  
+**Status:** Scheduling guide snapshot complete; use `../STATUS.md` for repository-wide launch posture.  
 **Setup Time:** 10 minutes  
 **Maintenance:** Minimal (weekly review)  
 **Reliability:** Excellent with proper IBKR setup

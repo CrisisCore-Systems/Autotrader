@@ -314,7 +314,7 @@ python src/bouncehunter/pennyhunter_scanner.py
 
 ## ✅ Summary
 
-**System Status**: ✅ PRODUCTION READY  
+**System Status**: ✅ Historical readiness snapshot  
 **Components**: ✅ 4/4 validated  
 **Current Universe**: 10 tickers (ADT, SAN, COMP, INTR, AHCO, SNDL, CLOV, EVGO, SENS, SPCE)  
 **Recommendation**: **Begin 30-day paper trading NOW, expand universe after validation**

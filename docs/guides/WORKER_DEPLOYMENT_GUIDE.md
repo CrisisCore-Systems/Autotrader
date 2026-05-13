@@ -1,6 +1,6 @@
-# Production Worker Deployment Guide
+# Worker Deployment Guide
 
-**Status**: Production Ready  
+**Status**: Worker deployment guide snapshot; use `../../STATUS.md` for repository-wide launch posture.  
 **Date**: October 25, 2025  
 **Version**: 1.0.0
 

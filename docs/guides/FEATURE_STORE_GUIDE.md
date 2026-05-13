@@ -4,7 +4,7 @@
 
 **Lookahead bias** (using future data) is the #1 fatal flaw in quantitative backtests. A single leaky feature can make a strategy appear profitable when it will lose money in live trading.
 
-This guide explains how to use `FeatureStore` to prevent lookahead bias and ensure production-ready features.
+This guide explains how to use `FeatureStore` to prevent lookahead bias and ensure implementation-safe features for this snapshot.
 
 ---
 

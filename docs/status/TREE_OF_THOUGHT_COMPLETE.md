@@ -1,5 +1,7 @@
 # Tree-of-Thought Feature Engineering Improvements - Complete ✅
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 ## Executive Summary
 
 Successfully applied **systematic tree-of-thought reasoning** (16 sequential analysis steps) to comprehensively improve the Phase 3 Week 5 feature engineering pipeline. **All Tier 1 implementations complete and validated** (6/6 tests passing).
@@ -377,7 +379,7 @@ metadata_df.to_csv("feature_catalog.csv")
 - **Performance**: 82,979 rows/sec (**65x faster!** 🚀)
 - **Features**: 43 base → 150+ transformed (**5x expansion**)
 - **NaN Handling**: Feature-specific strategies (100% handled, no bias)
-- **ML Readiness**: Scaled, lagged, differenced (production-ready)
+- **ML Readiness**: Scaled, lagged, differenced (implementation-complete for ML workflows)
 - **Architecture**: Full metadata system, correlation analysis
 - **Tests**: 46 tests (6 new validation tests, all passing)
 
@@ -390,7 +392,7 @@ metadata_df.to_csv("feature_catalog.csv")
 | NaN Handling | Naive (biased) | Smart (100% clean) | **Bias eliminated** |
 | Code Quality | Good | Excellent | 6/6 Codacy clean |
 | Test Coverage | 40 tests | 46 tests | +6 (+15%) |
-| ML Readiness | No | Yes | **Production-ready** |
+| ML Readiness | No | Yes | **Implementation-complete** |
 
 ---
 
@@ -454,7 +456,7 @@ metadata_df.to_csv("feature_catalog.csv")
 
 ## Conclusion
 
-Successfully applied **tree-of-thought reasoning** (16 sequential analysis steps) to systematically improve feature engineering pipeline. **All Tier 1 implementations complete and validated** (6/6 tests passing, 1,910 lines of production code).
+Successfully applied **tree-of-thought reasoning** (16 sequential analysis steps) to systematically improve feature engineering pipeline. **All Tier 1 implementations complete and validated** (6/6 tests passing, 1,910 lines of subsystem code).
 
 ### Key Achievements ✅
 1. **65x performance improvement** (82,979 vs 1,268 rows/sec) - **exceeded expectations!** 🚀
@@ -467,7 +469,7 @@ Successfully applied **tree-of-thought reasoning** (16 sequential analysis steps
 
 ### Impact
 - Can now process **5 million rows in 1 minute** vs **1 hour** before
-- Features are **production-ready for ML models** (proper scaling, temporal context)
+- Features are implementation-complete for ML models in this snapshot (proper scaling, temporal context)
 - **Backtesting accuracy improved** (eliminated look-ahead bias)
 - **Code quality excellent** (all files Codacy-clean)
 

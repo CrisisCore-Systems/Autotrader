@@ -83,4 +83,4 @@ The implementation will follow the proposed `crypto-pnd-detector/` layout, inclu
 - The test suite `tests/test_crypto_pnd_detector.py` exercises the streaming loop end-to-end, verifying compatibility with the repository’s pytest configuration and ensuring new dependencies remain pure-Python and local.
 - The development harness `tests/test_dev_deployment.py` and `run_dev_deployment` entrypoint simulate a dev deployment by stitching static collectors, the in-memory feature store, and the ensemble detector together.
 
-By executing this roadmap, the team can deliver a modern, explainable, and production-ready pump and dump detection platform over the planned 16-week horizon.
+By executing this roadmap, the team can deliver a modern, explainable, and implementation-ready pump and dump detection platform over the planned 16-week horizon.

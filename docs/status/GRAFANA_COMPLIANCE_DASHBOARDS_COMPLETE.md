@@ -1,6 +1,8 @@
 # 📊 Grafana Compliance Monitoring Dashboards
 
-**Status**: ✅ **COMPLETE** - Ready for Production
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
+**Status**: ✅ **COMPLETE** - subsystem snapshot
 
 Comprehensive Grafana dashboards for real-time compliance monitoring with Prometheus metrics integration.
 
@@ -571,7 +573,7 @@ If `alert_delivery_total` is 0:
    - Add Grafana notification channels
    - Test with intentional violations
 
-4. **Production Deployment** (30 minutes)
+4. **Deployment Planning** (30 minutes)
    - Run metrics exporter as service/daemon
    - Configure Prometheus for production
    - Set up retention policies
@@ -638,6 +640,6 @@ python scripts/demo_compliance_monitoring.py
 
 ---
 
-**Status**: 🎉 **PRODUCTION READY**
+**Status**: 🎉 **IMPLEMENTATION COMPLETE FOR THIS SUBSYSTEM SNAPSHOT**
 
 Compliance monitoring now has enterprise-grade visualization and alerting!

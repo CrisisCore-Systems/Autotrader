@@ -554,5 +554,5 @@ logger.error("Processing failed", error=str(error), exc_info=True)
 ---
 
 **Last Updated**: 2025-10-09  
-**Status**: ✅ Production Ready  
+**Status**: Unified logging guide snapshot; use `../STATUS.md` for repository-wide launch posture.  
 **Maintainer**: Engineering Team

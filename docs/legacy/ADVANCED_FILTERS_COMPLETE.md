@@ -358,7 +358,7 @@ elif vix < 20:  # Low volatility
 ✅ Integrated into paper trading workflow
 ✅ Configurable via YAML
 ✅ Tested with real market data
-✅ Ready for production use
+✅ Ready for documented workflow use in this historical snapshot
 
 ---
 

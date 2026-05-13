@@ -1,5 +1,7 @@
 # 🎉 VoidBloom Scanner - All Features Working!
 
+> Historical report: this file preserves a subsystem status snapshot under `docs/status/reports/`. It should not be read as the current repository-wide launch posture. For that, use `../../../STATUS.md`.
+
 📚 **Need more context?** Start with the [Documentation Portal](../../documentation_portal.md) for a curated list of the latest guides and runbooks.
 
 ## ✅ System Status: OPERATIONAL
@@ -316,9 +318,9 @@ curl http://127.0.0.1:8000/docs
 
 ---
 
-## 🎉 **SYSTEM IS FULLY OPERATIONAL!**
+## System Snapshot
 
-Your VoidBloom Hidden Gem Scanner is ready to discover cryptocurrency opportunities! 
+This VoidBloom Hidden Gem Scanner snapshot is operational for the documented local workflows.
 
 **Start it now:**
 ```powershell
@@ -330,5 +332,5 @@ Your VoidBloom Hidden Gem Scanner is ready to discover cryptocurrency opportunit
 ---
 
 **Built with:** Python • FastAPI • React • Vite • AI  
-**Status:** ✅ Production Ready  
+**Status:** Historical subsystem snapshot  
 **Date:** October 7, 2025

@@ -891,4 +891,4 @@ print('✓ Write successful')
 
 **Version:** 1.0.0  
 **Last Updated:** October 2025  
-**Status:** Production Ready ✅
+**Status:** Deployment guide snapshot; use `../STATUS.md` for repository-wide launch posture.

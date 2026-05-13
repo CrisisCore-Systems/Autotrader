@@ -222,7 +222,7 @@ The system is now **self-improving** via the learning loop:
 - Good tickers get more weight (positive avg reward)
 - Regime-specific thresholds adapt (tighten BCS in high-VIX)
 
-This is **production-ready for paper trading**. Once the learning loop validates over 3-6 months, transition to live trading with small position sizes.
+This is implemented for paper-trading validation in this historical snapshot. Once the learning loop validates over 3-6 months, transition to live trading with small position sizes.
 
 ---
 

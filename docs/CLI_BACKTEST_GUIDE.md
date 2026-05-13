@@ -2,7 +2,7 @@
 
 ## Overview
 
-The enhanced CLI backtest wrapper (`pipeline/cli_backtest.py`) provides a robust, production-ready command-line interface for running GemScore backtests with multiple engines and comprehensive configuration options.
+The enhanced CLI backtest wrapper (`pipeline/cli_backtest.py`) provides a robust command-line interface for running GemScore backtests with multiple engines and comprehensive configuration options in this implementation snapshot.
 
 ## Features
 

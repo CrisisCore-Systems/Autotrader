@@ -1,8 +1,10 @@
 # Intelligent Adjustments System - Project Status
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 ## Executive Summary
 
-**Status:** ✅ **PRODUCTION READY**  
+**Status:** Historical subsystem snapshot  
 **Completion Date:** October 2025  
 **Total Test Coverage:** 200 passing unit tests  
 **Documentation:** Complete (3 comprehensive guides)  
@@ -325,7 +327,7 @@ pytest tests/unit/exits/ tests/unit/data/ -v
 - ✅ **Validation:** 26 validation rules with helpful error messages
 - ✅ **YAML-based:** Human-readable configuration files
 
-### Production Readiness
+### Implementation Status
 - ✅ **200 Unit Tests:** Comprehensive test coverage
 - ✅ **Error Handling:** Graceful fallback on API failures
 - ✅ **Thread-Safe:** Caching with locks for concurrent access
@@ -419,7 +421,7 @@ pytest tests/unit/exits/ tests/unit/data/ -v
 - ✅ **200 unit tests passing** (100% pass rate)
 - ✅ **Zero critical bugs** in core logic
 - ✅ **Comprehensive documentation** (3 guides, 50+ pages)
-- ✅ **Production-ready configuration** (3 templates)
+- ✅ **Implementation-complete configuration** (3 templates)
 - ✅ **Deployment procedures** documented
 
 ### Business Success (Post-Deployment)
@@ -476,7 +478,7 @@ pytest tests/unit/exits/ tests/unit/data/ -v
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | October 2025 | Initial production-ready release |
+| 1.0.0 | October 2025 | Initial implementation-complete release |
 |  |  | - 8 phases complete |
 |  |  | - 200 tests passing |
 |  |  | - 3 configuration templates |
@@ -508,7 +510,7 @@ pytest tests/unit/data/test_vix_provider.py -v
 
 ---
 
-**Project Status:** ✅ **PRODUCTION READY**  
+**Project Status:** ✅ **IMPLEMENTATION COMPLETE FOR THIS SNAPSHOT**  
 **Recommendation:** Proceed to paper trading validation  
 **Timeline:** 2-4 weeks paper trading → 4 weeks gradual live rollout  
 **Expected Go-Live:** December 2025
@@ -516,4 +518,4 @@ pytest tests/unit/data/test_vix_provider.py -v
 ---
 
 *Last Updated: October 2025*  
-*Status: Phase 8 Complete - Ready for Deployment* 🚀
+Status: Phase 8 complete - ready for paper trading validation.

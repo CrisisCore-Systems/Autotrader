@@ -6,7 +6,7 @@
 
 ## What You Got
 
-A **production-ready, Canadian-friendly trading stack** with IBKR + Yahoo Finance. Everything works, fully documented, zero Alpaca dependencies.
+A Canadian-friendly trading stack snapshot with IBKR + Yahoo Finance. It is documented, tested for the described setup flow, and removes the Alpaca dependency.
 
 ---
 
@@ -104,7 +104,7 @@ See `docs/QUICK_START_CANADA.md` for complete walkthrough.
 You asked to "rip out Alpaca and drop in IBKR."
 
 **Delivered:**
-- ✅ 600-line IBKR adapter (production-ready)
+- ✅ 600-line IBKR adapter (implementation-complete for this snapshot)
 - ✅ 250-line Yahoo VIX provider (FREE, works now)
 - ✅ 3,500+ lines of documentation
 - ✅ Drop-in replacement for Alpaca
@@ -113,4 +113,4 @@ You asked to "rip out Alpaca and drop in IBKR."
 
 **Next:** Follow `docs/QUICK_START_CANADA.md` for deployment.
 
-**You're ready to trade Canadian markets! 🍁🚀**
+You can continue with paper-trading setup for Canadian markets from here.

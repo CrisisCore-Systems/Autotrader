@@ -1,14 +1,16 @@
 # Compliance Monitoring Framework - Implementation Complete ✅
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date**: October 25, 2025  
-**Status**: Production Ready  
+**Status**: Historical subsystem snapshot  
 **Codacy**: All checks passed (Pylint, Lizard, Semgrep, Trivy)
 
 ---
 
 ## Overview
 
-The Phase 12 Compliance Monitoring Framework is **fully implemented and production-ready**. This institutional-grade system provides automated policy enforcement, risk oversight, and anomaly detection for the AutoTrader platform.
+The Phase 12 Compliance Monitoring Framework was fully implemented in this snapshot and documented as deployment-ready at the subsystem level. It provides automated policy enforcement, risk oversight, and anomaly detection for the AutoTrader platform.
 
 ---
 
@@ -407,7 +409,7 @@ $ codacy-cli analyze autotrader/monitoring/compliance/monitor.py
 
 ---
 
-## Production Readiness Checklist
+## Implementation Checklist
 
 - ✅ **Code Complete**: All features implemented
 - ✅ **Type Safety**: Full type annotations
@@ -421,7 +423,7 @@ $ codacy-cli analyze autotrader/monitoring/compliance/monitor.py
 - ✅ **Demo Script**: 6 comprehensive examples
 - ✅ **Export Format**: JSON serialization ready
 
-**Status**: ✅ **PRODUCTION READY**
+**Status**: ✅ **IMPLEMENTATION COMPLETE FOR THIS SNAPSHOT**
 
 ---
 
@@ -624,7 +626,7 @@ if fp_rate > 0.20:
 
 ## Summary
 
-The Compliance Monitoring Framework is **fully implemented, tested, and production-ready**. It provides:
+The Compliance Monitoring Framework is fully implemented and tested in this snapshot. It provides:
 
 ✅ **Comprehensive Coverage**: Risk checks, LLM oversight, order controls  
 ✅ **Flexible Policies**: Configurable thresholds and rules  

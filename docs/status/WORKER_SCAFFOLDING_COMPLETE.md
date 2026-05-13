@@ -1,14 +1,16 @@
-# Production Worker Scaffolding Implementation
+# Worker Scaffolding Implementation
+
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
 
 **Date**: October 25, 2025  
 **Status**: ✅ Complete  
-**Phase**: Production Deployment Infrastructure
+**Phase**: Deployment Infrastructure
 
 ---
 
 ## Summary
 
-Implemented a complete production-ready worker system to replace the placeholder `python -m src.cli.main --help` command in Docker. The new architecture supports job processing, metrics emission, and containerized deployment.
+Implemented a complete worker system for this subsystem snapshot to replace the placeholder `python -m src.cli.main --help` command in Docker. The new architecture supports job processing, metrics emission, and containerized deployment.
 
 ---
 
@@ -344,7 +346,7 @@ docker-compose --profile optimization up worker-optimization
 
 ## Conclusion
 
-The production worker scaffolding is now complete and ready for deployment. The architecture provides:
+The production worker scaffolding is now complete for this snapshot and ready for the documented next integration steps. The architecture provides:
 
 ✅ **Separation of Concerns**: Each worker type has dedicated service  
 ✅ **Observability**: Full Prometheus metrics + structured logs  

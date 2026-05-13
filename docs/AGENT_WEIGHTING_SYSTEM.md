@@ -1,7 +1,7 @@
 # Agent Weighting System - Implementation Complete
 
 **Date**: October 18, 2025  
-**Status**: ✅ Production Ready  
+**Status**: Agent weighting subsystem snapshot; use `../STATUS.md` for repository-wide launch posture.  
 **Version**: 1.0
 
 ## 🎯 **Overview**

@@ -1,8 +1,10 @@
 # Alert Engine Expansion - Implementation Summary
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 ## Overview
 
-Successfully expanded the alert rule engine from basic single-rule support to a comprehensive, production-ready alerting system with advanced features.
+Successfully expanded the alert rule engine from basic single-rule support to a comprehensive alerting subsystem with advanced features.
 
 ## Issue Requirements
 
@@ -325,7 +327,7 @@ Potential future improvements:
 
 ## Conclusion
 
-The alert rule engine has been successfully expanded from basic single-rule support to a comprehensive, production-ready alerting system. All requirements from the original issue have been met:
+The alert rule engine has been successfully expanded from basic single-rule support to a comprehensive alerting subsystem. All requirements from the original issue have been met:
 
 ✅ Compound logic (AND, OR, NOT)
 ✅ Suppression and cool-off periods

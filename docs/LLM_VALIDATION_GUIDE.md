@@ -645,6 +645,6 @@ For questions or issues:
 
 ---
 
-**Status**: ✅ **PRODUCTION READY**
+**Status**: LLM validation guide snapshot; use `../STATUS.md` for repository-wide launch posture.
 
 All LLM outputs are now strictly validated with Pydantic schemas, fail-fast behavior, and comprehensive logging. The system gracefully falls back to deterministic heuristics when validation fails, ensuring reliability.

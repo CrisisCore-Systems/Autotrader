@@ -11,7 +11,7 @@
 - **Forex (FX):** Oanda and FXCM APIs for real-time tick and quote feeds; Dukascopy historical tick data for backtesting.
 - **Data Store:** Time-series database options evaluated (ClickHouse, InfluxDB, Parquet on S3); unified schema design ensures cross-venue compatibility.
 - **Latency & Quality:** End-to-end timestamp tracking (exchange → ingestion → storage), raw/cleaned/feature layers, and latency dashboards in Grafana.
-- **Primary Deliverables:** Production-ready connectors for all three asset classes, schema normalization library, reproducible historical download pipelines, and latency monitoring dashboards.
+- **Primary Deliverables:** Connectors implemented for all three asset classes, a schema normalization library, reproducible historical download pipelines, and latency monitoring dashboards.
 
 ---
 
@@ -287,7 +287,7 @@ class BinanceConnector(MarketDataConnector):
 | 4 | Unified schema & storage | All venues writing to normalized ClickHouse schema; Parquet cold storage pipeline active. |
 | 5 | Latency dashboards | Grafana dashboards live with p50/p99 latency, error rates; Prometheus metrics scraped. |
 
-**Exit Criteria:** Phase 2 is complete when all connectors are production-ready, latency p99 <500ms for real-time feeds, historical backfill pipelines reproducible via Prefect, and observability dashboards signed off by DevOps and Quant teams.
+**Exit Criteria:** Phase 2 is complete when all connectors are implemented for the target workflow, latency p99 <500ms for real-time feeds, historical backfill pipelines reproducible via Prefect, and observability dashboards signed off by DevOps and Quant teams.
 
 ---
 

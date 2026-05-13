@@ -228,7 +228,7 @@ Created/Updated:
 
 ## Conclusion
 
-**Critical Gap Identified**: The agentic LLM-driven trading system (Phase 9) has **NOT been statistically validated** end-to-end. The baseline system (Phases 1-8, 12) is validated and production-ready, but the **agentic upgrade lacks**:
+**Critical Gap Identified**: The agentic LLM-driven trading system (Phase 9) has **NOT been statistically validated** end-to-end. The baseline system (Phases 1-8, 12) is validated for this snapshot, but the **agentic upgrade lacks**:
 
 - ❌ Win rate measurement (target: ≥ 65%)
 - ❌ Sample size (target: ≥ 20 trades)

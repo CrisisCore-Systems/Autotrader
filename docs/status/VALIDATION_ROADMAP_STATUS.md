@@ -1,5 +1,7 @@
 # Validation Roadmap Implementation - Status Report
 
+> Scope note: this file is a point-in-time validation program snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date**: October 25, 2025  
 **Status**: ✅ **PHASES 1-3 COMPLETE** (Data + Baselines + Parameter Search + Walk-Forward + Portfolio + Optuna + CI/CD)  
 **Branch**: `feature/phase-2.5-memory-bootstrap`  
@@ -28,7 +30,7 @@ Completed Week 0-3 deliverables from the validation roadmap, establishing:
 - ✅ Optuna optimization: TPE sampler with median pruning, best Sharpe=0.0144
 - ✅ CI/CD pipeline: GitHub Actions workflow with 8 automated jobs
 - ✅ Comprehensive documentation: 52-page validation summary report
-- ✅ Validation framework: **80% complete** and **production-ready**
+- ✅ Validation framework: **80% complete** and ready for additional validation
 
 ---
 
@@ -219,7 +221,7 @@ Parameters:
 - ✅ Portfolio analysis with correlation matrices
 - ✅ Optuna optimization results and recommendations
 - ✅ Statistical validation and overfitting assessment
-- ✅ Production readiness checklist
+- ✅ Validation and implementation checklist
 
 **Report Sections**:
 1. Executive Summary
@@ -608,9 +610,9 @@ Closes #VALIDATION-ROADMAP-WEEK-1-2"
 ---
 
 **Validation Roadmap Phases 1-3: COMPLETE** ✅  
-**Validation Framework: 80% Complete and Production-Ready** 🚀  
+**Validation Framework: 80% Complete and Ready for Further Validation**  
 **Total Lines: 4,500+ (code + docs + workflows)**  
-**Ready for**: Production deployment with live data feeds
+**Ready for**: Continued validation and controlled deployment planning
 
 ---
 
@@ -626,7 +628,7 @@ git commit 8cf3176 "feat: Complete Week 2-3 validation roadmap (Optuna + CI/CD +
 
 ---
 
-## 🎯 Production Deployment Readiness
+## 🎯 Deployment Planning Readiness
 
 ### Validation Framework Status: **80% COMPLETE** ✅
 
@@ -644,10 +646,10 @@ git commit 8cf3176 "feat: Complete Week 2-3 validation roadmap (Optuna + CI/CD +
 | MLflow Tracking | ✅ DONE | 100% |
 | **Documentation** | ✅ DONE | 100% |
 
-### Next Steps for Production (Week 4+)
+### Next Steps for Deployment Planning (Week 4+)
 1. **Run full Optuna optimization** (200-500 trials) on all 7 symbols
 2. **Implement regime detection** for dynamic strategy adaptation
-3. **Deploy to production** with live data feeds
+3. **Plan controlled deployment** with live data feeds
 4. **Set up real-time monitoring** (Grafana + Prometheus)
 5. **Implement alert system** for performance degradation
 
@@ -662,7 +664,7 @@ git commit 8cf3176 "feat: Complete Week 2-3 validation roadmap (Optuna + CI/CD +
 ### Gap Summary
 
 **Baseline System (Phases 1-8, 12)**: ✅ **VALIDATED** (Week 0-3 complete)
-- Data pipeline, features, strategies, optimization, monitoring: **Production-ready**
+- Data pipeline, features, strategies, optimization, monitoring: implementation-complete in this snapshot
 - Statistical validation complete: 5 tests, 262K bars, 18-split walk-forward
 - Sharpe 0.01-0.015, parameter optimization complete
 
@@ -700,4 +702,4 @@ git commit 8cf3176 "feat: Complete Week 2-3 validation roadmap (Optuna + CI/CD +
 
 **Validation Roadmap Phases 1-3: COMPLETE** ✅  
 **Validation Roadmap Phase 4-5: PENDING** ⏸️ (Agentic system statistical validation required)  
-**Ready for**: Baseline production deployment (non-agentic features)
+**Ready for**: Baseline deployment planning for non-agentic features

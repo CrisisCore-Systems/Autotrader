@@ -1,7 +1,7 @@
 # Agentic System Training & Enhancement Roadmap
 
 **Current Date**: October 18, 2025  
-**System Status**: Production-ready (75% WR, 6.0x PF on 6-year backtest)
+**System Status**: Historical roadmap snapshot built from backtest results; use `../STATUS.md` for repository-wide launch posture.
 
 ## 🎯 **Training Capabilities Matrix**
 

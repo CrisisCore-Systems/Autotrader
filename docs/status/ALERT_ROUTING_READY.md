@@ -1,5 +1,7 @@
 # 🎉 Alert Routing Implementation - Complete!
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date**: October 25, 2025  
 **Task**: Set up Telegram alert routing for compliance monitoring  
 **Status**: ✅ **READY FOR CONFIGURATION**
@@ -8,7 +10,7 @@
 
 ## 🎯 Achievement Summary
 
-Successfully implemented a **production-ready Telegram alert routing system** that integrates seamlessly with the compliance monitoring framework!
+Successfully implemented a Telegram alert routing subsystem for this snapshot that integrates with the compliance monitoring framework.
 
 ### What You Now Have
 
@@ -22,7 +24,7 @@ Successfully implemented a **production-ready Telegram alert routing system** th
 | **Demo Scripts** | ✅ Ready | 320 | 3 comprehensive demonstrations |
 | **Documentation** | ✅ Ready | 700+ | Quick start + implementation guides |
 
-**Total Delivered**: ~1,700 lines of production code and documentation
+**Total Delivered**: ~1,700 lines of subsystem code and documentation
 
 ---
 
@@ -274,7 +276,7 @@ python scripts/setup_telegram_alerts.py --show-config
 ✅ **Error Handling**: Retries, timeouts, logging  
 ✅ **Easy Setup**: 5-minute interactive wizard  
 ✅ **Testing Tools**: Test scripts and demos  
-✅ **Production Ready**: Battle-tested code  
+✅ **Implementation Complete**: Battle-tested code  
 ✅ **Well Documented**: Guides, examples, API docs  
 
 ---
@@ -299,4 +301,4 @@ python scripts/setup_telegram_alerts.py --configure
 
 ---
 
-**Excellent work!** The alert routing system is ready for production use! 🚀
+**Excellent work!** The alert routing system is implemented for the documented workflow in this snapshot. 🚀

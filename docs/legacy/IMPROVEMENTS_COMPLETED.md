@@ -145,7 +145,7 @@ pip install slowapi
 
 **Issues:**
 - Claims "100% FREE" but code requires API keys
-- "Production Ready" but demo tokens with expected 404s
+- "Ready for broader use" but demo tokens with expected 404s
 - Multiple `*_COMPLETE.md` files for incomplete features
 
 **Plan:** Audit all .md files, add `KNOWN_ISSUES.md`

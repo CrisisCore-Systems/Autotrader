@@ -144,7 +144,7 @@ features = extractor.extract_features(
 
 #### `LightGBMPipeline`
 
-Production-ready training pipeline for gradient boosting models.
+Implementation-complete training pipeline for gradient boosting models in this snapshot.
 
 ```python
 from src.models.lightgbm_pipeline import LightGBMPipeline

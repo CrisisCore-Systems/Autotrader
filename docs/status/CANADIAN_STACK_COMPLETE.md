@@ -1,7 +1,9 @@
 # 🎉 IBKR Canadian Trading Stack - COMPLETE & VALIDATED
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date:** 2025-10-20  
-**Status:** 🟢 **PRODUCTION READY**  
+**Status:** Historical subsystem snapshot  
 **Account:** DUO071381 (Paper Trading, $100K CAD)
 
 ---
@@ -32,7 +34,7 @@
   - Windows-compatible (ASCII output, no Unicode)
 
 - ✅ **CLI Harness** (`scripts/ibkr_connector.py` - 500 lines)
-  - Production utilities: `--ping`, `--account`, `--positions`, `--orders`, `--quote`, `--place-test`, `--cancel-all`
+  - Operational utilities: `--ping`, `--account`, `--positions`, `--orders`, `--quote`, `--place-test`, `--cancel-all`
   - UTF-8 logging, Canadian stock support
   - **TESTED:** All commands working cleanly
 
@@ -182,7 +184,7 @@ Autotrader/
 ├── IBKR_SETUP_README.md             (300 lines - root guide)
 └── IBKR_CONNECTION_VALIDATED.md     (600 lines - validation)
 
-TOTAL: 8,000+ lines of production code and documentation
+TOTAL: 8,000+ lines of subsystem code and documentation
 ```
 
 ---
@@ -243,7 +245,7 @@ TOTAL: 8,000+ lines of production code and documentation
 - ✅ Zero Unicode errors (Windows compatible)
 - ✅ Clean console output (ASCII only)
 - ✅ UTF-8 logging (file encoding)
-- ✅ Production-ready code (1,000+ lines)
+- ✅ Implementation-complete code (1,000+ lines)
 - ✅ Comprehensive docs (6,000+ lines)
 
 ---
@@ -304,13 +306,13 @@ $env:IBKR_CLIENT_ID="42"
 - **Core Components Built:** 1,000+ lines in single session
 - **Documentation Written:** 6,000+ lines comprehensive guides
 - **Connection Validated:** 2025-10-20 21:33 EDT
-- **Status:** PRODUCTION READY (same day!)
+- **Status:** IMPLEMENTATION COMPLETE FOR THIS SNAPSHOT (same day!)
 
 ---
 
 ## 🎉 Final Status
 
-**🟢 ALL SYSTEMS OPERATIONAL**
+**🟢 SUBSYSTEM SNAPSHOT OPERATIONAL**
 
 **Canadian Trading Stack:** COMPLETE  
 **IBKR Connection:** VALIDATED  
@@ -333,7 +335,7 @@ python scripts\test_paper_trading_ibkr.py
 python scripts\run_pennyhunter_paper.py
 ```
 
-**You're live in 2 minutes.** 🚀
+You can continue validation from here.
 
 ---
 

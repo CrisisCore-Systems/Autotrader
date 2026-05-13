@@ -1,8 +1,10 @@
 # Integration Complete ✅
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 ## Summary
 
-Successfully integrated all **Tree-of-Thought improvements** into the feature engineering pipeline. All components are now production-ready and fully validated.
+Successfully integrated all Tree-of-Thought improvements into the feature engineering pipeline. All components are implementation-complete for this subsystem snapshot and fully validated.
 
 ## Integration Results
 
@@ -429,7 +431,7 @@ features = factory.extract_all(bars_df)
 - ✅ 100% NaN handling with smart strategies
 - ✅ Backwards compatible (no breaking changes)
 
-**Ready for production use** 🚀
+**Ready for documented workflow use in this snapshot** 🚀
 
 ---
 

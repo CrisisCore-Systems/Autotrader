@@ -298,6 +298,6 @@ class HiddenGemScanner:
 
 ---
 
-**Status**: ✅ Production Ready  
+**Status**: Quickstart snapshot; use `../STATUS.md` for repository-wide launch posture.  
 **Last Updated**: October 7, 2025  
 **Questions?** Check the comprehensive documentation or open an issue.

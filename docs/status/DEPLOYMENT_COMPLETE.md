@@ -1,5 +1,7 @@
 # Paper Trading System - Complete Deployment Summary
 
+> Scope note: this file is a point-in-time deployment snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date**: October 20, 2025 22:08 EDT  
 **Status**: FULLY OPERATIONAL ✅  
 **First Run**: SUCCESSFUL ✅
@@ -371,7 +373,7 @@ python scripts/monitor_adjustments.py
 - [x] No errors in logs
 - [x] Memory system active
 
-**Status**: PRODUCTION READY ✅
+**Status**: Deployment snapshot complete ✅
 
 ---
 
@@ -452,7 +454,7 @@ cat reports/pennyhunter_paper_trades.json
 **Deployment Date**: October 20, 2025 22:08 EDT  
 **System Status**: OPERATIONAL ✅  
 **Confidence Level**: VERY HIGH  
-**Ready for Production**: YES 🚀
+**Deployment Snapshot**: YES, for the documented workflow 🚀
 
 ---
 

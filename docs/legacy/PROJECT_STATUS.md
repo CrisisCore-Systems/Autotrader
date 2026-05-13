@@ -369,7 +369,7 @@ Autotrader/
 - [ ] Optimal filters validated on fresh data
 - [ ] Ready for Phase 2.5 (agentic memory)
 
-### System Production-Ready When:
+### System Ready For Broader Use When:
 - [ ] Phase 3 agentic system implemented
 - [ ] 50+ trades with 75%+ win rate
 - [ ] Live broker tested (small capital)

@@ -1,5 +1,7 @@
 # ✅ Compliance Monitoring Framework - What's Next?
 
+> Scope note: this file is a subsystem follow-up snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date**: October 25, 2025  
 **Status**: Implementation Complete + Imports Fixed  
 **Your Question**: "now what"
@@ -8,7 +10,7 @@
 
 ## 🎉 What You've Accomplished
 
-✅ **Compliance Monitoring Framework** - Fully implemented and production-ready  
+✅ **Compliance Monitoring Framework** - Fully implemented in this subsystem snapshot  
 ✅ **Demo Script** - 320 lines with 6 comprehensive scenarios  
 ✅ **Documentation** - ~3,000+ lines across 5 documents  
 ✅ **Import Issues** - Fixed (added missing `__init__.py` files)  
@@ -83,7 +85,7 @@ if issue.severity == ComplianceSeverity.INFO:
 - Create `scripts/setup_alert_routing.py`
 - Configure webhooks/API keys
 - Test with mock compliance issues
-- Deploy to production
+- Plan controlled deployment
 
 ---
 
@@ -341,7 +343,7 @@ Based on your project status, here's my recommendation:
 **Start with Agentic Validation Week 1** because:
 - It's the critical path blocker for live deployment
 - Compliance monitoring is already working (imports fixed)
-- You have 8 weeks of work ahead before production-ready
+- You have 8 weeks of work ahead before stronger deployment claims are justified
 - Every week you wait delays go-live by a week
 
 **Quick Start**:

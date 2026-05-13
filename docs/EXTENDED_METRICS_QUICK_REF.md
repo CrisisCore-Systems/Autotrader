@@ -207,6 +207,6 @@ See `notebooks/hidden_gem_scanner.ipynb` Section 9 for:
 
 ---
 
-**Status:** ✅ Production Ready  
+**Status:** Extended metrics quick-reference snapshot; use `../STATUS.md` for repository-wide launch posture.  
 **Test Coverage:** 29 tests, 100% pass rate  
 **Date:** 2025-01-08

@@ -32,7 +32,7 @@ A:
 - GitHub Codespaces: 2 minutes (one-click)
 - Gitpod: 3 minutes (one-click)
 
-**Q: Is this production-ready?**
+**Q: Is this intended for production deployment?**
 A: Lightweight mode is for **development only**. For production, use the full Docker stack with proper infrastructure.
 
 ---

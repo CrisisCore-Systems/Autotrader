@@ -2,7 +2,7 @@
 
 **Timestamp**: October 20, 2025 21:41 EDT  
 **Status**: ALL TESTS PASSING  
-**System**: PRODUCTION READY
+**System**: Validated paper-trading snapshot
 
 ---
 
@@ -226,7 +226,7 @@ Total Adjustment: +1.50%
 
 ## Next Steps
 
-The paper trading system is **PRODUCTION READY**. You can now:
+The paper trading system is validated for the documented paper-trading workflow in this snapshot. You can now:
 
 ### 1. Run Paper Trading Bot
 ```powershell
@@ -396,7 +396,7 @@ Currently using fixed BULL regime:
 
 ✅ **ALL SYSTEMS OPERATIONAL**
 
-The paper trading system has been fully validated and is ready for deployment:
+The paper trading system has been validated for the documented paper-trading workflow in this snapshot:
 - IBKR connection proven working (server v176)
 - Yahoo VIX provider delivering real-time data (VIX=18.23)
 - Adjustment calculations working correctly (+1.50% total)
@@ -404,7 +404,7 @@ The paper trading system has been fully validated and is ready for deployment:
 - Configuration validated
 - Error handling tested
 
-**Status**: PRODUCTION READY  
+**Status**: Workflow validated for this snapshot  
 **Confidence Level**: HIGH  
 **Next Action**: Deploy paper trading bot (`run_pennyhunter_paper.py`)
 

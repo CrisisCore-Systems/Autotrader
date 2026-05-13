@@ -1,5 +1,7 @@
 # GUI Beautification Complete ✨
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 ## Overview
 The PennyHunter GUI has been dramatically enhanced with modern design principles, creating a stunning dark-themed interface that rivals professional trading platforms.
 
@@ -307,7 +309,7 @@ Verify:
 
 The GUI now rivals professional trading platforms in visual quality while maintaining the functional excellence of the paper trading system. Every element has been thoughtfully designed for beauty, usability, and instant information recognition.
 
-**Status**: ✨ STUNNING & PRODUCTION READY ✨
+**Status**: GUI beautification complete for this subsystem snapshot
 
 ---
 *"Beauty is not just what you see, it's what you feel when you use it."*

@@ -181,4 +181,4 @@ grep "llm_invalid_json" app.log | jq .extra.raw_response_preview
 
 ---
 
-**Status**: ✅ Production Ready | **Tests**: 22/22 Passing | **Coverage**: 100%
+**Status**: LLM validation quick reference snapshot | **Tests**: 22/22 Passing | **Coverage**: 100%

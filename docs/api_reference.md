@@ -1018,4 +1018,4 @@ except Exception as e:
 
 **Version:** 1.0.0  
 **Last Updated:** October 2025  
-**Status:** Production Ready ✅
+**Status:** API reference snapshot; use `../STATUS.md` for repository-wide launch posture.

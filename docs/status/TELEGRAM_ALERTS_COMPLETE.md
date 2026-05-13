@@ -1,5 +1,7 @@
 # ✅ Telegram Alert Routing - Implementation Complete
 
+> Scope note: this file is a subsystem implementation snapshot in `docs/status/`. It should not be read as the current repository-wide launch posture. For that, use `../../STATUS.md`.
+
 **Date**: October 25, 2025  
 **Task**: Set up Alert Routing for Compliance Monitoring  
 **Status**: 🎉 **READY FOR CONFIGURATION**
@@ -8,7 +10,7 @@
 
 ## 🎯 What Was Built
 
-A **production-ready Telegram alert routing system** that sends real-time compliance violation alerts to your Telegram account.
+An implementation-complete Telegram alert routing subsystem that sends real-time compliance violation alerts to your Telegram account.
 
 ### Core Features
 
@@ -56,7 +58,7 @@ A **production-ready Telegram alert routing system** that sends real-time compli
 | `TELEGRAM_ALERTS_QUICKSTART.md` | 420 | Complete setup guide |
 | `TELEGRAM_ALERTS_COMPLETE.md` | 280 | Implementation summary (this file) |
 
-**Total**: ~1,700 lines of production-ready code and documentation
+**Total**: ~1,700 lines of subsystem code and documentation
 
 ---
 
@@ -89,7 +91,7 @@ python scripts/setup_telegram_alerts.py --test
 python scripts/demo_telegram_alerts.py
 ```
 
-### 3. Use in Production
+### 3. Use in an Integrated Environment
 
 ```python
 from autotrader.alerts.router import create_alert_router
@@ -553,7 +555,7 @@ python scripts/setup_telegram_alerts.py --create-example alerts.yaml
 
 ### What Was Delivered
 
-✅ **Core System**: 310 lines of production-ready alert routing  
+✅ **Core System**: 310 lines of alert routing implementation  
 ✅ **Configuration**: Flexible config system (YAML + env vars)  
 ✅ **Setup Tools**: Interactive setup and testing scripts  
 ✅ **Demo Scripts**: 3 comprehensive demonstration scenarios  
@@ -571,7 +573,7 @@ python scripts/setup_telegram_alerts.py --create-example alerts.yaml
 ✅ **Compliance Monitoring**: Seamless integration  
 ✅ **Audit Trail**: Works with existing data  
 ✅ **Multi-Channel**: Telegram (ready), Email (ready)  
-✅ **Production Ready**: Error handling, logging, validation  
+✅ **Implementation Complete**: Error handling, logging, validation  
 
 ---
 

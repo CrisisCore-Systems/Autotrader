@@ -1,6 +1,6 @@
 # Compliance Monitoring Quick Reference
 
-**Phase 12 Component** | **Status**: ✅ Production Ready
+**Phase 12 Component** | **Status**: Quick reference snapshot; use `../../STATUS.md` for repository-wide launch posture.
 
 ---
 

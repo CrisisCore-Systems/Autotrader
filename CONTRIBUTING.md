@@ -29,7 +29,7 @@ Thank you for your interest in contributing to Autotrader! This guide will help 
 
 ### Prerequisites
 
-- Python 3.11 or higher (3.11, 3.12, or 3.13 recommended)
+- Python 3.11, 3.12, or 3.13
 - pip package manager
 - Git
 
@@ -201,7 +201,8 @@ pytest --cov=src --cov-report=term --cov-fail-under=80
 
 # Security checks
 bandit -r src/ -f json -o bandit-report.json
-pip-audit --requirement requirements.txt || true
+pip-audit --requirement requirements.txt
+safety check -r requirements.txt --json
 ```
 
 ## Submitting Changes

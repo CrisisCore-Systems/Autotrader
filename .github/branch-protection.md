@@ -63,7 +63,7 @@ Branch name pattern: main
   - Search and add required status checks:
     - `test (3.11)`
     - `test (3.12)`
-    - `test (3.13)`
+      - `test (3.13)`
     - `lint`
     - `security`
     - `quality-gate`
@@ -130,7 +130,7 @@ Feature branches do not require branch protection rules, but should follow the s
 # Protect main branch
 gh api repos/:owner/:repo/branches/main/protection \
   --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["test (3.11)","test (3.12)","test (3.13)","lint","security","quality-gate"]}' \
+   --field required_status_checks='{"strict":true,"contexts":["test (3.11)","test (3.12)","test (3.13)","lint","security","quality-gate"]}' \
   --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
   --field enforce_admins=true \
   --field required_linear_history=true \

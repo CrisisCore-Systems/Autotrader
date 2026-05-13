@@ -59,7 +59,7 @@ jobs:
         run: pip install bandit[sarif]
       
       - name: Run Bandit
-        run: bandit -r src pipeline -f sarif -o bandit-results.sarif --severity-level medium || true
+        run: bandit -r src pipeline -f sarif -o bandit-results.sarif --severity-level high
       
       - name: Upload Bandit SARIF
         if: always()
@@ -93,18 +93,23 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install pip-audit
-        run: pip install pip-audit
+      - name: Install dependency scanners
+        run: pip install pip-audit safety
       
       - name: Audit dependencies
-        run: pip-audit -r requirements.txt --desc --fix-dry-run --format json --output pip-audit-results.json || true
+        run: pip-audit -r requirements.txt --desc --fix-dry-run --format json --output pip-audit-results.json
+
+      - name: Safety dependency scan
+        run: safety check -r requirements.txt --json > safety-results.json
       
       - name: Upload audit results
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pip-audit-results
-          path: pip-audit-results.json
+          path: |
+            pip-audit-results.json
+            safety-results.json
           retention-days: 30
 
   # === Container Scanning ===
@@ -305,4 +310,5 @@ jobs:
           echo "| Alert Config | ${{ needs.alert-config-validation.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Prompt Contracts | ${{ needs.prompt-contract-validation.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Security reports are point-in-time CI artifacts; committed local scan outputs may be stale." >> $GITHUB_STEP_SUMMARY
           echo "📚 [Security Posture Documentation](../SECURITY_POSTURE_COMPLETE.md)" >> $GITHUB_STEP_SUMMARY

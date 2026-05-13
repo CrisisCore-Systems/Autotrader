@@ -10,8 +10,8 @@ import sys
 
 
 def test_python_version():
-    """Test Python version is 3.13+"""
-    assert sys.version_info >= (3, 13), f"Python 3.13+ required, got {sys.version_info}"
+    """Test Python version meets the minimum supported runtime contract."""
+    assert sys.version_info >= (3, 11), f"Python 3.11+ required, got {sys.version_info}"
 
 
 def test_src_directory_exists():

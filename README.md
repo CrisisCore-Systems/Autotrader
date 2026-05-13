@@ -41,15 +41,26 @@ This repository contains the foundational blueprint and implementation for **Cri
 
 🎯 **Complete Tree of Thought Analysis** of what this repository is, what it can do, and how far along it is:
 - **[ANALYSIS_INDEX.md](docs/ANALYSIS_INDEX.md)** - Start here for navigation and quick summary
-- **[REPOSITORY_ANALYSIS.md](docs/REPOSITORY_ANALYSIS.md)** - Deep dive into capabilities and maturity (8.5/10 production-ready)
+- **[REPOSITORY_ANALYSIS.md](docs/REPOSITORY_ANALYSIS.md)** - Deep dive into capabilities and maturity as an internal alpha / paper-trading beta candidate
 - **[MATURITY_ASSESSMENT.md](docs/MATURITY_ASSESSMENT.md)** - Visual maturity scoring across all components (Level 3.8/5.0)
 - **[STRATEGIC_ROADMAP.md](docs/STRATEGIC_ROADMAP.md)** - 12-month strategic plan with quarterly milestones
 
-**Key Finding**: 80-90% complete for core use cases, production-ready for individual/small team trading
+**Current launch label**: internal alpha / paper-trading beta candidate.
+
+The repository includes substantial trading infrastructure, but the current validation state does not support a production or live-money readiness claim.
 
 ---
 
 ## 🎯 Current Status (October 26, 2025)
+
+### Launch Readiness
+
+| Launch lane | Status | Notes |
+|-------------|--------|-------|
+| Local developer demo | ✅ Launchable | Package structure, scripts, docs, and dashboards are present. |
+| Solo operator paper-trading beta | ⚠️ Conditionally launchable | Requires smoke testing, clean CI, and completion of paper-trade validation. |
+| Public beta / multi-user MVP | ❌ Not ready | Product services and validation remain incomplete. |
+| Live-money auto-trading | ❌ Not ready | Validation and security gates are not yet strong enough for financial automation. |
 
 ### ✅ **Phase 3 — Data Preparation (50% Complete)**
 
@@ -67,7 +78,7 @@ This repository contains the foundational blueprint and implementation for **Cri
 - [`PHASE_3_WEEK_2_COMPLETE.md`](docs/phases/PHASE_3_WEEK_2_COMPLETE.md) - Bar construction details
 - [`PHASE_3_DATA_PREP_SPECIFICATION.md`](docs/phases/PHASE_3_DATA_PREP_SPECIFICATION.md) - Full specification
 
-### ✅ **Production Ready - Trading System Active**
+### ⚠️ **Paper-Trading Beta Candidate**
 
 **BounceHunter/PennyHunter Gap Trading Strategy**:
 - ✅ **Broker Integration**: Multi-broker support (Paper, Alpaca, Questrade, IBKR)
@@ -76,7 +87,7 @@ This repository contains the foundational blueprint and implementation for **Cri
   - `test_bouncehunter_engine.py`: Gap trading strategy validation
   - `test_agentic.py`: Multi-agent orchestration tests
   - `test_backtest.py`: Backtesting framework validation
-- ✅ **Phase 2 Validation**: IN PROGRESS (2/20 trades accumulated)
+- ⚠️ **Phase 2 Validation**: IN PROGRESS (2/20 trades accumulated; not enough evidence for live deployment)
 - ✅ **Market Regime Detection**: SPY/VIX monitoring with adaptive sizing
 - ✅ **Advanced Risk Filters**: 5 modules (liquidity, slippage, runway, sector, volume)
 - ✅ **Paper Trading Workflow**: Daily automation scripts ready
@@ -84,9 +95,15 @@ This repository contains the foundational blueprint and implementation for **Cri
 
 **Infrastructure**:
 - ✅ Database migrations system (Alembic with schema versioning)
-- ✅ Security hardened (updated dependencies, FA field scrubbing for IBKR)
+- ✅ Security controls implemented (dependency scanning, FA field scrubbing for IBKR, secret scanning)
 - ✅ Canadian broker support (Questrade with auto-refreshing tokens)
 - ✅ Git workflow established (staged → committed → pushed to GitHub)
+
+**Current blockers before a broader launch**:
+- Complete Phase 2 paper-trading validation with a meaningful trade sample.
+- Keep the repository on officially supported Python versions only.
+- Keep dependency and filesystem scans green; treat CI security artifacts as the source of truth instead of committed local scan snapshots.
+- Limit current release positioning to paper trading until validation is complete.
 
 ### 📚 **Documentation Hub**
 
@@ -197,7 +214,7 @@ flowchart TD
 
 ## 🚀 Quick Start - BounceHunter Gap Trading
 
-> **Environment requirement:** Use Python 3.11 or 3.12. Python 3.13 is not yet supported by upstream dependencies (e.g., scikit-learn) unless you install Microsoft C++ Build Tools.
+> **Environment requirement:** Use Python 3.11, 3.12, or 3.13. CI covers the supported runtime contract, with 3.11 kept as the baseline environment for several auxiliary workflows.
 
 > **⚡ Laptop struggling with Docker?** See [Lightweight Development Guide](LIGHTWEIGHT_DEVELOPMENT.md) for alternatives that use **90% less RAM**! Includes GitHub Codespaces, SQLite-only mode, and more.
 
@@ -461,7 +478,7 @@ Confidence is computed as `0.5 · Recency + 0.5 · DataCompleteness` and reporte
 
 ### Observability & Safety
 
-**Comprehensive Observability Stack** - Production-ready monitoring and debugging:
+**Comprehensive Observability Stack** - Operations-grade monitoring and debugging for internal alpha and paper-trading workflows:
 
 - ✅ **Structured JSON Logging**: All components emit structured logs with context using `structlog`
   - Request correlation IDs for end-to-end tracing

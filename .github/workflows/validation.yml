@@ -16,6 +16,8 @@ on:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC
 
 env:
+  # Keep the validation pipeline on the minimum supported runtime.
+  # The main CI workflow exercises the broader 3.11-3.13 support contract.
   PYTHON_VERSION: '3.11'
   DVC_CACHE_DIR: .dvc/cache
 

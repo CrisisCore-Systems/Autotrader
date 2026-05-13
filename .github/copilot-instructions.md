@@ -12,7 +12,7 @@ AutoTrader is a sophisticated cryptocurrency trading system featuring:
 
 ## Tech Stack
 
-- **Language**: Python 3.11+ (3.11, 3.12, 3.13 supported)
+- **Language**: Python 3.11+ (3.11, 3.12, and 3.13 supported)
 - **Frameworks**: FastAPI, Pydantic, SQLAlchemy, Alembic
 - **Data Science**: NumPy, Pandas, scikit-learn, LightGBM, Optuna
 - **ML Ops**: MLflow, Prefect, Weights & Biases (wandb), DVC

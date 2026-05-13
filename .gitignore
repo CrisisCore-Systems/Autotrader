@@ -79,6 +79,8 @@ logs/
 # Generated reports
 compliance_report.json
 bandit-report.json
+safety-report.json
+pip-audit-output.txt
 
 # Temporary test results
 test_results/

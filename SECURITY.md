@@ -24,6 +24,12 @@ We will respond within 48 hours and provide updates every 5 business days.
 
 ## Security Measures
 
+## Source Of Truth
+
+- Treat CI security workflow results and fresh local scans as the source of truth.
+- Do not interpret committed raw scan outputs such as JSON or text reports as current posture unless they were regenerated for the exact dependency set under review.
+- Historical scan artifacts are useful for forensic context, but they can become stale as dependencies and scanner databases change.
+
 ### Secrets Management
 
 #### API Keys and Tokens

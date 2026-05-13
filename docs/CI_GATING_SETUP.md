@@ -40,7 +40,7 @@ Located at `.github/workflows/ci.yml`, this is the primary CI workflow that runs
 
 ### tests-and-coverage.yml (Legacy)
 
-The original test workflow is maintained for backward compatibility. New features should use `ci.yml`.
+The original test workflow is maintained for backward compatibility. Its test job now exercises Python 3.11, 3.12, and 3.13, while the linting and validation helper jobs stay on Python 3.11 as the minimum-runtime baseline. New features should still use `ci.yml` as the primary signal.
 
 ### integration.yml - Integration Tests
 
@@ -155,7 +155,7 @@ mypy src/ --ignore-missing-imports --exclude "src/legacy/"
 # Security scanning
 bandit -r src/ -f json -o bandit-report.json
 pip-audit --requirement requirements.txt --desc
-safety check
+safety check -r requirements.txt --json
 ```
 
 ## Core Module Test Coverage
@@ -227,7 +227,7 @@ pytest --cov=src --cov-report=term-missing | grep "TOTAL"
 
 ### Tests Failing Locally But Pass in CI
 
-- Check Python version (CI uses 3.11)
+- Check Python version (main CI tests 3.11, 3.12, and 3.13; some auxiliary workflows intentionally pin 3.11)
 - Verify dependencies are up to date: `pip install -r requirements.txt`
 - Check for environment-specific issues
 
@@ -247,7 +247,8 @@ pytest --cov=src --cov-report=term-missing | grep "TOTAL"
 ## Quality Gate Status
 
 The quality gate ensures:
-- ✅ All tests pass (Python 3.11, 3.12, 3.13)
+- ✅ All tests pass (Python 3.11, 3.12)
+- ✅ All tests pass (Python 3.11, 3.12, 3.13 in the main test workflows)
 - ✅ Coverage meets threshold (≥80%)
 - ✅ Code formatting is consistent (black)
 - ✅ Import sorting is correct (isort)

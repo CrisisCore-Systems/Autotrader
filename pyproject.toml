@@ -80,7 +80,16 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-ra -q --strict-markers --cov-fail-under=80"
+addopts = "-ra -q --strict-markers --maxfail=1 --durations=10 --tb=short --cov-fail-under=80"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+markers = [
+    "performance: Performance and scalability tests (may be slow)",
+    "slow: Slow tests that can be skipped in fast CI runs",
+    "integration: Integration tests across multiple modules",
+]
 
 [tool.coverage.run]
 source = ["src"]

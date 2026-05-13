@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = autotrader
+source = src
 omit =
     */__init__.py
     */tests/*
@@ -8,7 +8,7 @@ omit =
     setup.py
     
 [report]
-fail_under = 85
+fail_under = 80
 show_missing = True
 skip_covered = False
 precision = 2

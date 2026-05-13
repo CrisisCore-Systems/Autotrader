@@ -158,7 +158,10 @@ class NewsClient:
         
         for result in data.get("results", []):
             # Generate unique ID for the article
-            article_id = hashlib.md5(f"{result.get('url', '')}-{result.get('published_at', '')}".encode()).hexdigest()
+            article_id = hashlib.md5(
+                f"{result.get('url', '')}-{result.get('published_at', '')}".encode(),
+                usedforsecurity=False,
+            ).hexdigest()
             
             # Calculate sentiment from votes if available
             raw_sentiment = None
@@ -242,7 +245,10 @@ class NewsClient:
             if not any(alias in content for alias in token_aliases):
                 continue
 
-            article_id = hashlib.md5(f"{entry.get('link', '')}-{published_at}".encode()).hexdigest()
+            article_id = hashlib.md5(
+                f"{entry.get('link', '')}-{published_at}".encode(),
+                usedforsecurity=False,
+            ).hexdigest()
 
             news.append({
                 "id": article_id,

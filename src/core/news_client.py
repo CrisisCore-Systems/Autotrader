@@ -106,7 +106,10 @@ class NewsClient:
             if not any(alias in content for alias in aliases):
                 continue
 
-            article_id = hashlib.md5(f"{entry.get('link', '')}-{published_at}".encode()).hexdigest()
+            article_id = hashlib.md5(
+                f"{entry.get('link', '')}-{published_at}".encode(),
+                usedforsecurity=False,
+            ).hexdigest()
 
             news.append({
                 "title": entry.get("title", ""),

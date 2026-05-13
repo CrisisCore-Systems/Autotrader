@@ -4,6 +4,8 @@
 **Analysis Date**: October 27, 2025  
 **Planning Horizon**: 12 months (Q4 2025 - Q4 2026)
 
+> Planning note: this is a strategic planning artifact, not the canonical status page. For the current repository-wide launch posture and validation state, use `../STATUS.md`.
+
 ---
 
 ## Executive Summary
@@ -22,7 +24,7 @@ This roadmap leverages the comprehensive tree-of-thought analysis of the AutoTra
 ## Current Position Analysis
 
 ### What We Have (Strengths)
-✅ Production-ready BounceHunter strategy with multi-broker support  
+✅ BounceHunter strategy infrastructure with multi-broker support  
 ✅ 57K+ lines of well-architected code with 80%+ test coverage  
 ✅ Comprehensive observability (logging, metrics, tracing)  
 ✅ FREE tier operational ($0/month operating cost)  

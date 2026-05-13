@@ -5,6 +5,8 @@
 **Analysis Method**: Tree of Thought Reasoning  
 **Purpose**: Deep understanding of repository capabilities, status, and strategic direction
 
+> Historical analysis note: use `../STATUS.md` for the current repository-wide launch posture and validation state. This index remains useful for architecture and capability review, but some older readiness language is broader than the current evidence supports.
+
 ---
 
 ## Quick Navigation
@@ -50,7 +52,7 @@ The master analysis document that answers three fundamental questions:
 **Key Sections**:
 - Tree of Thought Analysis (5 branches)
 - Component maturity by subsystem
-- Production readiness score: 8.5/10
+- Historical subsystem readiness score: 8.5/10
 - Comparison to QuantConnect, Zipline, FreqTrade
 - Strategic recommendations (near-term, long-term)
 

@@ -14,6 +14,8 @@
 
 > **🪶 NEW: [Lightweight Development Guide](docs/LIGHTWEIGHT_DEVELOPMENT.md)** - Don't let Docker slow you down! Develop on resource-constrained laptops, use GitHub Codespaces, or skip Docker entirely. **90% less RAM usage!**
 
+> **📌 Canonical Status: [STATUS.md](STATUS.md)** - current launch posture, validation state, and near-term priorities.
+
 > **📖 [Understanding What You've Created](docs/OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
 > - [Quick Summary (5 min)](docs/status/SYSTEM_SUMMARY.md) - TL;DR with key stats
 > - [Complete Overview (20 min)](docs/WHAT_YOU_CREATED.md) - Deep dive into the system
@@ -48,6 +50,8 @@ This repository contains the foundational blueprint and implementation for **Cri
 **Current launch label**: internal alpha / paper-trading beta candidate.
 
 The repository includes substantial trading infrastructure, but the current validation state does not support a production or live-money readiness claim.
+
+For the current repository-wide status, use [STATUS.md](STATUS.md) as the source of truth.
 
 ---
 

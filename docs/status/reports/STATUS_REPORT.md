@@ -1,6 +1,8 @@
 # VoidBloom Hidden Gem Scanner - System Status Report
 **Generated:** December 2024
-**Status:** ✅ PRODUCTION READY
+**Status:** Historical archive
+
+> Historical report: this file preserves a subsystem-specific status snapshot. For the current repository-wide launch posture and validation state, use `../../../STATUS.md`.
 
 📚 **Documentation Hub:** For the latest runbooks and reference material, begin with the [Documentation Portal](../../documentation_portal.md).
 
@@ -8,7 +10,7 @@
 
 ## 🎯 Executive Summary
 
-The VoidBloom Hidden Gem Scanner is **production ready** with 100% FREE data sources, zero API keys required, and 21/21 tests passing. The system has been hardened with security fixes, corruption repairs, and comprehensive testing.
+At the time of this snapshot, the VoidBloom Hidden Gem Scanner was described as operational with 100% FREE data sources, zero API keys required, and 21/21 tests passing. Treat that as a historical subsystem claim rather than a current repository-wide readiness statement.
 
 ### Quick Status
 - **FREE Tier:** ✅ Fully operational ($0/month, 0 API keys)

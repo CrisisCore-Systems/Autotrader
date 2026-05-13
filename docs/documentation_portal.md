@@ -8,10 +8,11 @@ Welcome! This page consolidates the most useful documentation for the CrisisCore
 
 ## Start Here
 
+- [Canonical Repository Status](../STATUS.md) - current launch posture, validation state, and immediate priorities.
 - [System Snapshot](overview/PROJECT_OVERVIEW.md) – high-level context and current status.
 - [Release & Feature Progress](FEATURE_STATUS.md) – single page view of completed and planned work.
 - [Implementation Summary](IMPLEMENTATION_SUMMARY.md) – condensed overview of technical accomplishments.
-- [System Status Report (external)](https://github.com/CrisisCore-Systems/Autotrader/blob/main/STATUS_REPORT.md) – current maturity and launch-readiness report.
+- [Status Report Archive](status/reports/STATUS_REPORT.md) – historical launch-readiness report retained for reference.
 
 ## Setup & Operations
 
@@ -53,6 +54,7 @@ Welcome! This page consolidates the most useful documentation for the CrisisCore
 
 ## Governance, Roadmap & Process
 
+- [Now / Next / Later Roadmap](../ROADMAP_NOW_NEXT_LATER.md) – current priority stack separated from longer-term ambition.
 - [Roadmap Completion Summary](ROADMAP_COMPLETION_SUMMARY.md) – milestone tracking at a glance.
 - [Alerting & Backtesting Roadmap](roadmap_alerting_backtesting.md) – detailed alerting/backtesting plan.
 - [Technical Debt Final Summary](improvements/TECH_DEBT_FINAL_SUMMARY.md) – close-out report for the tech-debt program.

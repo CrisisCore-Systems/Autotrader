@@ -2,6 +2,8 @@
 **Generated:** October 7, 2025  
 **Status:** ✅ All Systems Operational
 
+> Scope note: this file describes the hidden-gem scanner feature set, not the repository-wide launch posture. For the current overall status, use `../STATUS.md`.
+
 ---
 
 ## 🎯 System Overview
@@ -300,7 +302,7 @@ All original objectives have been met:
 
 ## ✨ Summary
 
-The AutoTrader Scanner is **production-ready** with all core features operational. The system successfully:
+The AutoTrader Scanner is operational for research and local operator use, with the documented core feature set working. The system successfully:
 
 - Scans 4 different token types (protocols, utility, meme coins)
 - Generates AI-powered narratives and scores
@@ -309,7 +311,7 @@ The AutoTrader Scanner is **production-ready** with all core features operationa
 - Handles API failures gracefully
 - Delivers reliable and accurate assessments
 
-**Current Status: 🟢 All Systems Go!**
+**Current Scanner Status: 🟢 Operational**
 
 ---
 

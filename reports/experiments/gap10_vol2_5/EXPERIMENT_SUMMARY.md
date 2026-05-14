@@ -45,28 +45,27 @@
 - Baseline contamination: `NONE`
 - Status: active paper validation, no decision yet
 
-## Latest Fenced Session
+## Final Fenced Session
 
-- Second active `SPCE` closed at `TARGET`
-- Realized P&L: `+$9.96`
-- A new `TLRY` trade opened afterward
-- New active `TLRY`: `10` shares at `$9.18`, signal date `2026-01-09`
-- No skipped candidates after `TLRY` became the only eligible signal
-- Completed trades: `2`
-- Active trades: `1`
+- `TLRY` closed at `STOP`
+- `TLRY` realized P&L: `-$4.59`
+- A new `TLRY` trade opened afterward and is also closed in the current isolated results
+- No skipped candidates in the latest fenced run
+- Completed trades: `3`
+- Active trades: `0`
 - Wins: `1`
-- Losses: `1`
-- Win rate: `50.0%`
-- Net closed P&L: `+$5.05`
-- Near misses: `11`
+- Losses: `2`
+- Win rate: `33.3%`
+- Net closed P&L: `+$0.46`
+- Near misses: `0`
 - Ejected tickers: `none`
 - Baseline contamination: `NONE`
-- Status: active paper validation, no decision yet
+- Early 3-trade gate: `FAILED`
 
-## Warning
+## Early-Gate Readout
 
-`SPCE` selection dominance has reduced because `TLRY` is now active, but the sample size remains too small to trust.
-The experiment now has broader exposure than before, but only two completed trades is still not enough to support a decision.
+The tighter thresholds improved candidate cleanliness, but they did not preserve trade quality.
+The branch still allowed repeat ticker exposure, and the first three completed trades only produced a `33.3%` win rate.
 
 ## Scan-Only Comparison
 
@@ -107,9 +106,11 @@ Compared with baseline, the new variant is still looser because it adds `TLRY` o
 
 ## Decision
 
-Scan-only result was clean enough to justify the first isolated paper session.
-The experiment remains in active paper validation, and no merge or rejection decision has been made yet.
+Reject `gap10_vol2_5` as-is.
+The early 3-trade gate failed because win rate stayed below `50%`, even after the tighter scan thresholds reduced weaker candidates.
+This branch should not be merged into baseline.
 
 ## Next Step
 
-If resumed, continue only against the fenced `gap10_vol2_5` output paths, keep the one-position cap unchanged, and do not touch baseline files.
+Future experiments should add a ticker cooldown or anti-repeat rule before testing new thresholds.
+If this branch is revisited, continue only against the fenced `gap10_vol2_5` output paths, keep the one-position cap unchanged, and do not touch baseline files.

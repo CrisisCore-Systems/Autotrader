@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-13T20:36:50.648390",
+  "generated_at": "2026-05-13T20:56:22.890979",
   "account_summary": {
     "starting_capital": 200.0,
     "current_cash": 200.0,
@@ -9,16 +9,16 @@
   },
   "trading_stats": {
     "total_trades": 3,
-    "completed_trades": 2,
-    "active_trades": 1,
+    "completed_trades": 3,
+    "active_trades": 0,
     "rejected_signals": 0,
     "wins": 1,
-    "losses": 1,
-    "win_rate_pct": 50.0,
-    "total_pnl": 5.051000380516053,
+    "losses": 2,
+    "win_rate_pct": 33.33333333333333,
+    "total_pnl": 0.4610002279281584,
     "avg_win": 9.963000273704532,
-    "avg_loss": -4.911999893188479,
-    "profit_factor": 2.028298145429589
+    "avg_loss": -4.751000022888187,
+    "profit_factor": 2.0970322512538973
   },
   "trades": [
     {
@@ -99,7 +99,7 @@
       "score": 5.5,
       "gap_pct": 10.076671026967256,
       "vol_mult": 2.507678075855689,
-      "status": "active",
+      "status": "closed",
       "orders": {
         "entry": "PAPER-1",
         "stop": "PAPER-2",
@@ -110,97 +110,17 @@
       "risk_dollars": 5.0,
       "signal_id": "TLRY_2026-01-09_1778729810.590772",
       "fill_id": "fill_TLRY_2026-01-09_1778729810.590772_1778729810.601072",
-      "signal_quality": "good"
+      "signal_quality": "good",
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "exit_price": 8.721000289916992,
+      "exit_reason": "STOP",
+      "pnl": -4.590000152587894,
+      "return_pct": -5.000000000000004,
+      "pnl_pct": -5.000000000000004,
+      "hold_days": 0,
+      "phase25_outcome_synced": true
     }
   ],
   "rejected_signals": [],
-  "scan_near_misses": [
-    {
-      "ticker": "EVGO",
-      "date": "2026-04-08",
-      "gap_pct": 7.777783811828397,
-      "vol_spike": 1.0982176284834455,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "SPCE",
-      "date": "2026-04-08",
-      "gap_pct": 10.200671096467904,
-      "vol_spike": 1.191187565733896,
-      "reason": "volume_outside_sweet_spot",
-      "target_volume_rule": ">= 2.5x"
-    },
-    {
-      "ticker": "ACHR",
-      "date": "2026-04-08",
-      "gap_pct": 7.865169743308028,
-      "vol_spike": 1.0268051237571305,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "NIO",
-      "date": "2026-02-05",
-      "gap_pct": 7.657660995633826,
-      "vol_spike": 2.6629714127489086,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "BBAI",
-      "date": "2026-04-08",
-      "gap_pct": 9.275360255651057,
-      "vol_spike": 0.9278415013269016,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "ADT",
-      "date": "2026-05-13",
-      "gap_pct": 1.0263884613241374,
-      "vol_spike": 0.636115063934821,
-      "reason": "blocklisted"
-    },
-    {
-      "ticker": "COMP",
-      "date": "2026-04-08",
-      "gap_pct": 9.880244628889693,
-      "vol_spike": 2.096140898461661,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "NVAX",
-      "date": "2026-04-08",
-      "gap_pct": 7.393479628327546,
-      "vol_spike": 1.04549314841961,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "INTR",
-      "date": "2026-04-08",
-      "gap_pct": 9.419348932081654,
-      "vol_spike": 2.1590750387034854,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "CGC",
-      "date": "2026-04-23",
-      "gap_pct": 9.42028954208861,
-      "vol_spike": 3.5368286348752305,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    },
-    {
-      "ticker": "OGI",
-      "date": "2026-03-05",
-      "gap_pct": 7.913670175336283,
-      "vol_spike": 2.4289969312232986,
-      "reason": "gap_outside_sweet_spot",
-      "target_gap_range": "10-15"
-    }
-  ]
+  "scan_near_misses": []
 }

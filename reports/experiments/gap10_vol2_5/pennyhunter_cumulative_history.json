@@ -1,7 +1,7 @@
 {
   "first_trade_date": "2026-05-13T20:25:45.433740",
-  "last_updated": "2026-05-13T20:36:50.648390",
-  "total_sessions": 3,
+  "last_updated": "2026-05-13T20:56:22.890979",
+  "total_sessions": 4,
   "trades": [
     {
       "session_id": 1,
@@ -331,6 +331,27 @@
       ]
     },
     {
+      "session_id": 4,
+      "date": "2026-05-13T20:56:22.890979",
+      "type": "session_marker",
+      "source": "run_pennyhunter_paper",
+      "trading_stats": {
+        "total_trades": 3,
+        "completed_trades": 3,
+        "active_trades": 0,
+        "rejected_signals": 0,
+        "wins": 1,
+        "losses": 2,
+        "win_rate_pct": 33.33333333333333,
+        "total_pnl": 0.4610002279281584,
+        "avg_win": 9.963000273704532,
+        "avg_loss": -4.751000022888187,
+        "profit_factor": 2.0970322512538973
+      },
+      "rejected_signals": [],
+      "scan_near_misses": []
+    },
+    {
       "ticker": "SPCE",
       "entry_time": "2026-05-13T20:25:45.245449",
       "entry_price": 3.069999933242798,
@@ -362,7 +383,7 @@
       "pnl_pct": -5.000000000000004,
       "hold_days": 0,
       "phase25_outcome_synced": true,
-      "session_id": 3
+      "session_id": 4
     },
     {
       "ticker": "SPCE",
@@ -396,7 +417,7 @@
       "pnl_pct": 10.000000000000009,
       "hold_days": 0,
       "phase25_outcome_synced": true,
-      "session_id": 3
+      "session_id": 4
     },
     {
       "ticker": "TLRY",
@@ -410,7 +431,7 @@
       "score": 5.5,
       "gap_pct": 10.076671026967256,
       "vol_mult": 2.507678075855689,
-      "status": "active",
+      "status": "closed",
       "orders": {
         "entry": "PAPER-1",
         "stop": "PAPER-2",
@@ -422,7 +443,15 @@
       "signal_id": "TLRY_2026-01-09_1778729810.590772",
       "fill_id": "fill_TLRY_2026-01-09_1778729810.590772_1778729810.601072",
       "signal_quality": "good",
-      "session_id": 3
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "exit_price": 8.721000289916992,
+      "exit_reason": "STOP",
+      "pnl": -4.590000152587894,
+      "return_pct": -5.000000000000004,
+      "pnl_pct": -5.000000000000004,
+      "hold_days": 0,
+      "phase25_outcome_synced": true,
+      "session_id": 4
     }
   ],
   "metadata": {

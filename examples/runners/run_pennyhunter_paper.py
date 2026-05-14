@@ -156,6 +156,7 @@ class PennyHunterPaperTrader:
         self.advanced_filters_enabled = config.get('advanced_filters', {}).get('enabled', True)
         self.advanced_filter_config = self._build_advanced_filter_config(config)
         self.scan_filter_config = self._build_scan_filter_config(config)
+        self.ticker_cooldown_config = self._build_ticker_cooldown_config(config)
 
         # NEW: Phase 2.5 Memory System
         self.memory = PennyHunterMemory(penny_memory_db)
@@ -186,6 +187,7 @@ class PennyHunterPaperTrader:
         self.trades_log = []
         self.rejected_signals = []
         self.scan_diagnostics = []
+        self.cooldown_decisions = []
         self.active_positions = {}
         self.base_risk_per_trade = max_risk_per_trade
         self.current_risk_per_trade = max_risk_per_trade
@@ -229,6 +231,86 @@ class PennyHunterPaperTrader:
             'volume_max_mult': scan_filters.get('volume_max_mult', 10.0),
             'allow_extreme_volume_above_mult': scan_filters.get('allow_extreme_volume_above_mult', 15.0),
         }
+
+    @staticmethod
+    def _build_ticker_cooldown_config(config: Dict) -> Dict:
+        """Resolve optional post-close ticker cooldown rules from YAML config."""
+        cooldown = config.get('experiments', {}).get('ticker_cooldown', {})
+        return {
+            'enabled': bool(cooldown.get('enabled', False)),
+            'mode': cooldown.get('mode', 'next_session_prefer_alternate'),
+        }
+
+    def _pending_cooldown_trade(self) -> Optional[Dict]:
+        """Return the most recent closed trade whose next-session cooldown has not yet been consumed."""
+        closed_trades = [
+            trade for trade in self.trades_log
+            if trade.get('status') == 'closed' and trade.get('ticker') and trade.get('exit_time')
+        ]
+        closed_trades.sort(
+            key=lambda trade: (
+                trade.get('exit_time') or '',
+                trade.get('entry_time') or '',
+                str(trade.get('signal_id') or trade.get('id') or ''),
+            ),
+            reverse=True,
+        )
+
+        for trade in closed_trades:
+            exit_time = trade.get('exit_time') or ''
+            if any((candidate.get('entry_time') or '') > exit_time for candidate in self.trades_log):
+                continue
+            return trade
+
+        return None
+
+    def apply_ticker_cooldown(self, signals: List[Dict]) -> List[Dict]:
+        """Filter or suppress same-ticker re-entry for the next session after a close."""
+        self.cooldown_decisions = []
+        if not signals or not self.ticker_cooldown_config.get('enabled', False):
+            return signals
+
+        cooldown_trade = self._pending_cooldown_trade()
+        if not cooldown_trade:
+            return signals
+
+        blocked_ticker = cooldown_trade['ticker']
+        alternate_signals = [signal for signal in signals if signal.get('ticker') != blocked_ticker]
+        blocked_signals = [signal for signal in signals if signal.get('ticker') == blocked_ticker]
+
+        decision = {
+            'mode': self.ticker_cooldown_config.get('mode'),
+            'blocked_ticker': blocked_ticker,
+            'trigger_trade': {
+                'ticker': cooldown_trade.get('ticker'),
+                'entry_time': cooldown_trade.get('entry_time'),
+                'exit_time': cooldown_trade.get('exit_time'),
+                'exit_reason': cooldown_trade.get('exit_reason'),
+                'pnl': cooldown_trade.get('pnl'),
+            },
+            'eligible_tickers': [signal.get('ticker') for signal in signals],
+            'blocked_candidates': [signal.get('ticker') for signal in blocked_signals],
+        }
+
+        if alternate_signals:
+            decision['decision'] = 'prefer_alternate'
+            decision['selected_tickers'] = [signal.get('ticker') for signal in alternate_signals]
+            self.cooldown_decisions.append(decision)
+            logger.info(
+                "🧊 Cooldown blocks %s re-entry; preferring alternate ticker(s): %s",
+                blocked_ticker,
+                ', '.join(decision['selected_tickers']),
+            )
+            return alternate_signals
+
+        decision['decision'] = 'skip_repeat_without_alternative'
+        decision['selected_tickers'] = []
+        self.cooldown_decisions.append(decision)
+        logger.info(
+            "🧊 Cooldown blocks %s re-entry and no alternate ticker exists; skipping trade",
+            blocked_ticker,
+        )
+        return []
 
     @staticmethod
     def _volume_rule_matches(vol_spike: float, scan_filters: Dict) -> bool:
@@ -520,6 +602,7 @@ class PennyHunterPaperTrader:
                 'trading_stats': report.get('trading_stats', {}),
                 'rejected_signals': report.get('rejected_signals', []),
                 'scan_near_misses': report.get('scan_near_misses', []),
+                'cooldown_decisions': report.get('cooldown_decisions', []),
             }
         )
 
@@ -607,6 +690,7 @@ class PennyHunterPaperTrader:
 
         self.trades_log = report.get('trades', [])
         self.rejected_signals = []
+        self.cooldown_decisions = []
         self.active_positions = {
             trade['ticker']: trade
             for trade in self.trades_log
@@ -1159,6 +1243,7 @@ class PennyHunterPaperTrader:
             'trades': self.trades_log,
             'rejected_signals': self.rejected_signals,
             'scan_near_misses': self.scan_diagnostics,
+            'cooldown_decisions': self.cooldown_decisions,
         }
 
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -1319,9 +1404,10 @@ def main():
 
     # Scan for signals
     signals = trader.scan_for_signals(tickers)
+    signals = trader.apply_ticker_cooldown(signals)
 
     if not signals:
-        logger.warning("No signals found above scoring threshold")
+        logger.warning("No executable signals remained after scan filters and cooldown rules")
         trader.save_results(args.output)
         sys.exit(0)
 

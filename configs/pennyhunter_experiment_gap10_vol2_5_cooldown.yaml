@@ -1,0 +1,9 @@
+extends: pennyhunter_experiment_gap10_vol2_5.yaml
+
+name: PennyHunter Gap10 Vol2.5 Cooldown Experiment
+description: "Experimental PennyHunter thresholds with next-session ticker cooldown to block immediate same-ticker re-entry"
+
+experiments:
+  ticker_cooldown:
+    enabled: true
+    mode: next_session_prefer_alternate

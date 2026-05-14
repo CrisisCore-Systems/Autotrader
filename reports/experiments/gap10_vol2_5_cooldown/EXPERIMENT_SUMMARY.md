@@ -26,8 +26,31 @@
 - `reports/experiments/gap10_vol2_5_cooldown/phase2_validation_report.md`
 - `reports/experiments/gap10_vol2_5_cooldown/EXPERIMENT_SUMMARY.md`
 
+## First Isolated Paper Session
+
+- Signals found: `SPCE`
+- Trade opened: `SPCE`
+- SPCE details: `32` shares at `$3.07`, signal date `2026-04-06`, status `active`
+- Skipped candidates: `none`
+- cooldown_decisions: `none`
+- Cooldown did not trigger because there was no prior closed trade in the fenced cooldown experiment history.
+- Active trades: `1`
+- Completed trades: `0`
+- Wins: `0`
+- Losses: `0`
+- Win rate: `0.0%`
+- Net closed P&L: `$0.00`
+- Near misses: `12`
+- Ejected tickers: `none`
+- Baseline contamination: `NONE`
+- Status: active paper validation, cooldown not yet exercised
+
+## Interpretation
+
+This is a valid first-run artifact, not a cooldown proof yet.
+The cooldown rule becomes meaningful on the next isolated session after `SPCE` closes and a repeat-ticker decision is possible.
+
 ## Status
 
-Scaffold created only.
-The trader has not been run for this experiment yet.
+The trader has now completed the first isolated paper session for this experiment.
 Do not merge this branch into baseline.

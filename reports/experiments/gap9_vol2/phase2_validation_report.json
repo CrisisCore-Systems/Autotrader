@@ -1,0 +1,367 @@
+{
+  "generated_at": "2026-05-13T19:36:18.304440",
+  "phase2_deployment_date": "2025-10-20",
+  "trade_counts": {
+    "total_filtered": 6,
+    "completed": 5,
+    "active": 1,
+    "wins": 2,
+    "losses": 3,
+    "recent_rejected_signals": 0,
+    "recent_scan_near_misses": 11,
+    "unique_signal_dates": 5,
+    "unique_signal_setups": 6
+  },
+  "metrics": {
+    "win_rate": 0.4,
+    "win_rate_confidence_interval_95": {
+      "low": 0.11762077423264794,
+      "high": 0.769275718723987
+    },
+    "profit_factor": 1.3642996524389839,
+    "average_return_pct": 1.0000000000000009,
+    "average_win_pnl": 9.81750017404557,
+    "average_loss_pnl": -4.79733327229818,
+    "total_pnl": 5.243000531196598,
+    "max_drawdown_pnl": -9.47999992370606
+  },
+  "milestone": {
+    "reached": 5,
+    "next": 10,
+    "passed": false,
+    "message": "\u274c Initial Validation FAILED (2/5 wins = 40.0% vs 60% target)"
+  },
+  "by_regime": [
+    {
+      "name": "risk_on",
+      "trades": 5,
+      "wins": 2,
+      "losses": 3,
+      "win_rate": 0.4,
+      "total_pnl": 5.243000531196598,
+      "avg_return_pct": 1.0000000000000009
+    }
+  ],
+  "by_ticker": [
+    {
+      "name": "COMP",
+      "trades": 1,
+      "wins": 1,
+      "losses": 0,
+      "win_rate": 1.0,
+      "total_pnl": 9.672000074386606,
+      "avg_return_pct": 10.000000000000009
+    },
+    {
+      "name": "INTR",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.889999771118166,
+      "avg_return_pct": -5.000000000000004
+    },
+    {
+      "name": "SPCE",
+      "trades": 2,
+      "wins": 1,
+      "losses": 1,
+      "win_rate": 0.5,
+      "total_pnl": 5.051000380516053,
+      "avg_return_pct": 2.500000000000002
+    },
+    {
+      "name": "TLRY",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.590000152587894,
+      "avg_return_pct": -5.000000000000004
+    }
+  ],
+  "by_signal_setup": [
+    {
+      "name": "COMP@2026-04-08",
+      "trades": 1,
+      "wins": 1,
+      "losses": 0,
+      "win_rate": 1.0,
+      "total_pnl": 9.672000074386606
+    },
+    {
+      "name": "INTR@2026-04-08",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.889999771118166
+    },
+    {
+      "name": "SPCE@2026-03-31",
+      "trades": 1,
+      "wins": 1,
+      "losses": 0,
+      "win_rate": 1.0,
+      "total_pnl": 9.963000273704532
+    },
+    {
+      "name": "SPCE@2026-04-06",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.911999893188479
+    },
+    {
+      "name": "TLRY@2026-01-09",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.590000152587894
+    }
+  ],
+  "losing_trades": [
+    {
+      "ticker": "SPCE",
+      "entry_time": "2026-05-13T18:41:56.665811",
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "pnl": -4.911999893188479,
+      "return_pct": -5.000000000000004,
+      "market_regime": "risk_on",
+      "gap_pct": 10.162601468425821,
+      "vol_mult": 6.24819046426111
+    },
+    {
+      "ticker": "INTR",
+      "entry_time": "2026-05-13T18:50:21.335660",
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "pnl": -4.889999771118166,
+      "return_pct": -5.000000000000004,
+      "market_regime": "risk_on",
+      "gap_pct": 9.419348932081654,
+      "vol_mult": 2.1590750387034854
+    },
+    {
+      "ticker": "TLRY",
+      "entry_time": "2026-05-13T19:32:30.507004",
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "pnl": -4.590000152587894,
+      "return_pct": -5.000000000000004,
+      "market_regime": "risk_on",
+      "gap_pct": 10.076671026967256,
+      "vol_mult": 2.507678075855689
+    }
+  ],
+  "active_positions": [
+    {
+      "ticker": "CGC",
+      "entry_time": "2026-05-13T19:36:17.711198",
+      "entry_price": 1.2200000286102295,
+      "shares": 81,
+      "stop_loss": 1.159000027179718,
+      "take_profit": 1.3420000314712526,
+      "signal_type": "runner_vwap",
+      "signal_date": "2026-04-23",
+      "score": 6.5,
+      "gap_pct": 9.42028954208861,
+      "vol_mult": 3.5368286348752305,
+      "status": "active",
+      "orders": {
+        "entry": "PAPER-1",
+        "stop": "PAPER-2",
+        "target": "PAPER-3"
+      },
+      "market_regime": "risk_on",
+      "vix_level": 17.8700008392334,
+      "risk_dollars": 5.0,
+      "signal_id": "CGC_2026-04-23_1778726177.711198",
+      "fill_id": "fill_CGC_2026-04-23_1778726177.711198_1778726177.721232",
+      "signal_quality": "good",
+      "session_id": 6
+    }
+  ],
+  "recent_session": {
+    "generated_at": "2026-05-13T19:36:17.812080",
+    "trading_stats": {
+      "total_trades": 6,
+      "completed_trades": 5,
+      "active_trades": 1,
+      "rejected_signals": 0,
+      "wins": 2,
+      "losses": 3,
+      "win_rate_pct": 40.0,
+      "total_pnl": 5.243000531196598,
+      "avg_win": 9.81750017404557,
+      "avg_loss": -4.79733327229818,
+      "profit_factor": 2.046449478658476
+    },
+    "rejected_signals": [],
+    "rejection_summary": {
+      "by_stage": [],
+      "by_check": []
+    },
+    "scan_near_misses": [
+      {
+        "ticker": "EVGO",
+        "date": "2026-04-08",
+        "gap_pct": 7.777783811828397,
+        "vol_spike": 1.0982176284834455,
+        "reason": "gap_outside_sweet_spot",
+        "target_gap_range": "9-15"
+      },
+      {
+        "ticker": "SPCE",
+        "date": "2026-04-08",
+        "gap_pct": 10.200671096467904,
+        "vol_spike": 1.191187565733896,
+        "reason": "volume_outside_sweet_spot",
+        "target_volume_rule": ">= 2.0x"
+      },
+      {
+        "ticker": "ACHR",
+        "date": "2026-04-08",
+        "gap_pct": 7.865169743308028,
+        "vol_spike": 1.0268051237571305,
+        "reason": "gap_outside_sweet_spot",
+        "target_gap_range": "9-15"
+      },
+      {
+        "ticker": "NIO",
+        "date": "2026-02-05",
+        "gap_pct": 7.657660995633826,
+        "vol_spike": 2.6629714127489086,
+        "reason": "gap_outside_sweet_spot",
+        "target_gap_range": "9-15"
+      },
+      {
+        "ticker": "BBAI",
+        "date": "2026-04-08",
+        "gap_pct": 9.275360255651057,
+        "vol_spike": 0.9278415013269016,
+        "reason": "volume_outside_sweet_spot",
+        "target_volume_rule": ">= 2.0x"
+      },
+      {
+        "ticker": "ADT",
+        "date": "2026-05-13",
+        "gap_pct": 1.0263884613241374,
+        "vol_spike": 0.636115063934821,
+        "reason": "blocklisted"
+      },
+      {
+        "ticker": "COMP",
+        "date": "2026-04-08",
+        "gap_pct": 9.880244628889693,
+        "vol_spike": 2.096140898461661,
+        "reason": "already_processed"
+      },
+      {
+        "ticker": "NVAX",
+        "date": "2026-04-08",
+        "gap_pct": 7.393479628327546,
+        "vol_spike": 1.04549314841961,
+        "reason": "gap_outside_sweet_spot",
+        "target_gap_range": "9-15"
+      },
+      {
+        "ticker": "INTR",
+        "date": "2026-04-08",
+        "gap_pct": 9.419348932081654,
+        "vol_spike": 2.1590750387034854,
+        "reason": "already_processed"
+      },
+      {
+        "ticker": "TLRY",
+        "date": "2026-01-09",
+        "gap_pct": 10.076671026967256,
+        "vol_spike": 2.507678075855689,
+        "reason": "already_processed"
+      },
+      {
+        "ticker": "OGI",
+        "date": "2026-03-05",
+        "gap_pct": 7.913670175336283,
+        "vol_spike": 2.4289969312232986,
+        "reason": "gap_outside_sweet_spot",
+        "target_gap_range": "9-15"
+      }
+    ],
+    "near_miss_summary": {
+      "by_reason": [
+        {
+          "name": "gap_outside_sweet_spot",
+          "count": 5,
+          "latest_ticker": "OGI",
+          "latest_date": "2026-03-05"
+        },
+        {
+          "name": "already_processed",
+          "count": 3,
+          "latest_ticker": "TLRY",
+          "latest_date": "2026-01-09"
+        },
+        {
+          "name": "volume_outside_sweet_spot",
+          "count": 2,
+          "latest_ticker": "BBAI",
+          "latest_date": "2026-04-08"
+        },
+        {
+          "name": "blocklisted",
+          "count": 1,
+          "latest_ticker": "ADT",
+          "latest_date": "2026-05-13"
+        }
+      ]
+    },
+    "status": {
+      "had_rejections": false,
+      "executed_trades": 6,
+      "status": "cleared",
+      "message": "Latest session cleared previously observed blockers."
+    }
+  },
+  "session_audit_trend": {
+    "tracked_sessions": 6,
+    "sessions_with_rejections": 0,
+    "sessions_with_near_misses": 6,
+    "sessions_with_trades": 6,
+    "total_rejected_signals": 0,
+    "total_scan_near_misses": 54,
+    "rejection_summary": {
+      "by_stage": [],
+      "by_check": []
+    },
+    "near_miss_summary": {
+      "by_reason": [
+        {
+          "name": "gap_outside_sweet_spot",
+          "count": 30,
+          "latest_ticker": "OGI",
+          "latest_date": "2026-03-05"
+        },
+        {
+          "name": "volume_outside_sweet_spot",
+          "count": 12,
+          "latest_ticker": "BBAI",
+          "latest_date": "2026-04-08"
+        },
+        {
+          "name": "already_processed",
+          "count": 6,
+          "latest_ticker": "TLRY",
+          "latest_date": "2026-01-09"
+        },
+        {
+          "name": "blocklisted",
+          "count": 6,
+          "latest_ticker": "ADT",
+          "latest_date": "2026-05-13"
+        }
+      ]
+    },
+    "dominant_blocker": null
+  }
+}

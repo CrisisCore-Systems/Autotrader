@@ -258,7 +258,22 @@ class PennyHunterPaperTrader:
 
         for trade in closed_trades:
             exit_time = trade.get('exit_time') or ''
-            if any((candidate.get('entry_time') or '') > exit_time for candidate in self.trades_log):
+            trade_identity = (
+                trade.get('signal_id'),
+                trade.get('fill_id'),
+                trade.get('entry_time'),
+                trade.get('ticker'),
+            )
+            if any(
+                (
+                    candidate.get('signal_id'),
+                    candidate.get('fill_id'),
+                    candidate.get('entry_time'),
+                    candidate.get('ticker'),
+                ) != trade_identity
+                and (candidate.get('entry_time') or '') > exit_time
+                for candidate in self.trades_log
+            ):
                 continue
             return trade
 

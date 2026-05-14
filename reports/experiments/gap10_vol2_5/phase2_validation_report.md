@@ -1,38 +1,39 @@
 # Phase 2 Validation Report
-Generated: 2026-05-13T20:29:36.768178
+Generated: 2026-05-13T20:36:51.227538
 Deployment Date: 2025-10-20
 
 ## Summary
-- Completed trades: 1
+- Completed trades: 2
 - Active trades: 1
 - Recent rejected signals: 0
 - Recent scan near misses: 11
-- Unique signal dates: 2
-- Unique signal setups: 2
-- Tracked audit sessions: 2
+- Unique signal dates: 3
+- Unique signal setups: 3
+- Tracked audit sessions: 3
 - Latest session status: Latest session cleared previously observed blockers.
-- Wins / Losses: 0 / 1
-- Win rate: 0.0%
-- 95% confidence interval: 0.0% to 79.3%
-- Profit factor: 0.00
-- Average return: -5.00%
-- Total P&L: $-4.91
+- Wins / Losses: 1 / 1
+- Win rate: 50.0%
+- 95% confidence interval: 9.5% to 90.5%
+- Profit factor: 2.03
+- Average return: 2.50%
+- Total P&L: $5.05
 - Max drawdown: $-4.91
 - Milestone status: No milestone reached yet
 
 ## Regime Breakdown
 | Regime | Trades | Wins | Losses | Win Rate | Total P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| risk_on | 1 | 0 | 1 | 0.0% | $-4.91 |
+| risk_on | 2 | 1 | 1 | 50.0% | $5.05 |
 
 ## Ticker Breakdown
 | Ticker | Trades | Wins | Losses | Win Rate | Total P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| SPCE | 1 | 0 | 1 | 0.0% | $-4.91 |
+| SPCE | 2 | 1 | 1 | 50.0% | $5.05 |
 
 ## Signal Setup Breakdown
 | Setup | Trades | Wins | Losses | Win Rate | Total P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| SPCE@2026-03-31 | 1 | 1 | 0 | 100.0% | $9.96 |
 | SPCE@2026-04-06 | 1 | 0 | 1 | 0.0% | $-4.91 |
 
 ## Losing Trades
@@ -66,10 +67,10 @@ No rejected signals recorded in the latest paper-trading session.
 | volume_outside_sweet_spot | 1 | SPCE (2026-04-08) |
 
 ## Session Audit Trend
-- Tracked audit sessions: 2
+- Tracked audit sessions: 3
 - Sessions with rejected signals: 0
-- Sessions with scan near misses: 2
-- Sessions with executed trades: 2
+- Sessions with scan near misses: 3
+- Sessions with executed trades: 3
 - Total rejected signals across tracked sessions: 0
-- Total scan near misses across tracked sessions: 22
+- Total scan near misses across tracked sessions: 33
 - Latest session interpretation: Latest session cleared previously observed blockers.

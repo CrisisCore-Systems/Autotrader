@@ -6,7 +6,7 @@
 - Goal: test a tighter post-rejection variant after `gap9_vol2`.
 - Scan thresholds: `10-15%` gap, `>=2.5x` volume
 - Concurrency cap: unchanged from baseline (`1` position)
-- Mode: active paper validation after second fenced session
+- Mode: active paper validation after third fenced session
 - Baseline contamination: `NONE`
 
 ## First Paper Session
@@ -27,7 +27,7 @@
 - Baseline contamination: `NONE`
 - Status: active paper validation, no decision yet
 
-## Latest Fenced Session
+## Second Fenced Session
 
 - Prior active `SPCE` closed at `STOP`
 - Realized P&L: `-$4.91`
@@ -45,10 +45,28 @@
 - Baseline contamination: `NONE`
 - Status: active paper validation, no decision yet
 
+## Latest Fenced Session
+
+- Second active `SPCE` closed at `TARGET`
+- Realized P&L: `+$9.96`
+- A new `TLRY` trade opened afterward
+- New active `TLRY`: `10` shares at `$9.18`, signal date `2026-01-09`
+- No skipped candidates after `TLRY` became the only eligible signal
+- Completed trades: `2`
+- Active trades: `1`
+- Wins: `1`
+- Losses: `1`
+- Win rate: `50.0%`
+- Net closed P&L: `+$5.05`
+- Near misses: `11`
+- Ejected tickers: `none`
+- Baseline contamination: `NONE`
+- Status: active paper validation, no decision yet
+
 ## Warning
 
-`SPCE` is dominating selection order and `TLRY` remains untested because of the one-position cap.
-That means the experiment is still learning mostly from repeated `SPCE` selection rather than from a broader candidate mix.
+`SPCE` selection dominance has reduced because `TLRY` is now active, but the sample size remains too small to trust.
+The experiment now has broader exposure than before, but only two completed trades is still not enough to support a decision.
 
 ## Scan-Only Comparison
 

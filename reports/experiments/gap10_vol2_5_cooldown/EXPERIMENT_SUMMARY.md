@@ -78,13 +78,28 @@
 - Baseline files touched: `no`
 - Final git status: `clean`
 
+## Repeated Scan-Only Cooldown Block
+
+- Git status before scan: `clean`
+- Signals before cooldown: `SPCE`
+- Eligible signals after cooldown: `none`
+- Cooldown decision: `skip_repeat_without_alternative`
+- Reason: `repeat_ticker_suppressed_no_alternate`
+- Blocked ticker: `SPCE`
+- Trade would be allowed: `false`
+- Baseline changed: `NONE`
+- Final git status: `clean`
+
 ## Interpretation
 
 The first isolated paper session established the initial fenced state with an active `SPCE` trade.
 The post-fix proof run confirmed the repaired live cooldown path behaves correctly when that trade closes and no alternate ticker is available.
 The cooldown mechanism is now behaving correctly.
 There is currently no non-blocked eligible ticker.
-No paper trade should be run until a non-blocked eligible signal appears.
+No fenced paper session is eligible.
+The only available signal was repeat `SPCE`.
+Cooldown correctly suppressed repeat exposure again.
+Continue scan-only checks until a non-blocked eligible ticker appears.
 Trade-quality validation is still pending because the experiment has only one completed trade and no alternate-selection case has occurred yet.
 
 ## Status

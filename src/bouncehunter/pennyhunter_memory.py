@@ -15,6 +15,7 @@ Author: BounceHunter Team
 
 import sqlite3
 import logging
+import hashlib
 from pathlib import Path
 from typing import Optional, Dict, List
 from datetime import datetime
@@ -94,15 +95,53 @@ class PennyHunterMemory:
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS recorded_outcomes (
+                outcome_key TEXT PRIMARY KEY,
+                ticker TEXT NOT NULL,
+                won INTEGER NOT NULL,
+                pnl REAL NOT NULL,
+                trade_date TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         conn.commit()
         conn.close()
+
+    @staticmethod
+    def build_outcome_key(
+        ticker: str,
+        trade_date: Optional[str],
+        signal_id: Optional[str] = None,
+        signal_date: Optional[str] = None,
+        entry_time: Optional[str] = None,
+        entry_price: Optional[float] = None,
+        shares: Optional[float] = None,
+        pnl: Optional[float] = None,
+    ) -> str:
+        """Build a deterministic key for a completed trade outcome."""
+        if signal_id:
+            return f"signal:{signal_id}"
+
+        raw = "|".join([
+            str(ticker or ""),
+            str(signal_date or ""),
+            str(entry_time or ""),
+            str(trade_date or ""),
+            str(entry_price if entry_price is not None else ""),
+            str(shares if shares is not None else ""),
+            str(pnl if pnl is not None else ""),
+        ])
+        return f"trade:{hashlib.sha256(raw.encode('utf-8')).hexdigest()}"
 
     def record_trade_outcome(
         self,
         ticker: str,
         won: bool,
         pnl: float,
-        trade_date: Optional[str] = None
+        trade_date: Optional[str] = None,
+        outcome_key: Optional[str] = None,
     ):
         """
         Record a trade outcome for a ticker.
@@ -112,12 +151,25 @@ class PennyHunterMemory:
             won: True if trade was profitable
             pnl: Profit/loss amount
             trade_date: Trade date (ISO format, defaults to now)
+            outcome_key: Deterministic unique key for idempotent recording
         """
         if trade_date is None:
             trade_date = datetime.now().isoformat()
 
+        if outcome_key is None:
+            outcome_key = self.build_outcome_key(ticker=ticker, trade_date=trade_date, pnl=pnl)
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT 1 FROM recorded_outcomes WHERE outcome_key = ?",
+            (outcome_key,)
+        )
+        if cursor.fetchone() is not None:
+            conn.close()
+            logger.info(f"⏭️ Skipping duplicate memory outcome for {ticker}: {outcome_key}")
+            return
 
         # Check if ticker exists
         cursor.execute("SELECT ticker FROM ticker_stats WHERE ticker = ?", (ticker,))
@@ -163,6 +215,11 @@ class PennyHunterMemory:
                 trade_date
             ))
 
+        cursor.execute("""
+            INSERT INTO recorded_outcomes (outcome_key, ticker, won, pnl, trade_date)
+            VALUES (?, ?, ?, ?, ?)
+        """, (outcome_key, ticker, 1 if won else 0, pnl, trade_date))
+
         conn.commit()
 
         # Check if ticker should be ejected
@@ -172,6 +229,38 @@ class PennyHunterMemory:
         conn.close()
 
         logger.info(f"📝 Recorded trade: {ticker} {'WIN' if won else 'LOSS'} ${pnl:.2f}")
+
+    def rebuild_from_trades(self, trades: List[Dict], reset: bool = True):
+        """Rebuild ticker stats from a visible trade list."""
+        if reset:
+            self.reset_database()
+
+        completed_trades = [
+            trade for trade in trades
+            if trade.get('status') in ('closed', 'completed') and trade.get('ticker')
+        ]
+
+        for trade in completed_trades:
+            pnl = float(trade.get('pnl', 0) or 0)
+            outcome_key = self.build_outcome_key(
+                ticker=trade.get('ticker', ''),
+                trade_date=trade.get('exit_time'),
+                signal_id=trade.get('signal_id'),
+                signal_date=trade.get('signal_date'),
+                entry_time=trade.get('entry_time'),
+                entry_price=trade.get('entry_price'),
+                shares=trade.get('shares'),
+                pnl=pnl,
+            )
+            self.record_trade_outcome(
+                ticker=trade['ticker'],
+                won=pnl > 0,
+                pnl=pnl,
+                trade_date=trade.get('exit_time'),
+                outcome_key=outcome_key,
+            )
+
+        logger.info(f"✅ Rebuilt PennyHunter memory from {len(completed_trades)} completed trades")
 
     def _update_ticker_status(self, ticker: str, cursor: sqlite3.Cursor):
         """Update ticker status based on performance"""
@@ -433,6 +522,7 @@ class PennyHunterMemory:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM ticker_stats")
+        cursor.execute("DELETE FROM recorded_outcomes")
         conn.commit()
         conn.close()
         logger.warning("⚠️ Database reset - all ticker stats cleared")

@@ -1,29 +1,29 @@
 {
-  "generated_at": "2026-05-13T20:25:46.007963",
+  "generated_at": "2026-05-13T20:29:36.768178",
   "phase2_deployment_date": "2025-10-20",
   "trade_counts": {
-    "total_filtered": 1,
-    "completed": 0,
+    "total_filtered": 2,
+    "completed": 1,
     "active": 1,
     "wins": 0,
-    "losses": 0,
+    "losses": 1,
     "recent_rejected_signals": 0,
     "recent_scan_near_misses": 11,
-    "unique_signal_dates": 1,
-    "unique_signal_setups": 1
+    "unique_signal_dates": 2,
+    "unique_signal_setups": 2
   },
   "metrics": {
     "win_rate": 0.0,
     "win_rate_confidence_interval_95": {
       "low": 0.0,
-      "high": 0.0
+      "high": 0.7934506856227626
     },
     "profit_factor": 0.0,
-    "average_return_pct": 0.0,
+    "average_return_pct": -5.000000000000004,
     "average_win_pnl": 0.0,
-    "average_loss_pnl": 0.0,
-    "total_pnl": 0,
-    "max_drawdown_pnl": 0.0
+    "average_loss_pnl": -4.911999893188479,
+    "total_pnl": -4.911999893188479,
+    "max_drawdown_pnl": -4.911999893188479
   },
   "milestone": {
     "reached": null,
@@ -31,23 +31,63 @@
     "passed": false,
     "message": ""
   },
-  "by_regime": [],
-  "by_ticker": [],
-  "by_signal_setup": [],
-  "losing_trades": [],
-  "active_positions": [
+  "by_regime": [
+    {
+      "name": "risk_on",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.911999893188479,
+      "avg_return_pct": -5.000000000000004
+    }
+  ],
+  "by_ticker": [
+    {
+      "name": "SPCE",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.911999893188479,
+      "avg_return_pct": -5.000000000000004
+    }
+  ],
+  "by_signal_setup": [
+    {
+      "name": "SPCE@2026-04-06",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.911999893188479
+    }
+  ],
+  "losing_trades": [
     {
       "ticker": "SPCE",
       "entry_time": "2026-05-13T20:25:45.245449",
-      "entry_price": 3.069999933242798,
-      "shares": 32,
-      "stop_loss": 2.916499936580658,
-      "take_profit": 3.376999926567078,
-      "signal_type": "runner_vwap",
-      "signal_date": "2026-04-06",
-      "score": 7.0,
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "pnl": -4.911999893188479,
+      "return_pct": -5.000000000000004,
+      "market_regime": "risk_on",
       "gap_pct": 10.162601468425821,
-      "vol_mult": 6.24819046426111,
+      "vol_mult": 6.24819046426111
+    }
+  ],
+  "active_positions": [
+    {
+      "ticker": "SPCE",
+      "entry_time": "2026-05-13T20:29:35.496799",
+      "entry_price": 2.430000066757202,
+      "shares": 41,
+      "stop_loss": 2.3085000634193418,
+      "take_profit": 2.6730000734329225,
+      "signal_type": "runner_vwap",
+      "signal_date": "2026-03-31",
+      "score": 7.0,
+      "gap_pct": 11.52073692213711,
+      "vol_mult": 8.810559296670407,
       "status": "active",
       "orders": {
         "entry": "PAPER-1",
@@ -57,26 +97,26 @@
       "market_regime": "risk_on",
       "vix_level": 17.8700008392334,
       "risk_dollars": 5.0,
-      "signal_id": "SPCE_2026-04-06_1778729145.245449",
-      "fill_id": "fill_SPCE_2026-04-06_1778729145.245449_1778729145.329887",
+      "signal_id": "SPCE_2026-03-31_1778729375.496799",
+      "fill_id": "fill_SPCE_2026-03-31_1778729375.496799_1778729375.65598",
       "signal_quality": "perfect",
-      "session_id": 1
+      "session_id": 2
     }
   ],
   "recent_session": {
-    "generated_at": "2026-05-13T20:25:45.433740",
+    "generated_at": "2026-05-13T20:29:36.346773",
     "trading_stats": {
-      "total_trades": 1,
-      "completed_trades": 0,
+      "total_trades": 2,
+      "completed_trades": 1,
       "active_trades": 1,
       "rejected_signals": 0,
       "wins": 0,
-      "losses": 0,
-      "win_rate_pct": 0,
-      "total_pnl": 0,
+      "losses": 1,
+      "win_rate_pct": 0.0,
+      "total_pnl": -4.911999893188479,
       "avg_win": 0,
-      "avg_loss": 0,
-      "profit_factor": 0
+      "avg_loss": -4.911999893188479,
+      "profit_factor": 0.0
     },
     "rejected_signals": [],
     "rejection_summary": {
@@ -196,18 +236,18 @@
     },
     "status": {
       "had_rejections": false,
-      "executed_trades": 1,
+      "executed_trades": 2,
       "status": "cleared",
       "message": "Latest session cleared previously observed blockers."
     }
   },
   "session_audit_trend": {
-    "tracked_sessions": 1,
+    "tracked_sessions": 2,
     "sessions_with_rejections": 0,
-    "sessions_with_near_misses": 1,
-    "sessions_with_trades": 1,
+    "sessions_with_near_misses": 2,
+    "sessions_with_trades": 2,
     "total_rejected_signals": 0,
-    "total_scan_near_misses": 11,
+    "total_scan_near_misses": 22,
     "rejection_summary": {
       "by_stage": [],
       "by_check": []
@@ -216,19 +256,19 @@
       "by_reason": [
         {
           "name": "gap_outside_sweet_spot",
-          "count": 9,
+          "count": 18,
           "latest_ticker": "OGI",
           "latest_date": "2026-03-05"
         },
         {
           "name": "blocklisted",
-          "count": 1,
+          "count": 2,
           "latest_ticker": "ADT",
           "latest_date": "2026-05-13"
         },
         {
           "name": "volume_outside_sweet_spot",
-          "count": 1,
+          "count": 2,
           "latest_ticker": "SPCE",
           "latest_date": "2026-04-08"
         }

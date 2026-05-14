@@ -6,7 +6,7 @@
 - Goal: test a tighter post-rejection variant after `gap9_vol2`.
 - Scan thresholds: `10-15%` gap, `>=2.5x` volume
 - Concurrency cap: unchanged from baseline (`1` position)
-- Mode: first isolated paper/sim session completed
+- Mode: active paper validation after second fenced session
 - Baseline contamination: `NONE`
 
 ## First Paper Session
@@ -26,6 +26,29 @@
 - Ejected tickers: `none`
 - Baseline contamination: `NONE`
 - Status: active paper validation, no decision yet
+
+## Latest Fenced Session
+
+- Prior active `SPCE` closed at `STOP`
+- Realized P&L: `-$4.91`
+- A new `SPCE` trade opened in the same fenced session
+- New active `SPCE`: `41` shares at `$2.43`, signal date `2026-03-31`
+- `TLRY` was skipped again
+- Completed trades: `1`
+- Active trades: `1`
+- Wins: `0`
+- Losses: `1`
+- Win rate: `0.0%`
+- Net closed P&L: `-$4.91`
+- Near misses: `11`
+- Ejected tickers: `none`
+- Baseline contamination: `NONE`
+- Status: active paper validation, no decision yet
+
+## Warning
+
+`SPCE` is dominating selection order and `TLRY` remains untested because of the one-position cap.
+That means the experiment is still learning mostly from repeated `SPCE` selection rather than from a broader candidate mix.
 
 ## Scan-Only Comparison
 
@@ -67,7 +90,7 @@ Compared with baseline, the new variant is still looser because it adds `TLRY` o
 ## Decision
 
 Scan-only result was clean enough to justify the first isolated paper session.
-The experiment is now in active paper validation, and no merge or rejection decision has been made yet.
+The experiment remains in active paper validation, and no merge or rejection decision has been made yet.
 
 ## Next Step
 

@@ -278,6 +278,9 @@ class PennyHunterPaperTrader:
         alternate_signals = [signal for signal in signals if signal.get('ticker') != blocked_ticker]
         blocked_signals = [signal for signal in signals if signal.get('ticker') == blocked_ticker]
 
+        if not blocked_signals:
+            return signals
+
         decision = {
             'mode': self.ticker_cooldown_config.get('mode'),
             'blocked_ticker': blocked_ticker,
@@ -290,11 +293,13 @@ class PennyHunterPaperTrader:
             },
             'eligible_tickers': [signal.get('ticker') for signal in signals],
             'blocked_candidates': [signal.get('ticker') for signal in blocked_signals],
+            'reason': None,
         }
 
         if alternate_signals:
             decision['decision'] = 'prefer_alternate'
             decision['selected_tickers'] = [signal.get('ticker') for signal in alternate_signals]
+            decision['reason'] = 'repeat_ticker_blocked_alternate_available'
             self.cooldown_decisions.append(decision)
             logger.info(
                 "🧊 Cooldown blocks %s re-entry; preferring alternate ticker(s): %s",
@@ -305,6 +310,7 @@ class PennyHunterPaperTrader:
 
         decision['decision'] = 'skip_repeat_without_alternative'
         decision['selected_tickers'] = []
+        decision['reason'] = 'repeat_ticker_suppressed_no_alternate'
         self.cooldown_decisions.append(decision)
         logger.info(
             "🧊 Cooldown blocks %s re-entry and no alternate ticker exists; skipping trade",

@@ -6,7 +6,7 @@ Uses yfinance to screen for active, liquid penny stocks that meet PennyHunter cr
 Saves results to configs/active_pennies.txt for use with scanner.
 
 Criteria:
-- Price: $0.20 - $5.00
+- Price: $0.20 - $10.00
 - Volume: >500k shares/day average
 - Market Cap: >$10M (avoid micro shells)
 - Exchanges: NASDAQ, NYSE, AMEX only
@@ -195,8 +195,8 @@ def main():
                        help='Output file path')
     parser.add_argument('--min-price', type=float, default=0.20,
                        help='Minimum price (default $0.20)')
-    parser.add_argument('--max-price', type=float, default=5.00,
-                       help='Maximum price (default $5.00)')
+    parser.add_argument('--max-price', type=float, default=10.00,
+                       help='Maximum price (default $10.00)')
     parser.add_argument('--min-volume', type=int, default=500000,
                        help='Minimum avg daily volume (default 500k)')
     parser.add_argument('--min-mcap', type=float, default=10000000,

@@ -1,48 +1,57 @@
 {
-  "generated_at": "2026-05-13T19:36:18.304440",
+  "generated_at": "2026-05-13T20:14:46.773938",
   "phase2_deployment_date": "2025-10-20",
   "trade_counts": {
     "total_filtered": 6,
-    "completed": 5,
-    "active": 1,
+    "completed": 6,
+    "active": 0,
     "wins": 2,
-    "losses": 3,
+    "losses": 4,
     "recent_rejected_signals": 0,
-    "recent_scan_near_misses": 11,
+    "recent_scan_near_misses": 12,
     "unique_signal_dates": 5,
     "unique_signal_setups": 6
   },
   "metrics": {
-    "win_rate": 0.4,
+    "win_rate": 0.3333333333333333,
     "win_rate_confidence_interval_95": {
-      "low": 0.11762077423264794,
-      "high": 0.769275718723987
+      "low": 0.09677141110578047,
+      "high": 0.700006684861608
     },
-    "profit_factor": 1.3642996524389839,
-    "average_return_pct": 1.0000000000000009,
+    "profit_factor": 1.0156209805190832,
+    "average_return_pct": 1.924386576016938e-15,
     "average_win_pnl": 9.81750017404557,
-    "average_loss_pnl": -4.79733327229818,
-    "total_pnl": 5.243000531196598,
-    "max_drawdown_pnl": -9.47999992370606
+    "average_loss_pnl": -4.833249983191491,
+    "total_pnl": 0.3020004153251721,
+    "max_drawdown_pnl": -14.421000039577486
   },
   "milestone": {
     "reached": 5,
     "next": 10,
     "passed": false,
-    "message": "\u274c Initial Validation FAILED (2/5 wins = 40.0% vs 60% target)"
+    "message": "\u274c Initial Validation FAILED (2/5 wins = 33.3% vs 60% target)"
   },
   "by_regime": [
     {
       "name": "risk_on",
-      "trades": 5,
+      "trades": 6,
       "wins": 2,
-      "losses": 3,
-      "win_rate": 0.4,
-      "total_pnl": 5.243000531196598,
-      "avg_return_pct": 1.0000000000000009
+      "losses": 4,
+      "win_rate": 0.3333333333333333,
+      "total_pnl": 0.3020004153251721,
+      "avg_return_pct": 1.924386576016938e-15
     }
   ],
   "by_ticker": [
+    {
+      "name": "CGC",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.941000115871426,
+      "avg_return_pct": -4.999999999999993
+    },
     {
       "name": "COMP",
       "trades": 1,
@@ -81,6 +90,14 @@
     }
   ],
   "by_signal_setup": [
+    {
+      "name": "CGC@2026-04-23",
+      "trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": -4.941000115871426
+    },
     {
       "name": "COMP@2026-04-08",
       "trades": 1,
@@ -152,50 +169,33 @@
       "market_regime": "risk_on",
       "gap_pct": 10.076671026967256,
       "vol_mult": 2.507678075855689
-    }
-  ],
-  "active_positions": [
+    },
     {
       "ticker": "CGC",
       "entry_time": "2026-05-13T19:36:17.711198",
-      "entry_price": 1.2200000286102295,
-      "shares": 81,
-      "stop_loss": 1.159000027179718,
-      "take_profit": 1.3420000314712526,
-      "signal_type": "runner_vwap",
-      "signal_date": "2026-04-23",
-      "score": 6.5,
-      "gap_pct": 9.42028954208861,
-      "vol_mult": 3.5368286348752305,
-      "status": "active",
-      "orders": {
-        "entry": "PAPER-1",
-        "stop": "PAPER-2",
-        "target": "PAPER-3"
-      },
+      "exit_time": "2026-05-13T00:00:00-04:00",
+      "pnl": -4.941000115871426,
+      "return_pct": -4.999999999999993,
       "market_regime": "risk_on",
-      "vix_level": 17.8700008392334,
-      "risk_dollars": 5.0,
-      "signal_id": "CGC_2026-04-23_1778726177.711198",
-      "fill_id": "fill_CGC_2026-04-23_1778726177.711198_1778726177.721232",
-      "signal_quality": "good",
-      "session_id": 6
+      "gap_pct": 9.42028954208861,
+      "vol_mult": 3.5368286348752305
     }
   ],
+  "active_positions": [],
   "recent_session": {
-    "generated_at": "2026-05-13T19:36:17.812080",
+    "generated_at": "2026-05-13T20:14:46.338169",
     "trading_stats": {
       "total_trades": 6,
-      "completed_trades": 5,
-      "active_trades": 1,
+      "completed_trades": 6,
+      "active_trades": 0,
       "rejected_signals": 0,
       "wins": 2,
-      "losses": 3,
-      "win_rate_pct": 40.0,
-      "total_pnl": 5.243000531196598,
+      "losses": 4,
+      "win_rate_pct": 33.33333333333333,
+      "total_pnl": 0.3020004153251721,
       "avg_win": 9.81750017404557,
-      "avg_loss": -4.79733327229818,
-      "profit_factor": 2.046449478658476
+      "avg_loss": -4.833249983191491,
+      "profit_factor": 2.0312419610381665
     },
     "rejected_signals": [],
     "rejection_summary": {
@@ -280,6 +280,13 @@
         "reason": "already_processed"
       },
       {
+        "ticker": "CGC",
+        "date": "2026-04-23",
+        "gap_pct": 9.42028954208861,
+        "vol_spike": 3.5368286348752305,
+        "reason": "already_processed"
+      },
+      {
         "ticker": "OGI",
         "date": "2026-03-05",
         "gap_pct": 7.913670175336283,
@@ -298,9 +305,9 @@
         },
         {
           "name": "already_processed",
-          "count": 3,
-          "latest_ticker": "TLRY",
-          "latest_date": "2026-01-09"
+          "count": 4,
+          "latest_ticker": "CGC",
+          "latest_date": "2026-04-23"
         },
         {
           "name": "volume_outside_sweet_spot",
@@ -324,12 +331,12 @@
     }
   },
   "session_audit_trend": {
-    "tracked_sessions": 6,
+    "tracked_sessions": 7,
     "sessions_with_rejections": 0,
-    "sessions_with_near_misses": 6,
-    "sessions_with_trades": 6,
+    "sessions_with_near_misses": 7,
+    "sessions_with_trades": 7,
     "total_rejected_signals": 0,
-    "total_scan_near_misses": 54,
+    "total_scan_near_misses": 66,
     "rejection_summary": {
       "by_stage": [],
       "by_check": []
@@ -338,25 +345,25 @@
       "by_reason": [
         {
           "name": "gap_outside_sweet_spot",
-          "count": 30,
+          "count": 35,
           "latest_ticker": "OGI",
           "latest_date": "2026-03-05"
         },
         {
           "name": "volume_outside_sweet_spot",
-          "count": 12,
+          "count": 14,
           "latest_ticker": "BBAI",
           "latest_date": "2026-04-08"
         },
         {
           "name": "already_processed",
-          "count": 6,
-          "latest_ticker": "TLRY",
-          "latest_date": "2026-01-09"
+          "count": 10,
+          "latest_ticker": "CGC",
+          "latest_date": "2026-04-23"
         },
         {
           "name": "blocklisted",
-          "count": 6,
+          "count": 7,
           "latest_ticker": "ADT",
           "latest_date": "2026-05-13"
         }

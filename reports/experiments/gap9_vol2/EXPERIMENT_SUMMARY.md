@@ -4,41 +4,48 @@
 - Config: `configs/pennyhunter_experiment_gap9_vol2.yaml`
 - Baseline config: `configs/pennyhunter.yaml`
 - Hypothesis: lower gap floor and volume threshold increases valid setup availability without degrading validation quality.
-- Current status: failed initial 5-trade win-rate gate, still net positive.
-- Completed trades: `5`
+- Current status: final post-repair continuation completed; experiment rejected.
+- Completed trades: `6`
 - Wins: `2`
-- Losses: `3`
-- Win rate: `40.0%`
-- Net closed P&L: `$5.24`
-- Active trade excluded from milestone: `CGC`
+- Losses: `4`
+- Win rate: `33.3%`
+- Net closed P&L: `+$0.30`
+- Active trades: `0`
 - Baseline contamination: `NONE`
 - Ticker counts: `CGC=1, COMP=1, INTR=1, SPCE=2, TLRY=1`
 - Repeated ticker count: `1`
+- Unique signal setup count: `6`
 - Ejected tickers: `NONE` after memory repair
-- Near misses: `11`
+- Near misses: `12`
 - Memory recording: idempotent via `recorded_outcomes` and deterministic outcome keys
 - Future run validity: post-repair experiment runs are valid only after this repair point
+
+## Final Continuation Result
+
+The `gap9_vol2 post-repair continuation` used the active `CGC` trade as the clean continuation point.
+`CGC` closed at `STOP` for realized P&L `-$4.94`, which moved the fenced experiment to `6` completed trades, `2` wins, `4` losses, `33.3%` win rate, and `+$0.30` net closed P&L.
+No new active positions remain after the continuation, repeated ticker count remained `1`, unique signal setup count finished at `6`, near misses finished at `12`, and repaired memory logic still shows no ejected tickers.
 
 ## Milestone Summary
 
 The experiment reached the first 5 completed-trade milestone, but it failed the initial validation gate.
 The completed set finished at 2 wins, 3 losses, a 40.0% win rate, and `$5.24` net closed P&L.
 Result: the looser `9-15%` gap and `>=2x` volume scan did increase setup availability, but the first milestone does not support merging this variant into baseline.
-The experiment still failed the initial 5 completed-trade win-rate gate after the memory repair: `5` completed trades, `2` wins, `3` losses, `40.0%` win rate, and `+$5.24` net closed P&L.
+The final post-repair continuation did not recover trade quality preservation: the fenced sample finished at `6` completed trades, `2` wins, `4` losses, `33.3%` win rate, and `+$0.30` net closed P&L.
 
 ## Loss Pattern Summary
 
-- All three completed losses exited via `STOP`.
-- Losing tickers were `SPCE`, `INTR`, and `TLRY`.
-- Loss sizes were tightly clustered near the risk target: about `$-4.91`, `$-4.89`, and `$-4.59`.
-- The early sample suggests the relaxed scan is generating more trades, but not enough quality to maintain the required win-rate gate.
+- All four completed losses exited via `STOP`.
+- Losing tickers were `SPCE`, `INTR`, `TLRY`, and `CGC`.
+- Loss sizes remained tightly clustered near the risk target: about `$-4.91`, `$-4.89`, `$-4.59`, and `$-4.94`.
+- The final sample confirms the relaxed scan increased setup availability, but failed to preserve trade quality.
 
 ## Win Pattern Summary
 
 - Both completed wins exited via `TARGET`.
 - Winning tickers were `SPCE` and `COMP`.
 - Win sizes were materially larger than each individual loss: about `$9.96` and `$9.67`.
-- Net P&L stayed positive because average win size remained roughly double average loss size.
+- Net P&L remained slightly positive only because average win size stayed roughly double average loss size.
 
 ## Discrepancy Audit
 
@@ -67,8 +74,8 @@ Conclusion: the discrepancy is resolved for the fenced experiment DB, and future
 
 ## Decision
 
-Do not merge into baseline.
+Reject `gap9_vol2` and do not merge into baseline.
 
 ## Next Recommended Action
 
-Review filters before continuing.
+Keep the rejection recorded as final for this experiment variant. The reason is clear: setup availability increased, but trade-quality preservation failed.

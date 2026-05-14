@@ -6,8 +6,26 @@
 - Goal: test a tighter post-rejection variant after `gap9_vol2`.
 - Scan thresholds: `10-15%` gap, `>=2.5x` volume
 - Concurrency cap: unchanged from baseline (`1` position)
-- Mode: scan-only comparison completed, no paper session run yet
+- Mode: first isolated paper/sim session completed
 - Baseline contamination: `NONE`
+
+## First Paper Session
+
+- Signals found: `2`
+- Signal tickers: `SPCE, TLRY`
+- Trade opened: `SPCE`
+- SPCE details: `32` shares at `$3.07`, signal date `2026-04-06`, status `active`
+- Skipped candidate: `TLRY`
+- Completed trades: `0`
+- Active trades: `1`
+- Wins: `0`
+- Losses: `0`
+- Win rate: `0.0%`
+- Net closed P&L: `$0.00`
+- Near misses: `11`
+- Ejected tickers: `none`
+- Baseline contamination: `NONE`
+- Status: active paper validation, no decision yet
 
 ## Scan-Only Comparison
 
@@ -48,9 +66,9 @@ Compared with baseline, the new variant is still looser because it adds `TLRY` o
 
 ## Decision
 
-Scan-only result is clean enough to create the experiment and allow a later isolated paper session.
-No paper session has been run yet.
+Scan-only result was clean enough to justify the first isolated paper session.
+The experiment is now in active paper validation, and no merge or rejection decision has been made yet.
 
 ## Next Step
 
-If resumed, run the first paper/simulated session only against the fenced `gap10_vol2_5` output paths and keep baseline isolated.
+If resumed, continue only against the fenced `gap10_vol2_5` output paths, keep the one-position cap unchanged, and do not touch baseline files.

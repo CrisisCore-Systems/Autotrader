@@ -175,8 +175,13 @@ class AdvancedRiskFilters:
             if cash <= 0:
                 return True, 999, "No cash data (pass by default)"
 
-            # Get quarterly cash flow
-            cash_flow = stock.cashflow
+            # Prefer quarterly cash flow for runway math; annual cash flow is only a fallback.
+            cash_flow = stock.quarterly_cashflow
+            period_months = 3.0
+            if cash_flow is None or cash_flow.empty:
+                cash_flow = stock.cashflow
+                period_months = 12.0
+
             if cash_flow is None or cash_flow.empty:
                 return True, 999, "No cash flow data (pass by default)"
 
@@ -192,9 +197,9 @@ class AdvancedRiskFilters:
             if quarterly_ocf >= 0:
                 return True, 999, f"Cash flow positive: ${quarterly_ocf/1e6:.1f}M/quarter"
 
-            # Calculate burn rate and runway
+            # Calculate burn rate and runway using the reporting period behind the source table.
             quarterly_burn = abs(quarterly_ocf)
-            runway_months = (cash / quarterly_burn) * 3  # 3 months per quarter
+            runway_months = (cash / quarterly_burn) * period_months
 
             if runway_months < min_months:
                 return False, runway_months, f"Only {runway_months:.1f} months runway (need {min_months})"

@@ -72,6 +72,14 @@ signals:
     # PHASE 1: Signal scoring
     min_signal_score: 7.0               # PHASE 1: Minimum score to trade (0-10)
 
+    # Historical EOD scan approximation used by the paper runner.
+    paper_scan:
+      gap_min_pct: 10.0
+      gap_max_pct: 15.0
+      volume_min_mult: 4.0
+      volume_max_mult: 10.0
+      allow_extreme_volume_above_mult: 15.0
+
   # Playbook B: First Red Day Bounce (mean-reversion)
   frd_bounce:
     enabled: true

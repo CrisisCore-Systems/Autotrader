@@ -66,10 +66,25 @@
 - Baseline contamination: `NONE`
 - Status: cooldown mechanism proven in live fenced path, trade-quality validation still pending
 
+## Scan-Only Cooldown Checkpoint
+
+- Git status before scan: `clean`
+- Signals before cooldown: `SPCE`
+- Eligible signals after cooldown: `none`
+- Cooldown decision: `skip_repeat_without_alternative`
+- Reason: `repeat_ticker_suppressed_no_alternate`
+- Blocked ticker: `SPCE`
+- Trade would be allowed: `false`
+- Baseline files touched: `no`
+- Final git status: `clean`
+
 ## Interpretation
 
 The first isolated paper session established the initial fenced state with an active `SPCE` trade.
 The post-fix proof run confirmed the repaired live cooldown path behaves correctly when that trade closes and no alternate ticker is available.
+The cooldown mechanism is now behaving correctly.
+There is currently no non-blocked eligible ticker.
+No paper trade should be run until a non-blocked eligible signal appears.
 Trade-quality validation is still pending because the experiment has only one completed trade and no alternate-selection case has occurred yet.
 
 ## Status

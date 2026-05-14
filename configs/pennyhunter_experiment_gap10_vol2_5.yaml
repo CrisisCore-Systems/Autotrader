@@ -1,0 +1,13 @@
+extends: pennyhunter.yaml
+
+name: PennyHunter Gap10 Vol2.5 Experiment
+description: "Experimental PennyHunter scan thresholds: 10-15% gaps with >=2.5x volume"
+
+signals:
+  runner_vwap:
+    paper_scan:
+      gap_min_pct: 10.0
+      gap_max_pct: 15.0
+      volume_min_mult: 2.5
+      volume_max_mult:
+      allow_extreme_volume_above_mult:

@@ -1,0 +1,9 @@
+extends: pennyhunter_experiment_gap10_vol2_5_cooldown.yaml
+
+name: PennyHunter Gap10 Vol2.4 Cooldown Experiment
+description: "Experimental PennyHunter thresholds with next-session ticker cooldown and >=2.4x live scan volume"
+
+signals:
+  runner_vwap:
+    paper_scan:
+      volume_min_mult: 2.4

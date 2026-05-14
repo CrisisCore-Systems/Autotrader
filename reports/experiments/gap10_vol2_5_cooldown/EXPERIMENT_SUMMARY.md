@@ -90,6 +90,20 @@
 - Baseline changed: `NONE`
 - Final git status: `clean`
 
+## Candidate Scarcity / No-Trade State
+
+- Consecutive scan-only blocks: `4`
+- Blocked ticker: `SPCE`
+- Current alternate eligible ticker: `none`
+- Closest visible alternate candidate: `TLRY`, with gap `10.08%` in range but volume `2.40x` below the `>=2.5x` rule
+- Other near-eligibility examples: `INTR` at `9.42%` gap / `2.16x` volume, `COMP` at `9.88%` gap / `2.10x` volume, `CGC` at `9.42%` gap / `3.54x` volume
+- Why `TLRY` is not currently eligible: recent diagnostics show `volume_outside_sweet_spot`; its latest visible setup clears the gap filter but does not clear the `>=2.5x` volume threshold
+- Root cause classification: threshold strictness plus ticker-universe scarcity
+- Not the root cause: signal ordering, because no alternate fully eligible ticker is present to reorder toward
+- Not the root cause: cooldown behavior, because cooldown is correctly suppressing repeat `SPCE` exposure after the closed loss
+- Paper session currently eligible: `no`
+- What must change before another fenced paper session is eligible: at least one ticker other than the blocked `SPCE` must clear both the `10-15%` gap filter and the `>=2.5x` volume rule during a future scan
+
 ## Interpretation
 
 The first isolated paper session established the initial fenced state with an active `SPCE` trade.
@@ -100,6 +114,7 @@ No fenced paper session is eligible.
 The only available signal was repeat `SPCE`.
 Cooldown correctly suppressed repeat exposure again.
 Continue scan-only checks until a non-blocked eligible ticker appears.
+The current starvation state is best explained by strict entry thresholds on a sparse ticker universe rather than by cooldown or ordering defects.
 Trade-quality validation is still pending because the experiment has only one completed trade and no alternate-selection case has occurred yet.
 
 ## Status

@@ -104,6 +104,22 @@
 - Paper session currently eligible: `no`
 - What must change before another fenced paper session is eligible: at least one ticker other than the blocked `SPCE` must clear both the `10-15%` gap filter and the `>=2.5x` volume rule during a future scan
 
+## Threshold Sensitivity Audit
+
+- Audit mode: read-only scan-only, no trader run, no `execute_signal`, no paper-trade writes, baseline changed `NONE`
+- Variant tested: `current`, gap `10-15`, volume `>=2.5x`
+- Variant tested: `candidate`, gap `10-15`, volume `>=2.4x`
+- Variant tested: `candidate`, gap `10-15`, volume `>=2.25x`
+- Variant tested: `candidate`, gap `10-15`, volume `>=2.0x`
+- Result across all four variants: signals before cooldown remained `SPCE` only, eligible signals after cooldown remained `none`, blocked ticker remained `SPCE`, and paper session allowed remained `false`
+- Current signal details under every tested variant: `SPCE`, gap `11.52%`, volume `8.81x`, score `7.0`
+- Candidate alternates admitted by the scan at `>=2.4x`: `none`
+- Candidate alternates admitted by the scan at `>=2.25x`: `none`
+- Candidate alternates admitted by the scan at `>=2.0x`: `none`
+- Reintroduced gap9_vol2-style noise at any tested threshold: `none visible`, because `COMP`, `INTR`, and `CGC` still did not enter the live signal list
+- TLRY conclusion: not a current live candidate under any tested threshold; earlier near-miss diagnostics suggested it was close on volume, but the present scan state does not surface it even at `>=2.0x`
+- Decision: do not create a relaxed-volume follow-up config yet, because scan-only evidence does not produce a clean non-blocked alternate even at `>=2.0x`
+
 ## Interpretation
 
 The first isolated paper session established the initial fenced state with an active `SPCE` trade.
@@ -115,6 +131,7 @@ The only available signal was repeat `SPCE`.
 Cooldown correctly suppressed repeat exposure again.
 Continue scan-only checks until a non-blocked eligible ticker appears.
 The current starvation state is best explained by strict entry thresholds on a sparse ticker universe rather than by cooldown or ordering defects.
+The threshold sensitivity audit shows that simply lowering the volume filter is not enough under the current market snapshot, because no alternate ticker becomes live even at `>=2.0x`.
 Trade-quality validation is still pending because the experiment has only one completed trade and no alternate-selection case has occurred yet.
 
 ## Status

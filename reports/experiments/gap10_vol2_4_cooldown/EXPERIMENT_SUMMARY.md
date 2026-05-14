@@ -7,8 +7,8 @@
 - Scan thresholds: `10-15%` gap, `>=2.4x` volume
 - Ticker cooldown: `enabled`
 - Concurrency cap: unchanged from baseline (`1` position)
-- Mode: isolated scan-only comparison first
-- Baseline contamination: `PENDING SCAN-ONLY CHECK`
+- Mode: isolated paper validation only
+- Baseline contamination: `NONE`
 
 ## Fenced Output Paths
 
@@ -38,8 +38,29 @@
 - Noise check: `COMP`, `INTR`, and `CGC` do not reappear in either the fresh scaffold comparison or the matched-state control
 - Interpretation: the new scaffold is clean, and the only material behavior change from lowering the live volume floor to `>=2.4x` is that `TLRY` becomes available as the alternate under cooldown
 
+## First Isolated Paper Session
+
+- Signals found before cooldown: `SPCE`, `TLRY`
+- Eligible signals after cooldown: `SPCE`, `TLRY`
+- Cooldown decisions: `none`
+- Why cooldown did not trigger: no prior closed trade exists in this fresh fenced experiment
+- Trade opened: `SPCE`
+- SPCE details: `32` shares at `$3.07`, signal date `2026-04-06`, status `active`
+- Skipped candidate: `TLRY`
+- Active trades: `1`
+- Completed trades: `0`
+- Wins: `0`
+- Losses: `0`
+- Win rate: `0.0%`
+- Net closed P&L: `$0.00`
+- Near misses: `11`
+- Ejected tickers: `none`
+- Baseline changed: `NONE`
+- Status: active paper validation, cooldown not exercised yet
+
 ## Status
 
 - Git status before comparison: `clean`
-- Git status after scaffold creation: only the new config and new experiment summary are untracked
-- Recommended next step: preserve this scaffold as documentation-only until you explicitly request an isolated paper run on the new fenced paths
+- Git status after first paper session: only fenced experiment artifacts are untracked until committed
+- This was the first fenced paper session for `gap10_vol2_4_cooldown`.
+- Do not merge this branch into baseline.

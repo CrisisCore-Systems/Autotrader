@@ -1,0 +1,141 @@
+{
+  "generated_at": "2026-05-14T16:56:29.442171",
+  "account_summary": {
+    "starting_capital": 200.0,
+    "current_cash": 200.0,
+    "portfolio_value": 200.0,
+    "total_pnl": 0.0,
+    "return_pct": 0.0
+  },
+  "trading_stats": {
+    "total_trades": 1,
+    "completed_trades": 0,
+    "active_trades": 1,
+    "rejected_signals": 0,
+    "wins": 0,
+    "losses": 0,
+    "win_rate_pct": 0,
+    "total_pnl": 0,
+    "avg_win": 0,
+    "avg_loss": 0,
+    "profit_factor": 0
+  },
+  "trades": [
+    {
+      "ticker": "SPCE",
+      "entry_time": "2026-05-14T16:56:29.417439",
+      "entry_price": 3.069999933242798,
+      "shares": 32,
+      "stop_loss": 2.916499936580658,
+      "take_profit": 3.376999926567078,
+      "signal_type": "runner_vwap",
+      "signal_date": "2026-04-06",
+      "score": 7.0,
+      "gap_pct": 10.162601468425821,
+      "vol_mult": 6.24819046426111,
+      "status": "active",
+      "orders": {
+        "entry": "PAPER-1",
+        "stop": "PAPER-2",
+        "target": "PAPER-3"
+      },
+      "market_regime": "risk_on",
+      "vix_level": 17.260000228881836,
+      "risk_dollars": 5.0,
+      "signal_id": "SPCE_2026-04-06_1778802989.417439",
+      "fill_id": "fill_SPCE_2026-04-06_1778802989.417439_1778802989.4287",
+      "signal_quality": "perfect"
+    }
+  ],
+  "rejected_signals": [],
+  "scan_near_misses": [
+    {
+      "ticker": "EVGO",
+      "date": "2026-04-08",
+      "gap_pct": 7.777783811828397,
+      "vol_spike": 1.0982176284834455,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "SPCE",
+      "date": "2026-04-08",
+      "gap_pct": 10.200671096467904,
+      "vol_spike": 1.191187565733896,
+      "reason": "volume_outside_sweet_spot",
+      "target_volume_rule": ">= 2.4x"
+    },
+    {
+      "ticker": "ACHR",
+      "date": "2026-04-08",
+      "gap_pct": 7.865169743308028,
+      "vol_spike": 1.0268051237571305,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "NIO",
+      "date": "2026-02-05",
+      "gap_pct": 7.657660995633826,
+      "vol_spike": 2.6629714127489086,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "BBAI",
+      "date": "2026-04-08",
+      "gap_pct": 9.275360255651057,
+      "vol_spike": 0.9278415013269016,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "ADT",
+      "date": "2026-05-14",
+      "gap_pct": 1.1695895017748938,
+      "vol_spike": 0.32450639184705576,
+      "reason": "blocklisted"
+    },
+    {
+      "ticker": "COMP",
+      "date": "2026-04-08",
+      "gap_pct": 9.880244628889693,
+      "vol_spike": 2.096140898461661,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "NVAX",
+      "date": "2026-04-08",
+      "gap_pct": 7.393479628327546,
+      "vol_spike": 1.04549314841961,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "INTR",
+      "date": "2026-04-08",
+      "gap_pct": 9.419348932081654,
+      "vol_spike": 2.1590750387034854,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "CGC",
+      "date": "2026-04-23",
+      "gap_pct": 9.42028954208861,
+      "vol_spike": 3.5368286348752305,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    },
+    {
+      "ticker": "OGI",
+      "date": "2026-03-05",
+      "gap_pct": 7.913670175336283,
+      "vol_spike": 2.4289969312232986,
+      "reason": "gap_outside_sweet_spot",
+      "target_gap_range": "10-15"
+    }
+  ],
+  "cooldown_decisions": []
+}

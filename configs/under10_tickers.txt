@@ -1,39 +1,31 @@
 # PennyHunter Validated Ticker Universe
-# Generated: 2025-10-20 14:06:30
+# Generated: 2026-05-13 18:08:03
 # Criteria: $0.5-$10.0, 500,000+ volume, $1.0M+ dollar vol
-# Total: 34 tickers
+# Total: 26 tickers
 #
-BBAI
-BITF
 PLUG
+ACHR
 NIO
-BTBT
-TLRY
-RDW
-COMP
-AMC
+BBAI
 ADT
-FCEL
+BITF
+COMP
 NVAX
-CGC
-SAN
-SPCE
+BTBT
+INTR
+AMC
+TLRY
 CLOV
+SPCE
+OCGN
+SENS
 EVGO
 GEVO
-INTR
 KULR
-BLNK
-TWO
-SAVA
-ACB
-SNDL
-OCGN
-AHCO
-SENS
+CGC
 CRON
-ATOS
-ANY
+RSKD
+SNDL
+BLNK
+ACB
 OGI
-BNGO
-WKHS

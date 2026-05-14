@@ -111,14 +111,29 @@
 - Variant tested: `candidate`, gap `10-15`, volume `>=2.4x`
 - Variant tested: `candidate`, gap `10-15`, volume `>=2.25x`
 - Variant tested: `candidate`, gap `10-15`, volume `>=2.0x`
-- Result across all four variants: signals before cooldown remained `SPCE` only, eligible signals after cooldown remained `none`, blocked ticker remained `SPCE`, and paper session allowed remained `false`
-- Current signal details under every tested variant: `SPCE`, gap `11.52%`, volume `8.81x`, score `7.0`
-- Candidate alternates admitted by the scan at `>=2.4x`: `none`
-- Candidate alternates admitted by the scan at `>=2.25x`: `none`
-- Candidate alternates admitted by the scan at `>=2.0x`: `none`
+- Correction: the earlier read-only sweep changed the wrong config key; the verified live scan threshold is `signals.runner_vwap.paper_scan.volume_min_mult`
+- Verified result at `>=2.5x`: signals before cooldown `SPCE` only, eligible after cooldown `none`, blocked ticker `SPCE`, paper session allowed `false`
+- Verified result at `>=2.4x`: signals before cooldown `SPCE`, `TLRY`; eligible after cooldown `TLRY`; cooldown decision `prefer_alternate`
+- Verified result at `>=2.25x`: same as `>=2.4x`, with `TLRY` still admitted as the alternate
+- Verified result at `>=2.0x`: same as `>=2.4x`, with `TLRY` still the only alternate admitted
+- Current signal details at baseline `>=2.5x`: `SPCE`, gap `11.52%`, volume `8.81x`, score `7.0`
+- Alternate admitted once volume relaxes to `>=2.4x`: `TLRY`, gap `10.08%`, volume `2.40x`, score `5.0`
 - Reintroduced gap9_vol2-style noise at any tested threshold: `none visible`, because `COMP`, `INTR`, and `CGC` still did not enter the live signal list
-- TLRY conclusion: not a current live candidate under any tested threshold; earlier near-miss diagnostics suggested it was close on volume, but the present scan state does not surface it even at `>=2.0x`
-- Decision: do not create a relaxed-volume follow-up config yet, because scan-only evidence does not produce a clean non-blocked alternate even at `>=2.0x`
+- Decision: a relaxed-volume follow-up is technically viable at `>=2.4x`, but it would be admitting a marginal `TLRY` setup rather than a higher-score alternate
+
+## Signal Scarcity Root Cause
+
+- Audit mode: read-only only, git clean before/after, baseline changed `NONE`
+- Effective scan universe is larger than the visible active list: `26` raw tickers merged from the active list plus config ticker sources, with `16` passing universe screening
+- Why only `SPCE` surfaces at the current `>=2.5x` rule: it is the only screened ticker whose current historical setup clears both the `10-15%` gap filter and the `>=2.5x` volume filter
+- Why `TLRY` does not surface at the current rule: its closest qualifying setup is `2026-01-09`, gap `10.08%`, volume `2.40x`; it misses only the current volume floor
+- Why `COMP` does not surface: closest setup is gap `9.88%`, volume `2.10x`; it misses the gap floor before volume can matter
+- Why `INTR` does not surface: closest setup is gap `9.42%`, volume `2.16x`; it misses the gap floor
+- Why `CGC` does not surface: closest setup is gap `9.42%`, volume `3.54x`; volume is strong, but the setup still fails on gap
+- Other screened names mostly fail on gap or have no visible 90-day candidate in the target window: `EVGO`, `ACHR`, `NIO`, `BBAI`, `NVAX`, and `OGI` fail gap; `SENS`, `CLOV`, `AMC`, and `RSKD` showed no visible `10-15%` gap candidate in the inspected window; `ADT` is blocklisted
+- Ten raw-universe names never reach scan logic because they are screened out earlier, predominantly on exchange eligibility
+- Root cause classification: current no-trade state is caused by entry-threshold scarcity inside the merged universe, not by cooldown behavior, signal ordering, historical processed-state suppression, or baseline contamination
+- Practical next move: if the goal is to keep the stricter quality bar, remain scan-only and wait for new market data; if the goal is to force an alternate-selection trial, `>=2.4x` is the smallest verified relaxation and it currently selects `TLRY`
 
 ## Interpretation
 
@@ -131,7 +146,7 @@ The only available signal was repeat `SPCE`.
 Cooldown correctly suppressed repeat exposure again.
 Continue scan-only checks until a non-blocked eligible ticker appears.
 The current starvation state is best explained by strict entry thresholds on a sparse ticker universe rather than by cooldown or ordering defects.
-The threshold sensitivity audit shows that simply lowering the volume filter is not enough under the current market snapshot, because no alternate ticker becomes live even at `>=2.0x`.
+The corrected threshold audit shows that lowering the live volume filter to `>=2.4x` would admit `TLRY` as an alternate, while `COMP`, `INTR`, and `CGC` remain excluded on gap.
 Trade-quality validation is still pending because the experiment has only one completed trade and no alternate-selection case has occurred yet.
 
 ## Status

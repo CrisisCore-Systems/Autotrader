@@ -1,7 +1,7 @@
 {
   "first_trade_date": "2026-05-14T15:58:02.872784",
-  "last_updated": "2026-05-14T15:58:02.872784",
-  "total_sessions": 1,
+  "last_updated": "2026-05-14T16:17:58.083471",
+  "total_sessions": 2,
   "trades": [
     {
       "session_id": 1,
@@ -122,6 +122,145 @@
       "cooldown_decisions": []
     },
     {
+      "session_id": 2,
+      "date": "2026-05-14T16:17:58.083471",
+      "type": "session_marker",
+      "source": "run_pennyhunter_paper",
+      "trading_stats": {
+        "total_trades": 1,
+        "completed_trades": 1,
+        "active_trades": 0,
+        "rejected_signals": 0,
+        "wins": 0,
+        "losses": 1,
+        "win_rate_pct": 0.0,
+        "total_pnl": -4.911999893188479,
+        "avg_win": 0,
+        "avg_loss": -4.911999893188479,
+        "profit_factor": 0.0
+      },
+      "rejected_signals": [],
+      "scan_near_misses": [
+        {
+          "ticker": "EVGO",
+          "date": "2026-04-08",
+          "gap_pct": 7.777783811828397,
+          "vol_spike": 1.0982176284834455,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "SPCE",
+          "date": "2026-04-08",
+          "gap_pct": 10.200671096467904,
+          "vol_spike": 1.191187565733896,
+          "reason": "volume_outside_sweet_spot",
+          "target_volume_rule": ">= 2.5x"
+        },
+        {
+          "ticker": "ACHR",
+          "date": "2026-04-08",
+          "gap_pct": 7.865169743308028,
+          "vol_spike": 1.0268051237571305,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "NIO",
+          "date": "2026-02-05",
+          "gap_pct": 7.657660995633826,
+          "vol_spike": 2.6629714127489086,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "BBAI",
+          "date": "2026-04-08",
+          "gap_pct": 9.275360255651057,
+          "vol_spike": 0.9278415013269016,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "ADT",
+          "date": "2026-05-14",
+          "gap_pct": 1.1695895017748938,
+          "vol_spike": 0.32450639184705576,
+          "reason": "blocklisted"
+        },
+        {
+          "ticker": "COMP",
+          "date": "2026-04-08",
+          "gap_pct": 9.880244628889693,
+          "vol_spike": 2.096140898461661,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "NVAX",
+          "date": "2026-04-08",
+          "gap_pct": 7.393479628327546,
+          "vol_spike": 1.04549314841961,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "INTR",
+          "date": "2026-04-08",
+          "gap_pct": 9.419348932081654,
+          "vol_spike": 2.1590750387034854,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "TLRY",
+          "date": "2026-01-09",
+          "gap_pct": 10.076671026967256,
+          "vol_spike": 2.402805222801063,
+          "reason": "volume_outside_sweet_spot",
+          "target_volume_rule": ">= 2.5x"
+        },
+        {
+          "ticker": "CGC",
+          "date": "2026-04-23",
+          "gap_pct": 9.42028954208861,
+          "vol_spike": 3.5368286348752305,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        },
+        {
+          "ticker": "OGI",
+          "date": "2026-03-05",
+          "gap_pct": 7.913670175336283,
+          "vol_spike": 2.4289969312232986,
+          "reason": "gap_outside_sweet_spot",
+          "target_gap_range": "10-15"
+        }
+      ],
+      "cooldown_decisions": [
+        {
+          "mode": "next_session_prefer_alternate",
+          "blocked_ticker": "SPCE",
+          "trigger_trade": {
+            "ticker": "SPCE",
+            "entry_time": "2026-05-14T15:58:02.822699",
+            "exit_time": "2026-05-14T00:00:00-04:00",
+            "exit_reason": "STOP",
+            "pnl": -4.911999893188479
+          },
+          "eligible_tickers": [
+            "SPCE"
+          ],
+          "blocked_candidates": [
+            "SPCE"
+          ],
+          "reason": "repeat_ticker_suppressed_no_alternate",
+          "decision": "skip_repeat_without_alternative",
+          "selected_tickers": []
+        }
+      ]
+    },
+    {
       "ticker": "SPCE",
       "entry_time": "2026-05-14T15:58:02.822699",
       "entry_price": 3.069999933242798,
@@ -133,7 +272,7 @@
       "score": 7.0,
       "gap_pct": 10.162601468425821,
       "vol_mult": 6.24819046426111,
-      "status": "active",
+      "status": "closed",
       "orders": {
         "entry": "PAPER-1",
         "stop": "PAPER-2",
@@ -145,7 +284,15 @@
       "signal_id": "SPCE_2026-04-06_1778799482.822699",
       "fill_id": "fill_SPCE_2026-04-06_1778799482.822699_1778799482.862867",
       "signal_quality": "perfect",
-      "session_id": 1
+      "exit_time": "2026-05-14T00:00:00-04:00",
+      "exit_price": 2.916499936580658,
+      "exit_reason": "STOP",
+      "pnl": -4.911999893188479,
+      "return_pct": -5.000000000000004,
+      "pnl_pct": -5.000000000000004,
+      "hold_days": 0,
+      "phase25_outcome_synced": true,
+      "session_id": 2
     }
   ],
   "metadata": {

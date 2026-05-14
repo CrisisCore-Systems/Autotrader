@@ -1,42 +1,44 @@
 # Phase 2 Validation Report
-Generated: 2026-05-14T15:58:03.336143
+Generated: 2026-05-14T16:17:58.342299
 Deployment Date: 2025-10-20
 
 ## Summary
-- Completed trades: 0
-- Active trades: 1
+- Completed trades: 1
+- Active trades: 0
 - Recent rejected signals: 0
 - Recent scan near misses: 12
 - Unique signal dates: 1
 - Unique signal setups: 1
-- Tracked audit sessions: 1
+- Tracked audit sessions: 2
 - Latest session status: Latest session cleared previously observed blockers.
-- Wins / Losses: 0 / 0
+- Wins / Losses: 0 / 1
 - Win rate: 0.0%
-- 95% confidence interval: 0.0% to 0.0%
+- 95% confidence interval: 0.0% to 79.3%
 - Profit factor: 0.00
-- Average return: 0.00%
-- Total P&L: $0.00
-- Max drawdown: $0.00
+- Average return: -5.00%
+- Total P&L: $-4.91
+- Max drawdown: $-4.91
 - Milestone status: No milestone reached yet
 
 ## Regime Breakdown
 | Regime | Trades | Wins | Losses | Win Rate | Total P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| None | 0 | 0 | 0 | 0.0% | $0.00 |
+| risk_on | 1 | 0 | 1 | 0.0% | $-4.91 |
 
 ## Ticker Breakdown
 | Ticker | Trades | Wins | Losses | Win Rate | Total P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| None | 0 | 0 | 0 | 0.0% | $0.00 |
+| SPCE | 1 | 0 | 1 | 0.0% | $-4.91 |
 
 ## Signal Setup Breakdown
 | Setup | Trades | Wins | Losses | Win Rate | Total P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| None | 0 | 0 | 0 | 0.0% | $0.00 |
+| SPCE@2026-04-06 | 1 | 0 | 1 | 0.0% | $-4.91 |
 
 ## Losing Trades
-No losing trades recorded in the filtered Phase 2 sample.
+| Ticker | Exit Time | Regime | P&L | Return % | Gap % | Vol Mult |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| SPCE | 2026-05-14T00:00:00-04:00 | risk_on | $-4.91 | -5.00% | 10.2% | 6.2x |
 
 ## Recent Rejected Signals
 No rejected signals recorded in the latest paper-trading session.
@@ -65,10 +67,10 @@ No rejected signals recorded in the latest paper-trading session.
 | blocklisted | 1 | ADT (2026-05-14) |
 
 ## Session Audit Trend
-- Tracked audit sessions: 1
+- Tracked audit sessions: 2
 - Sessions with rejected signals: 0
-- Sessions with scan near misses: 1
-- Sessions with executed trades: 1
+- Sessions with scan near misses: 2
+- Sessions with executed trades: 2
 - Total rejected signals across tracked sessions: 0
-- Total scan near misses across tracked sessions: 12
+- Total scan near misses across tracked sessions: 24
 - Latest session interpretation: Latest session cleared previously observed blockers.

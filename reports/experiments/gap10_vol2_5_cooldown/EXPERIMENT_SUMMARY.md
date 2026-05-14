@@ -45,12 +45,34 @@
 - Baseline contamination: `NONE`
 - Status: active paper validation, cooldown not yet exercised
 
+## Post-Fix Cooldown Proof Run
+
+- SPCE closed at `STOP`
+- Realized P&L: `-$4.91`
+- Signals found before cooldown: `SPCE`
+- Eligible signals after cooldown: `none`
+- Trade opened after cooldown: `none`
+- Cooldown decision recorded:
+	- `decision`: `skip_repeat_without_alternative`
+	- `reason`: `repeat_ticker_suppressed_no_alternate`
+- Active trades: `0`
+- Completed trades: `1`
+- Wins: `0`
+- Losses: `1`
+- Win rate: `0.0%`
+- Net closed P&L: `-$4.91`
+- Near misses: `12`
+- Ejected tickers: `none`
+- Baseline contamination: `NONE`
+- Status: cooldown mechanism proven in live fenced path, trade-quality validation still pending
+
 ## Interpretation
 
-This is a valid first-run artifact, not a cooldown proof yet.
-The cooldown rule becomes meaningful on the next isolated session after `SPCE` closes and a repeat-ticker decision is possible.
+The first isolated paper session established the initial fenced state with an active `SPCE` trade.
+The post-fix proof run confirmed the repaired live cooldown path behaves correctly when that trade closes and no alternate ticker is available.
+Trade-quality validation is still pending because the experiment has only one completed trade and no alternate-selection case has occurred yet.
 
 ## Status
 
-The trader has now completed the first isolated paper session for this experiment.
+The trader has now completed a live fenced cooldown proof run for this experiment.
 Do not merge this branch into baseline.

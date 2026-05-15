@@ -38,6 +38,9 @@ class TickerStats:
     last_trade_date: str
     status: str  # 'active', 'ejected', 'monitored'
     ejection_reason: Optional[str] = None
+    last_exit_reason: Optional[str] = None
+    last_closed_session: Optional[int] = None
+    cooldown_until_session: int = 0
 
 
 class PennyHunterMemory:
@@ -94,6 +97,14 @@ class PennyHunterMemory:
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        columns = {row[1] for row in cursor.execute("PRAGMA table_info(ticker_stats)").fetchall()}
+        if 'last_exit_reason' not in columns:
+            cursor.execute("ALTER TABLE ticker_stats ADD COLUMN last_exit_reason TEXT")
+        if 'last_closed_session' not in columns:
+            cursor.execute("ALTER TABLE ticker_stats ADD COLUMN last_closed_session INTEGER")
+        if 'cooldown_until_session' not in columns:
+            cursor.execute("ALTER TABLE ticker_stats ADD COLUMN cooldown_until_session INTEGER DEFAULT 0")
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS recorded_outcomes (
@@ -230,6 +241,83 @@ class PennyHunterMemory:
 
         logger.info(f"📝 Recorded trade: {ticker} {'WIN' if won else 'LOSS'} ${pnl:.2f}")
 
+    def set_ticker_cooldown(
+        self,
+        ticker: str,
+        exit_reason: Optional[str],
+        closed_session: int,
+        cooldown_until_session: int,
+    ) -> None:
+        """Persist session-based cooldown metadata for a ticker."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT ticker FROM ticker_stats WHERE ticker = ?", (ticker,))
+        exists = cursor.fetchone() is not None
+
+        if exists:
+            cursor.execute(
+                """
+                UPDATE ticker_stats
+                SET last_exit_reason = ?,
+                    last_closed_session = ?,
+                    cooldown_until_session = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE ticker = ?
+                """,
+                (exit_reason, int(closed_session), int(cooldown_until_session), ticker),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO ticker_stats (
+                    ticker,
+                    last_exit_reason,
+                    last_closed_session,
+                    cooldown_until_session
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (ticker, exit_reason, int(closed_session), int(cooldown_until_session)),
+            )
+
+        conn.commit()
+        conn.close()
+
+    def get_ticker_cooldown(self, ticker: str, current_session: int) -> Dict:
+        """Return whether a ticker is still blocked by a persisted session cooldown."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT last_exit_reason, last_closed_session, cooldown_until_session
+            FROM ticker_stats
+            WHERE ticker = ?
+            """,
+            (ticker,),
+        )
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return {
+                'active': False,
+                'blocked_until': 0,
+                'unlock_at': int(current_session),
+                'trigger_reason': None,
+                'last_closed_session': None,
+            }
+
+        last_exit_reason, last_closed_session, cooldown_until_session = row
+        blocked_until = int(cooldown_until_session or 0)
+        is_active = int(current_session) <= blocked_until
+        return {
+            'active': is_active,
+            'blocked_until': blocked_until,
+            'unlock_at': blocked_until + 1,
+            'trigger_reason': last_exit_reason,
+            'last_closed_session': int(last_closed_session) if last_closed_session is not None else None,
+        }
+
     def rebuild_from_trades(self, trades: List[Dict], reset: bool = True):
         """Rebuild ticker stats from a visible trade list."""
         if reset:
@@ -324,7 +412,8 @@ class PennyHunterMemory:
 
         cursor.execute("""
             SELECT ticker, total_trades, wins, losses, total_pnl,
-                   sum_wins, sum_losses, last_trade_date, status, ejection_reason
+                   sum_wins, sum_losses, last_trade_date, status, ejection_reason,
+                   last_exit_reason, last_closed_session, cooldown_until_session
             FROM ticker_stats
             WHERE ticker = ?
         """, (ticker,))
@@ -342,7 +431,8 @@ class PennyHunterMemory:
 
         # Parse stats
         (ticker, total_trades, wins, losses, total_pnl,
-         sum_wins, sum_losses, last_trade_date, status, ejection_reason) = row
+         sum_wins, sum_losses, last_trade_date, status, ejection_reason,
+         last_exit_reason, last_closed_session, cooldown_until_session) = row
 
         win_rate = wins / total_trades if total_trades > 0 else 0.0
         avg_win = sum_wins / wins if wins > 0 else 0.0
@@ -359,7 +449,10 @@ class PennyHunterMemory:
             avg_loss=avg_loss,
             last_trade_date=last_trade_date,
             status=status,
-            ejection_reason=ejection_reason
+            ejection_reason=ejection_reason,
+            last_exit_reason=last_exit_reason,
+            last_closed_session=last_closed_session,
+            cooldown_until_session=int(cooldown_until_session or 0),
         )
 
         # Check ejection
@@ -406,7 +499,8 @@ class PennyHunterMemory:
         if status_filter:
             cursor.execute("""
                 SELECT ticker, total_trades, wins, losses, total_pnl,
-                       sum_wins, sum_losses, last_trade_date, status, ejection_reason
+                       sum_wins, sum_losses, last_trade_date, status, ejection_reason,
+                       last_exit_reason, last_closed_session, cooldown_until_session
                 FROM ticker_stats
                 WHERE status = ?
                 ORDER BY total_trades DESC
@@ -414,7 +508,8 @@ class PennyHunterMemory:
         else:
             cursor.execute("""
                 SELECT ticker, total_trades, wins, losses, total_pnl,
-                       sum_wins, sum_losses, last_trade_date, status, ejection_reason
+                       sum_wins, sum_losses, last_trade_date, status, ejection_reason,
+                       last_exit_reason, last_closed_session, cooldown_until_session
                 FROM ticker_stats
                 ORDER BY total_trades DESC
             """)
@@ -425,7 +520,8 @@ class PennyHunterMemory:
         stats_list = []
         for row in rows:
             (ticker, total_trades, wins, losses, total_pnl,
-             sum_wins, sum_losses, last_trade_date, status, ejection_reason) = row
+             sum_wins, sum_losses, last_trade_date, status, ejection_reason,
+             last_exit_reason, last_closed_session, cooldown_until_session) = row
 
             win_rate = wins / total_trades if total_trades > 0 else 0.0
             avg_win = sum_wins / wins if wins > 0 else 0.0
@@ -442,7 +538,10 @@ class PennyHunterMemory:
                 avg_loss=avg_loss,
                 last_trade_date=last_trade_date,
                 status=status,
-                ejection_reason=ejection_reason
+                ejection_reason=ejection_reason,
+                last_exit_reason=last_exit_reason,
+                last_closed_session=last_closed_session,
+                cooldown_until_session=int(cooldown_until_session or 0),
             ))
 
         return stats_list

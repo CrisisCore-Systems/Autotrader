@@ -123,6 +123,15 @@ entry_confirmation:
   require_green_confirmation_bar: false # Reserved for future confirmation gate
   reject_stop_hit_before_confirmation: false # Reserved for future confirmation gate
 
+experiments:
+  ticker_cooldown:
+    enabled: true
+    mode: session_based
+    sessions_by_exit_reason:
+      profit: 1
+      stop: 3
+      manual: 5
+
 # ===== GUARDS (Penny-specific risk controls) =====
 guards:
   # PHASE 1: Market regime filters (CRITICAL for win rate)

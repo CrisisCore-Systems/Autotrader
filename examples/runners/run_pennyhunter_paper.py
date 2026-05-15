@@ -241,9 +241,15 @@ class PennyHunterPaperTrader:
     def _build_ticker_cooldown_config(config: Dict) -> Dict:
         """Resolve optional post-close ticker cooldown rules from YAML config."""
         cooldown = config.get('experiments', {}).get('ticker_cooldown', {})
+        sessions_by_exit_reason = cooldown.get('sessions_by_exit_reason', {})
         return {
             'enabled': bool(cooldown.get('enabled', False)),
-            'mode': cooldown.get('mode', 'next_session_prefer_alternate'),
+            'mode': cooldown.get('mode', 'session_based'),
+            'sessions_by_exit_reason': {
+                'profit': int(sessions_by_exit_reason.get('profit', 1)),
+                'stop': int(sessions_by_exit_reason.get('stop', 3)),
+                'manual': int(sessions_by_exit_reason.get('manual', 5)),
+            },
         }
 
     @staticmethod
@@ -382,9 +388,70 @@ class PennyHunterPaperTrader:
 
         return None
 
+    def _current_session_id(self) -> int:
+        """Return the logical session id for the current run before append/save."""
+        history = self._load_cumulative_history()
+        return int(history.get('total_sessions') or 0) + 1
+
+    def _cooldown_sessions_for_exit_reason(self, exit_reason: Optional[str], won: bool) -> int:
+        """Map a close outcome to the configured session cooldown span."""
+        mapping = self.ticker_cooldown_config.get('sessions_by_exit_reason', {})
+        normalized = str(exit_reason or '').strip().upper()
+
+        if normalized in {'TARGET', 'PROFIT'}:
+            return int(mapping.get('profit', 1))
+        if normalized in {'STOP', 'LOSS'} or 'STOP' in normalized or 'LOSS' in normalized:
+            return int(mapping.get('stop', 3))
+        if normalized in {'MANUAL', 'EJECTED'} or 'MANUAL' in normalized or 'EJECT' in normalized:
+            return int(mapping.get('manual', 5))
+
+        return int(mapping.get('profit', 1) if won else mapping.get('stop', 3))
+
+    def _apply_persistent_ticker_cooldown(self, signals: List[Dict]) -> List[Dict]:
+        """Drop signals for tickers still blocked by persisted session-based cooldowns."""
+        if not signals or not self.ticker_cooldown_config.get('enabled', False) or not self.memory_enabled:
+            return signals
+
+        current_session = self._current_session_id()
+        allowed_signals = []
+
+        for signal in signals:
+            ticker = signal.get('ticker')
+            cooldown_state = self.memory.get_ticker_cooldown(ticker, current_session)
+            if not cooldown_state.get('active', False):
+                allowed_signals.append(signal)
+                continue
+
+            decision = {
+                'mode': self.ticker_cooldown_config.get('mode'),
+                'ticker': ticker,
+                'decision': 'reject',
+                'reason': 'cooldown_active',
+                'current_session': current_session,
+                'blocked_until': cooldown_state.get('blocked_until'),
+                'unlock_at': cooldown_state.get('unlock_at'),
+                'trigger_reason': cooldown_state.get('trigger_reason'),
+                'last_closed_session': cooldown_state.get('last_closed_session'),
+            }
+            self.cooldown_decisions.append(decision)
+            self._record_rejected_signal(
+                signal,
+                stage='ticker_cooldown',
+                reasons=[{'check': 'ticker_cooldown', 'reason': 'cooldown_active'}],
+                details=decision,
+            )
+            logger.info(
+                "🧊 %s blocked by persisted cooldown: current session %s, blocked through %s (%s)",
+                ticker,
+                current_session,
+                cooldown_state.get('blocked_until'),
+                cooldown_state.get('trigger_reason') or 'unknown',
+            )
+
+        return allowed_signals
+
     def apply_ticker_cooldown(self, signals: List[Dict]) -> List[Dict]:
         """Filter or suppress same-ticker re-entry for the next session after a close."""
-        self.cooldown_decisions = []
         if not signals or not self.ticker_cooldown_config.get('enabled', False):
             return signals
 
@@ -1004,6 +1071,7 @@ class PennyHunterPaperTrader:
         """Scan tickers for high-scoring signals"""
         logger.info(f"🔍 Scanning {len(tickers)} tickers for signals...")
         self.scan_diagnostics = []
+        self.cooldown_decisions = []
 
         regime = self.regime_snapshot or self.refresh_regime()
         spy_green = True
@@ -1168,6 +1236,8 @@ class PennyHunterPaperTrader:
 
             except Exception as e:
                 logger.error(f"{ticker}: Error scanning - {e}", exc_info=True)
+
+        signals = self._apply_persistent_ticker_cooldown(signals)
 
         logger.info(f"🎯 Found {len(signals)} signals above threshold")
         if not signals and self.scan_diagnostics:
@@ -1345,6 +1415,18 @@ class PennyHunterPaperTrader:
                 trade_date=trade_date,
                 outcome_key=outcome_key,
             )
+            if self.ticker_cooldown_config.get('enabled', False):
+                exit_reason = str(
+                    trade.get('exit_reason') or trade.get('outcome') or ('TARGET' if won else 'STOP')
+                ).upper()
+                closed_session = int(trade.get('session_id') or self._current_session_id())
+                cooldown_sessions = self._cooldown_sessions_for_exit_reason(exit_reason, won)
+                self.memory.set_ticker_cooldown(
+                    ticker=trade['ticker'],
+                    exit_reason=exit_reason,
+                    closed_session=closed_session,
+                    cooldown_until_session=closed_session + cooldown_sessions,
+                )
             self._record_phase25_outcome(trade)
 
             status = "WIN ✅" if won else "LOSS ❌"

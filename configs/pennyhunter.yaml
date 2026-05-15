@@ -114,6 +114,13 @@ signals:
     # PHASE 1: Signal scoring
     min_signal_score: 7.0               # PHASE 1: Minimum score to trade (0-10)
 
+# ===== ENTRY CONFIRMATION (Disabled by default) =====
+entry_confirmation:
+  enabled: false                        # Disabled by default; preserves current runner behavior
+  max_signal_age_days: null             # Stale-signal rejection requires a numeric day limit when enabled
+  require_green_confirmation_bar: false # Reserved for future confirmation gate
+  reject_stop_hit_before_confirmation: false # Reserved for future confirmation gate
+
 # ===== GUARDS (Penny-specific risk controls) =====
 guards:
   # PHASE 1: Market regime filters (CRITICAL for win rate)

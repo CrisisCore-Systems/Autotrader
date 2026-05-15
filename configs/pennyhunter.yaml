@@ -79,6 +79,8 @@ signals:
       volume_min_mult: 4.0
       volume_max_mult: 10.0
       allow_extreme_volume_above_mult: 15.0
+      max_signal_age_days: null         # Optional scan-window cap; null preserves legacy behavior
+      only_recent_signals: false        # Disabled by default; when true enforces max_signal_age_days at scan stage
 
   # Playbook B: First Red Day Bounce (mean-reversion)
   frd_bounce:

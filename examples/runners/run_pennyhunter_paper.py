@@ -226,12 +226,15 @@ class PennyHunterPaperTrader:
     def _build_scan_filter_config(config: Dict) -> Dict:
         """Resolve historical scan thresholds from YAML config."""
         scan_filters = config.get('signals', {}).get('runner_vwap', {}).get('paper_scan', {})
+        max_signal_age_days = scan_filters.get('max_signal_age_days')
         return {
             'gap_min_pct': float(scan_filters.get('gap_min_pct', 10.0)),
             'gap_max_pct': float(scan_filters.get('gap_max_pct', 15.0)),
             'volume_min_mult': float(scan_filters.get('volume_min_mult', 4.0)),
             'volume_max_mult': scan_filters.get('volume_max_mult', 10.0),
             'allow_extreme_volume_above_mult': scan_filters.get('allow_extreme_volume_above_mult', 15.0),
+            'max_signal_age_days': None if max_signal_age_days is None else int(max_signal_age_days),
+            'only_recent_signals': bool(scan_filters.get('only_recent_signals', False)),
         }
 
     @staticmethod
@@ -1094,6 +1097,35 @@ class PennyHunterPaperTrader:
 
                     if gap_pct >= 7:  # Keep this check for backward compatibility
                         signal_date = current.name.strftime('%Y-%m-%d')
+
+                        max_signal_age_days = self.scan_filter_config.get('max_signal_age_days')
+                        only_recent_signals = self.scan_filter_config.get('only_recent_signals', False)
+                        if only_recent_signals and max_signal_age_days is not None:
+                            reference_date = hist.index[-1].date() if hasattr(hist.index[-1], 'date') else datetime.now().date()
+                            signal_date_obj = current.name.date() if hasattr(current.name, 'date') else None
+                            if signal_date_obj is not None:
+                                signal_age_days = (reference_date - signal_date_obj).days
+                                if signal_age_days > max_signal_age_days:
+                                    self._record_scan_near_miss(
+                                        ticker,
+                                        current,
+                                        gap_pct,
+                                        vol_spike,
+                                        'signal_too_old_scan_window',
+                                        {
+                                            'signal_age_days': int(signal_age_days),
+                                            'max_signal_age_days': int(max_signal_age_days),
+                                            'reference_date': reference_date.isoformat(),
+                                        },
+                                    )
+                                    logger.info(
+                                        "⏱️ %s skipped by scan freshness window: signal age %sd exceeds max %sd",
+                                        ticker,
+                                        signal_age_days,
+                                        max_signal_age_days,
+                                    )
+                                    break
+
                         if self._signal_already_processed(ticker, signal_date):
                             self._record_scan_near_miss(
                                 ticker,

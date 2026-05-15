@@ -58,9 +58,34 @@
 - Baseline changed: `NONE`
 - Status: active paper validation, cooldown not exercised yet
 
+## Cooldown Alternate-Selection Proof Run
+
+- SPCE closed during reconciliation
+- SPCE close status: `STOP`
+- SPCE realized P&L: `-$4.91`
+- Signals before cooldown: `SPCE`, `TLRY`
+- Eligible signals after cooldown: `TLRY`
+- Cooldown decision: `prefer_alternate`
+- Cooldown reason: `repeat_ticker_blocked_alternate_available`
+- Blocked repeat ticker: `SPCE`
+- Trade opened after cooldown: `TLRY`
+- TLRY details: `10` shares at `$9.18`, signal date `2026-01-09`, status `active`
+- Skipped candidates: `none`
+- Active trades: `1`
+- Completed trades: `1`
+- Wins: `0`
+- Losses: `1`
+- Win rate: `0.0%`
+- Net closed P&L: `-$4.91`
+- Near misses: `11`
+- Ejected tickers: `none`
+- Baseline changed: `NONE`
+- Interpretation: cooldown alternate-selection case proven live in fenced experiment
+
 ## Status
 
 - Git status before comparison: `clean`
-- Git status after first paper session: only fenced experiment artifacts are untracked until committed
+- Git status after latest fenced run: only fenced experiment artifacts are modified until committed
 - This was the first fenced paper session for `gap10_vol2_4_cooldown`.
+- Cooldown alternate selection is now proven live for `gap10_vol2_4_cooldown`.
 - Do not merge this branch into baseline.

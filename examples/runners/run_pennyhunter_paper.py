@@ -23,7 +23,7 @@ import argparse
 import logging
 from collections import OrderedDict
 from pathlib import Path
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Dict, Optional
 import yaml
 import json
@@ -157,6 +157,7 @@ class PennyHunterPaperTrader:
         self.advanced_filter_config = self._build_advanced_filter_config(config)
         self.scan_filter_config = self._build_scan_filter_config(config)
         self.ticker_cooldown_config = self._build_ticker_cooldown_config(config)
+        self.entry_confirmation_config = self._build_entry_confirmation_config(config)
 
         # NEW: Phase 2.5 Memory System
         self.memory = PennyHunterMemory(penny_memory_db)
@@ -188,6 +189,7 @@ class PennyHunterPaperTrader:
         self.rejected_signals = []
         self.scan_diagnostics = []
         self.cooldown_decisions = []
+        self.entry_confirmation_decisions = []
         self.active_positions = {}
         self.base_risk_per_trade = max_risk_per_trade
         self.current_risk_per_trade = max_risk_per_trade
@@ -240,6 +242,104 @@ class PennyHunterPaperTrader:
             'enabled': bool(cooldown.get('enabled', False)),
             'mode': cooldown.get('mode', 'next_session_prefer_alternate'),
         }
+
+    @staticmethod
+    def _build_entry_confirmation_config(config: Dict) -> Dict:
+        """Resolve optional pre-execution entry confirmation rules from YAML config."""
+        entry_confirmation = config.get('entry_confirmation')
+        if entry_confirmation is None:
+            entry_confirmation = config.get('experiments', {}).get('entry_confirmation', {})
+
+        stale_signal_date = entry_confirmation.get('stale_signal_date', {})
+        max_signal_age_days = entry_confirmation.get('max_signal_age_days')
+        if max_signal_age_days is None:
+            max_signal_age_days = stale_signal_date.get('max_age_days')
+
+        return {
+            'enabled': bool(entry_confirmation.get('enabled', False)),
+            'max_signal_age_days': None if max_signal_age_days is None else int(max_signal_age_days),
+        }
+
+    @staticmethod
+    def _parse_signal_date(value: Optional[str]) -> Optional[date]:
+        """Parse a signal date string when available."""
+        if not value:
+            return None
+
+        try:
+            return datetime.fromisoformat(str(value)).date()
+        except ValueError:
+            return None
+
+    def _reference_market_date(self, signal: Dict) -> date:
+        """Use the latest available market date for confirmation rules when possible."""
+        hist = signal.get('hist')
+        if hist is not None and len(hist) > 0:
+            latest_index = hist.index[-1]
+            if hasattr(latest_index, 'date'):
+                return latest_index.date()
+
+        now = datetime.now()
+        if self.regime_snapshot and getattr(self.regime_snapshot, 'timestamp', None):
+            snapshot_timestamp = self.regime_snapshot.timestamp
+            if hasattr(snapshot_timestamp, 'date'):
+                return snapshot_timestamp.date()
+        return now.date()
+
+    def _evaluate_entry_confirmation(self, signal: Dict) -> bool:
+        """Apply optional pre-execution confirmation rules before sending orders."""
+        if not self.entry_confirmation_config.get('enabled', False):
+            return True
+
+        max_signal_age_days = self.entry_confirmation_config.get('max_signal_age_days')
+        if max_signal_age_days is None:
+            return True
+
+        signal_date = self._parse_signal_date(signal.get('date'))
+        if signal_date is None:
+            return True
+
+        reference_date = self._reference_market_date(signal)
+        age_days = (reference_date - signal_date).days
+        if age_days <= max_signal_age_days:
+            return True
+
+        decision = {
+            'ticker': signal.get('ticker'),
+            'signal_date': signal_date.isoformat(),
+            'reference_date': reference_date.isoformat(),
+            'age_days': age_days,
+            'decision': 'reject',
+            'reason': 'signal_too_old',
+            'check': 'stale_signal_date',
+            'max_signal_age_days': max_signal_age_days,
+            'recorded_at': datetime.now().isoformat(),
+        }
+        self.entry_confirmation_decisions.append(decision)
+        self._record_rejected_signal(
+            signal,
+            stage='entry_confirmation',
+            reasons=[
+                {
+                    'check': 'stale_signal_date',
+                    'reason': f'signal age {age_days}d exceeds max {max_signal_age_days}d',
+                }
+            ],
+            details={
+                'decision': 'reject',
+                'reason': 'signal_too_old',
+                'reference_date': reference_date.isoformat(),
+                'age_days': age_days,
+                'max_signal_age_days': max_signal_age_days,
+            },
+        )
+        logger.warning(
+            "❌ %s rejected by entry confirmation: signal age %sd exceeds max %sd",
+            signal.get('ticker'),
+            age_days,
+            max_signal_age_days,
+        )
+        return False
 
     def _pending_cooldown_trade(self) -> Optional[Dict]:
         """Return the most recent closed trade whose next-session cooldown has not yet been consumed."""
@@ -624,6 +724,7 @@ class PennyHunterPaperTrader:
                 'rejected_signals': report.get('rejected_signals', []),
                 'scan_near_misses': report.get('scan_near_misses', []),
                 'cooldown_decisions': report.get('cooldown_decisions', []),
+                'entry_confirmation_decisions': report.get('entry_confirmation_decisions', []),
             }
         )
 
@@ -712,6 +813,7 @@ class PennyHunterPaperTrader:
         self.trades_log = report.get('trades', [])
         self.rejected_signals = []
         self.cooldown_decisions = []
+        self.entry_confirmation_decisions = []
         self.active_positions = {
             trade['ticker']: trade
             for trade in self.trades_log
@@ -1092,6 +1194,10 @@ class PennyHunterPaperTrader:
                 logger.info(f"   Stats: {stats.win_rate*100:.1f}% WR ({stats.wins}W/{stats.losses}L)")
 
         # NEW: Run advanced quality gate if enabled
+        if not self._evaluate_entry_confirmation(signal):
+            return False
+
+        # NEW: Run advanced quality gate if enabled
         if self.advanced_filters_enabled and 'hist' in signal:
             logger.info(f"🔍 Running advanced quality gate for {ticker}...")
 
@@ -1265,6 +1371,7 @@ class PennyHunterPaperTrader:
             'rejected_signals': self.rejected_signals,
             'scan_near_misses': self.scan_diagnostics,
             'cooldown_decisions': self.cooldown_decisions,
+            'entry_confirmation_decisions': self.entry_confirmation_decisions,
         }
 
         with open(output_file, 'w', encoding='utf-8') as f:

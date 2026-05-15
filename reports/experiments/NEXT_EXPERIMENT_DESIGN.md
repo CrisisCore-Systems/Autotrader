@@ -184,3 +184,50 @@ Do not create these yet. These are the proposed fenced paths only.
 - The first confirmed-entry branch should also prepare to add `green_confirmation_bar` and `stop_hit_before_confirmation`, because those are the strongest additional checks implementable from the already attached daily `hist` data.
 - Do not test another threshold change first.
 - Do not wire intraday VWAP or opening-range-high logic into this next branch until the daily-bar confirmation experiment is specified and audited.
+
+## Scan Window Analysis (Stale Signal Root Cause)
+
+### Why old signals are surfacing
+
+- `scan_for_signals()` fetches `history(period='90d')` per ticker and then loops backward across that full frame (`for i in range(len(hist) - 1, 0, -1)`) to find the most recent qualifying bar.
+- The loop has no freshness cap, so any qualifying bar inside the 90-day pull can become a candidate signal date.
+- Result: bars that are weeks or months old can still surface as "current" candidates.
+
+### Why entry confirmation blocks them
+
+- The confirmed-entry branch applies `entry_confirmation.max_signal_age_days` after scan and cooldown, before execution.
+- This correctly rejects stale candidates with `signal_too_old`.
+- Current behavior therefore works as designed, but stale candidates are filtered late in the pipeline.
+
+### Why scan freshness should move upstream
+
+- Rejecting stale setups at scan time is cleaner than discovering them and rejecting them later.
+- Upstream freshness filtering would:
+  - reduce noisy candidate lists,
+  - make cooldown decisions operate on truly current opportunities,
+  - align paper scan behavior with live-scan intent.
+
+### Recommended config shape (scan freshness, separate from entry_confirmation)
+
+Add scan freshness controls under runner paper scan so candidate discovery can be constrained before cooldown and entry confirmation:
+
+```yaml
+signals:
+  runner_vwap:
+    paper_scan:
+      gap_min_pct: 10.0
+      gap_max_pct: 15.0
+      volume_min_mult: 2.4
+      volume_max_mult: 10.0
+      allow_extreme_volume_above_mult: 15.0
+
+      # New scan freshness controls (proposed)
+      max_signal_age_days: 2
+      only_recent_signals: true
+```
+
+Suggested semantics:
+
+- `max_signal_age_days`: hard cap on candidate bar age relative to scan date.
+- `only_recent_signals`: when true, skip candidate bars older than the cap during `scan_for_signals()` traversal.
+- Keep this independent of `entry_confirmation` so scan freshness and execution freshness can be tuned separately.

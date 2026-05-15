@@ -1,0 +1,18 @@
+{
+  "stage": "features",
+  "timestamp_utc": "2026-05-15T06:13:18.676768+00:00",
+  "input_dir": "data\\crypto\\raw",
+  "output_dir": "data\\crypto\\features",
+  "outputs": [
+    {
+      "input": "data\\crypto\\raw\\kraken_BTC_USD_15m_raw.parquet",
+      "output": "data\\crypto\\features\\kraken_BTC_USD_15m_features.parquet",
+      "rows": 625
+    },
+    {
+      "input": "data\\crypto\\raw\\kraken_ETH_USD_15m_raw.parquet",
+      "output": "data\\crypto\\features\\kraken_ETH_USD_15m_features.parquet",
+      "rows": 625
+    }
+  ]
+}

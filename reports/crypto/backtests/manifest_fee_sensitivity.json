@@ -1,0 +1,152 @@
+{
+  "stage": "fee-sensitivity",
+  "base_fee_bps": 10.0,
+  "base_slippage_bps": 5.0,
+  "scenarios": [
+    {
+      "scenario": "base",
+      "fee_bps_per_side": 10.0,
+      "slippage_bps_total": 5.0,
+      "symbols": [
+        {
+          "symbol": "BTC/USD",
+          "active_regime": "liquidity_void",
+          "horizon_bars": 16,
+          "profit_factor": 5.170521905220772,
+          "win_rate": 0.5,
+          "trades": 2,
+          "net_pnl": 10.416057780483968,
+          "max_drawdown": 0.0,
+          "recovery_factor": 0.0
+        },
+        {
+          "symbol": "ETH/USD",
+          "active_regime": "mean_reversion",
+          "horizon_bars": 8,
+          "profit_factor": 0.7583460832443256,
+          "win_rate": 0.3333333333333333,
+          "trades": 6,
+          "net_pnl": -4.86023787808612,
+          "max_drawdown": -12.069457772873566,
+          "recovery_factor": -0.4026889997502321
+        }
+      ]
+    },
+    {
+      "scenario": "+5bps",
+      "fee_bps_per_side": 15.0,
+      "slippage_bps_total": 5.0,
+      "symbols": [
+        {
+          "symbol": "BTC/USD",
+          "active_regime": "liquidity_void",
+          "horizon_bars": 16,
+          "profit_factor": 3.4062771455264764,
+          "win_rate": 0.5,
+          "trades": 2,
+          "net_pnl": 8.416057780483968,
+          "max_drawdown": 0.0,
+          "recovery_factor": 0.0
+        },
+        {
+          "symbol": "ETH/USD",
+          "active_regime": "mean_reversion",
+          "horizon_bars": 8,
+          "profit_factor": 0.549599282044623,
+          "win_rate": 0.3333333333333333,
+          "trades": 6,
+          "net_pnl": -10.860237878086119,
+          "max_drawdown": -14.069457772873566,
+          "recovery_factor": -0.7719016648264199
+        }
+      ]
+    },
+    {
+      "scenario": "-5bps",
+      "fee_bps_per_side": 5.0,
+      "slippage_bps_total": 5.0,
+      "symbols": [
+        {
+          "symbol": "BTC/USD",
+          "active_regime": "liquidity_void",
+          "horizon_bars": 16,
+          "profit_factor": 9.290952447345125,
+          "win_rate": 0.5,
+          "trades": 2,
+          "net_pnl": 12.416057780483968,
+          "max_drawdown": 0.0,
+          "recovery_factor": 0.0
+        },
+        {
+          "symbol": "ETH/USD",
+          "active_regime": "mean_reversion",
+          "horizon_bars": 8,
+          "profit_factor": 1.0707382396133966,
+          "win_rate": 0.3333333333333333,
+          "trades": 6,
+          "net_pnl": 1.1397621219138774,
+          "max_drawdown": -10.06945777287357,
+          "recovery_factor": 0.11319001952461816
+        }
+      ]
+    },
+    {
+      "scenario": "+5bps_slip",
+      "fee_bps_per_side": 10.0,
+      "slippage_bps_total": 10.0,
+      "symbols": [
+        {
+          "symbol": "BTC/USD",
+          "active_regime": "liquidity_void",
+          "horizon_bars": 16,
+          "profit_factor": 4.141258620210597,
+          "win_rate": 0.5,
+          "trades": 2,
+          "net_pnl": 9.416057780483968,
+          "max_drawdown": 0.0,
+          "recovery_factor": 0.0
+        },
+        {
+          "symbol": "ETH/USD",
+          "active_regime": "mean_reversion",
+          "horizon_bars": 8,
+          "profit_factor": 0.6445324186619575,
+          "win_rate": 0.3333333333333333,
+          "trades": 6,
+          "net_pnl": -7.860237878086117,
+          "max_drawdown": -13.069457772873566,
+          "recovery_factor": -0.601420350766235
+        }
+      ]
+    },
+    {
+      "scenario": "-5bps_slip",
+      "fee_bps_per_side": 10.0,
+      "slippage_bps_total": 0.0,
+      "symbols": [
+        {
+          "symbol": "BTC/USD",
+          "active_regime": "liquidity_void",
+          "horizon_bars": 16,
+          "profit_factor": 6.7150498359863375,
+          "win_rate": 0.5,
+          "trades": 2,
+          "net_pnl": 11.416057780483968,
+          "max_drawdown": 0.0,
+          "recovery_factor": 0.0
+        },
+        {
+          "symbol": "ETH/USD",
+          "active_regime": "mean_reversion",
+          "horizon_bars": 8,
+          "profit_factor": 0.8972947328929841,
+          "win_rate": 0.3333333333333333,
+          "trades": 6,
+          "net_pnl": -1.8602378780861208,
+          "max_drawdown": -11.069457772873568,
+          "recovery_factor": -0.1680514001909611
+        }
+      ]
+    }
+  ]
+}

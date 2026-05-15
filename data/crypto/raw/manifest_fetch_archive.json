@@ -1,0 +1,36 @@
+{
+  "stage": "fetch-archive",
+  "timestamp_utc": "2026-05-15T09:18:12.227996+00:00",
+  "exchange": "kraken",
+  "source": "trades",
+  "timeframe_min": 15,
+  "bars_requested": 12000,
+  "symbols": [
+    "BTC/USD"
+  ],
+  "archive_root": "data\\crypto\\raw_trades",
+  "outputs": [
+    {
+      "symbol": "BTC/USD",
+      "fetch_mode": "gap-repair",
+      "earliest_trade": "2026-04-15T07:06:19.473915339+00:00",
+      "high_water_mark": "2026-05-14T00:20:48.059664488+00:00",
+      "gap_seconds": 53737.051078081,
+      "bars_rows": 2758,
+      "trades_rows_fetched": 32000,
+      "trades_archive_rows": 1403614,
+      "trade_pages": 32,
+      "last_cursor_ns": 1778648522610205236,
+      "target_cursor_ns": 1778646637372153759,
+      "target_reached": true,
+      "archive_partitions": [
+        "data\\crypto\\raw_trades\\BTC_USD\\2026-04.parquet",
+        "data\\crypto\\raw_trades\\BTC_USD\\2026-05.parquet"
+      ],
+      "latest_partition": "data\\crypto\\raw_trades\\BTC_USD\\2026-05.parquet",
+      "output": "data\\crypto\\raw\\kraken_BTC_USD_15m_raw.parquet",
+      "start": "2026-04-15T07:15:00+00:00",
+      "end": "2026-05-14T00:30:00+00:00"
+    }
+  ]
+}

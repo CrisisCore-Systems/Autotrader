@@ -1,0 +1,56 @@
+{
+  "stage": "training-gate",
+  "timestamp_utc": "2026-05-15T09:20:22.802270+00:00",
+  "symbols": [
+    "BTC/USD",
+    "ETH/USD"
+  ],
+  "trade_gap_threshold_seconds": 1800.0,
+  "timeframe_min": 15,
+  "auto_refresh_bars": true,
+  "attempt_recovery": false,
+  "results": [
+    {
+      "symbol": "BTC/USD",
+      "trade_archive_rows": 1403614,
+      "trade_gaps": {
+        "trade_count": 797196,
+        "gap_threshold_seconds": 1800.0,
+        "gap_count": 0,
+        "max_gap_seconds": 655.72457,
+        "gaps": []
+      },
+      "bar_gaps": {
+        "bar_count": 2758,
+        "expected_bar_count": 2758,
+        "missing_bar_count": 0,
+        "gaps": []
+      },
+      "status": "green",
+      "reasons": [
+        "artifact_grade"
+      ]
+    },
+    {
+      "symbol": "ETH/USD",
+      "trade_archive_rows": 662625,
+      "trade_gaps": {
+        "trade_count": 482313,
+        "gap_threshold_seconds": 1800.0,
+        "gap_count": 0,
+        "max_gap_seconds": 661.535476,
+        "gaps": []
+      },
+      "bar_gaps": {
+        "bar_count": 2822,
+        "expected_bar_count": 2822,
+        "missing_bar_count": 0,
+        "gaps": []
+      },
+      "status": "green",
+      "reasons": [
+        "artifact_grade"
+      ]
+    }
+  ]
+}

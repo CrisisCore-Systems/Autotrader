@@ -1,0 +1,26 @@
+{
+  "stage": "fetch",
+  "timestamp_utc": "2026-05-15T06:34:25.834699+00:00",
+  "exchange": "kraken",
+  "source": "trades",
+  "timeframe_min": 15,
+  "bars_requested": 200,
+  "symbols": [
+    "BTC/USD"
+  ],
+  "outputs": [
+    {
+      "symbol": "BTC/USD",
+      "rows": 69,
+      "output": "data\\crypto\\raw\\kraken_BTC_USD_15m_raw.parquet",
+      "start": "2026-05-13T04:45:00+00:00",
+      "end": "2026-05-13T21:45:00+00:00",
+      "trades_archive_file": "data\\crypto\\raw_trades\\kraken_BTC_USD_trades.parquet",
+      "trades_archive_rows": 39764,
+      "trades_rows_fetched": 40000,
+      "trade_pages": 40,
+      "last_cursor_ns": 1778707932179518792
+    }
+  ],
+  "since_ns": 1778646865834699776
+}

@@ -761,6 +761,9 @@ def ensure_crypto_registry_schema(db_path: Path) -> None:
             ("loss_cluster_count", "INTEGER NOT NULL DEFAULT 0"),
             ("avg_loss_cluster_size", "REAL NOT NULL DEFAULT 0"),
             ("exit_mode", "TEXT NOT NULL DEFAULT 'timeout'"),
+            ("target_atr_multiplier", "REAL NOT NULL DEFAULT 0"),
+            ("stop_atr_multiplier", "REAL NOT NULL DEFAULT 0"),
+            ("atr_column", "TEXT NOT NULL DEFAULT ''"),
         ]
         for name, ddl in migrations:
             if name not in columns:
@@ -805,10 +808,13 @@ def write_registry_row(db_path: Path, row: dict[str, Any]) -> None:
                 loss_cluster_count,
                 avg_loss_cluster_size,
                 exit_mode,
+                target_atr_multiplier,
+                stop_atr_multiplier,
+                atr_column,
                 input_file,
                 report_file,
                 notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 row["run_id"],
@@ -839,6 +845,9 @@ def write_registry_row(db_path: Path, row: dict[str, Any]) -> None:
                 row["loss_cluster_count"],
                 row["avg_loss_cluster_size"],
                 row["exit_mode"],
+                row.get("target_atr_multiplier", 0.0),
+                row.get("stop_atr_multiplier", 0.0),
+                row.get("atr_column", ""),
                 row["input_file"],
                 row["report_file"],
                 row.get("notes", ""),
@@ -869,6 +878,94 @@ def apply_cooldown(signal_mask: pd.Series, cooldown_bars: int) -> pd.Series:
             accepted[i] = True
             last_idx = i
     return pd.Series(accepted, index=signal_mask.index)
+
+
+def simulate_trades_with_atr_exit(
+    df: pd.DataFrame,
+    accepted_mask: pd.Series,
+    args: argparse.Namespace,
+) -> pd.DataFrame:
+    """Path-dependent simulator for ATR-based TP/SL exits.
+
+    Notes:
+    - Uses long-only signals (consistent with breakout_up signal mask).
+    - If both TP and SL are breached within the same bar, assumes SL first
+      as a conservative guardrail.
+    """
+    entry_idx = np.flatnonzero(accepted_mask.to_numpy())
+    if entry_idx.size == 0:
+        return pd.DataFrame(columns=["timestamp", "net_edge", "pnl_usd", "exit_reason", "bars_held"])
+
+    atr_col = str(getattr(args, "atr_column", "atr_14"))
+    target_mult = float(getattr(args, "target_atr_multiplier", 1.5))
+    stop_mult = float(getattr(args, "stop_atr_multiplier", 2.0))
+    horizon_bars = int(getattr(args, "horizon_bars", 4))
+
+    fee_total_frac = (2.0 * float(getattr(args, "fee_bps_per_side", 0.0))) / 10000.0
+    slippage_total_frac = float(getattr(args, "slippage_bps_total", 0.0)) / 10000.0
+    tx_cost_frac = fee_total_frac + slippage_total_frac
+
+    records: list[dict[str, Any]] = []
+
+    for idx in entry_idx:
+        atr_value = float(df.iloc[idx].get(atr_col, np.nan))
+        entry_price = float(df.iloc[idx]["close"])
+        if not np.isfinite(entry_price) or entry_price <= 0.0:
+            continue
+
+        # If ATR is missing/invalid, revert this entry to timeout logic.
+        use_timeout_only = (not np.isfinite(atr_value)) or (atr_value <= 0.0)
+
+        tp_price = entry_price + (target_mult * atr_value)
+        sl_price = entry_price - (stop_mult * atr_value)
+
+        end_idx = min(len(df) - 1, idx + max(1, horizon_bars))
+        exit_idx = end_idx
+        exit_price = float(df.iloc[end_idx]["close"])
+        exit_reason = "timeout"
+
+        if not use_timeout_only:
+            for j in range(idx + 1, end_idx + 1):
+                high_k = float(df.iloc[j]["high"])
+                low_k = float(df.iloc[j]["low"])
+                hit_stop = low_k <= sl_price
+                hit_target = high_k >= tp_price
+
+                if hit_stop and hit_target:
+                    exit_idx = j
+                    exit_price = sl_price
+                    exit_reason = "stop_loss"
+                    break
+                if hit_stop:
+                    exit_idx = j
+                    exit_price = sl_price
+                    exit_reason = "stop_loss"
+                    break
+                if hit_target:
+                    exit_idx = j
+                    exit_price = tp_price
+                    exit_reason = "take_profit"
+                    break
+
+        gross_edge = (exit_price - entry_price) / entry_price
+        net_edge = gross_edge - tx_cost_frac
+        pnl_usd = float(getattr(args, "notional_usd", 1000.0)) * net_edge
+        bars_held = int(exit_idx - idx)
+
+        records.append(
+            {
+                "timestamp": df.iloc[idx].get("timestamp"),
+                "net_edge": net_edge,
+                "pnl_usd": pnl_usd,
+                "exit_reason": exit_reason,
+                "bars_held": bars_held,
+            }
+        )
+
+    if not records:
+        return pd.DataFrame(columns=["timestamp", "net_edge", "pnl_usd", "exit_reason", "bars_held"])
+
+    return pd.DataFrame.from_records(records)
 
 
 def command_backtest(args: argparse.Namespace) -> None:
@@ -920,12 +1017,16 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         score_threshold=args.signal_score_threshold,
     )
     accepted_mask = apply_cooldown(signal_mask, cooldown_bars=args.cooldown_bars)
-    trades = df.loc[accepted_mask].copy()
+    use_atr_exit = bool(getattr(args, "use_atr_exit", False))
+    if use_atr_exit:
+        trades = simulate_trades_with_atr_exit(df=df, accepted_mask=accepted_mask, args=args)
+    else:
+        trades = df.loc[accepted_mask].copy()
 
     symbol = str(df["symbol"].iloc[0]) if "symbol" in df.columns else source_file.stem
     timeframe_min = int(df["timeframe_min"].iloc[0]) if "timeframe_min" in df.columns else 15
 
-    exit_mode = "timeout"
+    exit_mode = "atr_path" if use_atr_exit else "timeout"
 
     if trades.empty:
         net_pnl = 0.0
@@ -944,7 +1045,8 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         loss_cluster_count = 0
         avg_loss_cluster_size = 0.0
     else:
-        trades["pnl_usd"] = args.notional_usd * trades["net_edge"]
+        if "pnl_usd" not in trades.columns:
+            trades["pnl_usd"] = args.notional_usd * trades["net_edge"]
         trades["is_win"] = (trades["pnl_usd"] > 0).astype(int)
         trades["is_loss"] = (trades["pnl_usd"] < 0).astype(int)
         trades["cum_pnl"] = trades["pnl_usd"].cumsum()
@@ -1016,6 +1118,9 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         "loss_cluster_count": loss_cluster_count,
         "avg_loss_cluster_size": avg_loss_cluster_size,
         "exit_mode": exit_mode,
+        "target_atr_multiplier": float(getattr(args, "target_atr_multiplier", 0.0)),
+        "stop_atr_multiplier": float(getattr(args, "stop_atr_multiplier", 0.0)),
+        "atr_column": str(getattr(args, "atr_column", "")),
         "input_file": str(source_file),
         "report_file": str(report_file),
         "notes": args.notes,
@@ -1117,11 +1222,13 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
 
         # Regime override: if --apply-regime, swap policy fields based on current bar regime
         active_regime: str | None = None
+        active_regime_cfg: dict[str, Any] = {}
         if getattr(args, "apply_regime", False):
             regime_dir = Path(getattr(args, "regime_dir", "data/crypto/regime"))
             active_regime = _load_current_regime(symbol, regime_dir)
             if active_regime:
                 regime_cfg = strategy_config.get("regimes", {}) or {}
+                active_regime_cfg = regime_cfg.get(active_regime, {}) or {}
                 policy = _apply_regime_to_policy(policy, active_regime, regime_cfg)
                 print(f"[regime] {symbol}: active_regime={active_regime}  horizon={policy.horizon_bars}  score_thr={policy.signal_score_threshold}")
             else:
@@ -1132,6 +1239,14 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
         local_args.signal_volume_threshold = policy.signal_volume_threshold
         local_args.signal_score_threshold = policy.signal_score_threshold
         local_args.cooldown_bars = policy.cooldown_bars
+        local_args.use_atr_exit = bool(getattr(args, "use_atr_exit", False) or active_regime_cfg.get("use_atr_exit", False))
+        local_args.atr_column = str(active_regime_cfg.get("atr_column", "atr_14"))
+        local_args.atr_period = int(active_regime_cfg.get("atr_period", 14))
+        # CLI args take priority over regime config when explicitly provided (not None)
+        cli_tp = getattr(args, "target_atr_multiplier", None)
+        cli_sl = getattr(args, "stop_atr_multiplier", None)
+        local_args.target_atr_multiplier = float(cli_tp if cli_tp is not None else active_regime_cfg.get("target_atr_multiplier", 1.5))
+        local_args.stop_atr_multiplier = float(cli_sl if cli_sl is not None else active_regime_cfg.get("stop_atr_multiplier", 2.0))
         local_args.feature_version = f"{args.feature_version}_{safe_symbol_name(symbol)}_h{policy.horizon_bars}"
         local_args.notes = f"{args.notes} strategy_config={config_path.name}".strip()
 
@@ -1158,6 +1273,10 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
                 "signal_score_threshold": policy.signal_score_threshold,
                 "cooldown_bars": policy.cooldown_bars,
                 "active_regime": active_regime,
+                "use_atr_exit": bool(getattr(local_args, "use_atr_exit", False)),
+                "atr_column": str(getattr(local_args, "atr_column", "atr_14")),
+                "target_atr_multiplier": float(getattr(local_args, "target_atr_multiplier", 1.5)),
+                "stop_atr_multiplier": float(getattr(local_args, "stop_atr_multiplier", 2.0)),
             }
             summary["runs"].append(run_report)
 
@@ -1188,17 +1307,26 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
                 symbol = str(features_df["symbol"].iloc[0]) if "symbol" in features_df.columns else file.stem
                 policy = resolve_strategy_policy(symbol, strategy_config, args)
                 active_regime2: str | None = None
+                active_regime_cfg2: dict[str, Any] = {}
                 if getattr(args, "apply_regime", False):
                     regime_dir2 = Path(getattr(args, "regime_dir", "data/crypto/regime"))
                     active_regime2 = _load_current_regime(symbol, regime_dir2)
                     if active_regime2:
                         regime_cfg2 = strategy_config.get("regimes", {}) or {}
+                        active_regime_cfg2 = regime_cfg2.get(active_regime2, {}) or {}
                         policy = _apply_regime_to_policy(policy, active_regime2, regime_cfg2)
                 local_args2 = argparse.Namespace(**vars(args))
                 local_args2.horizon_bars = policy.horizon_bars
                 local_args2.signal_volume_threshold = policy.signal_volume_threshold
                 local_args2.signal_score_threshold = policy.signal_score_threshold
                 local_args2.cooldown_bars = policy.cooldown_bars
+                local_args2.use_atr_exit = bool(getattr(args, "use_atr_exit", False) or active_regime_cfg2.get("use_atr_exit", False))
+                local_args2.atr_column = str(active_regime_cfg2.get("atr_column", "atr_14"))
+                local_args2.atr_period = int(active_regime_cfg2.get("atr_period", 14))
+                cli_tp2 = getattr(args, "target_atr_multiplier", None)
+                cli_sl2 = getattr(args, "stop_atr_multiplier", None)
+                local_args2.target_atr_multiplier = float(cli_tp2 if cli_tp2 is not None else active_regime_cfg2.get("target_atr_multiplier", 1.5))
+                local_args2.stop_atr_multiplier = float(cli_sl2 if cli_sl2 is not None else active_regime_cfg2.get("stop_atr_multiplier", 2.0))
                 local_args2.fee_bps_per_side = fee
                 local_args2.slippage_bps_total = slip
                 local_args2.feature_version = f"{args.feature_version}_{safe_symbol_name(symbol)}_h{policy.horizon_bars}_fee{scenario_name}"
@@ -1221,6 +1349,7 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
                             "symbol": symbol,
                             "active_regime": active_regime2,
                             "horizon_bars": policy.horizon_bars,
+                            "use_atr_exit": bool(getattr(local_args2, "use_atr_exit", False)),
                             **{k: run2.get(k) for k in ["profit_factor", "win_rate", "trades", "net_pnl", "max_drawdown", "recovery_factor"]},
                         }
                     )
@@ -2010,6 +2139,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest.add_argument("--feature-version", default="crypto_v1", help="Feature/version tag for registry")
     p_backtest.add_argument("--notes", default="", help="Optional run notes")
     p_backtest.add_argument("--export-equity-csv", action="store_true", help="Export per-trade equity curve CSV")
+    p_backtest.add_argument("--use-atr-exit", action="store_true", help="Enable path-dependent ATR TP/SL exits")
+    p_backtest.add_argument("--atr-column", default="atr_14", help="ATR column name used for dynamic exits")
+    p_backtest.add_argument("--atr-period", type=int, default=14, help="ATR lookback period metadata")
+    p_backtest.add_argument("--target-atr-multiplier", type=float, default=1.5, help="TP distance in ATR multiples")
+    p_backtest.add_argument("--stop-atr-multiplier", type=float, default=2.0, help="SL distance in ATR multiples")
     p_backtest.set_defaults(func=command_backtest)
 
     p_backtest_batch = subparsers.add_parser("backtest-batch", help="Run multiple backtest horizons and log each to the registry")
@@ -2048,6 +2182,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest_strategy.add_argument("--fee-sensitivity", action="store_true", help="Run ±5bps fee and slippage sensitivity sweep")
     p_backtest_strategy.add_argument("--apply-regime", action="store_true", help="Override per-symbol policy from regime-classify output (requires data/crypto/regime/ parquets)")
     p_backtest_strategy.add_argument("--regime-dir", default="data/crypto/regime", help="Directory containing regime parquets written by regime-classify")
+    p_backtest_strategy.add_argument("--use-atr-exit", action="store_true", help="Enable path-dependent ATR TP/SL exits")
+    p_backtest_strategy.add_argument("--atr-column", default="atr_14", help="ATR column name used for dynamic exits")
+    p_backtest_strategy.add_argument("--atr-period", type=int, default=14, help="ATR lookback period metadata")
+    p_backtest_strategy.add_argument("--target-atr-multiplier", type=float, default=None, help="TP distance in ATR multiples (overrides regime config when set)")
+    p_backtest_strategy.add_argument("--stop-atr-multiplier", type=float, default=None, help="SL distance in ATR multiples (overrides regime config when set)")
     p_backtest_strategy.set_defaults(func=command_backtest_strategy)
 
     p_audit_archive = subparsers.add_parser("audit-archive", help="Audit local trade archive for timestamp and bar gaps")

@@ -1,0 +1,73 @@
+{
+  "stage": "audit-archive",
+  "timestamp_utc": "2026-05-15T08:56:45.959712+00:00",
+  "archive_root": "data\\crypto\\raw_trades",
+  "timeframe_min": 15,
+  "trade_gap_threshold_seconds": 1800.0,
+  "symbols": [
+    "BTC/USD",
+    "ETH/USD"
+  ],
+  "outputs": [
+    {
+      "symbol": "BTC/USD",
+      "trade_archive_rows": 983999,
+      "trade_gaps": {
+        "trade_count": 559456,
+        "gap_threshold_seconds": 1800.0,
+        "gap_count": 1,
+        "max_gap_seconds": 747528.279449,
+        "gaps": [
+          {
+            "gap_seconds": 747528.27944994,
+            "start": "2026-05-04T12:51:49.092703819+00:00",
+            "end": "2026-05-13T04:30:37.372153759+00:00"
+          }
+        ]
+      },
+      "bar_gaps": {
+        "bar_count": 1928,
+        "expected_bar_count": 2758,
+        "missing_bar_count": 830,
+        "gaps": [
+          {
+            "start": "2026-05-04T13:15:00+00:00",
+            "end": "2026-05-13T04:30:00+00:00",
+            "missing_bars": 830
+          }
+        ]
+      },
+      "continuity_map": {
+        "map": "################################################......................##",
+        "legend": "2026-04-15 [######=data, ......=gap, 72 cols] 2026-05-14 69.4% covered",
+        "start": "2026-04-15T07:06:19.473915339+00:00",
+        "end": "2026-05-14T00:20:48.059664488+00:00",
+        "coverage_pct": 69.4
+      }
+    },
+    {
+      "symbol": "ETH/USD",
+      "trade_archive_rows": 662625,
+      "trade_gaps": {
+        "trade_count": 482313,
+        "gap_threshold_seconds": 1800.0,
+        "gap_count": 0,
+        "max_gap_seconds": 661.535476,
+        "gaps": []
+      },
+      "bar_gaps": {
+        "bar_count": 2822,
+        "expected_bar_count": 2822,
+        "missing_bar_count": 0,
+        "gaps": []
+      },
+      "continuity_map": {
+        "map": "########################################################################",
+        "legend": "2026-04-15 [######=data, ......=gap, 72 cols] 2026-05-14 100.0% covered",
+        "start": "2026-04-15T07:09:26.452075720+00:00",
+        "end": "2026-05-14T16:27:50.333301783+00:00",
+        "coverage_pct": 100.0
+      }
+    }
+  ]
+}

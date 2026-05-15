@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-05-15T20:30:02.531212Z",
+  "sweep_db_source": "reports\\crypto\\crypto_sweep_multimag45d_latency.db",
+  "status": "PASS",
+  "constraints": {
+    "latency_penalty_lambda": 1.0,
+    "shield_min_lookback": 1,
+    "min_cluster_gating_activity": 1.0,
+    "max_assets_filter": 2
+  },
+  "theoretical_optimum": {
+    "correlation_gating_threshold": 0.75,
+    "max_assets": 2,
+    "position_scaling_factor": 0.25,
+    "latency_lookback_bars": 0,
+    "j_score": -27.993449279873566,
+    "pnl_delay0": -8.113072764287132,
+    "sigma_delay": 19.880376515586434,
+    "empirical_cluster_gated_mean": 0.0
+  },
+  "operational_optimum": {
+    "correlation_gating_threshold": 0.75,
+    "max_assets": 2,
+    "position_scaling_factor": 0.4,
+    "latency_lookback_bars": 1,
+    "j_score": -30.52868473796071,
+    "pnl_delay0": -10.634490415067363,
+    "sigma_delay": 19.894194322893345,
+    "empirical_cluster_gated_mean": 1.0
+  }
+}

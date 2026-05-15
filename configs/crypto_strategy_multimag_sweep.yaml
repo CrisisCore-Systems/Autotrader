@@ -1,0 +1,60 @@
+defaults:
+  horizon_bars: 4
+  signal_volume_threshold: 2.0
+  signal_score_threshold: 0.002
+  cooldown_bars: 4
+
+position_sizing:
+  high_correlation_scale: 0.50
+
+portfolio_routing:
+  # strict_exclusion: when is_high_corr=True, capacity is forced to 1 regardless
+  # of max_simultaneous_assets.  With max_assets=2 and is_high_corr=False, both
+  # slots are open.  This makes gated_signals_count threshold-dependent.
+  coordination_mode: strict_exclusion
+  latency_lookback_bars: 1
+  latency_resolution_mode: rank_first
+  max_simultaneous_assets: 2
+  correlation_gating_threshold: 0.75
+  asset_priority_tiers:
+    - symbol: BTC/USD
+      rank: 1
+      allocation_limit_pct: 1.0
+    - symbol: ETH/USD
+      rank: 2
+      allocation_limit_pct: 0.75
+
+symbols:
+  BTC/USD:
+    horizon_bars: 4
+    signal_volume_threshold: 2.0
+    signal_score_threshold: 0.002
+
+  ETH/USD:
+    horizon_bars: 8
+    signal_volume_threshold: 2.0
+    signal_score_threshold: 0.002
+
+regimes:
+  mean_reversion:
+    horizon_bars: 8
+    signal_score_threshold: 0.0015
+    cooldown_bars: 6
+    signal_volume_threshold: 1.8
+    use_atr_exit: true
+    atr_column: atr_14
+    atr_period: 14
+    target_atr_multiplier: 3.5
+    stop_atr_multiplier: 2.5
+
+  momentum_trend:
+    horizon_bars: 4
+    signal_score_threshold: 0.003
+    cooldown_bars: 3
+    signal_volume_threshold: 2.5
+
+  liquidity_void:
+    horizon_bars: 16
+    signal_score_threshold: 0.010
+    cooldown_bars: 16
+    signal_volume_threshold: 5.0

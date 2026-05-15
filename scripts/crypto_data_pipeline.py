@@ -45,6 +45,16 @@ class StrategyPolicy:
     cooldown_bars: int
 
 
+@dataclass(frozen=True)
+class PortfolioRoutingConfig:
+    coordination_mode: str
+    max_simultaneous_assets: int
+    correlation_gating_threshold: float
+    latency_lookback_bars: int
+    latency_resolution_mode: str
+    asset_priority_tiers: dict[str, dict[str, float | int | str]]
+
+
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -521,6 +531,57 @@ def load_strategy_config(path: Path) -> dict[str, Any]:
     return data
 
 
+def load_portfolio_routing_config(config: dict[str, Any]) -> PortfolioRoutingConfig:
+    raw = config.get("portfolio_routing", {}) or {}
+    coordination_mode = str(raw.get("coordination_mode", "independent"))
+    allowed_modes = {"independent", "priority_gating", "strict_exclusion"}
+    if coordination_mode not in allowed_modes:
+        raise RuntimeError(f"Unsupported portfolio_routing.coordination_mode={coordination_mode!r}")
+    latency_resolution_mode = str(raw.get("latency_resolution_mode", "rank_first")).strip().lower()
+    if latency_resolution_mode not in {"rank_first", "fifo"}:
+        raise RuntimeError(
+            f"Unsupported portfolio_routing.latency_resolution_mode={latency_resolution_mode!r}"
+        )
+
+    raw_tiers = raw.get("asset_priority_tiers", []) or []
+    tiers: dict[str, dict[str, float | int | str]] = {}
+    for item in raw_tiers:
+        if not isinstance(item, dict) or "symbol" not in item:
+            continue
+        symbol = str(item["symbol"])
+        tiers[symbol] = {
+            "symbol": symbol,
+            "rank": int(item.get("rank", 9999)),
+            "allocation_limit_pct": float(item.get("allocation_limit_pct", 1.0)),
+        }
+
+    return PortfolioRoutingConfig(
+        coordination_mode=coordination_mode,
+        max_simultaneous_assets=max(1, int(raw.get("max_simultaneous_assets", 1))),
+        correlation_gating_threshold=float(raw.get("correlation_gating_threshold", 0.75)),
+        latency_lookback_bars=max(0, int(raw.get("latency_lookback_bars", 0))),
+        latency_resolution_mode=latency_resolution_mode,
+        asset_priority_tiers=tiers,
+    )
+
+
+def get_asset_rank(symbol: str, routing: PortfolioRoutingConfig) -> int:
+    tier = routing.asset_priority_tiers.get(symbol, {})
+    return int(tier.get("rank", 9999))
+
+
+def get_asset_allocation_limit(symbol: str, routing: PortfolioRoutingConfig) -> float:
+    tier = routing.asset_priority_tiers.get(symbol, {})
+    return float(tier.get("allocation_limit_pct", 1.0))
+
+
+def is_high_corr_entry(entry: dict[str, Any], routing: PortfolioRoutingConfig) -> bool:
+    row = entry["row"]
+    corr_regime = str(row.get("corr_regime", "neutral_correlation") or "neutral_correlation")
+    mean_corr = float(row.get("mean_correlation", 0.0) or 0.0)
+    return corr_regime == "high_correlation_sync" or mean_corr >= routing.correlation_gating_threshold
+
+
 def resolve_strategy_policy(symbol: str, config: dict[str, Any], args: argparse.Namespace) -> StrategyPolicy:
     defaults = config.get("defaults", {}) or {}
     symbols_cfg = config.get("symbols", {}) or {}
@@ -622,6 +683,67 @@ def load_parquet(path: Path) -> pd.DataFrame:
         raise RuntimeError(
             "Parquet support is unavailable. Install pyarrow (pip install pyarrow)."
         ) from exc
+
+
+# Module-level scale factor for high_correlation_sync regime; overridden by
+# position_sizing.high_correlation_scale in the strategy YAML at run-time.
+_HIGH_CORR_SCALE: float = 0.50
+
+
+def get_bps_scale_factor(corr_regime: str) -> float:
+    if corr_regime == "high_correlation_sync":
+        return _HIGH_CORR_SCALE
+    if corr_regime == "neutral_correlation":
+        return 0.75
+    if corr_regime == "decorrelation_risk":
+        return 1.00
+    return 1.00
+
+
+def hydrate_backtest_regime_frame(features_df: pd.DataFrame, symbol: str, regime_dir: Path) -> pd.DataFrame:
+    """Attach correlation-aware regime columns to a feature frame.
+
+    Missing regime files or unmatched timestamps fall back to neutral defaults so
+    strategy backtests remain runnable while still receiving a conservative size cut.
+    """
+    out = features_df.drop(
+        columns=[col for col in ["mean_correlation", "corr_regime", "bps_scale_factor"] if col in features_df.columns]
+    ).copy()
+    if "timestamp" not in out.columns:
+        out["mean_correlation"] = 0.0
+        out["corr_regime"] = "neutral_correlation"
+        out["bps_scale_factor"] = get_bps_scale_factor("neutral_correlation")
+        return out
+
+    out["timestamp"] = pd.to_datetime(out["timestamp"], errors="coerce")
+
+    candidate = regime_dir / f"kraken_{symbol.replace('/', '')}_regime.parquet"
+    if candidate.exists():
+        try:
+            regime_df = load_parquet(candidate)
+        except Exception:
+            regime_df = pd.DataFrame()
+        if not regime_df.empty and "timestamp" in regime_df.columns:
+            regime_cols = [col for col in ["timestamp", "mean_correlation", "corr_regime"] if col in regime_df.columns]
+            regime_view = regime_df[regime_cols].copy()
+            regime_view["timestamp"] = pd.to_datetime(regime_view["timestamp"], errors="coerce")
+            out = out.merge(regime_view, on="timestamp", how="left")
+        else:
+            out["mean_correlation"] = 0.0
+            out["corr_regime"] = "neutral_correlation"
+    else:
+        out["mean_correlation"] = 0.0
+        out["corr_regime"] = "neutral_correlation"
+
+    if "mean_correlation" not in out.columns:
+        out["mean_correlation"] = 0.0
+    out["mean_correlation"] = pd.to_numeric(out["mean_correlation"], errors="coerce").fillna(0.0)
+
+    if "corr_regime" not in out.columns:
+        out["corr_regime"] = "neutral_correlation"
+    out["corr_regime"] = out["corr_regime"].fillna("neutral_correlation").astype(str)
+    out["bps_scale_factor"] = out["corr_regime"].map(get_bps_scale_factor).fillna(1.0).astype(float)
+    return out
 
 
 def compute_max_drawdown(cumulative_pnl: pd.Series) -> float:
@@ -743,6 +865,12 @@ def ensure_crypto_registry_schema(db_path: Path) -> None:
                 max_tuw_bars INTEGER NOT NULL,
                 loss_cluster_count INTEGER NOT NULL,
                 avg_loss_cluster_size REAL NOT NULL,
+                avg_entry_mean_correlation REAL NOT NULL,
+                dominant_entry_corr_regime TEXT NOT NULL,
+                avg_bps_scale_factor REAL NOT NULL,
+                high_corr_trade_count INTEGER NOT NULL,
+                neutral_corr_trade_count INTEGER NOT NULL,
+                decorrelation_trade_count INTEGER NOT NULL,
                 exit_mode TEXT NOT NULL,
                 input_file TEXT NOT NULL,
                 report_file TEXT NOT NULL,
@@ -760,6 +888,12 @@ def ensure_crypto_registry_schema(db_path: Path) -> None:
             ("max_tuw_bars", "INTEGER NOT NULL DEFAULT 0"),
             ("loss_cluster_count", "INTEGER NOT NULL DEFAULT 0"),
             ("avg_loss_cluster_size", "REAL NOT NULL DEFAULT 0"),
+            ("avg_entry_mean_correlation", "REAL NOT NULL DEFAULT 0"),
+            ("dominant_entry_corr_regime", "TEXT NOT NULL DEFAULT 'neutral_correlation'"),
+            ("avg_bps_scale_factor", "REAL NOT NULL DEFAULT 1"),
+            ("high_corr_trade_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("neutral_corr_trade_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("decorrelation_trade_count", "INTEGER NOT NULL DEFAULT 0"),
             ("exit_mode", "TEXT NOT NULL DEFAULT 'timeout'"),
             ("target_atr_multiplier", "REAL NOT NULL DEFAULT 0"),
             ("stop_atr_multiplier", "REAL NOT NULL DEFAULT 0"),
@@ -769,6 +903,150 @@ def ensure_crypto_registry_schema(db_path: Path) -> None:
             if name not in columns:
                 conn.execute(f"ALTER TABLE crypto_runs ADD COLUMN {name} {ddl}")
 
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def ensure_portfolio_registry_schema(db_path: Path) -> None:
+    ensure_parent(db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS portfolio_runs (
+                portfolio_run_id TEXT PRIMARY KEY,
+                timestamp_utc TEXT NOT NULL,
+                config_file TEXT NOT NULL,
+                coordination_mode TEXT NOT NULL,
+                total_trades INTEGER NOT NULL,
+                gated_signals_count INTEGER NOT NULL,
+                portfolio_net_pnl REAL NOT NULL,
+                portfolio_profit_factor REAL NOT NULL,
+                max_simultaneous_assets INTEGER NOT NULL,
+                report_file TEXT NOT NULL,
+                notes TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS trade_ledger (
+                trade_id          TEXT PRIMARY KEY,
+                run_id            TEXT NOT NULL,
+                portfolio_run_id  TEXT,
+                symbol            TEXT NOT NULL,
+                timestamp_utc     TEXT NOT NULL,
+                entry_price       REAL NOT NULL,
+                exit_price        REAL,
+                net_edge          REAL NOT NULL,
+                pnl_usd           REAL NOT NULL,
+                scaled_notional   REAL NOT NULL,
+                bps_scale_factor  REAL NOT NULL,
+                unscaled_notional REAL NOT NULL,
+                bars_held         INTEGER NOT NULL,
+                exit_reason       TEXT NOT NULL,
+                corr_regime       TEXT NOT NULL,
+                mean_correlation  REAL NOT NULL,
+                timeframe_min     INTEGER NOT NULL,
+                is_win            INTEGER NOT NULL
+            )
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def write_trade_ledger_rows(
+    db_path: Path,
+    run_id: str,
+    portfolio_run_id: str | None,
+    symbol: str,
+    trades: pd.DataFrame,
+    notional_usd: float,
+) -> None:
+    """Persist per-trade vectors to trade_ledger table for attribution reporting."""
+    if trades.empty:
+        return
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = []
+        for _, t in trades.iterrows():
+            trade_id = f"trd_{uuid4().hex[:16]}"
+            pnl = float(t.get("pnl_usd", 0.0) or 0.0)
+            scale = float(t.get("bps_scale_factor", 1.0) or 1.0)
+            net_edge = float(t.get("net_edge", 0.0) or 0.0)
+            rows.append((
+                trade_id,
+                run_id,
+                portfolio_run_id,
+                symbol,
+                str(t.get("timestamp", "")),
+                float(t.get("entry_price", 0.0) or 0.0),
+                float(t.get("exit_price", 0.0) or 0.0),
+                net_edge,
+                pnl,
+                float(t.get("scaled_notional_usd", notional_usd * scale) or notional_usd * scale),
+                scale,
+                float(notional_usd),
+                int(t.get("bars_held", 0) or 0),
+                str(t.get("exit_reason", "timeout") or "timeout"),
+                str(t.get("corr_regime", "neutral_correlation") or "neutral_correlation"),
+                float(t.get("mean_correlation", 0.0) or 0.0),
+                int(t.get("timeframe_min", 15) or 15),
+                int(pnl > 0),
+            ))
+        conn.executemany(
+            """
+            INSERT OR IGNORE INTO trade_ledger (
+                trade_id, run_id, portfolio_run_id, symbol,
+                timestamp_utc, entry_price, exit_price, net_edge, pnl_usd,
+                scaled_notional, bps_scale_factor, unscaled_notional,
+                bars_held, exit_reason, corr_regime, mean_correlation,
+                timeframe_min, is_win
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            rows,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def write_portfolio_registry_row(db_path: Path, row: dict[str, Any]) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            """
+            INSERT INTO portfolio_runs (
+                portfolio_run_id,
+                timestamp_utc,
+                config_file,
+                coordination_mode,
+                total_trades,
+                gated_signals_count,
+                portfolio_net_pnl,
+                portfolio_profit_factor,
+                max_simultaneous_assets,
+                report_file,
+                notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                row["portfolio_run_id"],
+                row["timestamp_utc"],
+                row["config_file"],
+                row["coordination_mode"],
+                row["total_trades"],
+                row["gated_signals_count"],
+                row["portfolio_net_pnl"],
+                row["portfolio_profit_factor"],
+                row["max_simultaneous_assets"],
+                row["report_file"],
+                row.get("notes", ""),
+            ),
+        )
         conn.commit()
     finally:
         conn.close()
@@ -807,6 +1085,12 @@ def write_registry_row(db_path: Path, row: dict[str, Any]) -> None:
                 max_tuw_bars,
                 loss_cluster_count,
                 avg_loss_cluster_size,
+                avg_entry_mean_correlation,
+                dominant_entry_corr_regime,
+                avg_bps_scale_factor,
+                high_corr_trade_count,
+                neutral_corr_trade_count,
+                decorrelation_trade_count,
                 exit_mode,
                 target_atr_multiplier,
                 stop_atr_multiplier,
@@ -814,7 +1098,7 @@ def write_registry_row(db_path: Path, row: dict[str, Any]) -> None:
                 input_file,
                 report_file,
                 notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 row["run_id"],
@@ -844,6 +1128,12 @@ def write_registry_row(db_path: Path, row: dict[str, Any]) -> None:
                 row["max_tuw_bars"],
                 row["loss_cluster_count"],
                 row["avg_loss_cluster_size"],
+                row.get("avg_entry_mean_correlation", 0.0),
+                row.get("dominant_entry_corr_regime", "neutral_correlation"),
+                row.get("avg_bps_scale_factor", 1.0),
+                row.get("high_corr_trade_count", 0),
+                row.get("neutral_corr_trade_count", 0),
+                row.get("decorrelation_trade_count", 0),
                 row["exit_mode"],
                 row.get("target_atr_multiplier", 0.0),
                 row.get("stop_atr_multiplier", 0.0),
@@ -880,6 +1170,15 @@ def apply_cooldown(signal_mask: pd.Series, cooldown_bars: int) -> pd.Series:
     return pd.Series(accepted, index=signal_mask.index)
 
 
+def apply_execution_delay(signal_mask: pd.Series, execution_delay_bars: int) -> pd.Series:
+    """Shift executable signals forward to model delayed order fills."""
+    delay = int(execution_delay_bars)
+    if delay <= 0:
+        return signal_mask
+    delayed = signal_mask.shift(delay, fill_value=False)
+    return delayed.astype(bool)
+
+
 def simulate_trades_with_atr_exit(
     df: pd.DataFrame,
     accepted_mask: pd.Series,
@@ -908,10 +1207,16 @@ def simulate_trades_with_atr_exit(
     records: list[dict[str, Any]] = []
 
     for idx in entry_idx:
+        entry_row = df.iloc[idx]
         atr_value = float(df.iloc[idx].get(atr_col, np.nan))
-        entry_price = float(df.iloc[idx]["close"])
+        entry_price = float(entry_row["close"])
         if not np.isfinite(entry_price) or entry_price <= 0.0:
             continue
+
+        scale_factor = float(entry_row.get("bps_scale_factor", 1.0) or 1.0)
+        mean_corr_raw = entry_row.get("mean_correlation", 0.0)
+        mean_corr = float(mean_corr_raw) if pd.notna(mean_corr_raw) else 0.0
+        corr_regime = str(entry_row.get("corr_regime", "neutral_correlation") or "neutral_correlation")
 
         # If ATR is missing/invalid, revert this entry to timeout logic.
         use_timeout_only = (not np.isfinite(atr_value)) or (atr_value <= 0.0)
@@ -949,16 +1254,21 @@ def simulate_trades_with_atr_exit(
 
         gross_edge = (exit_price - entry_price) / entry_price
         net_edge = gross_edge - tx_cost_frac
-        pnl_usd = float(getattr(args, "notional_usd", 1000.0)) * net_edge
+        scaled_notional = float(getattr(args, "notional_usd", 1000.0)) * scale_factor
+        pnl_usd = scaled_notional * net_edge
         bars_held = int(exit_idx - idx)
 
         records.append(
             {
-                "timestamp": df.iloc[idx].get("timestamp"),
+                "timestamp": entry_row.get("timestamp"),
                 "net_edge": net_edge,
                 "pnl_usd": pnl_usd,
                 "exit_reason": exit_reason,
                 "bars_held": bars_held,
+                "mean_correlation": mean_corr,
+                "corr_regime": corr_regime,
+                "bps_scale_factor": scale_factor,
+                "scaled_notional_usd": scaled_notional,
             }
         )
 
@@ -1017,6 +1327,10 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         score_threshold=args.signal_score_threshold,
     )
     accepted_mask = apply_cooldown(signal_mask, cooldown_bars=args.cooldown_bars)
+    accepted_mask = apply_execution_delay(
+        accepted_mask,
+        execution_delay_bars=int(getattr(args, "execution_delay_bars", 0)),
+    )
     use_atr_exit = bool(getattr(args, "use_atr_exit", False))
     if use_atr_exit:
         trades = simulate_trades_with_atr_exit(df=df, accepted_mask=accepted_mask, args=args)
@@ -1045,8 +1359,25 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         loss_cluster_count = 0
         avg_loss_cluster_size = 0.0
     else:
+        if "mean_correlation" not in trades.columns:
+            trades["mean_correlation"] = 0.0
+        else:
+            trades["mean_correlation"] = pd.to_numeric(trades["mean_correlation"], errors="coerce").fillna(0.0)
+
+        if "corr_regime" not in trades.columns:
+            trades["corr_regime"] = "neutral_correlation"
+        else:
+            trades["corr_regime"] = trades["corr_regime"].fillna("neutral_correlation").astype(str)
+
+        if "bps_scale_factor" not in trades.columns:
+            if "corr_regime" in trades.columns:
+                trades["bps_scale_factor"] = trades["corr_regime"].map(get_bps_scale_factor).fillna(1.0)
+            else:
+                trades["bps_scale_factor"] = 1.0
+        trades["scaled_notional_usd"] = args.notional_usd * trades["bps_scale_factor"]
+
         if "pnl_usd" not in trades.columns:
-            trades["pnl_usd"] = args.notional_usd * trades["net_edge"]
+            trades["pnl_usd"] = trades["scaled_notional_usd"] * trades["net_edge"]
         trades["is_win"] = (trades["pnl_usd"] > 0).astype(int)
         trades["is_loss"] = (trades["pnl_usd"] < 0).astype(int)
         trades["cum_pnl"] = trades["pnl_usd"].cumsum()
@@ -1076,6 +1407,14 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
             cluster_gap_bars=args.loss_cluster_gap_bars,
         )
 
+        corr_counts = trades["corr_regime"].value_counts().to_dict()
+        avg_entry_mean_correlation = float(trades["mean_correlation"].mean())
+        avg_bps_scale_factor = float(trades["bps_scale_factor"].mean())
+        dominant_entry_corr_regime = max(corr_counts, key=corr_counts.get) if corr_counts else "neutral_correlation"
+        high_corr_trade_count = int(corr_counts.get("high_correlation_sync", 0))
+        neutral_corr_trade_count = int(corr_counts.get("neutral_correlation", 0))
+        decorrelation_trade_count = int(corr_counts.get("decorrelation_risk", 0))
+
         if args.export_equity_csv:
             equity = build_equity_frame(trades)
             equity_file = output_dir / f"equity_{safe_symbol_name(symbol)}_{args.horizon_bars}h_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.csv"
@@ -1084,6 +1423,14 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
                 equity_file,
                 index=False,
             )
+
+    if trades.empty:
+        avg_entry_mean_correlation = 0.0
+        dominant_entry_corr_regime = "neutral_correlation"
+        avg_bps_scale_factor = 1.0
+        high_corr_trade_count = 0
+        neutral_corr_trade_count = 0
+        decorrelation_trade_count = 0
 
     run_id = f"crypto_{safe_symbol_name(symbol)}_{args.horizon_bars}h_{uuid4().hex[:12]}"
     report_file = output_dir / f"{run_id}.json"
@@ -1102,6 +1449,7 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         "signal_score_threshold": args.signal_score_threshold,
         "horizon_bars": args.horizon_bars,
         "cooldown_bars": args.cooldown_bars,
+        "execution_delay_bars": int(getattr(args, "execution_delay_bars", 0)),
         "trades": trade_count,
         "wins": wins,
         "losses": losses,
@@ -1117,6 +1465,12 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
         "max_tuw_bars": max_tuw_bars,
         "loss_cluster_count": loss_cluster_count,
         "avg_loss_cluster_size": avg_loss_cluster_size,
+        "avg_entry_mean_correlation": avg_entry_mean_correlation,
+        "dominant_entry_corr_regime": dominant_entry_corr_regime,
+        "avg_bps_scale_factor": avg_bps_scale_factor,
+        "high_corr_trade_count": high_corr_trade_count,
+        "neutral_corr_trade_count": neutral_corr_trade_count,
+        "decorrelation_trade_count": decorrelation_trade_count,
         "exit_mode": exit_mode,
         "target_atr_multiplier": float(getattr(args, "target_atr_multiplier", 0.0)),
         "stop_atr_multiplier": float(getattr(args, "stop_atr_multiplier", 0.0)),
@@ -1127,11 +1481,27 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
     }
     report_file.write_text(json.dumps(run_report, indent=2), encoding="utf-8")
     write_registry_row(db_path, run_report)
+    ensure_portfolio_registry_schema(db_path)  # Creates trade_ledger if absent
+    if not trades.empty:
+        # Build a minimal trade frame matching what portfolio path uses
+        _trades_for_ledger = trades.copy()
+        if "entry_price" not in _trades_for_ledger.columns:
+            _trades_for_ledger["entry_price"] = _trades_for_ledger.get("close", 0.0)
+        if "exit_price" not in _trades_for_ledger.columns:
+            _trades_for_ledger["exit_price"] = 0.0
+        write_trade_ledger_rows(
+            db_path=db_path,
+            run_id=run_id,
+            portfolio_run_id=None,
+            symbol=symbol,
+            trades=_trades_for_ledger,
+            notional_usd=float(args.notional_usd),
+        )
 
     pf_str = "inf" if math.isinf(profit_factor) else f"{profit_factor:.3f}"
     print(
         f"Backtest {symbol} h={args.horizon_bars}: trades={trade_count}, win_rate={win_rate:.2%}, "
-        f"pf={pf_str}, net_pnl={net_pnl:.2f}, max_consec_losses={max_consecutive_losses}, "
+        f"pf={pf_str}, net_pnl={net_pnl:.2f}, avg_scale={avg_bps_scale_factor:.2f}, max_consec_losses={max_consecutive_losses}, "
         f"max_tuw_bars={max_tuw_bars} -> {report_file}"
     )
     return run_report
@@ -1140,6 +1510,638 @@ def run_backtest_from_labeled_df(df: pd.DataFrame, source_file: Path, args: argp
 def run_backtest_for_labeled_file(file: Path, args: argparse.Namespace, output_dir: Path, db_path: Path) -> dict[str, Any]:
     df = load_parquet(file)
     return run_backtest_from_labeled_df(df=df, source_file=file, args=args, output_dir=output_dir, db_path=db_path)
+
+
+def _build_strategy_local_args(
+    args: argparse.Namespace,
+    symbol: str,
+    policy: StrategyPolicy,
+    active_regime_cfg: dict[str, Any],
+) -> argparse.Namespace:
+    local_args = argparse.Namespace(**vars(args))
+    local_args.horizon_bars = policy.horizon_bars
+    local_args.signal_volume_threshold = policy.signal_volume_threshold
+    local_args.signal_score_threshold = policy.signal_score_threshold
+    local_args.cooldown_bars = policy.cooldown_bars
+    local_args.use_atr_exit = bool(getattr(args, "use_atr_exit", False) or active_regime_cfg.get("use_atr_exit", False))
+    local_args.atr_column = str(active_regime_cfg.get("atr_column", "atr_14"))
+    local_args.atr_period = int(active_regime_cfg.get("atr_period", 14))
+    cli_tp = getattr(args, "target_atr_multiplier", None)
+    cli_sl = getattr(args, "stop_atr_multiplier", None)
+    local_args.target_atr_multiplier = float(cli_tp if cli_tp is not None else active_regime_cfg.get("target_atr_multiplier", 1.5))
+    local_args.stop_atr_multiplier = float(cli_sl if cli_sl is not None else active_regime_cfg.get("stop_atr_multiplier", 2.0))
+    local_args.feature_version = f"{args.feature_version}_{safe_symbol_name(symbol)}_h{policy.horizon_bars}"
+    local_args.notes = f"{args.notes} strategy_config={Path(args.strategy_config).name}".strip()
+    return local_args
+
+
+def _prepare_strategy_symbol_inputs(
+    files: list[Path],
+    args: argparse.Namespace,
+    strategy_config: dict[str, Any],
+    regime_dir: Path,
+) -> list[dict[str, Any]]:
+    prepared: list[dict[str, Any]] = []
+    regime_cfg = strategy_config.get("regimes", {}) or {}
+
+    for file in files:
+        features_df = load_parquet(file)
+        if features_df.empty:
+            continue
+
+        symbol = str(features_df["symbol"].iloc[0]) if "symbol" in features_df.columns else file.stem
+        features_df = hydrate_backtest_regime_frame(features_df, symbol, regime_dir)
+        policy = resolve_strategy_policy(symbol, strategy_config, args)
+
+        active_regime: str | None = None
+        active_regime_cfg: dict[str, Any] = {}
+        if getattr(args, "apply_regime", False):
+            active_regime = _load_current_regime(symbol, regime_dir)
+            if active_regime:
+                active_regime_cfg = regime_cfg.get(active_regime, {}) or {}
+                policy = _apply_regime_to_policy(policy, active_regime, regime_cfg)
+                print(f"[regime] {symbol}: active_regime={active_regime}  horizon={policy.horizon_bars}  score_thr={policy.signal_score_threshold}")
+            else:
+                print(f"[regime] {symbol}: no regime parquet found in {regime_dir}; using static policy")
+
+        local_args = _build_strategy_local_args(args, symbol, policy, active_regime_cfg)
+        labeled_df = add_labels(
+            features_df,
+            horizon_bars=policy.horizon_bars,
+            cost_model=CostModel(
+                fee_bps_per_side=args.fee_bps_per_side,
+                slippage_bps_total=args.slippage_bps_total,
+            ),
+        ).copy()
+        labeled_df["timestamp"] = pd.to_datetime(labeled_df["timestamp"], errors="coerce")
+        labeled_df["raw_signal_candidate"] = build_signal_mask(
+            labeled_df,
+            volume_threshold=local_args.signal_volume_threshold,
+            score_threshold=local_args.signal_score_threshold,
+        )
+        labeled_df["signal_candidate"] = apply_execution_delay(
+            labeled_df["raw_signal_candidate"],
+            execution_delay_bars=int(getattr(local_args, "execution_delay_bars", 0)),
+        )
+        labeled_df["row_idx"] = np.arange(len(labeled_df), dtype=int)
+
+        prepared.append(
+            {
+                "file": file,
+                "symbol": symbol,
+                "policy": policy,
+                "active_regime": active_regime,
+                "active_regime_cfg": active_regime_cfg,
+                "args": local_args,
+                "df": labeled_df,
+            }
+        )
+
+    return prepared
+
+
+def _build_symbol_run_report_from_trades(
+    symbol: str,
+    source_file: Path,
+    args: argparse.Namespace,
+    trades: pd.DataFrame,
+    output_dir: Path,
+    db_path: Path,
+    portfolio_run_id: str | None = None,
+) -> dict[str, Any]:
+    timeframe_min = int(trades["timeframe_min"].iloc[0]) if (not trades.empty and "timeframe_min" in trades.columns) else 15
+    exit_mode = "atr_path" if bool(getattr(args, "use_atr_exit", False)) else "timeout"
+
+    if trades.empty:
+        trade_count = wins = losses = max_consecutive_losses = max_tuw_bars = loss_cluster_count = 0
+        net_pnl = avg_pnl = win_rate = profit_factor = max_drawdown = recovery_factor = avg_loss_streak = avg_tuw_bars = avg_loss_cluster_size = 0.0
+        avg_entry_mean_correlation = 0.0
+        dominant_entry_corr_regime = "neutral_correlation"
+        avg_bps_scale_factor = 1.0
+        high_corr_trade_count = neutral_corr_trade_count = decorrelation_trade_count = 0
+    else:
+        trades = trades.copy()
+        trades["pnl_usd"] = pd.to_numeric(trades["pnl_usd"], errors="coerce").fillna(0.0)
+        trades["mean_correlation"] = pd.to_numeric(trades.get("mean_correlation", 0.0), errors="coerce").fillna(0.0)
+        trades["bps_scale_factor"] = pd.to_numeric(trades.get("bps_scale_factor", 1.0), errors="coerce").fillna(1.0)
+        trades["corr_regime"] = trades.get("corr_regime", "neutral_correlation").fillna("neutral_correlation").astype(str)
+        trades["is_win"] = (trades["pnl_usd"] > 0).astype(int)
+        trades["is_loss"] = (trades["pnl_usd"] < 0).astype(int)
+        trades["cum_pnl"] = trades["pnl_usd"].cumsum()
+
+        trade_count = int(len(trades))
+        wins = int(trades["is_win"].sum())
+        losses = int(trades["is_loss"].sum())
+        net_pnl = float(trades["pnl_usd"].sum())
+        avg_pnl = float(trades["pnl_usd"].mean())
+        win_rate = float(wins / trade_count) if trade_count else 0.0
+        gross_win = float(trades.loc[trades["pnl_usd"] > 0, "pnl_usd"].sum())
+        gross_loss = float(-trades.loc[trades["pnl_usd"] < 0, "pnl_usd"].sum())
+        if gross_loss > 0:
+            profit_factor = gross_win / gross_loss
+        elif gross_win > 0:
+            profit_factor = float("inf")
+        else:
+            profit_factor = 0.0
+        max_drawdown = compute_max_drawdown(trades["cum_pnl"])
+        recovery_factor = (net_pnl / abs(max_drawdown)) if max_drawdown < 0 else 0.0
+        max_consecutive_losses, avg_loss_streak = consecutive_loss_stats(trades["pnl_usd"])
+        avg_tuw_bars, max_tuw_bars = time_under_water_stats(trades["cum_pnl"])
+        loss_cluster_count, avg_loss_cluster_size = drawdown_cluster_stats(
+            trades_df=trades,
+            cluster_gap_bars=args.loss_cluster_gap_bars,
+        )
+
+        corr_counts = trades["corr_regime"].value_counts().to_dict()
+        avg_entry_mean_correlation = float(trades["mean_correlation"].mean())
+        dominant_entry_corr_regime = max(corr_counts, key=corr_counts.get) if corr_counts else "neutral_correlation"
+        avg_bps_scale_factor = float(trades["bps_scale_factor"].mean())
+        high_corr_trade_count = int(corr_counts.get("high_correlation_sync", 0))
+        neutral_corr_trade_count = int(corr_counts.get("neutral_correlation", 0))
+        decorrelation_trade_count = int(corr_counts.get("decorrelation_risk", 0))
+
+    run_id = f"crypto_{safe_symbol_name(symbol)}_{args.horizon_bars}h_{uuid4().hex[:12]}"
+    report_file = output_dir / f"{run_id}.json"
+    ensure_parent(report_file)
+    run_report = {
+        "run_id": run_id,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "symbol": symbol,
+        "timeframe_min": timeframe_min,
+        "feature_version": args.feature_version,
+        "fee_bps_per_side": args.fee_bps_per_side,
+        "slippage_bps_total": args.slippage_bps_total,
+        "notional_usd": args.notional_usd,
+        "signal_volume_threshold": args.signal_volume_threshold,
+        "signal_score_threshold": args.signal_score_threshold,
+        "horizon_bars": args.horizon_bars,
+        "cooldown_bars": args.cooldown_bars,
+        "execution_delay_bars": int(getattr(args, "execution_delay_bars", 0)),
+        "trades": trade_count,
+        "wins": wins,
+        "losses": losses,
+        "win_rate": win_rate,
+        "profit_factor": profit_factor,
+        "net_pnl": net_pnl,
+        "avg_pnl_per_trade": avg_pnl,
+        "max_drawdown": max_drawdown,
+        "recovery_factor": recovery_factor,
+        "max_consecutive_losses": max_consecutive_losses,
+        "avg_loss_streak": avg_loss_streak,
+        "avg_tuw_bars": avg_tuw_bars,
+        "max_tuw_bars": max_tuw_bars,
+        "loss_cluster_count": loss_cluster_count,
+        "avg_loss_cluster_size": avg_loss_cluster_size,
+        "avg_entry_mean_correlation": avg_entry_mean_correlation,
+        "dominant_entry_corr_regime": dominant_entry_corr_regime,
+        "avg_bps_scale_factor": avg_bps_scale_factor,
+        "high_corr_trade_count": high_corr_trade_count,
+        "neutral_corr_trade_count": neutral_corr_trade_count,
+        "decorrelation_trade_count": decorrelation_trade_count,
+        "exit_mode": exit_mode,
+        "target_atr_multiplier": float(getattr(args, "target_atr_multiplier", 0.0)),
+        "stop_atr_multiplier": float(getattr(args, "stop_atr_multiplier", 0.0)),
+        "atr_column": str(getattr(args, "atr_column", "")),
+        "input_file": str(source_file),
+        "report_file": str(report_file),
+        "notes": args.notes,
+    }
+    report_file.write_text(json.dumps(run_report, indent=2), encoding="utf-8")
+    write_registry_row(db_path, run_report)
+    if not trades.empty:
+        write_trade_ledger_rows(
+            db_path=db_path,
+            run_id=run_id,
+            portfolio_run_id=portfolio_run_id,
+            symbol=symbol,
+            trades=trades if not trades.empty else pd.DataFrame(),
+            notional_usd=float(args.notional_usd),
+        )
+    pf_str = "inf" if math.isinf(profit_factor) else f"{profit_factor:.3f}"
+    print(
+        f"Portfolio backtest {symbol} h={args.horizon_bars}: trades={trade_count}, win_rate={win_rate:.2%}, "
+        f"pf={pf_str}, net_pnl={net_pnl:.2f}, avg_scale={avg_bps_scale_factor:.2f} -> {report_file}"
+    )
+    return run_report
+
+
+def run_portfolio_backtest_strategy(
+    prepared_inputs: list[dict[str, Any]],
+    args: argparse.Namespace,
+    strategy_config: dict[str, Any],
+    output_dir: Path,
+    db_path: Path,
+    config_path: Path,
+) -> dict[str, Any]:
+    routing = load_portfolio_routing_config(strategy_config)
+    if not prepared_inputs:
+        return {
+            "stage": "backtest-strategy-portfolio",
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "strategy_config": str(config_path),
+            "mode": "portfolio",
+            "portfolio_run": None,
+            "runs": [],
+        }
+
+    ensure_portfolio_registry_schema(db_path)
+    by_symbol: dict[str, dict[str, Any]] = {item["symbol"]: item for item in prepared_inputs}
+    all_timestamps = sorted(
+        {pd.Timestamp(ts) for item in prepared_inputs for ts in item["df"]["timestamp"].dropna().tolist()}
+    )
+    rows_by_symbol = {
+        item["symbol"]: item["df"].set_index("timestamp", drop=False).sort_index() for item in prepared_inputs
+    }
+
+    symbol_state: dict[str, dict[str, Any]] = {
+        symbol: {"last_entry_row_idx": -10**9, "active": None} for symbol in by_symbol.keys()
+    }
+    executed_trades_by_symbol: dict[str, list[dict[str, Any]]] = {symbol: [] for symbol in by_symbol.keys()}
+    gated_signals_count = 0
+    trace_enabled = bool(getattr(args, "debug_cooldown_trace", False))
+    trace_rows: list[dict[str, Any]] = []
+
+    recent_exec_events: list[dict[str, Any]] = []
+    gated_cluster_window_count = 0
+
+    for ts_position, current_ts in enumerate(all_timestamps):
+        remaining_slots = max(0, routing.max_simultaneous_assets - sum(1 for state in symbol_state.values() if state["active"]))
+        if routing.latency_lookback_bars > 0 and recent_exec_events:
+            min_ts_position = max(0, ts_position - routing.latency_lookback_bars)
+            recent_exec_events = [
+                evt for evt in recent_exec_events if int(evt["ts_position"]) >= min_ts_position
+            ]
+
+        for symbol, item in by_symbol.items():
+            active = symbol_state[symbol]["active"]
+            if active is None:
+                continue
+            symbol_rows = rows_by_symbol[symbol]
+            if current_ts not in symbol_rows.index:
+                continue
+            current_row = symbol_rows.loc[current_ts]
+            if isinstance(current_row, pd.DataFrame):
+                current_row = current_row.iloc[-1]
+            current_row_idx = int(current_row["row_idx"])
+
+            exit_reason: str | None = None
+            exit_price: float | None = None
+            if active["use_atr_exit"]:
+                high_k = float(current_row["high"])
+                low_k = float(current_row["low"])
+                hit_stop = low_k <= active["sl_price"]
+                hit_target = high_k >= active["tp_price"]
+                if hit_stop and hit_target:
+                    exit_reason = "stop_loss"
+                    exit_price = active["sl_price"]
+                elif hit_stop:
+                    exit_reason = "stop_loss"
+                    exit_price = active["sl_price"]
+                elif hit_target:
+                    exit_reason = "take_profit"
+                    exit_price = active["tp_price"]
+
+            if exit_reason is None and current_row_idx >= active["end_idx"]:
+                exit_reason = "timeout"
+                exit_price = float(current_row["close"])
+
+            if exit_reason is None or exit_price is None:
+                continue
+
+            gross_edge = (exit_price - active["entry_price"]) / active["entry_price"]
+            net_edge = gross_edge - active["tx_cost_frac"]
+            pnl_usd = active["scaled_notional_usd"] * net_edge
+            executed_trades_by_symbol[symbol].append(
+                {
+                    "timestamp": active["entry_timestamp"],
+                    "net_edge": net_edge,
+                    "pnl_usd": pnl_usd,
+                    "exit_reason": exit_reason,
+                    "bars_held": int(current_row_idx - active["entry_idx"]),
+                    "mean_correlation": active["mean_correlation"],
+                    "corr_regime": active["corr_regime"],
+                    "bps_scale_factor": active["bps_scale_factor"],
+                    "scaled_notional_usd": active["scaled_notional_usd"],
+                    "timeframe_min": active["timeframe_min"],
+                }
+            )
+            symbol_state[symbol]["active"] = None
+            remaining_slots += 1
+
+        pending_entries: list[dict[str, Any]] = []
+        trace_decision_by_symbol: dict[str, str] = {}
+        trace_state_by_symbol: dict[str, dict[str, Any]] = {}
+        for symbol, item in by_symbol.items():
+            symbol_rows = rows_by_symbol[symbol]
+            if current_ts not in symbol_rows.index:
+                continue
+            row = symbol_rows.loc[current_ts]
+            if isinstance(row, pd.DataFrame):
+                row = row.iloc[-1]
+            row_idx = int(row["row_idx"])
+            state = symbol_state[symbol]
+            raw_signal = bool(row.get("raw_signal_candidate", row.get("signal_candidate", False)))
+            effective_signal = bool(row.get("signal_candidate", False))
+            in_cooldown = bool(row_idx - int(state["last_entry_row_idx"]) < int(item["args"].cooldown_bars))
+            trace_state_by_symbol[symbol] = {
+                "row": row,
+                "raw_signal": raw_signal,
+                "effective_signal": effective_signal,
+                "in_cooldown": in_cooldown,
+            }
+            trace_decision_by_symbol[symbol] = ""
+
+            if state["active"] is not None:
+                continue
+            if not effective_signal:
+                continue
+            if in_cooldown:
+                trace_decision_by_symbol[symbol] = "masked_by_cooldown"
+                continue
+            pending_entries.append(
+                {
+                    "symbol": symbol,
+                    "row": row,
+                    "row_idx": row_idx,
+                    "item": item,
+                    "arrival_ts": pd.Timestamp(current_ts),
+                    "arrival_ts_position": ts_position,
+                }
+            )
+
+        if not pending_entries or remaining_slots <= 0:
+            if trace_enabled:
+                for symbol, state in trace_state_by_symbol.items():
+                    trace_rows.append(
+                        {
+                            "timestamp": pd.Timestamp(current_ts).isoformat(),
+                            "symbol": symbol,
+                            "raw_signal": int(state["raw_signal"]),
+                            "effective_signal": int(state["effective_signal"]),
+                            "in_cooldown": int(state["in_cooldown"]),
+                            "router_decision": trace_decision_by_symbol.get(symbol, ""),
+                        }
+                    )
+            continue
+
+        pending_is_high_corr: dict[str, bool] = {
+            entry["symbol"]: is_high_corr_entry(entry, routing) for entry in pending_entries
+        }
+
+        if (
+            routing.latency_lookback_bars > 0
+            and routing.coordination_mode in {"priority_gating", "strict_exclusion"}
+            and recent_exec_events
+        ):
+            lock_events = recent_exec_events
+            if routing.coordination_mode != "strict_exclusion":
+                lock_events = [evt for evt in recent_exec_events if bool(evt.get("is_high_corr", False))]
+            if not lock_events:
+                lock_events = []
+            if lock_events:
+                if routing.latency_resolution_mode == "rank_first":
+                    lock_rank = min(int(evt["rank"]) for evt in lock_events)
+                else:
+                    anchor = min(lock_events, key=lambda evt: (int(evt["ts_position"]), int(evt["rank"])))
+                    lock_rank = int(anchor["rank"])
+
+                survivors: list[dict[str, Any]] = []
+                for entry in pending_entries:
+                    symbol = entry["symbol"]
+                    requires_lock = bool(pending_is_high_corr.get(symbol, False)) or routing.coordination_mode == "strict_exclusion"
+                    if not requires_lock:
+                        survivors.append(entry)
+                        continue
+                    candidate_rank = get_asset_rank(symbol, routing)
+                    should_gate = (
+                        routing.coordination_mode == "strict_exclusion"
+                        or candidate_rank >= lock_rank
+                    )
+                    if should_gate:
+                        if not trace_decision_by_symbol.get(symbol):
+                            trace_decision_by_symbol[symbol] = "gated_cluster_window"
+                        gated_signals_count += 1
+                        gated_cluster_window_count += 1
+                        continue
+                    survivors.append(entry)
+                pending_entries = survivors
+                pending_is_high_corr = {
+                    entry["symbol"]: is_high_corr_entry(entry, routing) for entry in pending_entries
+                }
+
+        is_high_corr = any(pending_is_high_corr.values())
+
+        if routing.coordination_mode in {"priority_gating", "strict_exclusion"} and is_high_corr and len(pending_entries) > 1:
+            pending_entries.sort(key=lambda entry: get_asset_rank(entry["symbol"], routing))
+            capacity = 1 if routing.coordination_mode == "strict_exclusion" else remaining_slots
+            selected_entries = pending_entries[:capacity]
+            gated_signals_count += max(0, len(pending_entries) - len(selected_entries))
+        else:
+            if routing.latency_resolution_mode == "rank_first":
+                pending_entries.sort(
+                    key=lambda entry: (
+                        get_asset_rank(entry["symbol"], routing),
+                        entry["arrival_ts"],
+                        entry["symbol"],
+                    )
+                )
+            else:
+                pending_entries.sort(
+                    key=lambda entry: (
+                        entry["arrival_ts"],
+                        get_asset_rank(entry["symbol"], routing),
+                        entry["symbol"],
+                    )
+                )
+            selected_entries = pending_entries[:remaining_slots]
+            gated_signals_count += max(0, len(pending_entries) - len(selected_entries))
+
+        selected_symbols = {entry["symbol"] for entry in selected_entries}
+        for pending in pending_entries:
+            symbol = pending["symbol"]
+            if symbol not in selected_symbols and not trace_decision_by_symbol.get(symbol):
+                trace_decision_by_symbol[symbol] = "gated"
+
+        for entry in selected_entries:
+            symbol = entry["symbol"]
+            row = entry["row"]
+            row_idx = entry["row_idx"]
+            item = entry["item"]
+            local_args = item["args"]
+
+            entry_price = float(row["close"])
+            if not np.isfinite(entry_price) or entry_price <= 0.0:
+                continue
+
+            base_scale = float(row.get("bps_scale_factor", 1.0) or 1.0)
+            allocation_limit = get_asset_allocation_limit(symbol, routing)
+            scaled_notional_usd = float(local_args.notional_usd) * base_scale * allocation_limit
+            atr_value = float(row.get(str(getattr(local_args, "atr_column", "atr_14")), np.nan))
+            end_idx = min(len(item["df"]) - 1, row_idx + max(1, int(local_args.horizon_bars)))
+            active_record = {
+                "entry_idx": row_idx,
+                "entry_timestamp": row.get("timestamp"),
+                "entry_price": entry_price,
+                "end_idx": end_idx,
+                "scaled_notional_usd": scaled_notional_usd,
+                "bps_scale_factor": base_scale * allocation_limit,
+                "mean_correlation": float(row.get("mean_correlation", 0.0) or 0.0),
+                "corr_regime": str(row.get("corr_regime", "neutral_correlation") or "neutral_correlation"),
+                "timeframe_min": int(item["df"]["timeframe_min"].iloc[0]) if "timeframe_min" in item["df"].columns else 15,
+                "tx_cost_frac": ((2.0 * float(local_args.fee_bps_per_side)) + float(local_args.slippage_bps_total)) / 10000.0,
+                "use_atr_exit": bool(getattr(local_args, "use_atr_exit", False)),
+                "tp_price": None,
+                "sl_price": None,
+            }
+            if active_record["use_atr_exit"] and np.isfinite(atr_value) and atr_value > 0.0:
+                active_record["tp_price"] = entry_price + (float(getattr(local_args, "target_atr_multiplier", 1.5)) * atr_value)
+                active_record["sl_price"] = entry_price - (float(getattr(local_args, "stop_atr_multiplier", 2.0)) * atr_value)
+            else:
+                active_record["use_atr_exit"] = False
+
+            symbol_state[symbol]["active"] = active_record
+            symbol_state[symbol]["last_entry_row_idx"] = row_idx
+            remaining_slots = max(0, remaining_slots - 1)
+            trace_decision_by_symbol[symbol] = "executed"
+            recent_exec_events.append(
+                {
+                    "symbol": symbol,
+                    "rank": get_asset_rank(symbol, routing),
+                    "ts_position": ts_position,
+                    "is_high_corr": is_high_corr_entry(entry, routing),
+                }
+            )
+
+        if trace_enabled:
+            for symbol, state in trace_state_by_symbol.items():
+                trace_rows.append(
+                    {
+                        "timestamp": pd.Timestamp(current_ts).isoformat(),
+                        "symbol": symbol,
+                        "raw_signal": int(state["raw_signal"]),
+                        "effective_signal": int(state["effective_signal"]),
+                        "in_cooldown": int(state["in_cooldown"]),
+                        "router_decision": trace_decision_by_symbol.get(symbol, ""),
+                    }
+                )
+
+    trailing_timestamps = all_timestamps[-1:] if all_timestamps else []
+    for current_ts in trailing_timestamps:
+        for symbol, state in symbol_state.items():
+            active = state["active"]
+            if active is None:
+                continue
+            symbol_rows = rows_by_symbol[symbol]
+            current_row = symbol_rows.iloc[-1]
+            exit_price = float(current_row["close"])
+            gross_edge = (exit_price - active["entry_price"]) / active["entry_price"]
+            net_edge = gross_edge - active["tx_cost_frac"]
+            pnl_usd = active["scaled_notional_usd"] * net_edge
+            executed_trades_by_symbol[symbol].append(
+                {
+                    "timestamp": active["entry_timestamp"],
+                    "net_edge": net_edge,
+                    "pnl_usd": pnl_usd,
+                    "exit_reason": "timeout",
+                    "bars_held": int(current_row["row_idx"] - active["entry_idx"]),
+                    "mean_correlation": active["mean_correlation"],
+                    "corr_regime": active["corr_regime"],
+                    "bps_scale_factor": active["bps_scale_factor"],
+                    "scaled_notional_usd": active["scaled_notional_usd"],
+                    "timeframe_min": active["timeframe_min"],
+                }
+            )
+            state["active"] = None
+
+    summary: dict[str, Any] = {
+        "stage": "backtest-strategy",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "strategy_config": str(config_path),
+        "mode": "portfolio",
+        "runs": [],
+    }
+
+    # Generate portfolio_run_id early so trade_ledger rows can reference it
+    portfolio_run_id_placeholder = f"portfolio_{uuid4().hex[:12]}"
+
+    portfolio_trade_frames: list[pd.DataFrame] = []
+    for item in prepared_inputs:
+        symbol = item["symbol"]
+        symbol_trades = pd.DataFrame.from_records(executed_trades_by_symbol[symbol])
+        run_report = _build_symbol_run_report_from_trades(
+            symbol=symbol,
+            source_file=item["file"],
+            args=item["args"],
+            trades=symbol_trades,
+            output_dir=output_dir,
+            db_path=db_path,
+            portfolio_run_id=portfolio_run_id_placeholder,
+        )
+        run_report["strategy_policy"] = {
+            "symbol": item["policy"].symbol,
+            "horizon_bars": item["policy"].horizon_bars,
+            "signal_volume_threshold": item["policy"].signal_volume_threshold,
+            "signal_score_threshold": item["policy"].signal_score_threshold,
+            "cooldown_bars": item["policy"].cooldown_bars,
+            "active_regime": item["active_regime"],
+            "use_atr_exit": bool(getattr(item["args"], "use_atr_exit", False)),
+            "atr_column": str(getattr(item["args"], "atr_column", "atr_14")),
+            "target_atr_multiplier": float(getattr(item["args"], "target_atr_multiplier", 1.5)),
+            "stop_atr_multiplier": float(getattr(item["args"], "stop_atr_multiplier", 2.0)),
+        }
+        summary["runs"].append(run_report)
+        if not symbol_trades.empty:
+            portfolio_trade_frames.append(symbol_trades.assign(symbol=symbol))
+
+    portfolio_trades = pd.concat(portfolio_trade_frames, ignore_index=True) if portfolio_trade_frames else pd.DataFrame(columns=["pnl_usd"])
+    total_trades = int(len(portfolio_trades))
+    portfolio_net_pnl = float(portfolio_trades["pnl_usd"].sum()) if total_trades else 0.0
+    gross_win = float(portfolio_trades.loc[portfolio_trades["pnl_usd"] > 0, "pnl_usd"].sum()) if total_trades else 0.0
+    gross_loss = float(-portfolio_trades.loc[portfolio_trades["pnl_usd"] < 0, "pnl_usd"].sum()) if total_trades else 0.0
+    if gross_loss > 0:
+        portfolio_profit_factor = gross_win / gross_loss
+    elif gross_win > 0:
+        portfolio_profit_factor = float("inf")
+    else:
+        portfolio_profit_factor = 0.0
+
+    portfolio_run_id = portfolio_run_id_placeholder
+    portfolio_report_file = output_dir / f"{portfolio_run_id}.json"
+    portfolio_report = {
+        "portfolio_run_id": portfolio_run_id,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "config_file": str(config_path),
+        "coordination_mode": routing.coordination_mode,
+        "latency_lookback_bars": routing.latency_lookback_bars,
+        "latency_resolution_mode": routing.latency_resolution_mode,
+        "total_trades": total_trades,
+        "gated_signals_count": gated_signals_count,
+        "gated_cluster_window_count": gated_cluster_window_count,
+        "portfolio_net_pnl": portfolio_net_pnl,
+        "portfolio_profit_factor": portfolio_profit_factor,
+        "max_simultaneous_assets": routing.max_simultaneous_assets,
+        "report_file": str(portfolio_report_file),
+        "notes": args.notes,
+    }
+
+    if trace_enabled and trace_rows:
+        trace_path = Path(getattr(args, "debug_cooldown_trace_file", "reports/crypto/debug_cooldown_leak.csv"))
+        if not trace_path.is_absolute():
+            trace_path = Path.cwd() / trace_path
+        ensure_parent(trace_path)
+        pd.DataFrame(trace_rows).to_csv(trace_path, index=False)
+        portfolio_report["debug_cooldown_trace_file"] = str(trace_path)
+        print(f"Cooldown trace written: {trace_path}")
+
+    ensure_parent(portfolio_report_file)
+    portfolio_report_file.write_text(json.dumps(portfolio_report, indent=2), encoding="utf-8")
+    write_portfolio_registry_row(db_path, portfolio_report)
+    summary["portfolio_run"] = portfolio_report
+    print(
+        f"Portfolio strategy run: trades={total_trades}, gated={gated_signals_count}, "
+        f"net_pnl={portfolio_net_pnl:.2f}, pf={portfolio_profit_factor if not math.isinf(portfolio_profit_factor) else 'inf'} -> {portfolio_report_file}"
+    )
+    return summary
 
 
 def command_backtest_batch(args: argparse.Namespace) -> None:
@@ -1197,13 +2199,48 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
     output_dir = Path(args.output_dir)
     db_path = Path(args.registry_db)
     config_path = Path(args.strategy_config)
+    regime_dir = Path(getattr(args, "regime_dir", "data/crypto/regime"))
 
     files = sorted(input_dir.glob("kraken_*_features.parquet"))
     if not files:
         raise RuntimeError(f"No feature parquet files found in {input_dir}")
 
     strategy_config = load_strategy_config(config_path)
+    # Apply config-driven position sizing before any backtest runs in this process
+    import sys as _sys
+    _mod = _sys.modules[__name__]
+    _mod._HIGH_CORR_SCALE = float(
+        (strategy_config.get("position_sizing") or {}).get("high_correlation_scale", 0.50)
+    )
     ensure_crypto_registry_schema(db_path)
+
+    prepared_inputs = _prepare_strategy_symbol_inputs(files, args, strategy_config, regime_dir)
+    if getattr(args, "mode", "single") == "portfolio":
+        summary = run_portfolio_backtest_strategy(
+            prepared_inputs=prepared_inputs,
+            args=args,
+            strategy_config=strategy_config,
+            output_dir=output_dir,
+            db_path=db_path,
+            config_path=config_path,
+        )
+        manifest_file = output_dir / "manifest_backtest_strategy.json"
+        ensure_parent(manifest_file)
+        manifest_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        print(f"Strategy backtest manifest written: {manifest_file}")
+        print(f"Registry updated: {db_path}")
+        # Auto-generate Phase 4 attribution report after every portfolio run
+        try:
+            from generate_performance_attribution import generate_attribution
+            portfolio_run = summary.get("portfolio_run") or {}
+            generate_attribution(
+                db_path=db_path,
+                output_dir=output_dir / "attribution",
+                portfolio_run_id=portfolio_run.get("portfolio_run_id"),
+            )
+        except Exception as _attr_err:
+            print(f"[attribution] Skipped (non-fatal): {_attr_err}")
+        return
 
     summary: dict[str, Any] = {
         "stage": "backtest-strategy",
@@ -1212,52 +2249,13 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
         "runs": [],
     }
 
-    for file in files:
-        features_df = load_parquet(file)
-        if features_df.empty:
-            continue
-
-        symbol = str(features_df["symbol"].iloc[0]) if "symbol" in features_df.columns else file.stem
-        policy = resolve_strategy_policy(symbol, strategy_config, args)
-
-        # Regime override: if --apply-regime, swap policy fields based on current bar regime
-        active_regime: str | None = None
-        active_regime_cfg: dict[str, Any] = {}
-        if getattr(args, "apply_regime", False):
-            regime_dir = Path(getattr(args, "regime_dir", "data/crypto/regime"))
-            active_regime = _load_current_regime(symbol, regime_dir)
-            if active_regime:
-                regime_cfg = strategy_config.get("regimes", {}) or {}
-                active_regime_cfg = regime_cfg.get(active_regime, {}) or {}
-                policy = _apply_regime_to_policy(policy, active_regime, regime_cfg)
-                print(f"[regime] {symbol}: active_regime={active_regime}  horizon={policy.horizon_bars}  score_thr={policy.signal_score_threshold}")
-            else:
-                print(f"[regime] {symbol}: no regime parquet found in {regime_dir}; using static policy")
-
-        local_args = argparse.Namespace(**vars(args))
-        local_args.horizon_bars = policy.horizon_bars
-        local_args.signal_volume_threshold = policy.signal_volume_threshold
-        local_args.signal_score_threshold = policy.signal_score_threshold
-        local_args.cooldown_bars = policy.cooldown_bars
-        local_args.use_atr_exit = bool(getattr(args, "use_atr_exit", False) or active_regime_cfg.get("use_atr_exit", False))
-        local_args.atr_column = str(active_regime_cfg.get("atr_column", "atr_14"))
-        local_args.atr_period = int(active_regime_cfg.get("atr_period", 14))
-        # CLI args take priority over regime config when explicitly provided (not None)
-        cli_tp = getattr(args, "target_atr_multiplier", None)
-        cli_sl = getattr(args, "stop_atr_multiplier", None)
-        local_args.target_atr_multiplier = float(cli_tp if cli_tp is not None else active_regime_cfg.get("target_atr_multiplier", 1.5))
-        local_args.stop_atr_multiplier = float(cli_sl if cli_sl is not None else active_regime_cfg.get("stop_atr_multiplier", 2.0))
-        local_args.feature_version = f"{args.feature_version}_{safe_symbol_name(symbol)}_h{policy.horizon_bars}"
-        local_args.notes = f"{args.notes} strategy_config={config_path.name}".strip()
-
-        labeled_df = add_labels(
-            features_df,
-            horizon_bars=policy.horizon_bars,
-            cost_model=CostModel(
-                fee_bps_per_side=args.fee_bps_per_side,
-                slippage_bps_total=args.slippage_bps_total,
-            ),
-        )
+    for item in prepared_inputs:
+        file = item["file"]
+        symbol = item["symbol"]
+        policy = item["policy"]
+        active_regime = item["active_regime"]
+        local_args = item["args"]
+        labeled_df = item["df"]
         run_report = run_backtest_from_labeled_df(
             df=labeled_df,
             source_file=file,
@@ -1305,12 +2303,12 @@ def command_backtest_strategy(args: argparse.Namespace) -> None:
                 if features_df.empty:
                     continue
                 symbol = str(features_df["symbol"].iloc[0]) if "symbol" in features_df.columns else file.stem
+                features_df = hydrate_backtest_regime_frame(features_df, symbol, regime_dir)
                 policy = resolve_strategy_policy(symbol, strategy_config, args)
                 active_regime2: str | None = None
                 active_regime_cfg2: dict[str, Any] = {}
                 if getattr(args, "apply_regime", False):
-                    regime_dir2 = Path(getattr(args, "regime_dir", "data/crypto/regime"))
-                    active_regime2 = _load_current_regime(symbol, regime_dir2)
+                    active_regime2 = _load_current_regime(symbol, regime_dir)
                     if active_regime2:
                         regime_cfg2 = strategy_config.get("regimes", {}) or {}
                         active_regime_cfg2 = regime_cfg2.get(active_regime2, {}) or {}
@@ -2135,6 +3133,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest.add_argument("--slippage-bps-total", type=float, default=5.0, help="Total slippage bps")
     p_backtest.add_argument("--horizon-bars", type=int, default=4, help="Trade horizon in bars")
     p_backtest.add_argument("--cooldown-bars", type=int, default=4, help="Minimum bars between entries")
+    p_backtest.add_argument("--execution-delay-bars", type=int, default=0, help="Delay trade execution by N bars after signal")
     p_backtest.add_argument("--loss-cluster-gap-bars", type=int, default=6, help="Bars used to group nearby losses")
     p_backtest.add_argument("--feature-version", default="crypto_v1", help="Feature/version tag for registry")
     p_backtest.add_argument("--notes", default="", help="Optional run notes")
@@ -2156,6 +3155,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest_batch.add_argument("--fee-bps-per-side", type=float, default=10.0, help="Fee bps per side")
     p_backtest_batch.add_argument("--slippage-bps-total", type=float, default=5.0, help="Total slippage bps")
     p_backtest_batch.add_argument("--cooldown-bars", type=int, default=4, help="Minimum bars between entries")
+    p_backtest_batch.add_argument("--execution-delay-bars", type=int, default=0, help="Delay trade execution by N bars after signal")
     p_backtest_batch.add_argument("--loss-cluster-gap-bars", type=int, default=6, help="Bars used to group nearby losses")
     p_backtest_batch.add_argument("--feature-version", default="crypto_v1_batch", help="Feature/version tag base for registry")
     p_backtest_batch.add_argument("--notes", default="", help="Optional run notes")
@@ -2175,11 +3175,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest_strategy.add_argument("--slippage-bps-total", type=float, default=5.0, help="Total slippage bps")
     p_backtest_strategy.add_argument("--horizon-bars", type=int, default=4, help="Default trade horizon in bars")
     p_backtest_strategy.add_argument("--cooldown-bars", type=int, default=4, help="Default minimum bars between entries")
+    p_backtest_strategy.add_argument("--execution-delay-bars", type=int, default=0, help="Delay trade execution by N bars after signal")
     p_backtest_strategy.add_argument("--loss-cluster-gap-bars", type=int, default=6, help="Bars used to group nearby losses")
     p_backtest_strategy.add_argument("--feature-version", default="crypto_strategy", help="Feature/version tag base for registry")
     p_backtest_strategy.add_argument("--notes", default="", help="Optional run notes")
     p_backtest_strategy.add_argument("--export-equity-csv", action="store_true", help="Export per-trade equity curve CSV")
     p_backtest_strategy.add_argument("--fee-sensitivity", action="store_true", help="Run ±5bps fee and slippage sensitivity sweep")
+    p_backtest_strategy.add_argument("--mode", choices=["single", "portfolio"], default="single", help="Execution mode: legacy per-symbol or synchronized portfolio routing")
     p_backtest_strategy.add_argument("--apply-regime", action="store_true", help="Override per-symbol policy from regime-classify output (requires data/crypto/regime/ parquets)")
     p_backtest_strategy.add_argument("--regime-dir", default="data/crypto/regime", help="Directory containing regime parquets written by regime-classify")
     p_backtest_strategy.add_argument("--use-atr-exit", action="store_true", help="Enable path-dependent ATR TP/SL exits")
@@ -2187,6 +3189,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest_strategy.add_argument("--atr-period", type=int, default=14, help="ATR lookback period metadata")
     p_backtest_strategy.add_argument("--target-atr-multiplier", type=float, default=None, help="TP distance in ATR multiples (overrides regime config when set)")
     p_backtest_strategy.add_argument("--stop-atr-multiplier", type=float, default=None, help="SL distance in ATR multiples (overrides regime config when set)")
+    p_backtest_strategy.add_argument("--debug-cooldown-trace", action="store_true", help="Write bar-level cooldown and router decision trace for portfolio mode")
+    p_backtest_strategy.add_argument("--debug-cooldown-trace-file", default="reports/crypto/debug_cooldown_leak.csv", help="CSV file path for cooldown trace output")
     p_backtest_strategy.set_defaults(func=command_backtest_strategy)
 
     p_audit_archive = subparsers.add_parser("audit-archive", help="Audit local trade archive for timestamp and bar gaps")

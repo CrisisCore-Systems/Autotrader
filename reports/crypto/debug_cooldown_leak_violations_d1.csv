@@ -1,0 +1,1 @@
+timestamp,symbol,raw_signal,effective_signal,in_cooldown,router_decision,csv_line,prev_exec_ts,seconds_since_prev_exec,bars_since_prev_exec

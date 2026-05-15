@@ -1,0 +1,44 @@
+{
+  "active_orders": 0,
+  "completed_bars": {
+    "BTC/USD": 0,
+    "ETH/USD": 0
+  },
+  "config_path": "C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\configs\\crypto_strategy_multimag_sweep.yaml",
+  "heartbeat_age_seconds": null,
+  "kill_switch_engaged": false,
+  "last_audit_at": "2026-05-15T22:59:55.537746+00:00",
+  "last_heartbeat_at": null,
+  "policy_path": "C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\reports\\crypto\\policy_handoff_pass.json",
+  "policy_status": "PASS",
+  "running": false,
+  "runtime": {
+    "bars_requested": 3,
+    "mode": "testnet",
+    "probe_order_enabled": false,
+    "probe_order_quantity": 0.001,
+    "testnet_duration_seconds": 1.0,
+    "testnet_reconnect_seconds": 2.0,
+    "testnet_ws_url": "wss://stream.testnet.binance.vision/ws",
+    "tick_sleep_seconds": 0.05,
+    "ticks_per_bar": 6
+  },
+  "selected_policy": {
+    "correlation_gating_threshold": 0.75,
+    "empirical_cluster_gated_mean": 1.0,
+    "j_score": -30.52868473796071,
+    "latency_lookback_bars": 1,
+    "max_assets": 2,
+    "pnl_delay0": -10.634490415067363,
+    "position_scaling_factor": 0.4,
+    "sigma_delay": 19.894194322893345
+  },
+  "started_at": "2026-05-15T22:59:47.497957+00:00",
+  "stop_reason": "testnet duration elapsed: 1.0s",
+  "stopped_at": "2026-05-15T22:59:56.102066+00:00",
+  "stopping": false,
+  "symbols": [
+    "BTC/USD",
+    "ETH/USD"
+  ]
+}

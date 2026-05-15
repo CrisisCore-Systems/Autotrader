@@ -1,0 +1,14 @@
+{
+  "portfolio_run_id": "portfolio_96a1269963ec",
+  "timestamp_utc": "2026-05-15T19:42:33.571804+00:00",
+  "config_file": "configs\\crypto_strategy_multimag_sweep.yaml",
+  "coordination_mode": "strict_exclusion",
+  "total_trades": 18,
+  "gated_signals_count": 0,
+  "portfolio_net_pnl": -30.021457100808522,
+  "portfolio_profit_factor": 0.3013422399469477,
+  "max_simultaneous_assets": 2,
+  "report_file": "reports\\crypto\\sweep_runs_debug_cooldown\\portfolio_96a1269963ec.json",
+  "notes": "",
+  "debug_cooldown_trace_file": "C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\reports\\crypto\\debug_cooldown_leak.csv"
+}

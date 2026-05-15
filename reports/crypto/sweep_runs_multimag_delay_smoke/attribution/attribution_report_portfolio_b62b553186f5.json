@@ -1,0 +1,268 @@
+{
+  "report_id": "portfolio_b62b553186f5",
+  "generated_utc": "2026-05-15T19:04:58.412428+00:00",
+  "db_path": "reports\\crypto\\crypto_sweep_multimag_delay_smoke.db",
+  "portfolio_run_filter": "portfolio_b62b553186f5",
+  "trade_count": 16,
+  "sliceA_corr_regime_attribution": [
+    {
+      "symbol": "BTC/USD",
+      "corr_regime": "neutral_correlation",
+      "trades": 9.0,
+      "wins": 3.0,
+      "losses": 6.0,
+      "win_rate": 0.3333333333333333,
+      "net_pnl": -5.996599222062412,
+      "avg_pnl": -0.6662888024513791,
+      "profit_factor": 0.6706513718509143,
+      "avg_bars_held": 4.0,
+      "avg_scale_factor": 0.75
+    },
+    {
+      "symbol": "ETH/USD",
+      "corr_regime": "neutral_correlation",
+      "trades": 7.0,
+      "wins": 3.0,
+      "losses": 4.0,
+      "win_rate": 0.42857142857142855,
+      "net_pnl": -2.1164735422247207,
+      "avg_pnl": -0.3023533631749601,
+      "profit_factor": 0.8129203150526498,
+      "avg_bars_held": 8.0,
+      "avg_scale_factor": 0.5625
+    },
+    {
+      "symbol": "PORTFOLIO",
+      "corr_regime": "neutral_correlation",
+      "trades": 16.0,
+      "wins": 6.0,
+      "losses": 10.0,
+      "win_rate": 0.375,
+      "net_pnl": -8.113072764287132,
+      "avg_pnl": -0.5070670477679458,
+      "profit_factor": 0.725173160179893,
+      "avg_bars_held": 5.75,
+      "avg_scale_factor": 0.66796875
+    }
+  ],
+  "sliceB_sizing_efficiency": [
+    {
+      "symbol": "BTC/USD",
+      "trades": 9.0,
+      "realized_pnl": -5.996599222062412,
+      "unscaled_pnl": -7.995465629416549,
+      "capital_saved_from_haircut": -1.998866407354138,
+      "sizing_efficiency": 0.75,
+      "avg_scale_factor": 0.75,
+      "breakdown": "by_symbol",
+      "corr_regime": null
+    },
+    {
+      "symbol": "ETH/USD",
+      "trades": 7.0,
+      "realized_pnl": -2.1164735422247207,
+      "unscaled_pnl": -3.7626196306217263,
+      "capital_saved_from_haircut": -1.6461460883970047,
+      "sizing_efficiency": 0.5624999999999999,
+      "avg_scale_factor": 0.5625,
+      "breakdown": "by_symbol",
+      "corr_regime": null
+    },
+    {
+      "symbol": "ALL",
+      "trades": 16.0,
+      "realized_pnl": -8.113072764287132,
+      "unscaled_pnl": -11.75808526003828,
+      "capital_saved_from_haircut": -3.6450124957511427,
+      "sizing_efficiency": 0.6899994841728779,
+      "avg_scale_factor": 0.66796875,
+      "breakdown": "by_corr_regime",
+      "corr_regime": "neutral_correlation"
+    }
+  ],
+  "sliceC_routing_efficiency": {
+    "portfolio_1a25e84baa94": {
+      "portfolio_run_id": "portfolio_1a25e84baa94",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_0484f793f046": {
+      "portfolio_run_id": "portfolio_0484f793f046",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_a674e5643191": {
+      "portfolio_run_id": "portfolio_a674e5643191",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_c6258fc52b46": {
+      "portfolio_run_id": "portfolio_c6258fc52b46",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_7ecc0af715b6": {
+      "portfolio_run_id": "portfolio_7ecc0af715b6",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 2,
+      "total_executed_trades": 15,
+      "gated_signals_count": 3,
+      "total_candidate_signals": 18,
+      "gate_rate_pct": 16.67,
+      "portfolio_net_pnl": -8.730483028485855,
+      "portfolio_profit_factor": 0.7042586538378387,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_e1aaad96c5bd": {
+      "portfolio_run_id": "portfolio_e1aaad96c5bd",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 2,
+      "total_executed_trades": 15,
+      "gated_signals_count": 3,
+      "total_candidate_signals": 18,
+      "gate_rate_pct": 16.67,
+      "portfolio_net_pnl": -8.730483028485855,
+      "portfolio_profit_factor": 0.7042586538378387,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_073c02320ddd": {
+      "portfolio_run_id": "portfolio_073c02320ddd",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 2,
+      "total_executed_trades": 15,
+      "gated_signals_count": 3,
+      "total_candidate_signals": 18,
+      "gate_rate_pct": 16.67,
+      "portfolio_net_pnl": -8.730483028485855,
+      "portfolio_profit_factor": 0.7042586538378387,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_b9fcb25861fc": {
+      "portfolio_run_id": "portfolio_b9fcb25861fc",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 2,
+      "total_executed_trades": 15,
+      "gated_signals_count": 3,
+      "total_candidate_signals": 18,
+      "gate_rate_pct": 16.67,
+      "portfolio_net_pnl": -8.730483028485855,
+      "portfolio_profit_factor": 0.7042586538378387,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_b9fe4438ab40": {
+      "portfolio_run_id": "portfolio_b9fe4438ab40",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_ab450184dd92": {
+      "portfolio_run_id": "portfolio_ab450184dd92",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_c1b6b233cb3b": {
+      "portfolio_run_id": "portfolio_c1b6b233cb3b",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_e5d1067af0a8": {
+      "portfolio_run_id": "portfolio_e5d1067af0a8",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_9619910440d3": {
+      "portfolio_run_id": "portfolio_9619910440d3",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 2,
+      "total_executed_trades": 16,
+      "gated_signals_count": 2,
+      "total_candidate_signals": 18,
+      "gate_rate_pct": 11.11,
+      "portfolio_net_pnl": -8.113072764287132,
+      "portfolio_profit_factor": 0.725173160179893,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_b62b553186f5": {
+      "portfolio_run_id": "portfolio_b62b553186f5",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 2,
+      "total_executed_trades": 16,
+      "gated_signals_count": 2,
+      "total_candidate_signals": 18,
+      "gate_rate_pct": 11.11,
+      "portfolio_net_pnl": -8.113072764287132,
+      "portfolio_profit_factor": 0.725173160179893,
+      "symbol_pnl_decomposition": {
+        "BTC/USD": {
+          "trades": 9,
+          "net_pnl": -5.996599222062412,
+          "win_rate": 0.3333333333333333,
+          "profit_factor": 0.6706513718509143,
+          "avg_scale_factor": 0.75
+        },
+        "ETH/USD": {
+          "trades": 7,
+          "net_pnl": -2.1164735422247207,
+          "win_rate": 0.42857142857142855,
+          "profit_factor": 0.8129203150526498,
+          "avg_scale_factor": 0.5625
+        }
+      }
+    }
+  }
+}

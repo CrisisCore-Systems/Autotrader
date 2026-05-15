@@ -1,0 +1,87 @@
+{
+  "stage": "regime-classify",
+  "timestamp_utc": "2026-05-15T10:49:51.386218+00:00",
+  "window": 96,
+  "park_void_pct": 95.0,
+  "park_trend_pct": 70.0,
+  "compute_correlations": true,
+  "num_correlation_pairs": 1,
+  "symbols": [
+    {
+      "symbol": "BTC/USD",
+      "total_bars": 625,
+      "current_regime": "liquidity_void",
+      "last_park_vol_ann": 0.3363,
+      "last_rs_vol_ann": 0.331,
+      "last_sign_autocorr": -0.0833,
+      "last_mean_correlation": 0.8952,
+      "current_corr_regime": "high_correlation_sync",
+      "distribution": {
+        "mean_reversion": {
+          "count": 447,
+          "pct": 71.5
+        },
+        "momentum_trend": {
+          "count": 49,
+          "pct": 7.8
+        },
+        "liquidity_void": {
+          "count": 129,
+          "pct": 20.6
+        }
+      },
+      "corr_distribution": {
+        "high_correlation_sync": {
+          "count": 505,
+          "pct": 80.8
+        },
+        "neutral_correlation": {
+          "count": 73,
+          "pct": 11.7
+        },
+        "decorrelation_risk": {
+          "count": 47,
+          "pct": 7.5
+        }
+      }
+    },
+    {
+      "symbol": "ETH/USD",
+      "total_bars": 625,
+      "current_regime": "mean_reversion",
+      "last_park_vol_ann": 0.4125,
+      "last_rs_vol_ann": 0.4213,
+      "last_sign_autocorr": -0.0417,
+      "last_mean_correlation": 0.8952,
+      "current_corr_regime": "high_correlation_sync",
+      "distribution": {
+        "mean_reversion": {
+          "count": 424,
+          "pct": 67.8
+        },
+        "momentum_trend": {
+          "count": 71,
+          "pct": 11.4
+        },
+        "liquidity_void": {
+          "count": 130,
+          "pct": 20.8
+        }
+      },
+      "corr_distribution": {
+        "high_correlation_sync": {
+          "count": 505,
+          "pct": 80.8
+        },
+        "neutral_correlation": {
+          "count": 73,
+          "pct": 11.7
+        },
+        "decorrelation_risk": {
+          "count": 47,
+          "pct": 7.5
+        }
+      }
+    }
+  ]
+}

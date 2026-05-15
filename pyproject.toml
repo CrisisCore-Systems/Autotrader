@@ -89,6 +89,7 @@ markers = [
     "performance: Performance and scalability tests (may be slow)",
     "slow: Slow tests that can be skipped in fast CI runs",
     "integration: Integration tests across multiple modules",
+    "asyncio: Asyncio-based tests",
 ]
 
 [tool.coverage.run]

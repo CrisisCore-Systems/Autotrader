@@ -1,0 +1,16 @@
+{
+  "portfolio_run_id": "portfolio_7228a4449e9e",
+  "timestamp_utc": "2026-05-15T20:05:30.908148+00:00",
+  "config_file": "C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\configs\\_sweep_36mwsgku.yaml",
+  "coordination_mode": "strict_exclusion",
+  "latency_lookback_bars": 2,
+  "latency_resolution_mode": "rank_first",
+  "total_trades": 15,
+  "gated_signals_count": 4,
+  "gated_cluster_window_count": 3,
+  "portfolio_net_pnl": -23.054648041892975,
+  "portfolio_profit_factor": 0.35750340281358367,
+  "max_simultaneous_assets": 2,
+  "report_file": "reports\\crypto\\sweep_runs_45d_latency\\portfolio_7228a4449e9e.json",
+  "notes": ""
+}

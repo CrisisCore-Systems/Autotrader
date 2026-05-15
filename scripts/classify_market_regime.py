@@ -1,10 +1,11 @@
 """
-Market Regime Classifier — Dynamic Regime-Switching Metadata Layer
+Market Regime Classifier — Dynamic Regime-Switching Metadata Layer with Correlation Analysis
 
 Classifies each OHLCV bar into one of three market regimes using
-Parkinson volatility, Rogers-Satchell volatility, and return sign-autocorrelation.
+Parkinson volatility, Rogers-Satchell volatility, return sign-autocorrelation,
+and optionally multi-symbol rolling correlations.
 
-Regime IDs
+Regime IDs (Price Action)
 ----------
 mean_reversion  – Low volatility, range-bound, negative or neutral return autocorrelation.
                   Favours tight horizons + wider stops (price pulls back to mean).
@@ -13,16 +14,30 @@ momentum_trend  – Elevated volatility, breakout structure, positive autocorrel
 liquidity_void  – Extreme volatility spike or very thin volume (flash crash / gap-down).
                   Trading suspended; cooldown enforced.
 
+Correlation Regimes (Multi-Symbol)
+-----------------------------------
+high_correlation_sync   – Strong positive correlations (>0.7 default) with other assets.
+                          Avoid mean-reversion plays; sync with market leaders.
+neutral_correlation     – Mid-range correlations; standard regime rules apply.
+decorrelation_risk      – Weak/negative correlations (<0.3 default); isolated movement.
+                          Potential decorrelation trading opportunity.
+
 Usage (standalone)
 ------------------
     python scripts/classify_market_regime.py
     python scripts/classify_market_regime.py --symbols BTC/USD --window 96
+    python scripts/classify_market_regime.py --compute-correlations --symbols BTC/USD,ETH/USD
     python scripts/classify_market_regime.py --input-dir data/crypto/features \
         --output-dir data/crypto/regime --summary
 
 Integration
 -----------
-    from scripts.classify_market_regime import classify_regimes, load_regime_config
+    from scripts.classify_market_regime import (
+        classify_regimes,
+        classify_correlation_regimes,
+        compute_rolling_correlations,
+        load_regime_config
+    )
 
 Can also be wired in as a subcommand via crypto_data_pipeline.py.
 """
@@ -96,6 +111,116 @@ def rolling_annualised_vol(
 ) -> pd.Series:
     """Rolling annualised volatility from a per-bar variance series."""
     return np.sqrt(variance_series.rolling(window, min_periods=window // 2).mean() * bars_per_year)
+
+
+# ---------------------------------------------------------------------------
+# Correlation analysis (multi-symbol regime refinement)
+# ---------------------------------------------------------------------------
+
+
+def compute_rolling_correlations(
+    returns_dict: dict[str, pd.Series],
+    window: int,
+) -> dict[tuple[str, str], pd.Series]:
+    """Compute rolling pairwise correlations between symbol returns.
+    
+    Parameters
+    ----------
+    returns_dict : dict[str, pd.Series]
+        Dict mapping symbol → return series, all aligned to same index.
+    window : int
+        Rolling window in bars.
+    
+    Returns
+    -------
+    dict[tuple[str, str], pd.Series]
+        Maps (sym_a, sym_b) → rolling correlation series (sym_a < sym_b).
+    """
+    corr_dict = {}
+    symbols = sorted(returns_dict.keys())
+    
+    for i, sym_a in enumerate(symbols):
+        for sym_b in symbols[i + 1:]:
+            ret_a = returns_dict[sym_a]
+            ret_b = returns_dict[sym_b]
+            
+            # Align to common index
+            common_idx = ret_a.index.intersection(ret_b.index)
+            if len(common_idx) < window:
+                continue
+            
+            ret_a_aligned = ret_a.loc[common_idx]
+            ret_b_aligned = ret_b.loc[common_idx]
+            
+            # Rolling correlation
+            rolling_cov = ret_a_aligned.rolling(window, min_periods=window // 2).cov(ret_b_aligned)
+            rolling_std_a = ret_a_aligned.rolling(window, min_periods=window // 2).std()
+            rolling_std_b = ret_b_aligned.rolling(window, min_periods=window // 2).std()
+            rolling_corr = rolling_cov / (rolling_std_a * rolling_std_b)
+            
+            corr_dict[(sym_a, sym_b)] = rolling_corr.fillna(0.0)
+    
+    return corr_dict
+
+
+def classify_correlation_regimes(
+    df: pd.DataFrame,
+    rolling_correlations: dict[tuple[str, str], pd.Series],
+    symbol: str,
+    corr_threshold_high: float = 0.7,
+    corr_threshold_low: float = 0.3,
+) -> pd.DataFrame:
+    """Add correlation-based regime refinement to classified dataframe.
+    
+    Computes:
+      - mean_correlation: avg rolling correlation with other assets
+      - corr_regime: classification based on correlation structure
+    
+    Correlation regimes:
+      high_correlation_sync: Strong positive correlations (>0.7) → avoid mean-reversion
+      decorrelation_risk: Weak/negative correlations (<0.3) → decorrelation play
+      neutral_correlation: Mid-range correlations → standard classification
+    """
+    out = df.copy()
+    
+    if not rolling_correlations or len(rolling_correlations) == 0:
+        out["mean_correlation"] = np.nan
+        out["corr_regime"] = "neutral_correlation"
+        return out
+    
+    # Collect correlations involving this symbol
+    correlations_for_symbol = []
+    for (sym_a, sym_b), corr_series in rolling_correlations.items():
+        if sym_a == symbol and len(corr_series) > 0:
+            correlations_for_symbol.append(corr_series)
+        elif sym_b == symbol and len(corr_series) > 0:
+            correlations_for_symbol.append(corr_series)
+    
+    if correlations_for_symbol:
+        # Align all correlation series to the dataframe index
+        aligned_corrs = []
+        for corr_series in correlations_for_symbol:
+            common_idx = out.index.intersection(corr_series.index)
+            if len(common_idx) > 0:
+                aligned_corrs.append(corr_series.loc[common_idx].reindex(out.index))
+        
+        if aligned_corrs:
+            mean_corr = pd.concat(aligned_corrs, axis=1).mean(axis=1)
+            out["mean_correlation"] = mean_corr.fillna(0.0)
+            
+            # Classify based on correlation structure
+            corr_regime = pd.Series("neutral_correlation", index=out.index, dtype="object")
+            corr_regime[mean_corr > corr_threshold_high] = "high_correlation_sync"
+            corr_regime[mean_corr < corr_threshold_low] = "decorrelation_risk"
+            out["corr_regime"] = corr_regime
+        else:
+            out["mean_correlation"] = np.nan
+            out["corr_regime"] = "neutral_correlation"
+    else:
+        out["mean_correlation"] = np.nan
+        out["corr_regime"] = "neutral_correlation"
+    
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -317,14 +442,18 @@ def regime_summary(df: pd.DataFrame, symbol: str = "") -> dict[str, Any]:
     last_park_ann = float(df["park_vol_ann"].iloc[-1]) if "park_vol_ann" in df.columns else float("nan")
     last_rs_ann = float(df["rs_vol_ann"].iloc[-1]) if "rs_vol_ann" in df.columns else float("nan")
     last_sign_autocorr = float(df["sign_autocorr"].iloc[-1]) if "sign_autocorr" in df.columns else float("nan")
+    last_mean_corr = float(df["mean_correlation"].iloc[-1]) if "mean_correlation" in df.columns else float("nan")
+    current_corr_regime = str(df["corr_regime"].iloc[-1]) if "corr_regime" in df.columns and total > 0 else "unknown"
 
-    return {
+    summary = {
         "symbol": symbol,
         "total_bars": total,
         "current_regime": current_regime,
         "last_park_vol_ann": round(last_park_ann, 4),
         "last_rs_vol_ann": round(last_rs_ann, 4),
         "last_sign_autocorr": round(last_sign_autocorr, 4),
+        "last_mean_correlation": round(last_mean_corr, 4),
+        "current_corr_regime": current_corr_regime,
         "distribution": {
             label: {
                 "count": counts.get(label, 0),
@@ -333,17 +462,37 @@ def regime_summary(df: pd.DataFrame, symbol: str = "") -> dict[str, Any]:
             for label in REGIME_LABELS
         },
     }
+    
+    # Add correlation regime distribution if available
+    if "corr_regime" in df.columns:
+        corr_counts = df["corr_regime"].value_counts().to_dict()
+        summary["corr_distribution"] = {
+            "high_correlation_sync": {
+                "count": corr_counts.get("high_correlation_sync", 0),
+                "pct": round(corr_counts.get("high_correlation_sync", 0) / max(1, total) * 100, 1),
+            },
+            "neutral_correlation": {
+                "count": corr_counts.get("neutral_correlation", 0),
+                "pct": round(corr_counts.get("neutral_correlation", 0) / max(1, total) * 100, 1),
+            },
+            "decorrelation_risk": {
+                "count": corr_counts.get("decorrelation_risk", 0),
+                "pct": round(corr_counts.get("decorrelation_risk", 0) / max(1, total) * 100, 1),
+            },
+        }
+    
+    return summary
 
 
 def print_regime_table(summaries: list[dict[str, Any]]) -> None:
     hdr = (
         f"  {'Symbol':<12} {'Current Regime':<18} "
-        f"{'Park Vol%':>10} {'RS Vol%':>10} {'SignAC':>8} "
+        f"{'Park Vol%':>10} {'RS Vol%':>10} {'SignAC':>8} {'MeanCorr':>10} "
         f"{'MR%':>6} {'MT%':>6} {'LV%':>6}"
     )
     print("\nMarket Weather Report")
     print(hdr)
-    print("  " + "-" * 84)
+    print("  " + "-" * 100)
     for s in summaries:
         dist = s.get("distribution", {})
         mr_pct = dist.get("mean_reversion", {}).get("pct", 0.0)
@@ -352,9 +501,10 @@ def print_regime_table(summaries: list[dict[str, Any]]) -> None:
         pv = s.get("last_park_vol_ann", float("nan"))
         rv = s.get("last_rs_vol_ann", float("nan"))
         sa = s.get("last_sign_autocorr", float("nan"))
+        mc = s.get("last_mean_correlation", float("nan"))
         print(
             f"  {s.get('symbol', ''):<12} {s.get('current_regime', ''):<18} "
-            f"{pv*100:>9.1f}% {rv*100:>9.1f}% {sa:>8.3f} "
+            f"{pv*100:>9.1f}% {rv*100:>9.1f}% {sa:>8.3f} {mc:>10.3f} "
             f"{mr_pct:>5.1f}% {mt_pct:>5.1f}% {lv_pct:>5.1f}%"
         )
     print()
@@ -390,6 +540,30 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=_DEFAULT_WINDOW,
         help="Rolling window in bars for vol/autocorr (default 96 = 24 h at 15-min).",
+    )
+    p.add_argument(
+        "--corr-window",
+        type=int,
+        default=None,
+        help="Rolling window for correlation (default = same as --window).",
+    )
+    p.add_argument(
+        "--corr-threshold-high",
+        type=float,
+        default=0.7,
+        help="Correlation threshold for 'high_correlation_sync' regime (default 0.7).",
+    )
+    p.add_argument(
+        "--corr-threshold-low",
+        type=float,
+        default=0.3,
+        help="Correlation threshold for 'decorrelation_risk' regime (default 0.3).",
+    )
+    p.add_argument(
+        "--compute-correlations",
+        action="store_true",
+        default=False,
+        help="Compute multi-symbol correlations (requires 2+ symbols).",
     )
     p.add_argument(
         "--park-void-pct",
@@ -451,6 +625,44 @@ def command_classify(args: argparse.Namespace) -> list[dict[str, Any]]:
         symbol_filter = {s.strip().upper().replace("/", "") for s in args.symbols.split(",") if s.strip()}
 
     summaries: list[dict[str, Any]] = []
+    
+    # Pre-load all data if correlation computation is enabled
+    rolling_correlations: dict[tuple[str, str], pd.Series] = {}
+    if getattr(args, "compute_correlations", False):
+        print("[regime] Pre-loading data for correlation computation...", file=sys.stderr)
+        returns_dict: dict[str, pd.Series] = {}
+        
+        for file in files:
+            try:
+                df = pd.read_parquet(file)
+            except Exception as exc:
+                print(f"[regime] WARN: could not read {file}: {exc}", file=sys.stderr)
+                continue
+            
+            if df.empty or "ret_1" not in df.columns:
+                continue
+            
+            # Resolve symbol
+            if "symbol" in df.columns:
+                symbol = str(df["symbol"].iloc[0])
+            else:
+                symbol = file.stem.replace("kraken_", "").replace("_features", "").upper()
+            
+            safe_sym = symbol.replace("/", "")
+            if symbol_filter and safe_sym not in symbol_filter:
+                continue
+            
+            # Store return series
+            returns_dict[symbol] = df["ret_1"].copy()
+        
+        # Compute correlations if we have 2+ symbols
+        if len(returns_dict) >= 2:
+            corr_window = getattr(args, "corr_window", None) or args.window
+            try:
+                rolling_correlations = compute_rolling_correlations(returns_dict, corr_window)
+                print(f"[regime] Computed correlations for {len(rolling_correlations)} symbol pairs", file=sys.stderr)
+            except Exception as exc:
+                print(f"[regime] WARN: could not compute correlations: {exc}", file=sys.stderr)
 
     for file in files:
         try:
@@ -480,6 +692,18 @@ def command_classify(args: argparse.Namespace) -> list[dict[str, Any]]:
                 park_trend_pct=args.park_trend_pct,
                 min_volume_intensity=args.min_volume_intensity,
             )
+            
+            # Apply correlation-based regime refinement if enabled
+            if rolling_correlations:
+                corr_threshold_high = getattr(args, "corr_threshold_high", 0.7)
+                corr_threshold_low = getattr(args, "corr_threshold_low", 0.3)
+                classified = classify_correlation_regimes(
+                    classified,
+                    rolling_correlations,
+                    symbol,
+                    corr_threshold_high=corr_threshold_high,
+                    corr_threshold_low=corr_threshold_low,
+                )
         except Exception as exc:
             print(f"[regime] ERROR classifying {symbol}: {exc}", file=sys.stderr)
             continue
@@ -508,6 +732,8 @@ def command_classify(args: argparse.Namespace) -> list[dict[str, Any]]:
                     "window": args.window,
                     "park_void_pct": args.park_void_pct,
                     "park_trend_pct": args.park_trend_pct,
+                    "compute_correlations": getattr(args, "compute_correlations", False),
+                    "num_correlation_pairs": len(rolling_correlations),
                     "symbols": summaries,
                 },
                 indent=2,

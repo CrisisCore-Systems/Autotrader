@@ -1,0 +1,214 @@
+
+============================================================================
+  PHASE 4 ATTRIBUTION REPORT  [portfolio_ad3f6b30f890]
+  Generated: 2026-05-15 19:05Z
+============================================================================
+
+  A. CORRELATION STATE ATTRIBUTION
+  --------------------------------------------------------------------------
+  Symbol         Regime                     Trades  WinRate      PF     NetPnL  AvgScale
+  --------------------------------------------------------------------------
+  BTC/USD        neutral_correlation             9    33.3%   0.671      -6.00    0.7500
+  ETH/USD        neutral_correlation             9    33.3%   0.398     -13.91    0.5625
+  PORTFOLIO      neutral_correlation            18    33.3%   0.518     -19.91    0.6562
+
+  B. SIZING EFFICIENCY MATRIX
+  --------------------------------------------------------------------------
+  Breakdown      Key                          Realized   Unscaled      Saved    Eff%
+  --------------------------------------------------------------------------
+  by_symbol      BTC/USD                         -6.00      -8.00      -2.00   75.0%
+  by_symbol      ETH/USD                        -13.91     -24.73     -10.82   56.2%
+  by_corr_regime ALL                            -19.91     -32.73     -12.82   60.8%
+
+  C. ROUTING EFFICIENCY
+  --------------------------------------------------------------------------
+  Portfolio Run : portfolio_1a25e84baa94
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_0484f793f046
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_a674e5643191
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_c6258fc52b46
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_7ecc0af715b6
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 15 trades
+  Gated         : 3 signals  (16.7% of 18 candidates)
+  Portfolio PnL : $-8.7305   PF: 0.704
+
+  Portfolio Run : portfolio_e1aaad96c5bd
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 15 trades
+  Gated         : 3 signals  (16.7% of 18 candidates)
+  Portfolio PnL : $-8.7305   PF: 0.704
+
+  Portfolio Run : portfolio_073c02320ddd
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 15 trades
+  Gated         : 3 signals  (16.7% of 18 candidates)
+  Portfolio PnL : $-8.7305   PF: 0.704
+
+  Portfolio Run : portfolio_b9fcb25861fc
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 15 trades
+  Gated         : 3 signals  (16.7% of 18 candidates)
+  Portfolio PnL : $-8.7305   PF: 0.704
+
+  Portfolio Run : portfolio_b9fe4438ab40
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_ab450184dd92
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_c1b6b233cb3b
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_e5d1067af0a8
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_9619910440d3
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 16 trades
+  Gated         : 2 signals  (11.1% of 18 candidates)
+  Portfolio PnL : $-8.1131   PF: 0.725
+
+  Portfolio Run : portfolio_b62b553186f5
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 16 trades
+  Gated         : 2 signals  (11.1% of 18 candidates)
+  Portfolio PnL : $-8.1131   PF: 0.725
+
+  Portfolio Run : portfolio_44d097163588
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 16 trades
+  Gated         : 2 signals  (11.1% of 18 candidates)
+  Portfolio PnL : $-8.1131   PF: 0.725
+
+  Portfolio Run : portfolio_10bcfbbfb126
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 16 trades
+  Gated         : 2 signals  (11.1% of 18 candidates)
+  Portfolio PnL : $-8.1131   PF: 0.725
+
+  Portfolio Run : portfolio_9ec9e5b27fc9
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_736cfa25a60c
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_845f58b1a28b
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_21898403e0c2
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_bb98d3280109
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 17 trades
+  Gated         : 1 signals  (5.6% of 18 candidates)
+  Portfolio PnL : $-14.4753   PF: 0.597
+
+  Portfolio Run : portfolio_75ced87cc7f9
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 17 trades
+  Gated         : 1 signals  (5.6% of 18 candidates)
+  Portfolio PnL : $-14.4753   PF: 0.597
+
+  Portfolio Run : portfolio_1eeebfbf5baa
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 17 trades
+  Gated         : 1 signals  (5.6% of 18 candidates)
+  Portfolio PnL : $-14.4753   PF: 0.597
+
+  Portfolio Run : portfolio_ea91a19615da
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 17 trades
+  Gated         : 1 signals  (5.6% of 18 candidates)
+  Portfolio PnL : $-14.4753   PF: 0.597
+
+  Portfolio Run : portfolio_93d0adc06eeb
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_822b7feb9af9
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_5e059ab28589
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_825c713b4197
+  Mode          : strict_exclusion  (max_assets=1)
+  Executed      : 11 trades
+  Gated         : 4 signals  (26.7% of 15 candidates)
+  Portfolio PnL : $-10.3191   PF: 0.542
+
+  Portfolio Run : portfolio_e345671665a4
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 18 trades
+  Gated         : 0 signals  (0.0% of 18 candidates)
+  Portfolio PnL : $-19.9088   PF: 0.518
+
+  Portfolio Run : portfolio_649f1725c352
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 18 trades
+  Gated         : 0 signals  (0.0% of 18 candidates)
+  Portfolio PnL : $-19.9088   PF: 0.518
+
+  Portfolio Run : portfolio_ad3f6b30f890
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 18 trades
+  Gated         : 0 signals  (0.0% of 18 candidates)
+  Portfolio PnL : $-19.9088   PF: 0.518
+  Symbol         Trades     NetPnL  WinRate      PF  AvgScale
+  BTC/USD             9      -6.00    33.3%   0.671    0.7500
+  ETH/USD             9     -13.91    33.3%   0.398    0.5625
+
+============================================================================

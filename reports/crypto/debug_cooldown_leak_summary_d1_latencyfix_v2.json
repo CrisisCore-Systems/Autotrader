@@ -1,0 +1,9 @@
+{
+  "trace_file": "C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\reports\\crypto\\debug_cooldown_leak_d1_latencyfix_v2.csv",
+  "rows_total": 1238,
+  "executed_rows": 17,
+  "cooldown_bars": 4,
+  "bar_seconds": 900.0,
+  "anomaly_a_count": 0,
+  "anomaly_b_count": 0
+}

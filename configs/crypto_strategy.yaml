@@ -4,6 +4,18 @@ defaults:
   signal_score_threshold: 0.002
   cooldown_bars: 4
 
+portfolio_routing:
+  coordination_mode: priority_gating
+  max_simultaneous_assets: 2
+  correlation_gating_threshold: 0.75
+  asset_priority_tiers:
+    - symbol: BTC/USD
+      rank: 1
+      allocation_limit_pct: 1.0
+    - symbol: ETH/USD
+      rank: 2
+      allocation_limit_pct: 0.75
+
 symbols:
   BTC/USD:
     horizon_bars: 4

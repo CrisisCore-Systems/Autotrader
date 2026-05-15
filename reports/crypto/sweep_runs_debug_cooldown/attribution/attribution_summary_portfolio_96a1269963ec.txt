@@ -1,0 +1,34 @@
+
+============================================================================
+  PHASE 4 ATTRIBUTION REPORT  [portfolio_96a1269963ec]
+  Generated: 2026-05-15 19:42Z
+============================================================================
+
+  A. CORRELATION STATE ATTRIBUTION
+  --------------------------------------------------------------------------
+  Symbol         Regime                     Trades  WinRate      PF     NetPnL  AvgScale
+  --------------------------------------------------------------------------
+  BTC/USD        neutral_correlation             9    11.1%   0.255     -12.99    0.7500
+  ETH/USD        neutral_correlation             9    33.3%   0.333     -17.03    0.5625
+  PORTFOLIO      neutral_correlation            18    22.2%   0.301     -30.02    0.6562
+
+  B. SIZING EFFICIENCY MATRIX
+  --------------------------------------------------------------------------
+  Breakdown      Key                          Realized   Unscaled      Saved    Eff%
+  --------------------------------------------------------------------------
+  by_symbol      BTC/USD                        -12.99     -17.32      -4.33   75.0%
+  by_symbol      ETH/USD                        -17.03     -30.28     -13.25   56.2%
+  by_corr_regime ALL                            -30.02     -47.60     -17.58   63.1%
+
+  C. ROUTING EFFICIENCY
+  --------------------------------------------------------------------------
+  Portfolio Run : portfolio_96a1269963ec
+  Mode          : strict_exclusion  (max_assets=2)
+  Executed      : 18 trades
+  Gated         : 0 signals  (0.0% of 18 candidates)
+  Portfolio PnL : $-30.0215   PF: 0.301
+  Symbol         Trades     NetPnL  WinRate      PF  AvgScale
+  BTC/USD             9     -12.99    11.1%   0.255    0.7500
+  ETH/USD             9     -17.03    33.3%   0.333    0.5625
+
+============================================================================

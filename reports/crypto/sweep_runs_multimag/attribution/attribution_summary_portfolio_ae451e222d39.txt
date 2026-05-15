@@ -1,0 +1,50 @@
+
+============================================================================
+  PHASE 4 ATTRIBUTION REPORT  [portfolio_ae451e222d39]
+  Generated: 2026-05-15 18:41Z
+============================================================================
+
+  A. CORRELATION STATE ATTRIBUTION
+  --------------------------------------------------------------------------
+  Symbol         Regime                     Trades  WinRate      PF     NetPnL  AvgScale
+  --------------------------------------------------------------------------
+  BTC/USD        high_correlation_sync           4    75.0%   3.206      +5.60    0.5000
+  BTC/USD        neutral_correlation             1     0.0%   0.000      -0.73    0.7500
+  ETH/USD        high_correlation_sync           1     0.0%   0.000      -3.92    0.3750
+  ETH/USD        neutral_correlation             2     0.0%   0.000      -2.41    0.5625
+  PORTFOLIO      high_correlation_sync           5    60.0%   1.260      +1.68    0.4750
+  PORTFOLIO      neutral_correlation             3     0.0%   0.000      -3.14    0.6250
+
+  B. SIZING EFFICIENCY MATRIX
+  --------------------------------------------------------------------------
+  Breakdown      Key                          Realized   Unscaled      Saved    Eff%
+  --------------------------------------------------------------------------
+  by_symbol      BTC/USD                         +4.87     +10.23      +5.36   47.6%
+  by_symbol      ETH/USD                         -6.34     -14.75      -8.41   43.0%
+  by_corr_regime ALL                             +1.68      +0.74      -0.93  225.5%
+  by_corr_regime ALL                             -3.14      -5.26      -2.12   59.7%
+
+  C. ROUTING EFFICIENCY
+  --------------------------------------------------------------------------
+  Portfolio Run : portfolio_c2469a966e6e
+  Mode          : priority_gating  (max_assets=1)
+  Executed      : 8 trades
+  Gated         : 1 signals  (11.1% of 9 candidates)
+  Portfolio PnL : $-2.3018   PF: 0.639
+
+  Portfolio Run : portfolio_666397661b4a
+  Mode          : priority_gating  (max_assets=1)
+  Executed      : 8 trades
+  Gated         : 1 signals  (11.1% of 9 candidates)
+  Portfolio PnL : $-1.7979   PF: 0.784
+
+  Portfolio Run : portfolio_ae451e222d39
+  Mode          : priority_gating  (max_assets=1)
+  Executed      : 8 trades
+  Gated         : 1 signals  (11.1% of 9 candidates)
+  Portfolio PnL : $-1.4620   PF: 0.848
+  Symbol         Trades     NetPnL  WinRate      PF  AvgScale
+  BTC/USD             5      +4.87    60.0%   2.492    0.5500
+  ETH/USD             3      -6.34     0.0%   0.000    0.5000
+
+============================================================================

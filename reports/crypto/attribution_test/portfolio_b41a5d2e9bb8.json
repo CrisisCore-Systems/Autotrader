@@ -1,0 +1,13 @@
+{
+  "portfolio_run_id": "portfolio_b41a5d2e9bb8",
+  "timestamp_utc": "2026-05-15T18:23:59.237683+00:00",
+  "config_file": "configs\\crypto_strategy_collision_test.yaml",
+  "coordination_mode": "priority_gating",
+  "total_trades": 8,
+  "gated_signals_count": 1,
+  "portfolio_net_pnl": -1.4619761643016789,
+  "portfolio_profit_factor": 0.8477511692582508,
+  "max_simultaneous_assets": 1,
+  "report_file": "reports\\crypto\\attribution_test\\portfolio_b41a5d2e9bb8.json",
+  "notes": ""
+}

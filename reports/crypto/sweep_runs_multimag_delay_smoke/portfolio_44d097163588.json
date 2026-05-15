@@ -1,0 +1,13 @@
+{
+  "portfolio_run_id": "portfolio_44d097163588",
+  "timestamp_utc": "2026-05-15T19:04:59.959234+00:00",
+  "config_file": "C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\configs\\_sweep_waua4xxh.yaml",
+  "coordination_mode": "strict_exclusion",
+  "total_trades": 16,
+  "gated_signals_count": 2,
+  "portfolio_net_pnl": -8.113072764287132,
+  "portfolio_profit_factor": 0.725173160179893,
+  "max_simultaneous_assets": 2,
+  "report_file": "reports\\crypto\\sweep_runs_multimag_delay_smoke\\portfolio_44d097163588.json",
+  "notes": ""
+}

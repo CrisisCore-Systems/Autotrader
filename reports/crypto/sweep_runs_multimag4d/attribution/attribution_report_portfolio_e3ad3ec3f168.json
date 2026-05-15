@@ -1,0 +1,136 @@
+{
+  "report_id": "portfolio_e3ad3ec3f168",
+  "generated_utc": "2026-05-15T19:05:42.693382+00:00",
+  "db_path": "reports\\crypto\\crypto_sweep_multimag4d.db",
+  "portfolio_run_filter": "portfolio_e3ad3ec3f168",
+  "trade_count": 11,
+  "sliceA_corr_regime_attribution": [
+    {
+      "symbol": "BTC/USD",
+      "corr_regime": "neutral_correlation",
+      "trades": 8.0,
+      "wins": 2.0,
+      "losses": 6.0,
+      "win_rate": 0.25,
+      "net_pnl": -23.130211771875526,
+      "avg_pnl": -2.891276471484441,
+      "profit_factor": 0.12548915827219254,
+      "avg_bars_held": 4.0,
+      "avg_scale_factor": 0.75
+    },
+    {
+      "symbol": "ETH/USD",
+      "corr_regime": "neutral_correlation",
+      "trades": 3.0,
+      "wins": 0.0,
+      "losses": 3.0,
+      "win_rate": 0.0,
+      "net_pnl": -10.576440947160906,
+      "avg_pnl": -3.525480315720302,
+      "profit_factor": 0.0,
+      "avg_bars_held": 8.0,
+      "avg_scale_factor": 0.5625
+    },
+    {
+      "symbol": "PORTFOLIO",
+      "corr_regime": "neutral_correlation",
+      "trades": 11.0,
+      "wins": 2.0,
+      "losses": 9.0,
+      "win_rate": 0.18181818181818182,
+      "net_pnl": -33.706652719036434,
+      "avg_pnl": -3.0642411562760397,
+      "profit_factor": 0.08964306473430372,
+      "avg_bars_held": 5.090909090909091,
+      "avg_scale_factor": 0.6988636363636364
+    }
+  ],
+  "sliceB_sizing_efficiency": [
+    {
+      "symbol": "BTC/USD",
+      "trades": 8.0,
+      "realized_pnl": -23.130211771875526,
+      "unscaled_pnl": -30.840282362500695,
+      "capital_saved_from_haircut": -7.710070590625172,
+      "sizing_efficiency": 0.7500000000000002,
+      "avg_scale_factor": 0.75,
+      "breakdown": "by_symbol",
+      "corr_regime": null
+    },
+    {
+      "symbol": "ETH/USD",
+      "trades": 3.0,
+      "realized_pnl": -10.576440947160906,
+      "unscaled_pnl": -18.80256168384161,
+      "capital_saved_from_haircut": -8.226120736680706,
+      "sizing_efficiency": 0.5625,
+      "avg_scale_factor": 0.5625,
+      "breakdown": "by_symbol",
+      "corr_regime": null
+    },
+    {
+      "symbol": "ALL",
+      "trades": 11.0,
+      "realized_pnl": -33.706652719036434,
+      "unscaled_pnl": -49.642844046342304,
+      "capital_saved_from_haircut": -15.936191327305878,
+      "sizing_efficiency": 0.678983111595516,
+      "avg_scale_factor": 0.6988636363636364,
+      "breakdown": "by_corr_regime",
+      "corr_regime": "neutral_correlation"
+    }
+  ],
+  "sliceC_routing_efficiency": {
+    "portfolio_01494e345506": {
+      "portfolio_run_id": "portfolio_01494e345506",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -10.319065136644944,
+      "portfolio_profit_factor": 0.5419838928218692,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_a29077dcd7c9": {
+      "portfolio_run_id": "portfolio_a29077dcd7c9",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -22.15498650555093,
+      "portfolio_profit_factor": 0.16701487006174648,
+      "symbol_pnl_decomposition": {}
+    },
+    "portfolio_e3ad3ec3f168": {
+      "portfolio_run_id": "portfolio_e3ad3ec3f168",
+      "coordination_mode": "strict_exclusion",
+      "max_simultaneous_assets": 1,
+      "total_executed_trades": 11,
+      "gated_signals_count": 4,
+      "total_candidate_signals": 15,
+      "gate_rate_pct": 26.67,
+      "portfolio_net_pnl": -33.706652719036434,
+      "portfolio_profit_factor": 0.08964306473430372,
+      "symbol_pnl_decomposition": {
+        "BTC/USD": {
+          "trades": 8,
+          "net_pnl": -23.130211771875526,
+          "win_rate": 0.25,
+          "profit_factor": 0.12548915827219254,
+          "avg_scale_factor": 0.75
+        },
+        "ETH/USD": {
+          "trades": 3,
+          "net_pnl": -10.576440947160906,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "avg_scale_factor": 0.5625
+        }
+      }
+    }
+  }
+}

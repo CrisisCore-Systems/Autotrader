@@ -42,3 +42,24 @@
 - Eligible after entry_confirmation: none
 - baseline_changed: NONE
 - Git status after dry check: untracked scaffold files only
+
+## Current Signal Freshness Audit
+
+- Git status before audit: clean
+- Scanned universe size: 26 unique tickers
+- Signals before cooldown: SPCE, TLRY
+- Eligible after cooldown: SPCE, TLRY
+- Entry confirmation rejected: SPCE, TLRY
+- SPCE rejected because signal age was 38 days, reason signal_too_old
+- TLRY rejected because signal age was 125 days, reason signal_too_old
+- Any signal within max_signal_age_days=2: no
+- Paper session eligible: no
+- baseline_changed: NONE
+- Final git status: clean
+
+### Interpretation
+
+- The confirmed-entry branch is working correctly.
+- Current signals are blocked because they are stale, not because of cooldown failure.
+- No paper session should run until a signal appears within the configured 2-day freshness window.
+- The next valid action is scan-only freshness checks, not trading.

@@ -1,0 +1,44 @@
+defaults:
+  horizon_bars: 4
+  signal_volume_threshold: 2.0
+  signal_score_threshold: 0.002
+  cooldown_bars: 4
+
+symbols:
+  BTC/USD:
+    horizon_bars: 4
+    signal_volume_threshold: 2.0
+    signal_score_threshold: 0.002
+
+  ETH/USD:
+    horizon_bars: 8
+    signal_volume_threshold: 2.0
+    signal_score_threshold: 0.002
+
+# Dynamic Regime-Switching Execution Profiles
+# These override the per-symbol defaults when --apply-regime is passed to
+# backtest-strategy or when the live execution engine queries the regime
+# classifier output.
+#
+# Regime IDs (from scripts/classify_market_regime.py):
+#   mean_reversion  – Low vol, range-bound, negative return autocorr.
+#   momentum_trend  – Elevated vol, breakout structure, positive autocorr.
+#   liquidity_void  – Extreme vol spike or thin volume. Trading suspended.
+regimes:
+  mean_reversion:
+    horizon_bars: 8          # Wider look-forward; price reverts slowly
+    signal_score_threshold: 0.0015  # Slightly relaxed; signals are quieter
+    cooldown_bars: 6         # Longer cooldown; trends are weak
+    signal_volume_threshold: 1.8
+
+  momentum_trend:
+    horizon_bars: 4          # Compressed horizon; capture fast moves
+    signal_score_threshold: 0.003   # Stricter entry; avoid false breakouts
+    cooldown_bars: 3         # Short cooldown; momentum can re-trigger
+    signal_volume_threshold: 2.5
+
+  liquidity_void:
+    horizon_bars: 16         # Extended hold if stuck; no edge in timing
+    signal_score_threshold: 0.010   # Very strict; almost no new entries
+    cooldown_bars: 16        # Long enforced pause
+    signal_volume_threshold: 5.0

@@ -82,10 +82,41 @@
 - Baseline changed: `NONE`
 - Interpretation: cooldown alternate-selection case proven live in fenced experiment
 
+## Latest Fenced Session
+
+- TLRY closed during reconciliation
+- TLRY close status: `STOP`
+- TLRY realized P&L: `-$4.59`
+- Signals before cooldown: `SPCE`
+- Eligible signals after cooldown: `SPCE`
+- Cooldown decisions: `none`
+- Reason cooldown did not engage: the just-closed ticker was `TLRY`, while the only current eligible signal was `SPCE`, so this was not repeat `TLRY` exposure
+- Trade opened after cooldown: `SPCE`
+- SPCE details: `41` shares at `$2.43`, signal date `2026-03-31`, status `active`
+- Skipped candidates: `none`
+- Active trades: `1`
+- Completed trades: `2`
+- Wins: `0`
+- Losses: `2`
+- Win rate: `0.0%`
+- Net closed P&L: `-$9.50`
+- Near misses: `12`
+- Ejected tickers: `none`
+- Baseline changed: `NONE`
+
+## Final Decision
+
+- `gap10_vol2_4_cooldown` is mechanically valid but trade-quality failed
+- With `0` wins and `2` losses, the branch can no longer pass the `3`-trade early gate, because even a target on the next trade would only produce `1W / 2L = 33.3%`
+- Do not continue this branch as-is
+- Do not merge into baseline
+- Next research should focus on entry-quality filters, not more threshold loosening
+
 ## Status
 
 - Git status before comparison: `clean`
 - Git status after latest fenced run: only fenced experiment artifacts are modified until committed
 - This was the first fenced paper session for `gap10_vol2_4_cooldown`.
 - Cooldown alternate selection is now proven live for `gap10_vol2_4_cooldown`.
+- The branch is now rejected on trade quality.
 - Do not merge this branch into baseline.

@@ -1,0 +1,16 @@
+extends: pennyhunter_experiment_gap10_vol2_4_cooldown_confirmed.yaml
+
+name: PennyHunter Gap10 Vol2.4 Cooldown Confirmed V2 Experiment
+description: "Confirmed-entry experiment with upstream scan freshness filtering enabled"
+
+signals:
+  runner_vwap:
+    paper_scan:
+      only_recent_signals: true
+      max_signal_age_days: 2
+
+entry_confirmation:
+  enabled: true
+  max_signal_age_days: 2
+  require_green_confirmation_bar: false
+  reject_stop_hit_before_confirmation: false

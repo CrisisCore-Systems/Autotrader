@@ -1,0 +1,10 @@
+extends: pennyhunter_experiment_gap10_vol2_4_cooldown.yaml
+
+name: PennyHunter Gap10 Vol2.4 Cooldown Confirmed Experiment
+description: "Experimental PennyHunter thresholds with cooldown plus confirmed-entry stale-date gate"
+
+entry_confirmation:
+  enabled: true
+  max_signal_age_days: 2
+  require_green_confirmation_bar: false
+  reject_stop_hit_before_confirmation: false

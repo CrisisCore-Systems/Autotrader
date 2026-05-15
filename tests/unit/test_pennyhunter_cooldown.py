@@ -116,3 +116,30 @@ def test_stop_cooldown_blocks_until_session_boundary_then_unlocks(tmp_path: Path
     filtered_14 = session_14._apply_persistent_ticker_cooldown([{'ticker': 'TLRY', 'signal_type': 'runner_vwap'}])
     assert [signal['ticker'] for signal in filtered_14] == ['TLRY']
     assert session_14.cooldown_decisions == []
+
+
+def test_duplicate_closed_trade_does_not_extend_cooldown(tmp_path: Path) -> None:
+    session_10 = build_minimal_trader(tmp_path, total_sessions=9, history_name='history_session_10_dup.json')
+    trade = {
+        'ticker': 'SPCE',
+        'pnl': 9.96,
+        'exit_reason': 'TARGET',
+        'exit_time': '2026-05-14T20:00:00',
+        'entry_time': '2026-05-14T15:30:00',
+        'signal_id': 'SPCE_2026-03-31_runner_vwap',
+        'signal_date': '2026-03-31',
+        'entry_price': 4.5,
+        'shares': 100,
+    }
+
+    session_10.record_trade_outcome(trade)
+    first = session_10.memory.get_ticker_cooldown('SPCE', current_session=10)
+    assert first['last_closed_session'] == 10
+    assert first['blocked_until'] == 11
+
+    session_11 = build_minimal_trader(tmp_path, total_sessions=10, history_name='history_session_11_dup.json')
+    session_11.record_trade_outcome(trade)
+    second = session_11.memory.get_ticker_cooldown('SPCE', current_session=10)
+
+    assert second['last_closed_session'] == 10
+    assert second['blocked_until'] == 11

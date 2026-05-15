@@ -153,7 +153,7 @@ class PennyHunterMemory:
         pnl: float,
         trade_date: Optional[str] = None,
         outcome_key: Optional[str] = None,
-    ):
+    ) -> bool:
         """
         Record a trade outcome for a ticker.
 
@@ -180,7 +180,7 @@ class PennyHunterMemory:
         if cursor.fetchone() is not None:
             conn.close()
             logger.info(f"⏭️ Skipping duplicate memory outcome for {ticker}: {outcome_key}")
-            return
+            return False
 
         # Check if ticker exists
         cursor.execute("SELECT ticker FROM ticker_stats WHERE ticker = ?", (ticker,))
@@ -240,6 +240,7 @@ class PennyHunterMemory:
         conn.close()
 
         logger.info(f"📝 Recorded trade: {ticker} {'WIN' if won else 'LOSS'} ${pnl:.2f}")
+        return True
 
     def set_ticker_cooldown(
         self,

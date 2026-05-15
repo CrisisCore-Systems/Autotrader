@@ -24,7 +24,7 @@ import logging
 from collections import OrderedDict
 from pathlib import Path
 from datetime import date, datetime
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 import yaml
 import json
 
@@ -300,17 +300,37 @@ class PennyHunterPaperTrader:
         if not self.entry_confirmation_config.get('enabled', False):
             return True
 
+        def record_pass(reason: str, **extra: Any) -> None:
+            decision = {
+                'ticker': signal.get('ticker'),
+                'signal_date': signal.get('date'),
+                'decision': 'pass',
+                'reason': reason,
+                'recorded_at': datetime.now().isoformat(),
+            }
+            decision.update(extra)
+            self.entry_confirmation_decisions.append(decision)
+
         max_signal_age_days = self.entry_confirmation_config.get('max_signal_age_days')
         if max_signal_age_days is None:
+            record_pass('no_age_limit')
             return True
 
         signal_date = self._parse_signal_date(signal.get('date'))
         if signal_date is None:
+            record_pass('signal_date_unavailable', max_signal_age_days=max_signal_age_days)
             return True
 
         reference_date = self._reference_market_date(signal)
         age_days = (reference_date - signal_date).days
         if age_days <= max_signal_age_days:
+            record_pass(
+                'signal_fresh',
+                max_signal_age_days=max_signal_age_days,
+                signal_date=signal_date.isoformat(),
+                reference_date=reference_date.isoformat(),
+                age_days=age_days,
+            )
             return True
 
         decision = {
@@ -1408,14 +1428,14 @@ class PennyHunterPaperTrader:
                 pnl=pnl,
             )
 
-            self.memory.record_trade_outcome(
+            recorded = self.memory.record_trade_outcome(
                 ticker=trade['ticker'],
                 won=won,
                 pnl=pnl,
                 trade_date=trade_date,
                 outcome_key=outcome_key,
             )
-            if self.ticker_cooldown_config.get('enabled', False):
+            if recorded and self.ticker_cooldown_config.get('enabled', False):
                 exit_reason = str(
                     trade.get('exit_reason') or trade.get('outcome') or ('TARGET' if won else 'STOP')
                 ).upper()
@@ -1427,6 +1447,8 @@ class PennyHunterPaperTrader:
                     closed_session=closed_session,
                     cooldown_until_session=closed_session + cooldown_sessions,
                 )
+            elif not recorded:
+                logger.info("⏭️ Cooldown unchanged for duplicate outcome: %s", trade.get('ticker'))
             self._record_phase25_outcome(trade)
 
             status = "WIN ✅" if won else "LOSS ❌"

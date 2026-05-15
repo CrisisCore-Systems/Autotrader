@@ -49,3 +49,25 @@
 - Upstream scan freshness filtered stale historical candidates before cooldown and entry confirmation.
 - No trade candidate remains eligible in this scan-only state.
 - Keep this branch in scan-only monitoring until at least one candidate survives scan freshness.
+
+## Repeated Scan-Freshness Checkpoint
+
+- Git status before check: clean
+- Scanned universe size: 26
+- Signals before scan freshness: SPCE, TLRY
+- Signals rejected by scan freshness:
+  - SPCE, signal date 2026-04-06, age 38, reason signal_too_old_scan_window
+  - TLRY, signal date 2026-01-09, age 125, reason signal_too_old_scan_window
+- Signals after scan freshness: none
+- Cooldown decisions: none
+- Entry confirmation decisions: none
+- Any trade remaining eligible: false
+- baseline_changed: NONE
+- Final git status: clean
+
+### Interpretation (Repeated Check)
+
+- The v2 scanner is correctly blocking stale setups upstream.
+- No paper session is eligible.
+- Continue scan-only checks only until a fresh signal survives scan freshness.
+- Do not run a fenced paper session unless at least one signal survives scan freshness, cooldown, and entry confirmation.

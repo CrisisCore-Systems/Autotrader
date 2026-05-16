@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crisiscore-systems.github.io/autotrader/schemas/paper_trade_schema.json",
+  "title": "Phase 2 Paper Trade Record",
+  "description": "Schema for real paper-trade evidence intake used by Phase 2 validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trade_id",
+    "opened_at",
+    "closed_at",
+    "ticker",
+    "strategy",
+    "mode",
+    "broker",
+    "entry_price",
+    "exit_price",
+    "shares",
+    "gross_pnl",
+    "fees",
+    "net_pnl",
+    "return_pct",
+    "regime",
+    "signal_quality",
+    "gap_pct",
+    "volume_ratio",
+    "stop_price",
+    "target_price",
+    "exit_reason",
+    "memory_ejected_before_trade",
+    "notes"
+  ],
+  "properties": {
+    "trade_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ticker": {
+      "type": "string",
+      "minLength": 1
+    },
+    "strategy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "paper"
+      ]
+    },
+    "broker": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entry_price": {
+      "type": "number"
+    },
+    "exit_price": {
+      "type": "number"
+    },
+    "shares": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "gross_pnl": {
+      "type": "number"
+    },
+    "fees": {
+      "type": "number",
+      "minimum": 0
+    },
+    "net_pnl": {
+      "type": "number"
+    },
+    "return_pct": {
+      "type": "number"
+    },
+    "regime": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signal_quality": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "gap_pct": {
+      "type": "number"
+    },
+    "volume_ratio": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "stop_price": {
+      "type": "number"
+    },
+    "target_price": {
+      "type": "number"
+    },
+    "exit_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "memory_ejected_before_trade": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

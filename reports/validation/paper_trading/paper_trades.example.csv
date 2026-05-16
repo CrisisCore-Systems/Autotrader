@@ -1,0 +1,2 @@
+trade_id,opened_at,closed_at,ticker,strategy,mode,broker,entry_price,exit_price,shares,gross_pnl,fees,net_pnl,return_pct,regime,signal_quality,gap_pct,volume_ratio,stop_price,target_price,exit_reason,memory_ejected_before_trade,notes
+PT-EXAMPLE-0001,2026-05-01T13:31:00Z,2026-05-01T14:12:00Z,EXMPL,BounceHunter,paper,PaperBroker,10.00,10.50,100,50.00,1.00,49.00,0.0500,normal,0.78,0.084,1.9,9.70,10.80,TARGET,false,Example row for format only

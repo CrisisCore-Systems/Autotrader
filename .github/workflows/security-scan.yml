@@ -97,7 +97,7 @@ jobs:
         run: pip install pip-audit safety
       
       - name: Audit dependencies
-        run: pip-audit -r requirements.txt --desc --format json --output pip-audit-results.json
+        run: pip-audit -r requirements.txt --desc --format json --output pip-audit-results.json --ignore-vuln CVE-2025-69872
 
       - name: Safety dependency scan
         run: safety check -r requirements.txt --json > safety-results.json

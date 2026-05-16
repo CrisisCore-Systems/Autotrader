@@ -58,7 +58,7 @@ Expiry:
 - Current local evidence:
 	- `pip-audit -r requirements.txt`: 1 remaining vulnerability (`diskcache`, `CVE-2025-69872`)
 	- `safety check -r requirements.txt`: 0 vulnerabilities
-- Accepted temporary risk: `diskcache` advisory has no published fixed version.
+- Accepted temporary risk: `diskcache` advisory (`CVE-2025-69872`) is ignored in CI only because no published fixed version exists; all other `pip-audit` findings remain blocking.
 - Mitigation: keep DVC/cache paths non-world-writable in runner/runtime environments and avoid untrusted writes to cache directories.
 - Expiry: 2026-06-30 (re-evaluate weekly and remove acceptance when an upstream fix is available).
 

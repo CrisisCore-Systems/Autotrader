@@ -26,6 +26,15 @@ Validator/intake work: clean locally, not implicated in CI failures.
 - Existing high vulnerabilities from Grype
 - scripts import path failure in alert/prompt validation jobs
 
+## dependency-triage (2026-05-15)
+- Runtime dependency triage applied: FastAPI/Starlette upgraded and MLflow/Prefect moved out of runtime requirements.
+- Current local evidence:
+	- `pip-audit -r requirements.txt`: 1 remaining vulnerability (`diskcache`, `CVE-2025-69872`)
+	- `safety check -r requirements.txt`: 0 vulnerabilities
+- Accepted temporary risk: `diskcache` advisory has no published fixed version.
+- Mitigation: keep DVC/cache paths non-world-writable in runner/runtime environments and avoid untrusted writes to cache directories.
+- Expiry: 2026-06-30 (re-evaluate weekly and remove acceptance when an upstream fix is available).
+
 ---
 
 ## Repair Order

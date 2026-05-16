@@ -23,3 +23,8 @@ locust>=2.20.0
 # Code Coverage
 coverage[toml]>=7.4.0
 codecov>=2.1.13
+
+# Optional ML Ops Tooling (non-runtime)
+mlflow==3.11.1
+mlflow-skinny==3.11.1
+prefect==2.20.25

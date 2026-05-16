@@ -1,0 +1,110 @@
+{
+  "scope": {
+    "strategy": "BounceHunter Agentic (backtest validation from agentic_backtest_results)",
+    "mode": "Backtest validation artifact",
+    "framing_note": "Validation Report v1 is a reproducible backtest validation artifact. It does not replace Phase 2 paper-trading validation. Live capital remains blocked until paper-trade sample validation is complete.",
+    "capital": 100000.0,
+    "date_range": {
+      "start": "2019-01-01",
+      "end": "2025-10-18"
+    },
+    "trade_sample_size": 8,
+    "source_file": "reports\\agentic_backtest_results.json",
+    "generated_at": "2026-05-16T00:32:55.982803Z"
+  },
+  "executive_verdict": "Fail",
+  "core_metrics": {
+    "total_trades": 8,
+    "wins": 6,
+    "losses": 2,
+    "win_rate": 0.75,
+    "win_rate_confidence_interval": {
+      "low": 0.40926987910258916,
+      "high": 0.9285223111419724,
+      "method": "wilson_95"
+    },
+    "average_win": 0.10000000000000009,
+    "average_loss": -0.050000000000000044,
+    "profit_factor": 6.0,
+    "sharpe_ratio": 0.9766329351669566,
+    "max_drawdown": 0.0004999999999999449,
+    "average_return_per_trade": 0.06250000000000006
+  },
+  "loss_analysis": {
+    "largest_loss": {
+      "ticker": "COMP",
+      "entry_date": "2021-08-10",
+      "exit_date": "2021-08-17",
+      "entry_price": 16.6299991607666,
+      "exit_price": 15.798499202728271,
+      "stop_price": 15.798499202728271,
+      "target_price": 18.292999076843262,
+      "return_pct": -0.050000000000000044,
+      "hold_days": 7,
+      "hit_target": false,
+      "hit_stop": true,
+      "exit_reason": "STOP",
+      "confidence": 6.0,
+      "probability": 0.7000000000000001,
+      "regime": "normal",
+      "size_pct": 0.01,
+      "gap_pct": 0.08835074943636162,
+      "sector": "UNKNOWN",
+      "sentinel_approved": true,
+      "screener_approved": true,
+      "forecaster_approved": true,
+      "riskofficer_approved": true,
+      "newssentry_approved": true,
+      "trader_approved": true,
+      "veto_reason": null,
+      "forecaster_note": "Confidence: 6.0",
+      "riskofficer_note": "Passed risk checks"
+    },
+    "repeated_failure_patterns": {
+      "STOP": 2
+    },
+    "tickers_responsible_for_losses": {
+      "COMP": 1,
+      "INTR": 1
+    },
+    "regime_during_losses": {
+      "normal": 2
+    },
+    "slippage_or_liquidity_notes": "No explicit slippage/liquidity loss note in source trades; investigate separately."
+  },
+  "regime_breakdown": {
+    "normal": 8,
+    "high_vix": 0,
+    "spy_stress": 0,
+    "unknown": 0
+  },
+  "memory_auto_ejector_review": {
+    "before_memory_hooks": {
+      "win_rate": 0.46875,
+      "trade_sample": 32
+    },
+    "after_memory_hooks": {
+      "win_rate": 0.75,
+      "trade_sample": 8
+    },
+    "ejection_candidates": {
+      "ADT": 5
+    },
+    "ejection_event_mentions": 5,
+    "behavior_assessment": "Sensible based on repeated low-win-rate ejection notes"
+  },
+  "live_capital_gate": {
+    "decision": "Fail",
+    "required_evidence_before_live_use": [
+      "Increase completed paper trade sample to >= 30",
+      "Sustain positive profit factor and stable drawdown across regimes",
+      "Demonstrate memory/ejector impact over a larger sample",
+      "Provide slippage/liquidity stress checks"
+    ],
+    "hard_stop_conditions": [
+      "Disable live capital if max drawdown exceeds 10%",
+      "Disable live capital if 95% CI lower bound for win rate falls below 0.50",
+      "Disable live capital on repeated unresolved broker/execution errors"
+    ]
+  }
+}

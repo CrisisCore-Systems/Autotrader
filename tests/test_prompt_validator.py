@@ -53,7 +53,7 @@ class TestInjectionDetector:
         result = detector.detect("execute(__import__('os').system('ls'))")
 
         assert not result.is_valid
-        assert result.threat_level >= ThreatLevel.HIGH
+        assert result.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]
 
     def test_script_injection(self):
         """Test detection of script injection."""
@@ -83,7 +83,7 @@ class TestInjectionDetector:
         result = detector.detect("A" * 150000)
 
         assert not result.is_valid
-        assert result.threat_level >= ThreatLevel.MEDIUM
+        assert result.threat_level in [ThreatLevel.MEDIUM, ThreatLevel.HIGH, ThreatLevel.CRITICAL]
 
     def test_repeated_characters(self):
         """Test detection of repeated character DOS attempts."""

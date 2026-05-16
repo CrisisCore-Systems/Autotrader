@@ -46,7 +46,8 @@ class InjectionDetector:
     # Common injection patterns
     INJECTION_PATTERNS = [
         # System prompt override attempts
-        r"(?i)(ignore|disregard|forget)\s+(previous|all|above|prior)\s+(instructions|prompts|rules)",
+        r"(?i)(ignore|disregard|forget)\b.*\b(instructions?|prompts?|rules?)\b",
+        r"(?i)(ignore|disregard|forget)\s+everything\s+above",
         r"(?i)system\s*[:=]\s*['\"]",
         r"(?i)you\s+are\s+now\s+(a|an)\s+",
         # Role manipulation
@@ -56,10 +57,11 @@ class InjectionDetector:
         r"(?i)(execute|run|eval|exec)\s*\(",
         r"(?i)__[a-z]+__\s*\(",
         # Data exfiltration attempts
-        r"(?i)(print|output|return|send)\s+(all|everything|system|config)",
+        r"(?i)(print|output|return|send)\s+(all|everything|system|config(?:uration)?)",
         r"(?i)reveal\s+(your|the)\s+(system|prompt|instructions)",
         # SQL/NoSQL injection patterns
         r"(?i)(union|select|insert|update|delete)\s+.*\s+from",
+        r"(?i)\b(drop|truncate)\s+table\b",
         r"(?i)\$where|\$ne|\$gt|\$lt",
         # Script injection
         r"<script[^>]*>",

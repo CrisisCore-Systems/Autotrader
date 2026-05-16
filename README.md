@@ -16,6 +16,12 @@
 
 > **📌 Canonical Status: [STATUS.md](STATUS.md)** - current launch posture, validation state, and near-term priorities.
 
+## Validation Artifacts
+
+- `reports/validation/VALIDATION_REPORT_V1.md` is the current reproducible backtest validation artifact.
+- It does not replace Phase 2 paper-trading validation.
+- Live capital remains blocked until paper-trade sample validation is complete.
+
 > **📖 [Understanding What You've Created](docs/OVERVIEW_INDEX.md)** - Start here for a comprehensive system overview!
 > - [Quick Summary (5 min)](docs/status/SYSTEM_SUMMARY.md) - TL;DR with key stats
 > - [Complete Overview (20 min)](docs/WHAT_YOU_CREATED.md) - Deep dive into the system

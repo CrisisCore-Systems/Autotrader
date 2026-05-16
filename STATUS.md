@@ -83,6 +83,12 @@ AutoTrader is a substantial trading platform with real infrastructure, but it is
 - Validate RL against fixed baselines before any production positioning.
 - Pursue HA, multi-user hosting, and broader commercial packaging only after trading proof is in place.
 
+## Validation Artifacts
+
+- `reports/validation/VALIDATION_REPORT_V1.md` is the current reproducible backtest validation artifact.
+- It does not replace Phase 2 paper-trading validation.
+- Live capital remains blocked until paper-trade sample validation is complete.
+
 ## Reader Guidance
 
 - For execution priorities, see `ROADMAP_NOW_NEXT_LATER.md`.

@@ -38,7 +38,7 @@ jobs:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
       
       - name: Upload Semgrep SARIF
-        if: always()
+        if: always() && hashFiles('semgrep.sarif') != ''
         uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb  # v3.13.1
         with:
           sarif_file: semgrep.sarif
@@ -62,7 +62,7 @@ jobs:
         run: bandit -r src pipeline -f sarif -o bandit-results.sarif --severity-level high
       
       - name: Upload Bandit SARIF
-        if: always()
+        if: always() && hashFiles('bandit-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb  # v3.13.1
         with:
           sarif_file: bandit-results.sarif
@@ -97,7 +97,7 @@ jobs:
         run: pip install pip-audit safety
       
       - name: Audit dependencies
-        run: pip-audit -r requirements.txt --desc --fix-dry-run --format json --output pip-audit-results.json
+        run: pip-audit -r requirements.txt --desc --format json --output pip-audit-results.json
 
       - name: Safety dependency scan
         run: safety check -r requirements.txt --json > safety-results.json
@@ -133,7 +133,7 @@ jobs:
           scanners: 'vuln,secret,config,license'
       
       - name: Upload Trivy SARIF
-        if: always()
+        if: always() && hashFiles('trivy-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v3.24.6
         with:
           sarif_file: trivy-results.sarif
@@ -171,12 +171,27 @@ jobs:
           fetch-depth: 0
       
       - name: Run TruffleHog
+        if: github.event_name == 'pull_request'
         uses: trufflesecurity/trufflehog@b84c3d14d189e16da175e2c27fa8136603783ffc
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
           extra_args: --only-verified
+
+      - name: Run TruffleHog (push/schedule)
+        if: github.event_name != 'pull_request' && github.event.before != '' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before != github.sha
+        uses: trufflesecurity/trufflehog@b84c3d14d189e16da175e2c27fa8136603783ffc
+        with:
+          path: ./
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
+          extra_args: --only-verified
+
+      - name: Skip TruffleHog when diff range is unavailable
+        if: github.event_name != 'pull_request' && (github.event.before == '' || github.event.before == '0000000000000000000000000000000000000000' || github.event.before == github.sha)
+        run: |
+          echo "TruffleHog skipped: unable to derive a valid base/head commit range for this event."
 
   # === SBOM Generation ===
   sbom:
@@ -210,7 +225,7 @@ jobs:
           output-format: sarif
       
       - name: Upload Grype SARIF
-        if: always()
+        if: always() && steps.grype-scan.outputs.sarif != ''
         uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v3.24.6
         with:
           sarif_file: ${{ steps.grype-scan.outputs.sarif }}

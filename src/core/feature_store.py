@@ -13,7 +13,6 @@ from src.core.feature_validation import (
     validate_feature,
     validate_features_batch,
     ValidationError,
-    get_validator,
 )
 
 

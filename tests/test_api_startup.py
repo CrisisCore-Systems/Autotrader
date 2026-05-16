@@ -42,6 +42,12 @@ def test_app_initializes_without_required_keys(monkeypatch, caplog):
         def include_router(self, *args, **kwargs):
             return None
 
+        def middleware(self, *args, **kwargs):
+            def decorator(func):
+                return func
+
+            return decorator
+
         def get(self, *args, **kwargs):
             def decorator(func):
                 return func
@@ -96,24 +102,70 @@ def test_app_initializes_without_required_keys(monkeypatch, caplog):
     monkeypatch.setitem(sys.modules, "slowapi.errors", fake_slowapi_errors)
     monkeypatch.setitem(sys.modules, "slowapi.util", fake_slowapi_util)
 
+    fake_logging_config = types.ModuleType("src.core.logging_config")
+    fake_logging_config.setup_structured_logging = lambda *args, **kwargs: logging.getLogger("autotrader-api")
+    fake_logging_config.get_logger = lambda *args, **kwargs: logging.getLogger("autotrader-api")
+    monkeypatch.setitem(sys.modules, "src.core.logging_config", fake_logging_config)
+
+    fake_metrics = types.ModuleType("src.core.metrics")
+    fake_metrics.record_api_request = lambda *args, **kwargs: None
+    fake_metrics.record_api_duration = lambda *args, **kwargs: None
+    fake_metrics.record_api_error = lambda *args, **kwargs: None
+
+    class _FakeActiveRequestTracker:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    fake_metrics.ActiveRequestTracker = _FakeActiveRequestTracker
+    monkeypatch.setitem(sys.modules, "src.core.metrics", fake_metrics)
+
+    fake_tracing = types.ModuleType("src.core.tracing")
+    fake_tracing.setup_tracing = lambda *args, **kwargs: None
+    fake_tracing.instrument_fastapi = lambda *args, **kwargs: None
+    fake_tracing.get_trace_id = lambda *args, **kwargs: "trace-id"
+    monkeypatch.setitem(sys.modules, "src.core.tracing", fake_tracing)
+
     fake_fastapi_middleware.cors = fake_fastapi_middleware_cors
 
     fake_routes_pkg = types.ModuleType("src.api.routes")
+    fake_routes_pkg.__path__ = []  # Mark as package for dotted imports.
     fake_tokens_module = types.ModuleType("src.api.routes.tokens")
     fake_tokens_module.router = object()
     fake_health_module = types.ModuleType("src.api.routes.health")
     fake_health_module.router = object()
     fake_experiments_module = types.ModuleType("src.api.routes.experiments")
     fake_experiments_module.router = object()
+    fake_monitoring_module = types.ModuleType("src.api.routes.monitoring")
+    fake_monitoring_module.router = object()
+    fake_scan_module = types.ModuleType("src.api.routes.scan")
+    fake_scan_module.router = object()
+    fake_bouncehunter_module = types.ModuleType("src.api.routes.bouncehunter")
+    fake_bouncehunter_module.router = object()
+    fake_llm_module = types.ModuleType("src.api.routes.llm")
+    fake_llm_module.router = object()
 
     fake_routes_pkg.tokens = fake_tokens_module
     fake_routes_pkg.health = fake_health_module
     fake_routes_pkg.experiments = fake_experiments_module
+    fake_routes_pkg.monitoring = fake_monitoring_module
+    fake_routes_pkg.scan = fake_scan_module
+    fake_routes_pkg.bouncehunter = fake_bouncehunter_module
+    fake_routes_pkg.llm = fake_llm_module
 
     monkeypatch.setitem(sys.modules, "src.api.routes", fake_routes_pkg)
     monkeypatch.setitem(sys.modules, "src.api.routes.tokens", fake_tokens_module)
     monkeypatch.setitem(sys.modules, "src.api.routes.health", fake_health_module)
     monkeypatch.setitem(sys.modules, "src.api.routes.experiments", fake_experiments_module)
+    monkeypatch.setitem(sys.modules, "src.api.routes.monitoring", fake_monitoring_module)
+    monkeypatch.setitem(sys.modules, "src.api.routes.scan", fake_scan_module)
+    monkeypatch.setitem(sys.modules, "src.api.routes.bouncehunter", fake_bouncehunter_module)
+    monkeypatch.setitem(sys.modules, "src.api.routes.llm", fake_llm_module)
     sys.modules.pop(module_name, None)
 
     with caplog.at_level(logging.WARNING):

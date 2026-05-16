@@ -718,6 +718,7 @@ class TestQuestradeBroker:
     @pytest.fixture
     def mock_questrade(self):
         """Mock Questrade client."""
+        pytest.importorskip("questrade_api")
         with patch("questrade_api.Questrade") as mock_qt_class:
             mock_qt = Mock()
             mock_qt_class.return_value = mock_qt
@@ -884,18 +885,21 @@ class TestIBKRBroker:
             mock_ib = Mock()
             mock_ib_class.return_value = mock_ib
             mock_ib.isConnected.return_value = True
+            mock_ib.managedAccounts.return_value = ["DU0071381"]
 
             # Mock account values
             mock_values = [
-                Mock(tag="TotalCashValue", value="50000.0"),
-                Mock(tag="NetLiquidation", value="150000.0"),
-                Mock(tag="BuyingPower", value="75000.0"),
+                Mock(tag="TotalCashValue", value="50000.0", account="DU0071381"),
+                Mock(tag="NetLiquidation", value="150000.0", account="DU0071381"),
+                Mock(tag="BuyingPower", value="75000.0", account="DU0071381"),
             ]
             mock_ib.accountValues.return_value = mock_values
+            mock_ib.accountSummary.return_value = mock_values
 
             # Mock positions
             mock_positions = [
                 Mock(
+                    account="DU0071381",
                     contract=Mock(symbol="AAPL"),
                     position=100,
                     avgCost=150.0,
@@ -931,7 +935,10 @@ class TestIBKRBroker:
     def test_get_account(self, mock_ibkr):
         """Test get_account method."""
         broker = IBKRBroker()
-        account = broker.get_account()
+
+        # Isolate account summary parsing from position-fetch side effects.
+        with patch.object(broker, "get_positions", return_value=[]):
+            account = broker.get_account()
 
         assert account.cash == 50000.0
         assert account.portfolio_value == 150000.0

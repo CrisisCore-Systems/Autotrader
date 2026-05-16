@@ -28,6 +28,33 @@ Validator/intake work: clean locally, not implicated in CI failures.
 
 ## dependency-triage (2026-05-15)
 - Runtime dependency triage applied: FastAPI/Starlette upgraded and MLflow/Prefect moved out of runtime requirements.
+
+---
+
+## Trivy Terraform Config Baseline Drift
+
+Status: Accepted temporary CI baseline drift.
+
+The Trivy filesystem vulnerability/secret scan remains blocking.
+
+The Trivy config scan is currently advisory because it reports pre-existing Terraform IaC findings that require infrastructure review rather than workflow repair.
+
+Known findings:
+- `terraform/main.tf`
+  - `AWS-0052`: ALB does not drop invalid headers.
+  - `AWS-0053`: Load balancer is publicly exposed.
+- `terraform/modules/networking/main.tf`
+  - `AWS-0104`: unrestricted `0.0.0.0/0` egress across load balancer, ECS task, RDS, and Redis security groups.
+  - Additional HIGH networking findings reported by Trivy.
+
+Required follow-up:
+- Decide whether public ALB exposure is intentional.
+- Add `drop_invalid_header_fields = true` where appropriate.
+- Replace unrestricted egress with minimum required destinations where feasible.
+- Re-enable config scan as blocking after Terraform review.
+
+Expiry:
+- Re-evaluate before any production infrastructure deployment.
 - Current local evidence:
 	- `pip-audit -r requirements.txt`: 1 remaining vulnerability (`diskcache`, `CVE-2025-69872`)
 	- `safety check -r requirements.txt`: 0 vulnerabilities

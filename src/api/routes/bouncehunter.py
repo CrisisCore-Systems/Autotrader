@@ -60,11 +60,11 @@ class SignalResponse(BaseModel):
     probability: float
     z_score: float
     rsi2: float
-    bb_deviation: float
+    bb_deviation: Optional[float] = None
     distance_200ma: float
-    trend_63d: float
-    gap_down: bool
-    vix_regime: str
+    trend_63d: Optional[float] = None
+    gap_down: Optional[bool] = None
+    vix_regime: Optional[str] = None
     entry_price: float
     target_price: Optional[float] = None
     stop_price: Optional[float] = None
@@ -149,11 +149,11 @@ def scan_for_bounces(
             probability=report.probability,
             z_score=report.z_score,
             rsi2=report.rsi2,
-            bb_deviation=0.0,  # Not in SignalReport, placeholder
+            bb_deviation=None,
             distance_200ma=report.dist_200dma,
-            trend_63d=0.0,  # Not in SignalReport, placeholder
-            gap_down=False,  # Not in SignalReport, placeholder
-            vix_regime="unknown",  # Not in SignalReport, placeholder
+            trend_63d=None,
+            gap_down=None,
+            vix_regime=None,
             entry_price=report.entry,
             target_price=report.target,
             stop_price=report.stop,
@@ -171,7 +171,7 @@ def scan_for_bounces(
             "max_probability": max(probabilities),
             "min_probability": min(probabilities),
             "avg_z_score": sum(z_scores) / len(z_scores),
-            "gap_down_count": sum(1 for s in signals if s.gap_down),
+            "gap_down_count": sum(1 for s in signals if s.gap_down is True),
             "training_samples": len(train_df),
         }
     else:

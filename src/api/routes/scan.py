@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -175,12 +176,28 @@ def run_scan(request: Request, payload: ScanRequest = Body(...)) -> ScanResponse
     _ensure_dir(base_dir)
     md_path = base_dir / f"{payload.symbol.upper()}_{ts}.md"
     html_path = base_dir / f"{payload.symbol.upper()}_{ts}.html"
+    metadata_path = base_dir / f"{payload.symbol.upper()}_{ts}.json"
+
+    liquidity_ok = bool(getattr(result, "safety_report", None)) and bool(
+        getattr(result, "artifact_payload", {}).get("flags", [])
+    )
 
     try:
         if result.artifact_markdown:
             md_path.write_text(result.artifact_markdown, encoding="utf-8")
         if result.artifact_html:
             html_path.write_text(result.artifact_html, encoding="utf-8")
+        metadata = {
+            "token": result.token,
+            "gem_score": result.gem_score.score,
+            "confidence": result.gem_score.confidence,
+            "flagged": result.flag,
+            "liquidity_ok": liquidity_ok,
+            "created_at": ts,
+            "artifact_markdown_path": str(md_path) if md_path.exists() else None,
+            "artifact_html_path": str(html_path) if html_path.exists() else None,
+        }
+        metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     except Exception as write_exc:  # Do not fail the request on write errors
         logger.warning("artifact_write_failed", error=str(write_exc))
 
@@ -189,7 +206,7 @@ def run_scan(request: Request, payload: ScanRequest = Body(...)) -> ScanResponse
         gem_score=result.gem_score.score,
         confidence=result.gem_score.confidence,
         flagged=result.flag,
-        liquidity_ok=bool(getattr(result, "safety_report", None)) and bool(getattr(result, "artifact_payload", {}).get("flags", [])),
+        liquidity_ok=liquidity_ok,
         created_at=ts,
         artifact_markdown_path=str(md_path) if md_path.exists() else None,
         artifact_html_path=str(html_path) if html_path.exists() else None,
@@ -199,9 +216,9 @@ def run_scan(request: Request, payload: ScanRequest = Body(...)) -> ScanResponse
 
 class RecentScanItem(BaseModel):
     symbol: str
-    gem_score: float
-    confidence: float
-    flagged: bool
+    gem_score: Optional[float] = None
+    confidence: Optional[float] = None
+    flagged: Optional[bool] = None
     created_at: str
     artifact_markdown_path: str
     artifact_html_path: str
@@ -226,8 +243,7 @@ def list_recent_scans(
     if not artifacts_base.exists():
         return []
     
-    # Collect all JSON metadata files (we'll use the response JSON structure from run_scan)
-    # For now, we'll scan the filesystem for .md files and parse the timestamp from filenames
+    # Collect recent artifacts and prefer sidecar JSON metadata when available.
     scans = []
     
     for symbol_dir in artifacts_base.iterdir():
@@ -245,15 +261,29 @@ def list_recent_scans(
             
             ts_str = parts[-1]  # YYYYMMDDTHHMMSSZ
             html_file = md_file.with_suffix(".html")
+            metadata_file = md_file.with_suffix(".json")
+
+            gem_score: Optional[float] = None
+            confidence: Optional[float] = None
+            flagged: Optional[bool] = None
+            created_at = ts_str
+
+            if metadata_file.exists():
+                try:
+                    metadata = json.loads(metadata_file.read_text(encoding="utf-8"))
+                    gem_score = metadata.get("gem_score")
+                    confidence = metadata.get("confidence")
+                    flagged = metadata.get("flagged")
+                    created_at = metadata.get("created_at", created_at)
+                except Exception as exc:
+                    logger.warning("scan_metadata_read_failed", path=str(metadata_file), error=str(exc))
             
-            # We don't have gem_score in the filename, so we'll show a placeholder
-            # In production, you'd save a .json metadata file alongside the artifacts
             scans.append(RecentScanItem(
                 symbol=symbol,
-                gem_score=0.0,  # Placeholder - would read from metadata JSON
-                confidence=0.0,  # Placeholder
-                flagged=False,   # Placeholder
-                created_at=ts_str,
+                gem_score=gem_score,
+                confidence=confidence,
+                flagged=flagged,
+                created_at=created_at,
                 artifact_markdown_path=str(md_file),
                 artifact_html_path=str(html_file) if html_file.exists() else "",
             ))

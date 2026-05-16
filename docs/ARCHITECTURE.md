@@ -2,7 +2,9 @@
 
 **Version:** 1.0.0  
 **Last Updated:** October 22, 2025  
-**Status:** Production
+**Status:** Subsystem architecture reference (not repository-wide production status)
+
+Current repository-wide status lives in `STATUS.md`. This document is subsystem-scoped and may describe historical implementation state.
 
 ---
 

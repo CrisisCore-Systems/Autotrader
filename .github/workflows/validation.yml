@@ -43,13 +43,25 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install dvc[s3]
+
+      - name: Check DVC remote
+        id: dvc-remote
+        run: |
+          if dvc remote list | grep -q "s3cache"; then
+            echo "has_remote=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_remote=false" >> "$GITHUB_OUTPUT"
+            echo "DVC remote 's3cache' not configured; skipping remote cache pull."
+          fi
       
       - name: Configure DVC
+        if: steps.dvc-remote.outputs.has_remote == 'true'
         run: |
           dvc remote modify s3cache access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           dvc remote modify s3cache secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       
       - name: Pull DVC data
+        if: steps.dvc-remote.outputs.has_remote == 'true'
         run: dvc pull
       
       - name: Validate data integrity

@@ -1,3 +1,11 @@
+# Text files - enforce LF to reduce cross-platform diff noise
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+
 # Binary files - mark explicitly to avoid incorrect diffs
 *.db binary
 *.sqlite binary

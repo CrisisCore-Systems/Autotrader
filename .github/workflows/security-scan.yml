@@ -253,6 +253,8 @@ jobs:
   alert-config-validation:
     name: Alert Rules Validation
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       
@@ -269,6 +271,8 @@ jobs:
   prompt-contract-validation:
     name: Prompt Contract Validation
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
       

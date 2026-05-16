@@ -204,7 +204,7 @@ jobs:
       - name: Generate Python SBOM
         uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.15.7
         with:
-          path: .
+          file: requirements.txt  # Scope to Python runtime only; path: . caused JS/Actions packages to inflate the SBOM
           format: spdx-json
           artifact-name: python-sbom.spdx.json
           output-file: sbom-python.spdx.json
@@ -223,7 +223,7 @@ jobs:
           sbom: sbom-python.spdx.json
           fail-build: true
           severity-cutoff: high
-          output-format: sarif
+          output-format: table  # table: findings visible in log; sarif upload was broken (locationFromSarifResult errors)
       
       - name: Upload Grype SARIF
         if: always() && steps.grype-scan.outputs.sarif != ''

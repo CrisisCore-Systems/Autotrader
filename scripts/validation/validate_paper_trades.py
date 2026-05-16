@@ -16,8 +16,11 @@ from pathlib import Path
 from typing import Any
 
 
-def _parse_datetime(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+def _parse_datetime(value: str, field_name: str) -> datetime:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"Field '{field_name}' must be a valid ISO 8601 date-time: {value!r}") from exc
 
 
 def _parse_float(value: str, field_name: str) -> float:
@@ -76,8 +79,8 @@ def validate_csv(csv_path: Path, schema_path: Path) -> dict[str, Any]:
                 if row.get(column, "") == "":
                     raise ValueError(f"Row {row_number}: required field '{column}' is empty")
 
-            opened_at = _parse_datetime(row["opened_at"])
-            closed_at = _parse_datetime(row["closed_at"])
+            opened_at = _parse_datetime(row["opened_at"], "opened_at")
+            closed_at = _parse_datetime(row["closed_at"], "closed_at")
             open_dates.append(opened_at)
             close_dates.append(closed_at)
 

@@ -19,12 +19,14 @@ import asyncio
 import contextlib
 import json
 import logging
+import os
 import random
 import sys
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, AsyncIterable, Dict, List, Optional
+from inspect import isawaitable
 
 import yaml
 
@@ -34,6 +36,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from autotrader.execution.adapters import OrderSide, OrderType
 from autotrader.execution.adapters.paper import PaperTradingAdapter
+from autotrader.execution.adapters.binance_testnet import BinanceTestnetAdapter
+from autotrader.execution.adapters.kraken import KrakenAdapter
 from autotrader.execution.live import (
     BinanceTestnetTransportAdapter,
     LiveExecutionEngine,
@@ -66,6 +70,20 @@ def _load_json(path: Path) -> Dict[str, Any]:
         return json.load(handle)
 
 
+def _load_local_env_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def _extract_symbols(strategy_config: Dict[str, Any]) -> List[str]:
     explicit_symbols = strategy_config.get("symbols") or {}
     if isinstance(explicit_symbols, dict) and explicit_symbols:
@@ -77,6 +95,59 @@ def _extract_symbols(strategy_config: Dict[str, Any]) -> List[str]:
         return routed_symbols
 
     return ["BTC/USD", "ETH/USD"]
+
+
+def _normalize_symbols_for_mode(symbols: List[str], mode: str) -> List[str]:
+    normalized: List[str] = []
+    for symbol in symbols:
+        raw = str(symbol).strip().upper().replace("-", "/")
+        if mode == "testnet":
+            if raw.endswith("/USD"):
+                raw = raw[:-4] + "/USDT"
+            raw = raw.replace("/", "")
+        elif mode == "kraken":
+            if "/" not in raw and raw.endswith("USDT"):
+                raw = raw[:-4] + "/USDT"
+            elif "/" not in raw and raw.endswith("USD"):
+                raw = raw[:-3] + "/USD"
+        normalized.append(raw)
+    return normalized
+
+
+def _extract_quote_asset(symbol: str) -> str:
+    raw = str(symbol).strip().upper().replace("-", "/")
+    if "/" in raw:
+        return raw.split("/", 1)[1]
+    known_quotes = ["USDT", "USD", "USDC", "EUR", "GBP", "JPY", "BTC", "ETH"]
+    for quote in known_quotes:
+        if raw.endswith(quote) and len(raw) > len(quote):
+            return quote
+    return "USD"
+
+
+def _quote_balance_from_snapshot(balances: Dict[str, float], quote_asset: str) -> float:
+    quote = str(quote_asset).upper()
+    aliases = {
+        "USD": ["USD", "ZUSD", "USDT"],
+        "USDT": ["USDT", "USD", "ZUSD"],
+        "EUR": ["EUR", "ZEUR"],
+        "GBP": ["GBP", "ZGBP"],
+        "JPY": ["JPY", "ZJPY"],
+    }
+    candidates = aliases.get(quote, [quote])
+    total = 0.0
+    for key in candidates:
+        total += float(balances.get(key, 0.0) or 0.0)
+    return total
+
+
+def _parse_bool(value: str) -> bool:
+    raw = str(value).strip().lower()
+    if raw in {"1", "true", "yes", "y", "on"}:
+        return True
+    if raw in {"0", "false", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"Expected boolean value, got: {value}")
 
 
 def _symbol_base_prices(symbols: List[str]) -> Dict[str, float]:
@@ -228,6 +299,7 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
     config_path = (PROJECT_ROOT / args.config).resolve()
     policy_path = (PROJECT_ROOT / args.policy_json).resolve()
     output_path = (PROJECT_ROOT / args.status_output).resolve()
+    _load_local_env_file(PROJECT_ROOT / ".env")
 
     strategy_config = _load_yaml(config_path)
     policy = _load_json(policy_path)
@@ -239,10 +311,11 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
     symbols = _extract_symbols(strategy_config)
 
     mode = str(args.mode).strip().lower()
-    if mode not in {"synthetic", "testnet"}:
+    if mode not in {"synthetic", "testnet", "kraken", "ibkr"}:
         raise SystemExit(f"Unsupported mode: {args.mode}")
 
-    venue = "SIM" if mode == "synthetic" else "BINANCE_TESTNET"
+    symbols = _normalize_symbols_for_mode(symbols, mode)
+    venue = "SIM" if mode == "synthetic" else ("BINANCE_TESTNET" if mode == "testnet" else ("KRAKEN" if mode == "kraken" else "IBKR"))
     runtime_config = _build_runtime_config(
         strategy_config,
         policy,
@@ -263,14 +336,21 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
     logger.info("Staging symbols: %s", ", ".join(symbols))
     logger.info("Staging mode: %s", mode)
 
-    paper_adapter = PaperTradingAdapter(initial_balance=float(args.initial_balance))
-    await paper_adapter.connect()
+    effective_transmit = bool(args.transmit)
+    if args.paper_only:
+        effective_transmit = False
 
-    replay: Optional[MockLiveTickReplay] = None
-    testnet_transport: Optional[BinanceTestnetTransportAdapter] = None
-    transport_stream_provider = None
+    if args.probe_balance_only and mode not in {"testnet", "kraken", "ibkr"}:
+        raise SystemExit("--probe-balance-only requires an authenticated mode (testnet, kraken, or ibkr)")
+
 
     if mode == "synthetic":
+        logger.info("Initializing Live Staging in SYNTHETIC mode using PaperTradingAdapter.")
+        broker_adapter = PaperTradingAdapter(initial_balance=float(args.initial_balance))
+        await broker_adapter.connect()
+        replay: Optional[MockLiveTickReplay] = None
+        testnet_transport: Optional[BinanceTestnetTransportAdapter] = None
+        transport_stream_provider = None
         replay = MockLiveTickReplay(
             symbols=symbols,
             bar_interval_minutes=args.bar_interval_minutes,
@@ -279,21 +359,147 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
             sleep_seconds=args.tick_sleep_seconds,
             seed=args.seed,
         )
-    else:
+    elif mode == "testnet":
+        logger.info("Initializing Live Staging in TESTNET mode using Authenticated BinanceTestnetAdapter.")
+        broker_adapter = BinanceTestnetAdapter()
+        connected = await broker_adapter.connect()
+        if not connected:
+            raise SystemExit("Failed to establish authenticated session with Binance Testnet.")
         testnet_transport = BinanceTestnetTransportAdapter(
             websocket_url=args.testnet_ws_url,
             reconnect_delay_seconds=args.testnet_reconnect_seconds,
             quote_asset=args.testnet_quote_asset,
         )
         transport_stream_provider = testnet_transport.stream
+        replay = None
+    elif mode == "kraken":
+        logger.info("Initializing Live Staging in KRAKEN mode using Authenticated KrakenAdapter.")
+        broker_adapter = KrakenAdapter()
+        connected = await broker_adapter.connect()
+        if not connected:
+            raise SystemExit("Failed to establish authenticated session with Kraken.")
+        testnet_transport = None
+        # Kraken transport is not yet wired; feed a replay stream so market-data
+        # and bar-close callbacks remain active while validating private API flow.
+        transport_stream_provider = None
+        replay = MockLiveTickReplay(
+            symbols=symbols,
+            bar_interval_minutes=args.bar_interval_minutes,
+            bars_to_emit=args.bars,
+            ticks_per_bar=args.ticks_per_bar,
+            sleep_seconds=args.tick_sleep_seconds,
+            seed=args.seed,
+        )
+        transport_stream_provider = replay.stream
+    elif mode == "ibkr":
+        logger.info("Initializing Live Staging in IBKR mode via local IB Gateway/TWS socket.")
+        try:
+            from autotrader.execution.adapters.ibkr import IBKRAdapter
+        except Exception as exc:
+            raise SystemExit(
+                "IBKR adapter import failed. Ensure ibapi is installed and available (pip install ibapi)."
+            ) from exc
 
+        broker_adapter = IBKRAdapter(
+            host=args.ibkr_host,
+            port=int(args.ibkr_port),
+            client_id=int(args.ibkr_client_id),
+        )
+        connected = await broker_adapter.connect()
+        if not connected:
+            raise SystemExit(
+                f"Could not connect to IBKR at {args.ibkr_host}:{args.ibkr_port}. Ensure IB Gateway/TWS is running with API sockets enabled."
+            )
+        testnet_transport = None
+        replay = MockLiveTickReplay(
+            symbols=symbols,
+            bar_interval_minutes=args.bar_interval_minutes,
+            bars_to_emit=args.bars,
+            ticks_per_bar=args.ticks_per_bar,
+            sleep_seconds=args.tick_sleep_seconds,
+            seed=args.seed,
+        )
+        transport_stream_provider = replay.stream
+
+    # Read-only auth probe: validate private API credentials and balance schema,
+    # then short-circuit before any order-placement pathways are reached.
+    if args.probe_balance_only:
+        if args.probe_order:
+            logger.info("--probe-balance-only enabled; skipping order probe even though --probe-order is set.")
+
+        started_at = datetime.now(timezone.utc)
+        balances = await broker_adapter.get_account_balance()
+        logger.info(
+            "Balance-only probe passed via private endpoint. Assets=%d NonZero=%d",
+            len(balances),
+            sum(1 for value in balances.values() if float(value) > 0.0),
+        )
+
+        status = {
+            "running": False,
+            "stopping": False,
+            "kill_switch_engaged": False,
+            "active_orders": 0,
+            "symbols": symbols,
+            "completed_bars": {symbol: 0 for symbol in symbols},
+            "started_at": started_at.isoformat(),
+            "stopped_at": datetime.now(timezone.utc).isoformat(),
+            "stop_reason": "probe balance-only completed",
+            "config_path": str(config_path),
+            "policy_path": str(policy_path),
+            "policy_status": policy.get("status"),
+            "selected_policy": selected_policy,
+            "preflight": {
+                "mode": mode,
+                "balance_only": True,
+                "assets_returned": len(balances),
+                "non_zero_assets": sum(1 for value in balances.values() if float(value) > 0.0),
+                "balances": balances,
+            },
+            "runtime": {
+                "mode": mode,
+                "bars_requested": args.bars,
+                "ticks_per_bar": args.ticks_per_bar,
+                "tick_sleep_seconds": args.tick_sleep_seconds,
+                "probe_order_enabled": bool(args.probe_order),
+                "probe_order_quantity": args.probe_order_quantity,
+                "probe_balance_only": bool(args.probe_balance_only),
+                "probe_requires_balance": bool(args.probe_requires_balance),
+                "probe_min_quote_balance": args.probe_min_quote_balance,
+                "paper_only": bool(args.paper_only),
+                "transmit": bool(args.transmit),
+                "effective_transmit": bool(effective_transmit),
+                "max_order_notional": float(args.max_order_notional),
+                "ibkr_host": args.ibkr_host,
+                "ibkr_port": args.ibkr_port,
+                "ibkr_client_id": args.ibkr_client_id,
+                "testnet_ws_url": args.testnet_ws_url,
+                "testnet_reconnect_seconds": args.testnet_reconnect_seconds,
+                "testnet_duration_seconds": args.testnet_duration_seconds,
+            },
+        }
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with output_path.open("w", encoding="utf-8") as handle:
+            json.dump(status, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+
+        logger.info("Wrote staging status snapshot to %s", output_path)
+        with contextlib.suppress(Exception):
+            disconnect_result = broker_adapter.disconnect()
+            if isawaitable(disconnect_result):
+                await disconnect_result
+        return status
     completed_bars = 0
     probe_order_submitted = False
+    probe_order_in_flight = False
+
 
     async def on_completed_bar(bar: OHLCV, engine: LiveExecutionEngine) -> None:
-        nonlocal completed_bars, probe_order_submitted
+        nonlocal completed_bars, probe_order_submitted, probe_order_in_flight
 
-        paper_adapter.set_price(bar.symbol, float(bar.close))
+        if mode == "synthetic":
+            broker_adapter.set_price(bar.symbol, float(bar.close))
         completed_bars += 1
 
         logger.info(
@@ -309,34 +515,89 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
             args.bars,
         )
 
-        if args.probe_order and not probe_order_submitted:
+        # Probe order logic for authenticated modes.
+        if mode in {"testnet", "kraken", "ibkr"} and args.probe_order and not probe_order_submitted:
             probe_order_submitted = True
-            order = await engine.submit_order(
-                symbol=bar.symbol,
-                side=OrderSide.BUY,
-                quantity=float(args.probe_order_quantity),
-                order_type=OrderType.MARKET,
-                time_in_force="IOC",
-            )
-            logger.info(
-                "PROBE ORDER | id=%s | symbol=%s | side=%s | qty=%.6f | status=%s | fill=%.6f @ %.4f",
-                order.order_id,
-                order.symbol,
-                order.side.value,
-                order.quantity,
-                order.status.value,
-                order.filled_quantity,
-                order.avg_fill_price,
-            )
+            probe_order_in_flight = True
+            logger.info("====== STARTING LIVE PRIVATE API PROBE RUN (%s) ======", mode.upper())
+            probe_symbol = symbols[0] if symbols else ("BTCUSDT" if mode == "testnet" else ("XBT/USD" if mode == "kraken" else "AAPL"))
+            probe_price = 15000.0 if mode == "testnet" else (10000.0 if mode == "kraken" else 1.0)
+            try:
+                balances = await broker_adapter.get_account_balance()
+                logger.info(
+                    "Pre-flight auth check passed via private balance endpoint. Assets=%d",
+                    len(balances),
+                )
+
+                quote_asset = _extract_quote_asset(probe_symbol)
+                quote_balance = _quote_balance_from_snapshot(balances, quote_asset)
+                required_quote = float(args.probe_order_quantity) * float(probe_price)
+                min_required = max(required_quote, float(args.probe_min_quote_balance))
+
+                if args.probe_requires_balance and quote_balance < min_required:
+                    logger.warning(
+                        "Skipping probe order due to insufficient %s balance: available=%.8f required>=%.8f",
+                        quote_asset,
+                        quote_balance,
+                        min_required,
+                    )
+                    return
+
+                logger.info(
+                    "Submitting private probe order: symbol=%s side=BUY qty=%.6f price=%.4f",
+                    probe_symbol,
+                    float(args.probe_order_quantity),
+                    probe_price,
+                )
+
+                probe_notional = float(args.probe_order_quantity) * float(probe_price)
+                if mode == "ibkr" and probe_notional > float(args.max_order_notional):
+                    logger.warning(
+                        "Skipping IBKR probe order because notional %.4f exceeds max-order-notional %.4f",
+                        probe_notional,
+                        float(args.max_order_notional),
+                    )
+                    return
+
+                updated_order = await engine.submit_order(
+                    symbol=probe_symbol,
+                    side=OrderSide.BUY,
+                    quantity=float(args.probe_order_quantity),
+                    order_type=OrderType.LIMIT,
+                    price=probe_price,
+                    time_in_force="GTC",
+                    ibkr_transmit=effective_transmit,
+                )
+                logger.info("Probe order acknowledged by exchange. Assigned ID: %s", updated_order.order_id)
+                await asyncio.sleep(1.5)
+                logger.info("Initiating cancellation for probe order: %s", updated_order.order_id)
+                cancelled = await engine.cancel_order(updated_order.order_id)
+                if cancelled:
+                    logger.info("Probe order successfully purged from the testnet orderbook. Safety pristine.")
+                else:
+                    logger.warning("Cancellation request returned false. Manual inspection recommended.")
+            except Exception as e:
+                logger.error(f"Catastrophic failure during private API execution probe: {str(e)}")
+                logger.error("Triggering structural safety engine teardown.")
+            finally:
+                probe_order_in_flight = False
+                logger.info("Private API probe sequence completed. Stopping live execution tracking layer.")
+                engine.request_stop("probe sequence completed")
+                return
 
         if mode == "synthetic" and completed_bars >= args.bars:
             engine.request_stop(f"target bars reached: {completed_bars}")
 
+
     def exchange_snapshot_provider() -> PortfolioStateSnapshot:
-        return _build_portfolio_snapshot(paper_adapter, source="paper_exchange")
+        if mode == "synthetic":
+            return _build_portfolio_snapshot(broker_adapter, source="paper_exchange")
+        # For testnet, you may want to implement a real snapshot from the exchange
+        return PortfolioStateSnapshot(timestamp=datetime.now(timezone.utc), positions={}, open_order_ids=[], source="testnet_exchange")
+
 
     engine = LiveExecutionEngine(
-        broker_adapter=paper_adapter,
+        broker_adapter=broker_adapter,
         config=runtime_config,
         local_snapshot_provider=None,
         exchange_snapshot_provider=exchange_snapshot_provider,
@@ -354,6 +615,14 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
             if not engine.running or engine.stopping:
                 break
             engine.market_data.parse_websocket_message(payload)
+
+        # Keep the engine alive briefly if a probe is enabled and still running.
+        wait_guard = 0
+        while args.probe_order and engine.running and not engine.stopping and (not probe_order_submitted or probe_order_in_flight):
+            await asyncio.sleep(0.1)
+            wait_guard += 1
+            if wait_guard >= 200:  # 20s max guard
+                break
 
         if engine.running and not engine.stopping:
             engine.request_stop("replay stream completed")
@@ -407,7 +676,9 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
             testnet_transport.stop()
 
         with contextlib.suppress(Exception):
-            await paper_adapter.disconnect()
+            disconnect_result = broker_adapter.disconnect()
+            if isawaitable(disconnect_result):
+                await disconnect_result
 
     status = engine.get_status()
     status.update(
@@ -423,6 +694,16 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
                 "tick_sleep_seconds": args.tick_sleep_seconds,
                 "probe_order_enabled": bool(args.probe_order),
                 "probe_order_quantity": args.probe_order_quantity,
+                "probe_balance_only": bool(args.probe_balance_only),
+                "probe_requires_balance": bool(args.probe_requires_balance),
+                "probe_min_quote_balance": args.probe_min_quote_balance,
+                "paper_only": bool(args.paper_only),
+                "transmit": bool(args.transmit),
+                "effective_transmit": bool(effective_transmit),
+                "max_order_notional": float(args.max_order_notional),
+                "ibkr_host": args.ibkr_host,
+                "ibkr_port": args.ibkr_port,
+                "ibkr_client_id": args.ibkr_client_id,
                 "testnet_ws_url": args.testnet_ws_url,
                 "testnet_reconnect_seconds": args.testnet_reconnect_seconds,
                 "testnet_duration_seconds": args.testnet_duration_seconds,
@@ -443,9 +724,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the Phase 5 live staging harness.")
     parser.add_argument(
         "--mode",
-        choices=["synthetic", "testnet"],
+        choices=["synthetic", "testnet", "kraken", "ibkr"],
         default="synthetic",
-        help="Transport mode: deterministic replay or live testnet websocket",
+        help="Transport mode: deterministic replay, Binance testnet, Kraken authenticated, or IBKR socket mode",
     )
     parser.add_argument("--config", default="configs/crypto_strategy_multimag_sweep.yaml", help="Strategy template YAML to load")
     parser.add_argument("--policy-json", default="reports/crypto/policy_handoff_pass.json", help="Phase 4 policy handoff JSON")
@@ -455,10 +736,47 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ticks-per-bar", type=int, default=6, help="Synthetic ticks emitted per virtual bar and symbol")
     parser.add_argument("--tick-sleep-seconds", type=float, default=0.05, help="Real-time delay between synthetic tick batches")
     parser.add_argument("--initial-balance", type=float, default=100_000.0, help="Starting paper balance")
-    parser.add_argument("--probe-order", dest="probe_order", action="store_true", help="Submit a small paper probe order on the first completed bar")
+    parser.add_argument("--probe-order", dest="probe_order", action="store_true", help="Submit a small probe order on the first completed bar")
     parser.add_argument("--no-probe-order", dest="probe_order", action="store_false", help="Disable the probe order")
     parser.set_defaults(probe_order=True)
     parser.add_argument("--probe-order-quantity", type=float, default=0.001, help="Probe order quantity used when the probe is enabled")
+    parser.add_argument(
+        "--probe-balance-only",
+        action="store_true",
+        help="Read-only authenticated probe: query private balance and exit without placing orders",
+    )
+    parser.add_argument(
+        "--probe-requires-balance",
+        dest="probe_requires_balance",
+        action="store_true",
+        help="Require sufficient quote balance before placing probe order",
+    )
+    parser.add_argument(
+        "--no-probe-requires-balance",
+        dest="probe_requires_balance",
+        action="store_false",
+        help="Allow probe order attempt even when quote balance appears insufficient",
+    )
+    parser.set_defaults(probe_requires_balance=True)
+    parser.add_argument(
+        "--probe-min-quote-balance",
+        type=float,
+        default=0.0,
+        help="Minimum quote-asset balance threshold required for probe order (in quote units)",
+    )
+    parser.add_argument("--paper-only", action="store_true", help="Force non-transmitting behavior for broker probes (safety mode)")
+    parser.add_argument(
+        "--transmit",
+        type=_parse_bool,
+        default=False,
+        help="Whether broker orders are transmitted (true/false). Default false for safety.",
+    )
+    parser.add_argument(
+        "--max-order-notional",
+        type=float,
+        default=5.0,
+        help="Maximum allowed notional for a probe order before it is skipped.",
+    )
     parser.add_argument("--seed", type=int, default=7, help="Seed for the synthetic replay stream")
     parser.add_argument(
         "--testnet-ws-url",
@@ -482,6 +800,9 @@ def build_parser() -> argparse.ArgumentParser:
         default="USDT",
         help="Quote asset used when mapping canonical symbols like BTC/USD to exchange symbols",
     )
+    parser.add_argument("--ibkr-host", default="127.0.0.1", help="IBKR API socket host (Gateway/TWS)")
+    parser.add_argument("--ibkr-port", type=int, default=4002, help="IBKR API socket port (Gateway paper usually 4002; TWS paper often 7497)")
+    parser.add_argument("--ibkr-client-id", type=int, default=99, help="IBKR API client ID")
     parser.add_argument("--log-level", default="INFO", help="Python logging level")
     return parser
 

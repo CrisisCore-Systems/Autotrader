@@ -115,6 +115,8 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         # Threading
         self.thread: Optional[threading.Thread] = None
         self.connection_event = asyncio.Event()
+        self.account_summary_event = asyncio.Event()
+        self.account_summary: Dict[str, float] = {}
     
     # EWrapper callbacks
     
@@ -302,6 +304,19 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             if order:
                 order.status = OrderStatus.REJECTED
                 order.filled_at = datetime.now()
+
+    def accountSummary(self, reqId: int, account: str, tag: str, value: str, currency: str):
+        """Callback: Account summary value."""
+        try:
+            if tag in {"NetLiquidation", "TotalCashValue", "AvailableFunds"}:
+                key = currency.upper()
+                self.account_summary[key] = float(value)
+        except Exception:
+            return
+
+    def accountSummaryEnd(self, reqId: int):
+        """Callback: Account summary stream complete."""
+        self.account_summary_event.set()
     
     def _map_ib_status(self, ib_status: str) -> OrderStatus:
         """
@@ -350,10 +365,10 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         """
         try:
             # Start connection
-            self.connect(self.host, self.port, self.client_id)
+            EClient.connect(self, self.host, self.port, self.client_id)
             
             # Start thread to run message loop
-            self.thread = threading.Thread(target=self.run, daemon=True)
+            self.thread = threading.Thread(target=EClient.run, args=(self,), daemon=True)
             self.thread.start()
             
             # Wait for connection (nextValidId callback)
@@ -372,9 +387,13 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             print(f"❌ IBKR connection error: {e}")
             return False
     
-    async def disconnect(self):
-        """Disconnect from TWS/Gateway."""
-        self.disconnect()
+    def disconnect(self):
+        """Disconnect from TWS/Gateway.
+
+        This is intentionally synchronous because ibapi internally calls
+        self.disconnect() from synchronous paths.
+        """
+        EClient.disconnect(self)
         self.connected_flag = False
         print("✅ Disconnected from IBKR")
     
@@ -403,11 +422,17 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         -------
         contract : Contract
         """
+        normalized = str(symbol).upper().replace("-", "/")
+        base_symbol = normalized
+        base_currency = currency
+        if "/" in normalized:
+            base_symbol, base_currency = normalized.split("/", 1)
+
         contract = Contract()
-        contract.symbol = symbol
+        contract.symbol = base_symbol
         contract.secType = sec_type
         contract.exchange = exchange
-        contract.currency = currency
+        contract.currency = base_currency
         
         return contract
     
@@ -454,6 +479,9 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             ib_order.orderType = 'LMT'
             ib_order.lmtPrice = order.price
             ib_order.tif = 'FOK'
+
+        # Safety control: non-transmitting order path for dry-run style probes.
+        ib_order.transmit = bool(order.metadata.get("ibkr_transmit", True))
         
         return ib_order
     
@@ -634,13 +662,23 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         -------
         balance : dict
         """
-        # Would need to implement accountSummary callback
-        # For now, return placeholder
-        return {
-            'cash': 0.0,
-            'stock_value': 0.0,
-            'total_equity': 0.0
-        }
+        if not self.connected_flag:
+            return {}
+
+        req_id = 9001
+        self.account_summary_event.clear()
+        self.account_summary = {}
+
+        self.reqAccountSummary(req_id, "All", "NetLiquidation,TotalCashValue,AvailableFunds")
+
+        try:
+            await asyncio.wait_for(self.account_summary_event.wait(), timeout=5.0)
+        except asyncio.TimeoutError:
+            pass
+        finally:
+            self.cancelAccountSummary(req_id)
+
+        return dict(self.account_summary)
     
     def subscribe_fills(self, callback: Callable):
         """

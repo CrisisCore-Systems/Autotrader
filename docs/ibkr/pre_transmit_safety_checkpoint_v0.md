@@ -15,3 +15,13 @@ Validated constraints:
 Hard boundary:
 run_live_staging.py must remain non-transmitting.
 Any future transmitted paper-order test must live in a separate script with explicit human-confirmation flags.
+
+Post-merge repeatability checkpoint (main):
+- Date: 2026-05-16
+- Verified CLI entrypoint: `python scripts/run_ibkr_paper_transmit_probe.py --help`
+- Verified one guarded paper probe on main (SNDL, STK, LMT, qty=1, max notional=5, localhost:7497, confirmation phrase exact match)
+- Second safety marker preserved: ibkr-paper-transmit-probe-v0
+
+Boundary reaffirmed:
+- Do not connect strategy automation to IBKR order transmission yet.
+- Next milestone is a paper trading harness with simulated strategy signals, not real strategy autonomy.

@@ -1,0 +1,69 @@
+name: Dependency Lane License Report
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "requirements-runtime.txt"
+      - "requirements-broker.txt"
+      - "requirements-market-data.txt"
+      - "requirements-mlops.txt"
+      - ".github/workflows/dependency-lane-license-report.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "requirements-runtime.txt"
+      - "requirements-broker.txt"
+      - "requirements-market-data.txt"
+      - "requirements-mlops.txt"
+      - ".github/workflows/dependency-lane-license-report.yml"
+
+jobs:
+  lane-license-report:
+    name: License report for ${{ matrix.lane }} lane
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: runtime
+            file: requirements-runtime.txt
+          - lane: broker
+            file: requirements-broker.txt
+          - lane: market-data
+            file: requirements-market-data.txt
+          - lane: mlops
+            file: requirements-mlops.txt
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Upgrade packaging tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install lane dependencies and pip-licenses
+        run: |
+          python -m pip install --no-input --disable-pip-version-check -r "${{ matrix.file }}"
+          python -m pip install --no-input --disable-pip-version-check pip-licenses
+
+      - name: Generate license report JSON
+        run: |
+          New-Item -ItemType Directory "reports/validation/ci/license-lane-reports" -Force | Out-Null
+          python -m piplicenses --format=json --output-file "reports/validation/ci/license-lane-reports/${{ matrix.lane }}-licenses.json"
+        shell: pwsh
+
+      - name: Upload lane license report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-lane-license-report-${{ matrix.lane }}
+          path: reports/validation/ci/license-lane-reports/${{ matrix.lane }}-licenses.json
+          if-no-files-found: error

@@ -161,6 +161,24 @@ def _parse_bool(value: str) -> bool:
     raise argparse.ArgumentTypeError(f"Expected boolean value, got: {value}")
 
 
+def _assert_ibkr_pre_transmit_safety(args: argparse.Namespace) -> None:
+    if str(args.mode).lower() != "ibkr":
+        return
+
+    if not args.paper_only:
+        raise SystemExit("Refusing IBKR order path: --paper-only is required.")
+
+    if int(args.ibkr_port) != 7497:
+        raise SystemExit(
+            f"Refusing IBKR order path: expected paper TWS port 7497, got {args.ibkr_port}."
+        )
+
+    if str(args.transmit).lower() == "true":
+        raise SystemExit(
+            "Refusing IBKR order path: --transmit true is disabled for live staging."
+        )
+
+
 def _symbol_base_prices(symbols: List[str]) -> Dict[str, float]:
     defaults = {
         "BTC/USD": 65_000.0,
@@ -324,6 +342,8 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
     mode = str(args.mode).strip().lower()
     if mode not in {"synthetic", "testnet", "kraken", "ibkr"}:
         raise SystemExit(f"Unsupported mode: {args.mode}")
+
+    _assert_ibkr_pre_transmit_safety(args)
 
     symbols = _normalize_symbols_for_mode(symbols, mode)
     venue = "SIM" if mode == "synthetic" else ("BINANCE_TESTNET" if mode == "testnet" else ("KRAKEN" if mode == "kraken" else "IBKR"))

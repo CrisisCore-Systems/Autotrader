@@ -1,0 +1,54 @@
+[
+  {
+    "signal_id": "concurrent-004-a",
+    "symbol": "SNDL",
+    "quantity": 2.0,
+    "limit_price": 2.45,
+    "side": "BUY",
+    "sec_type": "STK",
+    "currency": "USD",
+    "exchange": "SMART",
+    "order_type": "LMT",
+    "confidence": 0.9,
+    "source": "simulated_signal"
+  },
+  {
+    "signal_id": "concurrent-004-b",
+    "symbol": "SNDL",
+    "quantity": 1.0,
+    "limit_price": 4.90,
+    "side": "BUY",
+    "sec_type": "STK",
+    "currency": "USD",
+    "exchange": "SMART",
+    "order_type": "LMT",
+    "confidence": 0.9,
+    "source": "simulated_signal"
+  },
+  {
+    "signal_id": "concurrent-004-c",
+    "symbol": "SNDL",
+    "quantity": 4.0,
+    "limit_price": 1.25,
+    "side": "BUY",
+    "sec_type": "STK",
+    "currency": "USD",
+    "exchange": "SMART",
+    "order_type": "LMT",
+    "confidence": 0.9,
+    "source": "simulated_signal"
+  },
+  {
+    "signal_id": "concurrent-004-d",
+    "symbol": "SNDL",
+    "quantity": 3.0,
+    "limit_price": 2.50,
+    "side": "BUY",
+    "sec_type": "STK",
+    "currency": "USD",
+    "exchange": "SMART",
+    "order_type": "LMT",
+    "confidence": 0.9,
+    "source": "simulated_signal"
+  }
+]

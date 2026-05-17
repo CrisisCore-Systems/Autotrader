@@ -1,0 +1,2 @@
+# Market data dependencies
+yfinance>=0.2.38

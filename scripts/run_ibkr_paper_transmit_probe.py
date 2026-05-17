@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -36,7 +36,7 @@ def _parse_side(value: str) -> OrderSide:
     raise argparse.ArgumentTypeError(f"Unsupported side: {value}")
 
 
-def _assert_safety(args: argparse.Namespace) -> None:
+def _assert_host_and_port(args: argparse.Namespace) -> None:
     host = str(args.ibkr_host).strip().lower()
     if host not in ALLOWED_HOSTS:
         raise SystemExit(f"Refusing probe: host must be localhost/127.0.0.1, got {args.ibkr_host}.")
@@ -44,24 +44,35 @@ def _assert_safety(args: argparse.Namespace) -> None:
     if int(args.ibkr_port) != 7497:
         raise SystemExit(f"Refusing probe: expected paper TWS port 7497, got {args.ibkr_port}.")
 
+
+def _assert_confirmation(args: argparse.Namespace) -> None:
     if str(args.i_understand_this_submits_a_paper_order) != CONFIRM_PHRASE:
         raise SystemExit("Refusing probe: confirmation phrase mismatch.")
 
+
+def _assert_contract_shape(args: argparse.Namespace) -> None:
     sec_type = str(args.sec_type).strip().upper()
     if sec_type != "STK":
         raise SystemExit(f"Refusing probe: sec-type must be STK, got {args.sec_type}.")
-
-    order_type = str(args.order_type).strip().upper()
-    if order_type != "LMT":
-        raise SystemExit(f"Refusing probe: order-type must be LMT, got {args.order_type}.")
 
     quantity = float(args.quantity)
     if abs(quantity - round(quantity)) > 1e-9:
         raise SystemExit(f"Refusing probe: STK quantity must be whole number, got {args.quantity}.")
 
+
+def _assert_order_shape(args: argparse.Namespace) -> None:
+    order_type = str(args.order_type).strip().upper()
+    if order_type != "LMT":
+        raise SystemExit(f"Refusing probe: order-type must be LMT, got {args.order_type}.")
+
     limit_price = float(args.limit_price)
     if limit_price <= 0.0:
         raise SystemExit("Refusing probe: --limit-price must be > 0.")
+
+
+def _assert_notional_cap(args: argparse.Namespace) -> None:
+    quantity = float(args.quantity)
+    limit_price = float(args.limit_price)
 
     max_notional = float(args.max_order_notional)
     if max_notional <= 0.0 or max_notional > 5.0:
@@ -74,6 +85,14 @@ def _assert_safety(args: argparse.Namespace) -> None:
         raise SystemExit(
             f"Refusing probe: order notional {notional:.4f} exceeds max-order-notional {max_notional:.4f}."
         )
+
+
+def _assert_safety(args: argparse.Namespace) -> None:
+    _assert_host_and_port(args)
+    _assert_confirmation(args)
+    _assert_contract_shape(args)
+    _assert_order_shape(args)
+    _assert_notional_cap(args)
 
 
 async def _run(args: argparse.Namespace) -> int:

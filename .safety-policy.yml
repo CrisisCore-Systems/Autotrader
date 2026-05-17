@@ -1,0 +1,6 @@
+# Safety policy for Python dependency audit.
+# Purpose: restore deterministic CI behavior after security-scan baseline classification.
+# This file should be kept conservative until the dependency review policy is fully governed.
+
+security:
+  ignore-cvss-severity-below: 0

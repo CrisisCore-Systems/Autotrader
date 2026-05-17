@@ -25,3 +25,11 @@ Post-merge repeatability checkpoint (main):
 Boundary reaffirmed:
 - Do not connect strategy automation to IBKR order transmission yet.
 - Next milestone is a paper trading harness with simulated strategy signals, not real strategy autonomy.
+
+Simulated-signal harness validation (branch: ibkr-simulated-signal-paper-harness):
+- Date: 2026-05-17
+- Command: `python scripts/run_ibkr_simulated_signal_paper_harness.py --ibkr-host 127.0.0.1 --ibkr-port 7497 --ibkr-client-id 88 --i-understand-this-submits-a-paper-order "YES_PAPER_ORDER_ONLY" --submit-paper-order --cancel-after-seconds 5`
+- Reject fixtures passed before acceptance.
+- One valid simulated signal (`sim-001`) accepted and submitted as one constrained paper order (SNDL / STK / LMT, qty=1, limit=1.00, notional=1.00 <= 5.00).
+- Cancel path executed and disconnect recorded.
+- Status artifact written to `reports/ibkr/simulated_signal_paper_harness_status.json` (gitignored).

@@ -289,10 +289,10 @@ def _build_status(args: argparse.Namespace, valid_signal: Dict[str, Any]) -> Dic
     }
 
 
-def _record_event(status: Dict[str, Any], event: str, **fields: Any) -> None:
-    payload = {"at": _utc_now(), "event": event}
+def _record_event(status_doc: Dict[str, Any], event_name: str, **fields: Any) -> None:
+    payload = {"at": _utc_now(), "event": event_name}
     payload.update(fields)
-    status["events"].append(payload)
+    status_doc["events"].append(payload)
 
 
 def _evaluate_fixture(fixture: Dict[str, Any], args: argparse.Namespace) -> Dict[str, Any]:
@@ -466,6 +466,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--submit-valid-signal",
+        "--submit-paper-order",
+        dest="submit_valid_signal",
         action="store_true",
         help="Submit exactly one valid constrained paper LMT order after reject fixtures pass.",
     )

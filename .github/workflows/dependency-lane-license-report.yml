@@ -65,9 +65,23 @@ jobs:
           python -m piplicenses --format=json --output-file "reports/validation/ci/license-lane-reports/${{ matrix.lane }}-licenses.json"
         shell: pwsh
 
+      - name: Generate warning-only license summary
+        run: |
+          python scripts/ci/lane_license_warning_report.py \
+            --lane "${{ matrix.lane }}" \
+            --input "reports/validation/ci/license-lane-reports/${{ matrix.lane }}-licenses.json" \
+            --output "reports/validation/ci/license-lane-reports/${{ matrix.lane }}-license-warnings.md"
+
+      - name: Append warning summary to job summary
+        shell: bash
+        run: |
+          cat "reports/validation/ci/license-lane-reports/${{ matrix.lane }}-license-warnings.md" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload lane license report artifact
         uses: actions/upload-artifact@v4
         with:
           name: dependency-lane-license-report-${{ matrix.lane }}
-          path: reports/validation/ci/license-lane-reports/${{ matrix.lane }}-licenses.json
+          path: |
+            reports/validation/ci/license-lane-reports/${{ matrix.lane }}-licenses.json
+            reports/validation/ci/license-lane-reports/${{ matrix.lane }}-license-warnings.md
           if-no-files-found: error

@@ -86,3 +86,4 @@ pip-audit-output.txt
 test_results/
 # IBKR runtime probe artifacts
 reports/ibkr/paper_transmit_probe_status.json
+reports/ibkr/simulated_signal_paper_harness_status.json

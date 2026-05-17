@@ -28,46 +28,59 @@ def _utc_now() -> str:
 
 
 def _parse_side(value: str) -> OrderSide:
-    raw = str(value).strip().upper()
-    if raw == "BUY":
-        return OrderSide.BUY
-    if raw == "SELL":
-        return OrderSide.SELL
-    raise argparse.ArgumentTypeError(f"Unsupported side: {value}")
+    try:
+        return {"BUY": OrderSide.BUY, "SELL": OrderSide.SELL}[str(value).strip().upper()]
+    except KeyError as exc:
+        raise argparse.ArgumentTypeError(f"Unsupported side: {value}") from exc
+
+
+def _refuse_unless(condition: bool, message: str) -> None:
+    if not condition:
+        raise SystemExit(message)
 
 
 def _assert_host_and_port(args: argparse.Namespace) -> None:
     host = str(args.ibkr_host).strip().lower()
-    if host not in ALLOWED_HOSTS:
-        raise SystemExit(f"Refusing probe: host must be localhost/127.0.0.1, got {args.ibkr_host}.")
-
-    if int(args.ibkr_port) != 7497:
-        raise SystemExit(f"Refusing probe: expected paper TWS port 7497, got {args.ibkr_port}.")
+    _refuse_unless(
+        host in ALLOWED_HOSTS,
+        f"Refusing probe: host must be localhost/127.0.0.1, got {args.ibkr_host}.",
+    )
+    _refuse_unless(
+        int(args.ibkr_port) == 7497,
+        f"Refusing probe: expected paper TWS port 7497, got {args.ibkr_port}.",
+    )
 
 
 def _assert_confirmation(args: argparse.Namespace) -> None:
-    if str(args.i_understand_this_submits_a_paper_order) != CONFIRM_PHRASE:
-        raise SystemExit("Refusing probe: confirmation phrase mismatch.")
+    _refuse_unless(
+        str(args.i_understand_this_submits_a_paper_order) == CONFIRM_PHRASE,
+        "Refusing probe: confirmation phrase mismatch.",
+    )
 
 
 def _assert_contract_shape(args: argparse.Namespace) -> None:
     sec_type = str(args.sec_type).strip().upper()
-    if sec_type != "STK":
-        raise SystemExit(f"Refusing probe: sec-type must be STK, got {args.sec_type}.")
+    _refuse_unless(
+        sec_type == "STK",
+        f"Refusing probe: sec-type must be STK, got {args.sec_type}.",
+    )
 
     quantity = float(args.quantity)
-    if abs(quantity - round(quantity)) > 1e-9:
-        raise SystemExit(f"Refusing probe: STK quantity must be whole number, got {args.quantity}.")
+    _refuse_unless(
+        abs(quantity - round(quantity)) <= 1e-9,
+        f"Refusing probe: STK quantity must be whole number, got {args.quantity}.",
+    )
 
 
 def _assert_order_shape(args: argparse.Namespace) -> None:
     order_type = str(args.order_type).strip().upper()
-    if order_type != "LMT":
-        raise SystemExit(f"Refusing probe: order-type must be LMT, got {args.order_type}.")
+    _refuse_unless(
+        order_type == "LMT",
+        f"Refusing probe: order-type must be LMT, got {args.order_type}.",
+    )
 
     limit_price = float(args.limit_price)
-    if limit_price <= 0.0:
-        raise SystemExit("Refusing probe: --limit-price must be > 0.")
+    _refuse_unless(limit_price > 0.0, "Refusing probe: --limit-price must be > 0.")
 
 
 def _assert_notional_cap(args: argparse.Namespace) -> None:
@@ -75,16 +88,16 @@ def _assert_notional_cap(args: argparse.Namespace) -> None:
     limit_price = float(args.limit_price)
 
     max_notional = float(args.max_order_notional)
-    if max_notional <= 0.0 or max_notional > 5.0:
-        raise SystemExit(
-            f"Refusing probe: --max-order-notional must be > 0 and <= 5.0, got {args.max_order_notional}."
-        )
+    _refuse_unless(
+        0.0 < max_notional <= 5.0,
+        f"Refusing probe: --max-order-notional must be > 0 and <= 5.0, got {args.max_order_notional}.",
+    )
 
     notional = quantity * limit_price
-    if notional > max_notional:
-        raise SystemExit(
-            f"Refusing probe: order notional {notional:.4f} exceeds max-order-notional {max_notional:.4f}."
-        )
+    _refuse_unless(
+        notional <= max_notional,
+        f"Refusing probe: order notional {notional:.4f} exceeds max-order-notional {max_notional:.4f}.",
+    )
 
 
 def _assert_safety(args: argparse.Namespace) -> None:

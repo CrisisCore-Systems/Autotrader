@@ -5,14 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "autotrader"
 version = "0.1.0"
-description = "AutoTrader - Cryptocurrency Trading Bot"
-license = { text = "Proprietary" }
-authors = [
-    { name = "CrisisCore-Systems" }
-]
-maintainers = [
-    { name = "CrisisCore-Systems" }
-]
+description\ =\ "AutoTrader\ -\ Cryptocurrency\ Trading\ Bot"\nlicense\ =\ \{\ text\ =\ "Proprietary"\ }\nauthors\ =\ \[\n\ \ \ \ \{\ name\ =\ "CrisisCore-Systems"\ }\n]\nmaintainers\ =\ \[\n\ \ \ \ \{\ name\ =\ "CrisisCore-Systems"\ }\n]
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy>=2.3.0,<3.0",

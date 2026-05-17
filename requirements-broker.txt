@@ -1,0 +1,4 @@
+# Broker dependencies
+ib_insync>=0.9.86
+ccxt==4.5.12
+aiohttp

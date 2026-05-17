@@ -484,6 +484,24 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         ib_order.transmit = bool(order.metadata.get("ibkr_transmit", True))
         
         return ib_order
+
+    def _sanitize_ibkr_order(self, order: IBOrder) -> None:
+        """Clear deprecated IBKR fields that can trigger warnings on newer APIs."""
+        for attr in ("eTradeOnly", "firmQuoteOnly"):
+            if hasattr(order, attr):
+                setattr(order, attr, "")
+
+    def _cancel_order_compat(self, order_id: int) -> None:
+        """Call cancelOrder with API-version-compatible signatures."""
+        try:
+            self.cancelOrder(order_id)
+            return
+        except TypeError as first_error:
+            try:
+                self.cancelOrder(order_id, "")
+                return
+            except TypeError:
+                raise first_error
     
     async def submit_order(self, order: Order) -> Order:
         """
@@ -512,6 +530,7 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             
             # Create IB order
             ib_order = self._create_ib_order(order)
+            self._sanitize_ibkr_order(ib_order)
             
             # Place order
             self.placeOrder(ib_order_id, contract, ib_order)
@@ -549,7 +568,7 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         """
         try:
             ib_order_id = int(order_id)
-            self.cancelOrder(ib_order_id, "")
+            self._cancel_order_compat(ib_order_id)
             
             order = self.orders.get(order_id)
             if order:
@@ -604,6 +623,7 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         
         # Create IB order with updated params
         ib_order = self._create_ib_order(order)
+        self._sanitize_ibkr_order(ib_order)
         
         # Place modified order (same order ID)
         ib_order_id = int(order_id)

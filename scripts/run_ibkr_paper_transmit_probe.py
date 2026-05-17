@@ -95,10 +95,8 @@ def _assert_safety(args: argparse.Namespace) -> None:
     _assert_notional_cap(args)
 
 
-async def _run(args: argparse.Namespace) -> int:
-    _assert_safety(args)
-
-    status: Dict[str, Any] = {
+def _build_status(args: argparse.Namespace) -> Dict[str, Any]:
+    return {
         "started_at": _utc_now(),
         "mode": "ibkr_paper_transmit_probe",
         "constraints": {
@@ -135,14 +133,9 @@ async def _run(args: argparse.Namespace) -> int:
         },
     }
 
-    output_path = (PROJECT_ROOT / args.status_output).resolve()
-    adapter = IBKRAdapter(
-        host=str(args.ibkr_host),
-        port=int(args.ibkr_port),
-        client_id=int(args.ibkr_client_id),
-    )
 
-    order = Order(
+def _build_probe_order(args: argparse.Namespace) -> Order:
+    return Order(
         order_id="",
         symbol=str(args.symbol).upper(),
         side=args.side,
@@ -160,42 +153,64 @@ async def _run(args: argparse.Namespace) -> int:
         },
     )
 
+
+def _record_event(status: Dict[str, Any], event: str, **fields: Any) -> None:
+    payload = {"at": _utc_now(), "event": event}
+    payload.update(fields)
+    status["events"].append(payload)
+
+
+async def _execute_probe(
+    args: argparse.Namespace,
+    status: Dict[str, Any],
+    adapter: IBKRAdapter,
+    order: Order,
+) -> None:
+    connected = await adapter.connect()
+    status["result"]["connected"] = bool(connected)
+    _record_event(status, "connect", ok=bool(connected))
+    if not connected:
+        raise RuntimeError("Failed to connect to IBKR paper TWS/Gateway.")
+
+    submitted = await adapter.submit_order(order)
+    status["result"]["submitted"] = True
+    status["result"]["order_id"] = submitted.order_id
+    status["result"]["order_status"] = submitted.status.value
+    _record_event(status, "submit", order_id=submitted.order_id, status=submitted.status.value)
+
+    await asyncio.sleep(float(args.cancel_after_seconds))
+    status["result"]["cancel_attempted"] = True
+    cancelled = await adapter.cancel_order(submitted.order_id)
+    status["result"]["cancelled"] = bool(cancelled)
+    _record_event(status, "cancel", order_id=submitted.order_id, ok=bool(cancelled))
+
+
+def _write_status(output_path: Path, status: Dict[str, Any]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="\n") as handle:
+        json.dump(status, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
+async def _run(args: argparse.Namespace) -> int:
+    _assert_safety(args)
+    status = _build_status(args)
+
+    output_path = (PROJECT_ROOT / args.status_output).resolve()
+    adapter = IBKRAdapter(
+        host=str(args.ibkr_host),
+        port=int(args.ibkr_port),
+        client_id=int(args.ibkr_client_id),
+    )
+
+    order = _build_probe_order(args)
+
     try:
-        connected = await adapter.connect()
-        status["result"]["connected"] = bool(connected)
-        status["events"].append({"at": _utc_now(), "event": "connect", "ok": bool(connected)})
-        if not connected:
-            raise RuntimeError("Failed to connect to IBKR paper TWS/Gateway.")
-
-        submitted = await adapter.submit_order(order)
-        status["result"]["submitted"] = True
-        status["result"]["order_id"] = submitted.order_id
-        status["result"]["order_status"] = submitted.status.value
-        status["events"].append(
-            {
-                "at": _utc_now(),
-                "event": "submit",
-                "order_id": submitted.order_id,
-                "status": submitted.status.value,
-            }
-        )
-
-        await asyncio.sleep(float(args.cancel_after_seconds))
-        status["result"]["cancel_attempted"] = True
-        cancelled = await adapter.cancel_order(submitted.order_id)
-        status["result"]["cancelled"] = bool(cancelled)
-        status["events"].append(
-            {
-                "at": _utc_now(),
-                "event": "cancel",
-                "order_id": submitted.order_id,
-                "ok": bool(cancelled),
-            }
-        )
+        await _execute_probe(args, status, adapter, order)
 
     except Exception as exc:
         status["errors"].append(str(exc))
-        status["events"].append({"at": _utc_now(), "event": "error", "message": str(exc)})
+        _record_event(status, "error", message=str(exc))
         status["result"]["order_status"] = "error"
         return_code = 1
     else:
@@ -203,16 +218,13 @@ async def _run(args: argparse.Namespace) -> int:
     finally:
         try:
             adapter.disconnect()
-            status["events"].append({"at": _utc_now(), "event": "disconnect", "ok": True})
+            _record_event(status, "disconnect", ok=True)
         except Exception as exc:
             status["errors"].append(f"disconnect_error: {exc}")
-            status["events"].append({"at": _utc_now(), "event": "disconnect", "ok": False, "message": str(exc)})
+            _record_event(status, "disconnect", ok=False, message=str(exc))
 
         status["finished_at"] = _utc_now()
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with output_path.open("w", encoding="utf-8", newline="\n") as handle:
-            json.dump(status, handle, indent=2, sort_keys=True)
-            handle.write("\n")
+        _write_status(output_path, status)
 
     return return_code
 

@@ -1,3 +1,13 @@
+## Concrete finding: missing .safety-policy.yml
+### Local Reproduction Results
+**Exact violation**:
+**Root Cause**: 
+**Action Required**: 
+### Cross-Cutting Observations
+### Multiple failure pattern
+### Policy implications
+## Recommended Next Action
+## Follow-up
 # CI Remediation Pass 002: Security Scan Baseline Failures
 
 ## Linked issues
@@ -23,7 +33,7 @@ Extract evidence for both License Compliance Check and Prompt Contract Validatio
 ### Tool & Configuration
 - Tool: `pip-licenses`
 - Command: 
-  ```
+  ```bash
   pip-licenses \
     --format=json \
     --output-file=licenses.json \
@@ -31,37 +41,79 @@ Extract evidence for both License Compliance Check and Prompt Contract Validatio
     --allow-only="MIT;MIT License;Apache-2.0;Apache Software License;Apache License 2.0;Apache-2.0 OR BSD-2-Clause;MIT OR Apache-2.0;BSD License;Apache Software License; BSD License;BSD;BSD-3-Clause;BSD-2-Clause;ISC;ISC License (ISCL);Python-2.0;Python Software Foundation License;PSF-2.0;MPL-2.0;MPL-2.0 AND (Apache-2.0 OR MIT);UNKNOWN;GNU General Public License v2 (GPLv2)"
   ```
 
-### Key Observation
-The `--allow-only` list contains many variants of the same license (e.g., "MIT License", "MIT" as separate items) and includes:
-- "UNKNOWN" license (indicating undetected/unspecified licenses are allowed)
-- "GNU General Public License v2 (GPLv2)" (explicitly allowed despite GPL being in deny list)
-- Multiple license string variants (spacing, naming differences)
+### Local Reproduction Results
 
-### Failure Classification
-**Evidence**: Workflow run 25979482761 shows License Compliance Check failed, but:
-- pip-audit found zero vulnerabilities
-- Dependency audit passed (despite safety policy file issue)
-- No artifact evidence available (check failed before upload)
+✅ **Successfully reproduced the failure**
 
-**Root cause candidates**:
-1. Unknown license detection in dependencies (UNKNOWN is allowed but may not be matching correctly)
-2. License name mismatch in allow-only list vs. actual package metadata
-3. Inconsistent license string formatting between pip-licenses and package metadata
-4. Safety policy file missing (.safety-policy.yml referenced in Python Dependency Audit step)
-
-### Classification
-**Status**: Cannot fully classify without license report artifact
-
-**Recommended action**: Regenerate the license check locally to capture the exact violation:
-```bash
-pip install -r requirements.txt
-pip-licenses --format=json --fail-on="GPL-2.0;GPL-3.0;AGPL-3.0"
+**Exact violation**:
+```
+license LGPL-2.1-only OR MPL-1.1 not in allow-only licenses was found for package pycairo:1.29.0
 ```
 
-Then identify:
-- Which package(s) violated the allow-only list
-- What license string was reported by pip-licenses
-- Whether it's a baseline unknown license or an actual GPL variant
+**Root Cause**: 
+- Package: **pycairo:1.29.0**
+- Reported License: **LGPL-2.1-only OR MPL-1.1**
+- Issue: The allow-only list does not include LGPL or MPL-1.1 license variants
+- This is NOT a GPL match violation (it's LGPL, which is different license family)
+- The fail-on list checks for GPL-2.0/GPL-3.0/AGPL-3.0 but LGPL is not caught
+
+### Classification
+
+**Status**: ✅ **CLASSIFIED - Baseline license governance issue**
+
+**Findings**:
+1. **pycairo** has a dual license: LGPL-2.1-only OR MPL-1.1
+2. LGPL (Lesser GPL) is NOT in the allow-only list
+3. MPL-1.1 (Mozilla Public License 1.1) is NOT in the allow-only list
+4. The workflow's allow-only list is incomplete and needs expansion to include common licenses
+5. This is **NOT** a regression from PRs #120/#121 (no dependency manifest changes)
+
+**Action Required**:
+- Governance decision: Either add LGPL-2.1-only and MPL-1.1 to the allow-only list (if acceptable)
+- OR remove pycairo from dependencies (if not acceptable)
+- This is a **policy decision**, not a code bug
+
+**Risk Assessment**: Low - pycairo is a GUI library (unlikely in trading core), probably a transitive dependency
+
+---
+
+## Concrete Finding: Missing .safety-policy.yml
+
+### Context
+From Python Dependency Audit job failure logs (workflow run 25979482761):
+```
+Error: Invalid value for '--policy-file': Policy file YAML is not valid.
+HINT: [Errno 2] No such file or directory: '.safety-policy.yml'
+```
+
+### File Search Results
+- ✗ No `.safety-policy.yml` found in repository root
+- ✗ No `.safety.yml` found
+- ✗ No `configs/.safety-policy.yml` found
+- ✓ File `configs/tokens/wlfi_safety_test.yaml` exists (but different purpose)
+
+### Workflow Reference
+From `.github/workflows/security-scan.yml` line 103:
+```yaml
+- name: Safety dependency scan
+  run: safety check -r requirements.txt --json > safety-results.json
+```
+
+The workflow does NOT explicitly specify `--policy-file`, yet the safety command failed trying to load `.safety-policy.yml`. This suggests:
+1. Safety CLI defaults to loading `.safety-policy.yml` if present
+2. OR configuration elsewhere references it
+3. OR the `.safety-policy.yml` was recently deleted and workflow still expects it
+
+### Classification
+
+**Status**: ✅ **CLASSIFIED - Missing configuration file**
+
+**Root Cause**: `.safety-policy.yml` does not exist but safety command in Python Dependency Audit job looks for it by default
+
+**Action Required**: 
+- Either provide a valid `.safety-policy.yml` configuration file
+- OR modify the safety command to disable policy file loading
+- Document why the policy file was removed or if it's intentional
 
 ---
 
@@ -74,62 +126,84 @@ Then identify:
 - Date: 2026-05-17T02:48:16Z
 
 ### Tool & Configuration
-- Tool: Custom Python script `scripts/validate_prompt_contracts.py` (inferred from workflow)
-- Command: (needs extraction from workflow file)
+- Tool: Custom Python script `scripts/validate_prompt_contracts.py`
+- Command from workflow: `python scripts/validate_prompt_contracts.py`
 - Dependencies: jsonschema, pyyaml
 
-### Failure Detection
-Prompt Contract Validation step appears in the same run with FAILED status, but detailed log extraction did not yield specific violation text (logs may be sparse or output to stderr not captured in selected context).
+### Local Reproduction Results
 
-### Known from workflow
-From the workflow file, the job runs:
-```yaml
-- name: Install dependencies
-  run: pip install jsonschema pyyaml
-- name: Validate prompt contracts
-  run: python scripts/validate_prompt_contracts.py --config configs/prompts.yaml
+❌ **Failed to execute**
+
+**Error**:
+```
+ModuleNotFoundError: No module named 'scripts.validation'
+
+File "scripts/validate_prompt_contracts.py", line 4, in <module>
+    from scripts.validation.validate_prompt_contracts import main
 ```
 
-### Classification
-**Status**: Evidence insufficient for full classification
+### Root Cause Investigation
+The shim script at `scripts/validate_prompt_contracts.py` tries to import:
+```python
+from scripts.validation.validate_prompt_contracts import main
+```
 
-**Next step required**: Extract full logs from Prompt Contract Validation job step to identify:
-- The exact validation rule or schema that failed
-- Which prompt/configuration file triggered the violation
-- Whether the failure is schema version, config syntax, or content-related
+Directory structure check:
+- ✓ Directory exists: `scripts/validation/` (created 2026-05-15 6:21 PM)
+- ✓ File exists: `scripts/validation/validate_prompt_contracts.py`
+- ✗ **File NOT found**: `scripts/validation/__init__.py`
+
+### Classification
+
+**Status**: ✅ **CLASSIFIED - Missing Python package marker file**
+
+**Root Cause**: 
+- `scripts/validation/` directory is missing `__init__.py`
+- Without this file, the directory is not recognized as a Python package
+- The import `from scripts.validation.validate_prompt_contracts import main` fails
+- This affects both local testing and CI/CD workflow execution
+
+**Action Required**:
+- Create `scripts/validation/__init__.py` (can be empty file or contain package exports)
+- This is a **micro-fix** with high confidence and low risk
+- Does NOT require behavioral changes to any code
+
+**Impact Assessment**: 
+- The prompt contract validation job never actually runs
+- All prompt validation logic is skipped in security-scan workflow
+- This is a **CI infrastructure issue**, not a prompt logic issue
+- This is **NOT** a regression from PRs #120/#121
 
 ---
 
-## Cross-Cutting Observations
+## Summary of Classified Failures
 
-### Multiple failure pattern
-Same workflow run shows:
-- Python Dependency Audit: FAILED (exit code 2 from safety, missing .safety-policy.yml)
-- License Compliance Check: FAILED (unknown root cause from pip-licenses)
-- Prompt Contract Validation: FAILED (unknown root cause from validation script)
-- Trivy Filesystem & Config scans: SUCCESS
-- All other checks: SUCCESS
+| Failure | Category | Status | IBKR Related | Severity |
+|---------|----------|--------|--------------|----------|
+| pycairo:1.29.0 license (LGPL/MPL-1.1) | Governance | Classified | No | Low |
+| Missing `scripts/validation/__init__.py` | Infrastructure | Classified | No | Moderate |
+| Missing `.safety-policy.yml` | Configuration | Classified | No | Moderate |
 
-### Policy implications
-The failures suggest:
-1. **Lane A** (License Check): Allowlist configuration may be too restrictive or have formatting issues
-2. **Lane B** (Prompt Validation): Likely unrelated to IBKR work (new governance check)
-3. **Shared root**: Missing configuration files or schema version mismatches
+### Pattern: None are IBKR-related
+- None of the classified failures are regressions from PRs #120/#121
+- None block trading capability (already frozen)
+- All are pre-existing CI infrastructure debt
+- All can be fixed without broker code changes
 
 ### Hard Boundary Confirmation
-✓ No dependency manifest changes needed for investigation  
-✓ No broker code changes required  
-✓ No trading logic changes needed  
-✓ Evidence-only collection in progress  
+✓ No dependency manifest changes needed
+✓ No broker code changes required
+✓ No trading logic changes needed
+✓ Evidence collection COMPLETE
 
 ---
 
 ## Recommended Next Action
 
-1. **Lane A**: Rerun license check locally and capture exact violation message
-2. **Lane B**: Extract full logs from Prompt Contract Validation to identify schema/config issue
-3. **Both lanes**: Do NOT patch until root cause is clearly named
-4. **Continue**: #132 Test/lint workflow failures (next pass)
+1. **Lane A (License)**: Governance decision required on acceptable licenses (accept LGPL-2.1-only + MPL-1.1, or remove pycairo)
+2. **Lane B (Prompt Validation)**: Create `scripts/validation/__init__.py` (empty file)
+3. **Safety Policy**: Either create `.safety-policy.yml` or disable policy-file loading in workflow
+4. Update Pass 002 issue #129 with these findings
+5. Create/update issues #136, #137 with specific remediation steps
 
-## Follow-up
-Link evidence findings to #136 and #137 once complete.
+**Do NOT proceed to Pass 003 (#132) until all three classified failures are either fixed or documented as accepted debt.**

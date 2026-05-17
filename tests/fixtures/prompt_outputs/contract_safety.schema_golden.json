@@ -1,0 +1,13 @@
+{
+  "schema_version": "v1.0.0",
+  "verified": true,
+  "owner_privileges": true,
+  "can_mint": false,
+  "upgradable_proxy": false,
+  "severity": "medium",
+  "key_findings": [
+    "Ownership is not renounced; owner retains admin privileges",
+    "Tax rate configurable up to 10% on transfers"
+  ],
+  "recommendation": "Monitor owner activity and tax rate changes. Consider contracts with renounced ownership for lower risk."
+}

@@ -463,6 +463,10 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
                 "tick_sleep_seconds": args.tick_sleep_seconds,
                 "probe_order_enabled": bool(args.probe_order),
                 "probe_order_quantity": args.probe_order_quantity,
+                "probe_symbol": args.probe_symbol,
+                "probe_sec_type": args.probe_sec_type,
+                "probe_currency": args.probe_currency,
+                "probe_exchange": args.probe_exchange,
                 "probe_balance_only": bool(args.probe_balance_only),
                 "probe_requires_balance": bool(args.probe_requires_balance),
                 "probe_min_quote_balance": args.probe_min_quote_balance,
@@ -520,8 +524,9 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
             probe_order_submitted = True
             probe_order_in_flight = True
             logger.info("====== STARTING LIVE PRIVATE API PROBE RUN (%s) ======", mode.upper())
-            probe_symbol = symbols[0] if symbols else ("BTCUSDT" if mode == "testnet" else ("XBT/USD" if mode == "kraken" else "AAPL"))
-            probe_price = 15000.0 if mode == "testnet" else (10000.0 if mode == "kraken" else 1.0)
+            default_probe_symbol = symbols[0] if symbols else ("BTCUSDT" if mode == "testnet" else ("XBT/USD" if mode == "kraken" else "AAPL"))
+            probe_symbol = str(args.probe_symbol or default_probe_symbol)
+            probe_price = 15000.0 if mode == "testnet" else (10000.0 if mode == "kraken" else float(bar.close))
             try:
                 balances = await broker_adapter.get_account_balance()
                 logger.info(
@@ -567,6 +572,10 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
                     price=probe_price,
                     time_in_force="GTC",
                     ibkr_transmit=effective_transmit,
+                    ibkr_symbol=probe_symbol,
+                    ibkr_sec_type=args.probe_sec_type,
+                    ibkr_currency=args.probe_currency,
+                    ibkr_exchange=args.probe_exchange,
                 )
                 logger.info("Probe order acknowledged by exchange. Assigned ID: %s", updated_order.order_id)
                 await asyncio.sleep(1.5)
@@ -694,6 +703,10 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
                 "tick_sleep_seconds": args.tick_sleep_seconds,
                 "probe_order_enabled": bool(args.probe_order),
                 "probe_order_quantity": args.probe_order_quantity,
+                "probe_symbol": args.probe_symbol,
+                "probe_sec_type": args.probe_sec_type,
+                "probe_currency": args.probe_currency,
+                "probe_exchange": args.probe_exchange,
                 "probe_balance_only": bool(args.probe_balance_only),
                 "probe_requires_balance": bool(args.probe_requires_balance),
                 "probe_min_quote_balance": args.probe_min_quote_balance,
@@ -740,6 +753,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-probe-order", dest="probe_order", action="store_false", help="Disable the probe order")
     parser.set_defaults(probe_order=True)
     parser.add_argument("--probe-order-quantity", type=float, default=0.001, help="Probe order quantity used when the probe is enabled")
+    parser.add_argument("--probe-symbol", default=None, help="Explicit probe symbol/contract root (e.g., SNDL, AAPL, BTC/USD)")
+    parser.add_argument("--probe-sec-type", default="STK", help="IBKR security type used for probe contract (e.g., STK, CASH, CRYPTO)")
+    parser.add_argument("--probe-currency", default="USD", help="IBKR contract currency used for probe orders")
+    parser.add_argument("--probe-exchange", default="SMART", help="IBKR exchange/route used for probe contract")
     parser.add_argument(
         "--probe-balance-only",
         action="store_true",

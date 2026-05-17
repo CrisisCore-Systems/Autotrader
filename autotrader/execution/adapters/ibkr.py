@@ -28,7 +28,7 @@ Example
 >>> order = await adapter.submit_order(order)
 """
 
-from typing import Optional, Dict, List, Callable
+from typing import Optional, Dict, List, Callable, Tuple
 from datetime import datetime
 import asyncio
 import threading
@@ -435,6 +435,23 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         contract.currency = base_currency
         
         return contract
+
+    def _resolve_contract_params(self, order: Order) -> Tuple[str, str, str, str]:
+        """Resolve IBKR contract parameters from order metadata or defaults."""
+        metadata = order.metadata or {}
+        symbol = str(metadata.get("ibkr_symbol") or order.symbol)
+        sec_type = str(metadata.get("ibkr_sec_type") or "STK").upper()
+        exchange = str(metadata.get("ibkr_exchange") or "SMART").upper()
+        currency = str(metadata.get("ibkr_currency") or "USD").upper()
+        return symbol, sec_type, exchange, currency
+
+    def _validate_order_quantity_for_contract(self, order: Order, sec_type: str) -> None:
+        """Reject quantities that are invalid for the resolved IBKR contract type."""
+        quantity = float(order.quantity)
+        if sec_type == "STK" and abs(quantity - round(quantity)) > 1e-9:
+            raise ValueError(
+                f"IBKR {sec_type} orders require whole-share quantity; got {quantity}."
+            )
     
     def _create_ib_order(self, order: Order) -> IBOrder:
         """
@@ -526,7 +543,14 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             self.next_order_id += 1
             
             # Create contract
-            contract = self._create_contract(order.symbol)
+            symbol, sec_type, exchange, currency = self._resolve_contract_params(order)
+            self._validate_order_quantity_for_contract(order, sec_type)
+            contract = self._create_contract(
+                symbol=symbol,
+                sec_type=sec_type,
+                exchange=exchange,
+                currency=currency,
+            )
             
             # Create IB order
             ib_order = self._create_ib_order(order)
@@ -619,7 +643,14 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             order.price = price
         
         # Create contract
-        contract = self._create_contract(order.symbol)
+        symbol, sec_type, exchange, currency = self._resolve_contract_params(order)
+        self._validate_order_quantity_for_contract(order, sec_type)
+        contract = self._create_contract(
+            symbol=symbol,
+            sec_type=sec_type,
+            exchange=exchange,
+            currency=currency,
+        )
         
         # Create IB order with updated params
         ib_order = self._create_ib_order(order)

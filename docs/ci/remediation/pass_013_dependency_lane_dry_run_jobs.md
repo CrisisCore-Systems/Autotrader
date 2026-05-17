@@ -31,7 +31,8 @@ This workflow is additive only.
 
 It does not replace security-scan.yml.
 It does not move dependencies.
-It does not change equirements.txt.
+It does not change 
+equirements.txt.
 It does not change pyproject.toml.
 
 ## Boundary

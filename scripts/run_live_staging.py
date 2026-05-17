@@ -141,6 +141,17 @@ def _quote_balance_from_snapshot(balances: Dict[str, float], quote_asset: str) -
     return total
 
 
+def _default_ibkr_probe_price(symbol: str, sec_type: str, fallback_price: float) -> float:
+    """Provide deterministic, low-risk defaults for explicit IBKR paper probes."""
+    if str(sec_type).upper() != "STK":
+        return float(fallback_price)
+
+    stock_probe_defaults = {
+        "SNDL": 2.0,
+    }
+    return float(stock_probe_defaults.get(str(symbol).upper(), float(fallback_price)))
+
+
 def _parse_bool(value: str) -> bool:
     raw = str(value).strip().lower()
     if raw in {"1", "true", "yes", "y", "on"}:
@@ -484,7 +495,7 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
         }
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with output_path.open("w", encoding="utf-8") as handle:
+        with output_path.open("w", encoding="utf-8", newline="\n") as handle:
             json.dump(status, handle, indent=2, sort_keys=True)
             handle.write("\n")
 
@@ -527,6 +538,12 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
             default_probe_symbol = symbols[0] if symbols else ("BTCUSDT" if mode == "testnet" else ("XBT/USD" if mode == "kraken" else "AAPL"))
             probe_symbol = str(args.probe_symbol or default_probe_symbol)
             probe_price = 15000.0 if mode == "testnet" else (10000.0 if mode == "kraken" else float(bar.close))
+            if mode == "ibkr":
+                probe_price = _default_ibkr_probe_price(
+                    symbol=probe_symbol,
+                    sec_type=args.probe_sec_type,
+                    fallback_price=probe_price,
+                )
             try:
                 balances = await broker_adapter.get_account_balance()
                 logger.info(
@@ -570,7 +587,7 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
                     quantity=float(args.probe_order_quantity),
                     order_type=OrderType.LIMIT,
                     price=probe_price,
-                    time_in_force="GTC",
+                    time_in_force=("DAY" if mode == "ibkr" else "GTC"),
                     ibkr_transmit=effective_transmit,
                     ibkr_symbol=probe_symbol,
                     ibkr_sec_type=args.probe_sec_type,
@@ -583,6 +600,10 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
                 cancelled = await engine.cancel_order(updated_order.order_id)
                 if cancelled:
                     logger.info("Probe order successfully purged from the testnet orderbook. Safety pristine.")
+                elif mode == "ibkr" and not effective_transmit:
+                    logger.info(
+                        "Probe order cleanup already completed for non-transmitting IBKR flow."
+                    )
                 else:
                     logger.warning("Cancellation request returned false. Manual inspection recommended.")
             except Exception as e:
@@ -725,7 +746,7 @@ async def _run_staging(args: argparse.Namespace) -> Dict[str, Any]:
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as handle:
+    with output_path.open("w", encoding="utf-8", newline="\n") as handle:
         json.dump(status, handle, indent=2, sort_keys=True)
         handle.write("\n")
 

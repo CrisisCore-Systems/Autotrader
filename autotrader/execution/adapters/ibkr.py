@@ -497,6 +497,10 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
             ib_order.lmtPrice = order.price
             ib_order.tif = 'FOK'
 
+        tif_value = str(order.time_in_force or "").upper()
+        if tif_value in {"DAY", "GTC", "IOC", "FOK"}:
+            ib_order.tif = tif_value
+
         # Safety control: non-transmitting order path for dry-run style probes.
         ib_order.transmit = bool(order.metadata.get("ibkr_transmit", True))
         
@@ -592,9 +596,16 @@ class IBKRAdapter(EWrapper, EClient, BaseBrokerAdapter):
         """
         try:
             ib_order_id = int(order_id)
-            self._cancel_order_compat(ib_order_id)
             
             order = self.orders.get(order_id)
+            if order and not bool((order.metadata or {}).get("ibkr_transmit", True)):
+                order.status = OrderStatus.CANCELLED
+                order.filled_at = datetime.now()
+                print(f"✅ Order cancelled locally (non-transmitting): {order_id}")
+                return True
+
+            self._cancel_order_compat(ib_order_id)
+
             if order:
                 order.status = OrderStatus.CANCELLED
                 order.filled_at = datetime.now()

@@ -2,6 +2,7 @@
 *.py text eol=lf
 *.md text eol=lf
 *.json text eol=lf
+reports/crypto/live_staging_status.json text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.toml text eol=lf

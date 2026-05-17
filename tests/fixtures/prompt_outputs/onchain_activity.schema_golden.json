@@ -1,0 +1,8 @@
+{
+  "schema_version": "v1.0.0",
+  "accumulation_score": 0.68,
+  "top_wallet_pct": 35.2,
+  "tx_size_skew": "medium",
+  "suspicious_patterns": [],
+  "notes": "Moderate accumulation by mid-size wallets; no obvious wash trading or sandwich attacks detected."
+}

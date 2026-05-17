@@ -1,13 +1,22 @@
 {
-  "schema_version": "v1.0.0",
-  "verified": true,
-  "owner_privileges": true,
-  "can_mint": false,
-  "upgradable_proxy": false,
-  "severity": "medium",
-  "key_findings": [
-    "Ownership is not renounced; owner retains admin privileges",
-    "Tax rate configurable up to 10% on transfers"
+  "schema_version": "1.0.0",
+  "safety_score": 0.62,
+  "risk_level": "medium",
+  "findings": [
+    {
+      "severity": "warning",
+      "category": "ownership",
+      "description": "Ownership is not renounced and admin controls remain active."
+    },
+    {
+      "severity": "warning",
+      "category": "tax_abuse",
+      "description": "Transfer tax can be increased by owner governance controls."
+    }
   ],
-  "recommendation": "Monitor owner activity and tax rate changes. Consider contracts with renounced ownership for lower risk."
+  "honeypot_indicators": [
+    "none"
+  ],
+  "verified_contract": true,
+  "recommendation": "caution"
 }

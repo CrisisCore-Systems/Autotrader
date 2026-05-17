@@ -2,7 +2,7 @@
 
 ## Goal
 
-Validate whether PR #163 caused the internal utotrader package to stop reporting as UNKNOWN in dependency lane license reports.
+Validate whether PR #163 caused the internal autotrader package to stop reporting as UNKNOWN in dependency lane license reports.
 
 ## Source run
 
@@ -13,7 +13,7 @@ Validate whether PR #163 caused the internal utotrader package to stop reportin
 
 ## Expected result
 
-utotrader 0.1.0 should report:
+autotrader 0.1.0 should report:
 
 Proprietary
 
@@ -28,13 +28,13 @@ Proprietary
 
 ## Interpretation
 
-The package metadata change in PR #163 was clean and metadata-only, but the dependency lane license report artifacts still show utotrader as UNKNOWN.
+The package metadata change in PR #163 was clean and metadata-only, but the dependency lane license report artifacts still show autotrader as UNKNOWN.
 
 This means the CI license-report path does not yet reflect the local editable-install validation result, or the lane report workflow is resolving package metadata differently than the local validation command.
 
 ## Next investigation target
 
-Determine why local pip-licenses sees utotrader as Proprietary while CI lane artifacts still report UNKNOWN.
+Determine why local pip-licenses sees autotrader as Proprietary while CI lane artifacts still report UNKNOWN.
 
 Potential causes to inspect:
 
@@ -54,3 +54,4 @@ No runtime behavior changes.
 No trading behavior changes.
 No artifact JSON files committed.
 No unrelated test files committed.
+

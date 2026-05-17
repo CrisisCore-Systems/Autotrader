@@ -55,6 +55,10 @@ jobs:
           python -m pip install --no-input --disable-pip-version-check -r "${{ matrix.file }}"
           python -m pip install --no-input --disable-pip-version-check pip-licenses
 
+      - name: Install local project metadata
+        run: |
+          python -m pip install --no-deps -e .
+
       - name: Generate license report JSON
         run: |
           New-Item -ItemType Directory "reports/validation/ci/license-lane-reports" -Force | Out-Null

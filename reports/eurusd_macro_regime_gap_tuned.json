@@ -1,0 +1,57 @@
+{
+  "activity_penalty": 0.0,
+  "baseline": {
+    "diagnostics": {
+      "dominant_kill_gate": "imbalance",
+      "dominant_kill_rate": 0.667888074616922,
+      "feature_quotes": 3002,
+      "imbalance_rejections": 2005,
+      "matched_orders": 4,
+      "pass_rate": 0.0013324450366422385,
+      "passed_signals": 4,
+      "quotes_seen": 3002,
+      "spread_rejections": 733,
+      "trend_rejections": 115,
+      "trend_separation_rejections": 145,
+      "trend_warmup_skips": 0
+    },
+    "matched_orders": 4,
+    "net_return": -0.2111873724009783,
+    "rejected_allocations": 0,
+    "routed_orders": 4,
+    "signals_processed": 4
+  },
+  "fast_ema_len": 5,
+  "fitness": -3.331121534467285,
+  "imbalance_cutoff": 0.85,
+  "latency_window": 5,
+  "min_trades": 3,
+  "min_trend_separation_bps": 0.5,
+  "missing_trade_penalty": 25.0,
+  "signal_quantity": 10,
+  "slow_ema_len": 50,
+  "spread_threshold": 0.8,
+  "spread_window": 32,
+  "stress_surge": {
+    "diagnostics": {
+      "dominant_kill_gate": "imbalance",
+      "dominant_kill_rate": 0.667888074616922,
+      "feature_quotes": 3002,
+      "imbalance_rejections": 2005,
+      "matched_orders": 4,
+      "pass_rate": 0.0013324450366422385,
+      "passed_signals": 4,
+      "quotes_seen": 3002,
+      "spread_rejections": 733,
+      "trend_rejections": 115,
+      "trend_separation_rejections": 145,
+      "trend_warmup_skips": 0
+    },
+    "matched_orders": 4,
+    "net_return": -1.5599670810331534,
+    "rejected_allocations": 0,
+    "routed_orders": 4,
+    "signals_processed": 4
+  },
+  "symbol": "EUR/USD"
+}

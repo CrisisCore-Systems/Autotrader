@@ -113,6 +113,7 @@ class OrderManager:
         price: Optional[float] = None,
         stop_price: Optional[float] = None,
         time_in_force: str = "GTC",
+        post_only: bool = False,
         **kwargs
     ) -> Order:
         """
@@ -156,6 +157,7 @@ class OrderManager:
             price=price,
             stop_price=stop_price,
             time_in_force=time_in_force,
+            post_only=post_only,
             metadata=kwargs
         )
         
@@ -235,7 +237,8 @@ class OrderManager:
             order_type=old_order.order_type,
             price=price or old_order.price,
             stop_price=old_order.stop_price,
-            time_in_force=old_order.time_in_force
+            time_in_force=old_order.time_in_force,
+            post_only=old_order.post_only,
         )
         
         # Link orders
@@ -486,5 +489,23 @@ class OrderManager:
                 await asyncio.sleep(10)
 
 
+from autotrader.execution.oms.pipeline import TrapPipeline
+from autotrader.execution.oms.detector import MockStructuralTrapDetector, StructuralTrapDetector, VolumeProfileDetector, VolumeProfileNode, VolumeProfileValueArea, VolumeProfileZone
+from autotrader.execution.oms.stop_run import StructuralTrapSignal, StopRunCoordinator, StopRunLayer, StopRunTrapContext
+
+
 # Export
-__all__ = ['OrderManager']
+__all__ = [
+    'OrderManager',
+    'TrapPipeline',
+    'StructuralTrapDetector',
+    'VolumeProfileNode',
+    'VolumeProfileValueArea',
+    'VolumeProfileZone',
+    'MockStructuralTrapDetector',
+    'VolumeProfileDetector',
+    'StructuralTrapSignal',
+    'StopRunCoordinator',
+    'StopRunLayer',
+    'StopRunTrapContext',
+]

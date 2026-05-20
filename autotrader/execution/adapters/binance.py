@@ -346,36 +346,7 @@ class BinanceAdapter(BaseBrokerAdapter):
         await self._rate_limit()
         
         try:
-            # Map order type
-            binance_type = self._map_order_type(order.order_type)
-            
-            # Map side
-            binance_side = 'BUY' if order.side == OrderSide.BUY else 'SELL'
-            
-            # Build parameters
-            params = {
-                'symbol': order.symbol,
-                'side': binance_side,
-                'type': binance_type,
-                'quantity': order.quantity
-            }
-            
-            # Add price for limit orders
-            if order.order_type in [OrderType.LIMIT, OrderType.STOP_LIMIT]:
-                params['price'] = order.price
-                params['timeInForce'] = 'GTC'  # Good Till Cancel
-            
-            # Add stop price for stop orders
-            if order.order_type in [OrderType.STOP, OrderType.STOP_LIMIT]:
-                params['stopPrice'] = order.stop_price
-            
-            # IOC time in force
-            if order.order_type == OrderType.IOC:
-                params['timeInForce'] = 'IOC'
-            
-            # FOK time in force
-            if order.order_type == OrderType.FOK:
-                params['timeInForce'] = 'FOK'
+            params = self._build_order_params(order)
             
             # Submit order
             response = self.client.new_order(**params)
@@ -396,6 +367,32 @@ class BinanceAdapter(BaseBrokerAdapter):
             print(f"❌ Order submission error: {e}")
             order.status = OrderStatus.REJECTED
             raise
+
+    def _build_order_params(self, order: Order) -> Dict[str, object]:
+        if order.post_only and order.order_type != OrderType.LIMIT:
+            raise ValueError("Binance post-only orders must be resting limit orders")
+
+        params: Dict[str, object] = {
+            'symbol': order.symbol,
+            'side': 'BUY' if order.side == OrderSide.BUY else 'SELL',
+            'type': self._map_order_type(order.order_type),
+            'quantity': order.quantity,
+        }
+
+        if order.order_type in [OrderType.LIMIT, OrderType.STOP_LIMIT]:
+            params['price'] = order.price
+            params['timeInForce'] = 'GTX' if order.post_only else 'GTC'
+
+        if order.order_type in [OrderType.STOP, OrderType.STOP_LIMIT]:
+            params['stopPrice'] = order.stop_price
+
+        if order.order_type == OrderType.IOC:
+            params['timeInForce'] = 'IOC'
+
+        if order.order_type == OrderType.FOK:
+            params['timeInForce'] = 'FOK'
+
+        return params
     
     def _map_order_type(self, order_type: OrderType) -> str:
         """

@@ -588,7 +588,9 @@ class FeatureFactory:
         min_bars = max(
             self.config.rsi_period if self.config.enable_technical else 0,
             self.config.bb_period if self.config.enable_technical else 0,
-            max(self.config.rolling_windows) if self.config.enable_rolling else 0
+            # Shorter histories are valid: larger rolling windows can warm up to NaN
+            # and are handled downstream by configured NaN strategy.
+            min(self.config.rolling_windows) if self.config.enable_rolling else 0
         )
         
         if len(bars_df) < min_bars:

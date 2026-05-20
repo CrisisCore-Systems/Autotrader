@@ -1,0 +1,308 @@
+{
+  "constraints": {
+    "allowed_hosts": [
+      "127.0.0.1",
+      "localhost"
+    ],
+    "confirmation_phrase_required": "YES_PAPER_ORDER_ONLY",
+    "max_order_notional": 5.0,
+    "min_confidence": 0.7,
+    "one_order_max_per_run": true,
+    "order_type": "LMT",
+    "paper_only_required": true,
+    "paper_port": 7497,
+    "sec_type": "STK"
+  },
+  "errors": [],
+  "events": [
+    {
+      "at": "2026-05-17T18:31:02.222593+00:00",
+      "event": "valid_signal_accepted",
+      "signal_id": "sim-v1-001"
+    },
+    {
+      "at": "2026-05-17T18:31:12.344283+00:00",
+      "event": "connect",
+      "ok": true
+    },
+    {
+      "at": "2026-05-17T18:31:12.344283+00:00",
+      "event": "submit",
+      "order_id": "1",
+      "status": "submitted"
+    },
+    {
+      "at": "2026-05-17T18:31:17.359004+00:00",
+      "event": "cancel",
+      "ok": true,
+      "order_id": "1"
+    },
+    {
+      "at": "2026-05-17T18:31:17.359785+00:00",
+      "event": "disconnect",
+      "ok": true
+    }
+  ],
+  "finished_at": "2026-05-17T18:31:17.359785+00:00",
+  "fixtures": [
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": false,
+        "phrase_ok": true,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "paper_only flag required"
+      ],
+      "matched_expectation": true,
+      "name": "missing_paper_only",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 1.0,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": true,
+        "phrase_ok": true,
+        "port": 7496
+      },
+      "expected": "reject",
+      "issues": [
+        "paper port 7497 required, got 7496"
+      ],
+      "matched_expectation": true,
+      "name": "wrong_port",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 1.0,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "10.0.0.7",
+        "paper_only": true,
+        "phrase_ok": true,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "live-looking host not allowed: 10.0.0.7"
+      ],
+      "matched_expectation": true,
+      "name": "live_host",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 1.0,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": true,
+        "phrase_ok": false,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "missing or invalid confirmation phrase"
+      ],
+      "matched_expectation": true,
+      "name": "missing_confirmation_phrase",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 1.0,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": true,
+        "phrase_ok": true,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "order_type must be LMT, got MKT"
+      ],
+      "matched_expectation": true,
+      "name": "market_order",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "MKT",
+        "quantity": 1.0,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": true,
+        "phrase_ok": true,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "notional over cap: 10.0000 > 5.0000"
+      ],
+      "matched_expectation": true,
+      "name": "notional_over_cap",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 10.0,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": true,
+        "phrase_ok": true,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "STK quantity must be whole number, got 1.5"
+      ],
+      "matched_expectation": true,
+      "name": "fractional_quantity",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 1.5,
+        "sec_type": "STK",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    },
+    {
+      "accepted": false,
+      "context": {
+        "host": "127.0.0.1",
+        "paper_only": true,
+        "phrase_ok": true,
+        "port": 7497
+      },
+      "expected": "reject",
+      "issues": [
+        "unsupported sec_type: OPT"
+      ],
+      "matched_expectation": true,
+      "name": "unsupported_sec_type",
+      "signal": {
+        "confidence": 0.72,
+        "currency": "USD",
+        "exchange": "SMART",
+        "limit_price": 1.0,
+        "order_type": "LMT",
+        "quantity": 1.0,
+        "sec_type": "OPT",
+        "side": "BUY",
+        "signal_id": "sim-v1-001",
+        "source": "simulated_signal",
+        "symbol": "SNDL"
+      }
+    }
+  ],
+  "mode": "ibkr_paper_trading_harness_v1",
+  "request": {
+    "cancel_after_seconds": 5.0,
+    "client_id": 91,
+    "host": "127.0.0.1",
+    "paper_only": true,
+    "port": 7497,
+    "signals_json": "scripts/fixtures/ibkr/simulated_signal_fixture_v1.json",
+    "submit_paper_order": true
+  },
+  "result": {
+    "accepted_signal_id": "sim-v1-001",
+    "cancel_attempted": true,
+    "cancelled": true,
+    "connected": true,
+    "fixtures_passed": true,
+    "order_id": "1",
+    "order_status": "submitted",
+    "order_submission_attempted": true,
+    "submitted": true
+  },
+  "started_at": "2026-05-17T18:31:02.221500+00:00",
+  "valid_signal": {
+    "confidence": 0.72,
+    "currency": "USD",
+    "exchange": "SMART",
+    "limit_price": 1.0,
+    "order_type": "LMT",
+    "quantity": 1,
+    "sec_type": "STK",
+    "side": "BUY",
+    "signal_id": "sim-v1-001",
+    "source": "simulated_signal",
+    "symbol": "SNDL"
+  }
+}

@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Open PR for dependency lane mirror validation",
+			"type": "shell",
+			"command": "gh pr create --base main --head dependency-lane-mirror-validation --title \"Document dependency lane mirror validation\" --body \"Documents dependency lane mirror validation.\\n\\nValidation:\\n- requirements-runtime.txt installed cleanly and passed pip check\\n- requirements-broker.txt installed cleanly and passed pip check\\n- requirements-market-data.txt installed cleanly and passed pip check\\n- requirements-mlops.txt installed cleanly and passed pip check\\n\\nPurpose:\\n- Prove the mirror files are structurally valid installation targets before wiring CI\\n- Preserve current manifests and runtime behavior\\n\\nBoundary:\\n- No requirements.txt changes\\n- No pyproject.toml changes\\n- No workflow changes\\n- No runtime import changes\\n- No broker code changes\\n- No strategy code changes\\n- No execution behavior changes\\n- No trading automation changes\\n- No temp validation logs committed\""
+		}
+	]
+}

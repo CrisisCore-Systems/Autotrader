@@ -29,6 +29,15 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+from autotrader.backtesting.engine.historical import (
+    DuckDBHistoricalDatasetConnector,
+    HistoricalQuoteEvent,
+    HistoricalSimulationEngine,
+    LatencyDistributionProfile,
+    SimulationRunSummary,
+    StrategySignal,
+)
+
 
 class OrderStatus(Enum):
     """Order status enumeration."""
@@ -791,4 +800,10 @@ __all__ = [
     'RiskManager',
     'BacktestResults',
     'OrderStatus',
+    'DuckDBHistoricalDatasetConnector',
+    'HistoricalQuoteEvent',
+    'HistoricalSimulationEngine',
+    'LatencyDistributionProfile',
+    'SimulationRunSummary',
+    'StrategySignal',
 ]

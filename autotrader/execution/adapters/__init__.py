@@ -105,6 +105,7 @@ class Order:
     price: Optional[float] = None
     stop_price: Optional[float] = None
     time_in_force: str = "GTC"
+    post_only: bool = False
     
     status: OrderStatus = OrderStatus.PENDING
     filled_quantity: float = 0.0
@@ -115,6 +116,10 @@ class Order:
     filled_at: Optional[datetime] = None
     
     metadata: Dict = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.post_only and self.order_type != OrderType.LIMIT:
+            raise ValueError("post_only orders must use OrderType.LIMIT")
     
     def is_open(self) -> bool:
         """Check if order is open."""

@@ -1,0 +1,5 @@
+[33m7394b3e0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mci-remediation-002-security-scan-baseline[m[33m)[m Expand security scan baseline evidence - all three lanes classified
+[33m3f9c0ae5[m Document security scan baseline evidence (Lane A & B investigation)
+[33m257622b5[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Document dependency review baseline evidence (#135)
+[33m89a4e34f[m Add CI baseline triage pass document (#123)
+[33mfb0df9db[m Document CI baseline risk register (#122)

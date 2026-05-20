@@ -225,23 +225,7 @@ class OKXAdapter(BaseBrokerAdapter):
         
         try:
             import aiohttp
-            
-            # Build order params
-            params = {
-                'instId': order.symbol,
-                'tdMode': 'cash',  # Cash trading
-                'side': 'buy' if order.side == OrderSide.BUY else 'sell',
-                'ordType': self._map_order_type(order.order_type),
-                'sz': str(order.quantity)
-            }
-            
-            # Add price for limit orders
-            if order.order_type in [OrderType.LIMIT, OrderType.IOC, OrderType.FOK]:
-                params['px'] = str(order.price)
-            
-            # Stop orders
-            if order.order_type in [OrderType.STOP, OrderType.STOP_LIMIT]:
-                params['slTriggerPx'] = str(order.stop_price)
+            params = self._build_order_params(order)
             
             body = json.dumps(params)
             path = '/api/v5/trade/order'
@@ -289,6 +273,26 @@ class OKXAdapter(BaseBrokerAdapter):
             print(f"❌ Order submission error: {e}")
             order.status = OrderStatus.REJECTED
             raise
+
+    def _build_order_params(self, order: Order) -> Dict[str, str]:
+        if order.post_only and order.order_type != OrderType.LIMIT:
+            raise ValueError("OKX post-only orders must be resting limit orders")
+
+        params: Dict[str, str] = {
+            'instId': order.symbol,
+            'tdMode': 'cash',
+            'side': 'buy' if order.side == OrderSide.BUY else 'sell',
+            'ordType': 'post_only' if order.post_only else self._map_order_type(order.order_type),
+            'sz': str(order.quantity)
+        }
+
+        if order.order_type in [OrderType.LIMIT, OrderType.IOC, OrderType.FOK]:
+            params['px'] = str(order.price)
+
+        if order.order_type in [OrderType.STOP, OrderType.STOP_LIMIT]:
+            params['slTriggerPx'] = str(order.stop_price)
+
+        return params
     
     def _map_order_type(self, order_type: OrderType) -> str:
         """Map OrderType to OKX order type."""

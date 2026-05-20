@@ -1,0 +1,3 @@
+{"seq": 1, "order_id": 1001, "signal_id": "SIG-901", "prev_status": "Pending", "new_status": "Submitted", "filled": 0.0, "remaining": 100.0, "checksum": "4a03ecd11164c131bdbb5327674c84966fdddd072e310d5d7eb28b597dd3368b"}
+{"seq": 2, "order_id": 1001, "signal_id": "SIG-901", "prev_status": "Submitted", "new_status": "PartiallyFilled", "filled": 50.0, "remaining": 50.0, "checksum": "0036bfaff4bdd275d13fedc8dabaace19382fd680619dbc1b4b9ffd0173ec494"}
+{"seq": 3, "order_id": 1002, "signal_id": "SIG-902", "prev_status": "Pending", "new_status": "Submitted", "filled": 0.0, "remaining": 200.0, "checksum": "aacdde3887682ec5b43431607810dcbc3af35061d640a24ccda7851398aa04b4"}

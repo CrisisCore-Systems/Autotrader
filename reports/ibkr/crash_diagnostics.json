@@ -1,0 +1,87 @@
+{
+  "broker_position_snapshots": {
+    "USD:AAPL": {
+      "avg_cost": 254.33,
+      "quantity": 1.0
+    },
+    "USD:AMD": {
+      "avg_cost": 419.030003,
+      "quantity": 40.0
+    }
+  },
+  "context": "startup_attestation_failure",
+  "event_type": "LAST_GASP_DIAGNOSTIC",
+  "fatal_error": {
+    "message": "Startup broker attestation failed: drift or ghost orders detected",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\autotrader\\execution\\adapters\\ibkr.py\", line 1430, in connect\n    await self._run_startup_broker_attestation()\n  File \"C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\autotrader\\execution\\adapters\\ibkr.py\", line 802, in _run_startup_broker_attestation\n    self._validate_startup_recovery_state()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\kay\\Documents\\Projects\\AutoTrader\\Autotrader\\autotrader\\execution\\adapters\\ibkr.py\", line 772, in _validate_startup_recovery_state\n    raise CriticalRecoveryAnomaly(\n        \"Startup broker attestation failed: drift or ghost orders detected\"\n    )\nautotrader.execution.adapters.ibkr.CriticalRecoveryAnomaly: Startup broker attestation failed: drift or ghost orders detected\n",
+    "type": "CriticalRecoveryAnomaly"
+  },
+  "local_positions": {
+    "AAPL": {
+      "avg_entry_price": 254.33,
+      "current_price": 0.0,
+      "quantity": 1.0
+    },
+    "AMD": {
+      "avg_entry_price": 419.030003,
+      "current_price": 0.0,
+      "quantity": 30.0
+    }
+  },
+  "recent_reconciliation_events": [
+    {
+      "event": "lock",
+      "reason": "circuit breach",
+      "symbol": "AMD",
+      "ts_ms": 1779123251173
+    },
+    {
+      "event": "circuit_breach",
+      "reason": "drift 1.0000 exceeded threshold 0.0100; local=0.00000000, broker=40.00000000",
+      "symbol": "USD:AMD",
+      "ts_ms": 1779123251173
+    },
+    {
+      "event": "lock",
+      "reason": "circuit breach",
+      "symbol": "AAPL",
+      "ts_ms": 1779123251173
+    },
+    {
+      "event": "circuit_breach",
+      "reason": "drift 1.0000 exceeded threshold 0.0100; local=0.00000000, broker=1.00000000",
+      "symbol": "USD:AAPL",
+      "ts_ms": 1779123251173
+    },
+    {
+      "event": "unlock",
+      "reason": "startup expected-position override applied",
+      "symbol": "AAPL",
+      "ts_ms": 1779123251196
+    },
+    {
+      "event": "unlock",
+      "reason": "startup expected-position override applied",
+      "symbol": "AMD",
+      "ts_ms": 1779123251196
+    },
+    {
+      "event": "critical_recovery_anomaly",
+      "reason": "startup_attestation_mismatch",
+      "symbol": "GLOBAL",
+      "ts_ms": 1779123251196
+    }
+  ],
+  "runtime_snapshot": {
+    "active_locks": [],
+    "breach_symbols": [
+      "USD:AMD"
+    ],
+    "circuit_open": true,
+    "gross_portfolio_drift_notional": 4190.30003,
+    "portfolio_drift_limit": 500.0,
+    "seen_fingerprints_count": 7
+  },
+  "state": "BREACHED",
+  "timestamp_ms": 1779123251198
+}

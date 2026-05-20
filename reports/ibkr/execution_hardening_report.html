@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    @page {
+        size: A4;
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-right {
+            content: counter(page);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #64748b;
+        }
+        @bottom-left {
+            content: "TR-008: IBKR Execution Architecture Matrix";
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #64748b;
+        }
+    }
+    body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.6;
+        color: #1e293b;
+        margin: 0;
+        padding: 0;
+    }
+    .header-banner {
+        background-color: #0f172a;
+        color: #f8fafc;
+        padding: 25px 20px;
+        margin-bottom: 30px;
+        border-radius: 4px;
+    }
+    .header-banner h1 {
+        font-size: 20pt;
+        margin: 0 0 8px 0;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        color: #f1f5f9;
+    }
+    .header-banner .meta {
+        font-size: 9.5pt;
+        color: #94a3b8;
+    }
+    h2 {
+        font-size: 14pt;
+        font-weight: 600;
+        color: #0f172a;
+        margin-top: 25px;
+        margin-bottom: 12px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #e2e8f0;
+        page-break-after: avoid;
+    }
+    h3 {
+        font-size: 11.5pt;
+        font-weight: 600;
+        color: #334155;
+        margin-top: 18px;
+        margin-bottom: 8px;
+        page-break-after: avoid;
+    }
+    p {
+        margin-top: 0;
+        margin-bottom: 12px;
+        text-align: justify;
+    }
+    code {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #f1f5f9;
+        color: #0f172a;
+        padding: 2px 5px;
+        font-size: 9.5pt;
+        border-radius: 3px;
+    }
+    pre {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 12px;
+        font-size: 9pt;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        margin-top: 0;
+        margin-bottom: 16px;
+        page-break-inside: avoid;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        font-size: 9.5pt;
+        page-break-inside: avoid;
+    }
+    th {
+        background-color: #334155;
+        color: #ffffff;
+        font-weight: 600;
+        text-align: left;
+        padding: 8px 10px;
+        border: 1px solid #334155;
+    }
+    td {
+        padding: 8px 10px;
+        border: 1px solid #e2e8f0;
+    }
+    tr:nth-child(even) td {
+        background-color: #f8fafc;
+    }
+    .callout {
+        background-color: #f0f9ff;
+        border-left: 4px solid #0284c7;
+        padding: 12px;
+        margin-bottom: 16px;
+        border-radius: 0 4px 4px 0;
+        page-break-inside: avoid;
+    }
+    .callout-title {
+        font-weight: 600;
+        color: #0369a1;
+        margin-bottom: 4px;
+        font-size: 10pt;
+    }
+    .math {
+        font-family: 'Times New Roman', serif;
+        font-style: italic;
+        font-weight: bold;
+        color: #0f172a;
+    }
+</style>
+</head>
+<body>
+<div class="header-banner">
+    <h1>IBKR Execution Hardening Report</h1>
+    <div class="meta">Document ID: TR-008 &bull; System Status: Hardened &bull; Date: May 17, 2026</div>
+</div>
+<h2>1. Executive Summary & Core Security Posture</h2>
+<p>This report compiles the technical implementation details of the execution engine hardening pass applied to the production Interactive Brokers (IBKR) adapter. Algorithmic trade execution requires a deterministic environment where connection loss, message duplication, and broker gateway noise cannot result in state drift, duplicate orders, or invalid performance statistics.</p>
+<p>The system shifts from an optimistic network posture to a zero-trust, local-first architecture. It addresses critical real-world failure modes: broker connection drops, out-of-order partial execution streaming, informational warning anomalies, and local identifier recycling.</p>
+<h2>2. State Lifecycle Architecture Matrix</h2>
+<p>The connection lifecycle is managed by an event-driven state machine that handles network drops without compromising outstanding execution threads. It establishes an explicit handshake sync verification gate to isolate informational warnings from hard system drops.</p>
+<table>
+    <thead>
+        <tr>
+            <th>Connection Phase</th>
+            <th>Triggering Event</th>
+            <th>System Action & Mitigation</th>
+            <th>Target State</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>DISCONNECTED</strong></td>
+            <td>Harness Initialization / Fault Failure</td>
+            <td>Zeroes active network socket boundaries; blocks outgoing order placement pipelines.</td>
+            <td>CONNECTING</td>
+        </tr>
+        <tr>
+            <td><strong>CONNECTING</strong></td>
+            <td>Retry Scheduler Dispatch</td>
+            <td>Invokes exponential backoff with full jitter to distribute connection loads.</td>
+            <td>HANDSHAKE_SYNC</td>
+        </tr>
+        <tr>
+            <td><strong>HANDSHAKE_SYNC</strong></td>
+            <td>TCP Socket Connection</td>
+            <td>Enforces a mandatory observation floor window to trap asynchronous farm errors.</td>
+            <td>CONNECTED / RECONNECTING</td>
+        </tr>
+        <tr>
+            <td><strong>CONNECTED</strong></td>
+            <td>Fault Matrix Cleared</td>
+            <td>Declares gateway readiness; unblocks queue worker threads; clears retry backoff.</td>
+            <td>RECONNECTING</td>
+        </tr>
+        <tr>
+            <td><strong>RECONNECTING</strong></td>
+            <td>Error 1100 / Socket Drop</td>
+            <td>Pauses active ingestion worker; locks current order state; calculates jitter backoff.</td>
+            <td>CONNECTING</td>
+        </tr>
+    </tbody>
+</table>
+<div class="callout">
+    <div class="callout-title">Mathematical Proof: Exponential Backoff with Full Jitter</div>
+    The backoff sleep window calculation is bounded non-linearly to suppress network contention spikes during server reconnect storms. The sleep duration is calculated as follows:
+    <div style="text-align:center; margin:10px 0; font-size:11pt;">
+        <span class="math">t<sub>retry</sub> = Random(0, Min(t<sub>max</sub>, t<sub>base</sub> &times; 2<sup>attempt</sup>))</span>
+    </div>
+    Where <span class="math">t<sub>base</sub> = 1.0s</span>, <span class="math">t<sub>max</sub> = 30.0s</span>, and <span class="math">attempt</span> represents the incremented retry counter.
+</div>
+<h2>3. Defensive Rehydration & Ingestion Deduplication Gates</h2>
+<p>To insulate the core system from historical callback floods during gateway reconnects, a cold-start rehydration gate acts as a strict initialization barrier. The connection loop blocks until the local Write-Ahead Log (WAL) journal file is parsed to repopulate active memory snapshots and closed-order constraints.</p>
+<h3>3.1 Order Status Transition Progress Logic</h3>
+<p>Inbound <code>orderStatus</code> packets pass through a strict progress validation filter. An event is rejected if it tries to move backward or duplicate an existing state. It is processed only if it matches one of the following criteria:</p>
+<pre>
+1. Status Progression: Current state rank strictly exceeds the rehydrated snapshot rank.
+2. Accumulation Progress: Status matches snapshot, but filled count increments (Filled_New > Filled_Old).
+3. Local Register Identification: Order ID is missing from the snapshot table (New Order Track).
+</pre>
+<h3>3.2 Local Order ID Recycling Mitigation</h3>
+<p>IBKR paper trading gateways reuse local order identifiers across fresh harness sessions. A persistent deduplication index would inadvertently flag new sessions as duplicate entries from previous days. The adapter mitigates this by intercepting the <code>submit_order</code> action and explicitly clearing out stale snapshot references and closed-order blocks for the recycled identifier.</p>
+<h2>4. Execution Evidence & Disk Performance Audit</h2>
+<p>The integrated middleware was tested against an active TWS gateway using a paper-trading test harness. The system successfully managed informational warning sequences and logged the transitions directly to local storage.</p>
+<h3>4.1 Warning 399 Isolation Trace</h3>
+<p>During the test run, IBKR emitted an informational code <code>399</code> notice (indicating outside-hours processing delays). The upgraded <code>error()</code> handler correctly flagged the message as non-terminal, maintaining the order's active status. The log below confirms the sequence:</p>
+<pre>
+2026-05-17 14:12:10 [INFO] 📡 Socket Established. Transiting to HANDSHAKE_SYNC.
+2026-05-17 14:12:10 [INFO] 📥 [EWrapper Signal] Code 399 received: Order will wait for opening bell.
+2026-05-17 14:12:11 [INFO] [DedupeGate] Passed: OrderID-1 status remains SUBMITTED (Warning Filtered).
+2026-05-17 14:12:15 [INFO] 🔄 Local cancel request submitted to IBKR for Order ID 1.
+2026-05-17 14:12:15 [INFO] 📊 [Telemetry Export] Order 1 archived successfully | Status: Cancelled | E2E Latency: 4890ms
+</pre>
+<h3>4.2 Unified Post-Trade Analytics Schema</h3>
+<p>Upon reaching a terminal condition, the trade's operational data is compiled and exported to the performance ledger. The structured output below shows the hybrid schema, combining raw timestamps with pre-calculated millisecond deltas:</p>
+<pre>
+{
+  "identity": {"order_id": 1, "signal_id": "sig-294", "symbol": "SNDL", "side": "BUY"},
+  "pricing_metrics": {"total_quantity": 1.0, "avg_fill_price": 0.0, "total_notional": 0.0},
+  "lifecycle_timestamps": {
+    "ts_ingested": 1779055930110,
+    "ts_dispatched": 1779055930145,
+    "ts_first_partial_fill": null,
+    "ts_final_settlement": 1779055935035
+  },
+  "derived_latencies_ms": {
+    "latency_ingest_to_dispatch": 35,
+    "latency_dispatch_to_first_partial": 0,
+    "latency_end_to_end": 4925
+  },
+  "terminal_summary": {
+    "terminal_status": "Cancelled",
+    "completion_ratio": 0.0,
+    "failure_reason": "Local cancel request submitted to IBKR"
+  },
+  "audit_metadata": {"exported_at": 1779055935040, "source_module": "TR-007-CORE", "schema_version": "1.0.0"}
+}
+</pre>
+<h2>5. Durability and Future Mitigations</h2>
+<p>To address the residual limitation where execution fingerprints are stored only in memory, the next sprint will expand the Write-Ahead Log to record explicit execution IDs. This ensures complete deduplication across cold restarts, matching the system's local-first, high-reliability design principles.</p>
+</body>
+</html>

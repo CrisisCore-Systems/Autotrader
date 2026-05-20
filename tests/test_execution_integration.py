@@ -137,6 +137,83 @@ async def test_paper_adapter_cancel_order(paper_adapter):
     assert submitted_order.status == OrderStatus.CANCELLED
 
 
+def test_post_only_order_requires_limit_type():
+    with pytest.raises(ValueError, match="post_only orders must use OrderType.LIMIT"):
+        Order(
+            order_id="",
+            symbol='BTCUSDT',
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            quantity=0.1,
+            post_only=True,
+        )
+
+
+def test_binance_builds_post_only_limit_order_params():
+    pytest.importorskip("binance.spot")
+    from autotrader.execution.adapters.binance import BinanceAdapter
+
+    adapter = BinanceAdapter.__new__(BinanceAdapter)
+    order = Order(
+        order_id="",
+        symbol='BTCUSDT',
+        side=OrderSide.BUY,
+        order_type=OrderType.LIMIT,
+        quantity=0.1,
+        price=50000,
+        post_only=True,
+    )
+
+    params = adapter._build_order_params(order)
+
+    assert params['type'] == 'LIMIT'
+    assert params['timeInForce'] == 'GTX'
+    assert params['price'] == 50000
+
+
+def test_coinbase_builds_post_only_limit_order_params():
+    pytest.importorskip("aiohttp")
+    from autotrader.execution.adapters.coinbase import CoinbaseAdapter
+
+    adapter = CoinbaseAdapter.__new__(CoinbaseAdapter)
+    order = Order(
+        order_id="",
+        symbol='BTC-USD',
+        side=OrderSide.SELL,
+        order_type=OrderType.LIMIT,
+        quantity=0.1,
+        price=50000,
+        post_only=True,
+    )
+
+    params = adapter._build_order_params(order)
+
+    assert params['type'] == 'limit'
+    assert params['time_in_force'] == 'GTC'
+    assert params['post_only'] == 'true'
+
+
+def test_okx_builds_post_only_limit_order_params():
+    pytest.importorskip("aiohttp")
+    from autotrader.execution.adapters.okx import OKXAdapter
+
+    adapter = OKXAdapter.__new__(OKXAdapter)
+    order = Order(
+        order_id="",
+        symbol='BTC-USDT',
+        side=OrderSide.BUY,
+        order_type=OrderType.LIMIT,
+        quantity=0.1,
+        price=50000,
+        post_only=True,
+    )
+
+    params = adapter._build_order_params(order)
+
+    assert params['ordType'] == 'post_only'
+    assert params['px'] == '50000'
+
+
 @pytest.mark.asyncio
 async def test_paper_adapter_positions(paper_adapter):
     """Test position tracking."""

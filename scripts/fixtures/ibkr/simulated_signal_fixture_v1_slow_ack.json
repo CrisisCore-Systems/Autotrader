@@ -1,0 +1,13 @@
+{
+  "signal_id": "sim-v1-003-d",
+  "symbol": "SNDL",
+  "side": "BUY",
+  "quantity": 1,
+  "limit_price": 1.10,
+  "order_type": "LMT",
+  "source": "simulated_signal",
+  "sec_type": "STK",
+  "currency": "USD",
+  "exchange": "SMART",
+  "confidence": 1.0
+}

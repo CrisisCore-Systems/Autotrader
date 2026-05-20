@@ -208,29 +208,7 @@ class CoinbaseAdapter(BaseBrokerAdapter):
         
         try:
             import aiohttp
-            
-            # Build order params
-            params = {
-                'product_id': order.symbol,
-                'side': 'buy' if order.side == OrderSide.BUY else 'sell',
-                'type': self._map_order_type(order.order_type)
-            }
-            
-            # Add size/price based on type
-            if order.order_type == OrderType.MARKET:
-                params['size'] = str(order.quantity)
-            elif order.order_type == OrderType.LIMIT:
-                params['size'] = str(order.quantity)
-                params['price'] = str(order.price)
-                params['time_in_force'] = 'GTC'
-            elif order.order_type == OrderType.IOC:
-                params['size'] = str(order.quantity)
-                params['price'] = str(order.price)
-                params['time_in_force'] = 'IOC'
-            elif order.order_type == OrderType.FOK:
-                params['size'] = str(order.quantity)
-                params['price'] = str(order.price)
-                params['time_in_force'] = 'FOK'
+            params = self._build_order_params(order)
             
             body = json.dumps(params)
             path = '/orders'
@@ -267,6 +245,35 @@ class CoinbaseAdapter(BaseBrokerAdapter):
             print(f"❌ Order submission error: {e}")
             order.status = OrderStatus.REJECTED
             raise
+
+    def _build_order_params(self, order: Order) -> Dict[str, str]:
+        if order.post_only and order.order_type != OrderType.LIMIT:
+            raise ValueError("Coinbase post-only orders must be resting limit orders")
+
+        params: Dict[str, str] = {
+            'product_id': order.symbol,
+            'side': 'buy' if order.side == OrderSide.BUY else 'sell',
+            'type': self._map_order_type(order.order_type)
+        }
+
+        if order.order_type == OrderType.MARKET:
+            params['size'] = str(order.quantity)
+        elif order.order_type == OrderType.LIMIT:
+            params['size'] = str(order.quantity)
+            params['price'] = str(order.price)
+            params['time_in_force'] = 'GTC'
+            if order.post_only:
+                params['post_only'] = 'true'
+        elif order.order_type == OrderType.IOC:
+            params['size'] = str(order.quantity)
+            params['price'] = str(order.price)
+            params['time_in_force'] = 'IOC'
+        elif order.order_type == OrderType.FOK:
+            params['size'] = str(order.quantity)
+            params['price'] = str(order.price)
+            params['time_in_force'] = 'FOK'
+
+        return params
     
     def _map_order_type(self, order_type: OrderType) -> str:
         """Map OrderType to Coinbase order type."""

@@ -1,0 +1,13 @@
+{
+  "signal_id": "sim-v1-003",
+  "symbol": "AAPL",
+  "sec_type": "STK",
+  "currency": "USD",
+  "exchange": "SMART",
+  "side": "SELL",
+  "quantity": 1,
+  "order_type": "LMT",
+  "limit_price": 1.0,
+  "confidence": 0.85,
+  "source": "simulated_signal"
+}

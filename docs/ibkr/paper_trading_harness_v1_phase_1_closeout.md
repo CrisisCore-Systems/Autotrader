@@ -23,6 +23,8 @@
 | `paper_trading_harness_v1_status.submit_002.json` | sim-v1-001 | BUY | Second controlled submit |
 | `paper_trading_harness_v1_status.varied_dry_run_003.json` | sim-v1-003 | SELL | Varied signal dry-run proof |
 
+**Legacy artifact note**: `paper_trading_harness_v1_status.json` is a legacy/non-canonical run artifact (timestamp 21:21:13 vs canonical 18:14:10) and is excluded from Phase 1 evidence.
+
 ## Forbidden Actions (Confirmed)
 
 - **Live trading**: Forbidden. Live port 7496 remains blocked.

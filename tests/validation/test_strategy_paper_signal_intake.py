@@ -108,16 +108,17 @@ def test_rejects_duplicate_signal_id(tmp_path: Path) -> None:
 def test_writes_acceptance_artifact(tmp_path: Path) -> None:
     signal = _valid_signal()
 
-    journal_path = tmp_path / "paper_trade_journal.jsonl"
-
     from autotrader.strategy.signals.intake import write_acceptance_artifact
-    write_acceptance_artifact(signal, journal_path)
+    write_acceptance_artifact(signal)
 
-    assert journal_path.exists()
-    content = json.loads(journal_path.read_text())
+    artifact_path = Path(f"reports/signals/accepted/{signal.signal_id}.json")
+    assert artifact_path.exists()
+    content = json.loads(artifact_path.read_text())
     assert content["accepted"] is True
     assert content["signal_id"] == "test-sig-001"
     assert content["broker_mode"] == "paper"
+    # Clean up
+    artifact_path.unlink()
 
 
 def test_writes_rejection_artifact(tmp_path: Path) -> None:

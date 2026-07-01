@@ -10,7 +10,7 @@ telegram:
   # 2. Send /newbot
   # 3. Follow prompts to create bot
   # 4. Copy the bot token
-  bot_token: "YOUR_BOT_TOKEN_HERE"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
   
   # Get chat ID:
   # 1. Start a chat with your bot
@@ -18,7 +18,7 @@ telegram:
   # 3. Visit: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
   # 4. Look for "chat":{"id": YOUR_CHAT_ID}
   # OR use @userinfobot to get your user ID
-  chat_id: "YOUR_CHAT_ID_HERE"
+  chat_id: "${TELEGRAM_CHAT_ID}"
 
 # Email Configuration (Optional - for backup/reporting)
 email:

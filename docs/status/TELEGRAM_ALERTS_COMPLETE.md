@@ -209,7 +209,7 @@ autotrader/alerts/
 ```yaml
 telegram:
   enabled: true
-  bot_token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
   chat_id: "987654321"
 
 email:
@@ -229,7 +229,7 @@ python scripts/setup_telegram_alerts.py --configure
 ### Option 2: Environment Variables
 
 ```bash
-export TELEGRAM_BOT_TOKEN="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
 export TELEGRAM_CHAT_ID="987654321"
 export ALERTS_ENABLED="true"
 ```

@@ -11,28 +11,14 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from autotrader.monitoring.compliance.monitor import ComplianceIssue, ComplianceSeverity
-
-try:
-    from prometheus_client import Counter
-    PROMETHEUS_AVAILABLE = True
-except ImportError:
-    PROMETHEUS_AVAILABLE = False
-    class Counter:
-        def __init__(self, *args, **kwargs): pass
-        def labels(self, *args, **kwargs): return self
-        def inc(self, *args, **kwargs): pass
+from autotrader.monitoring.compliance.monitor import (
+    ALERT_DELIVERY_TOTAL,
+    ComplianceIssue,
+    ComplianceSeverity,
+)
 
 
 logger = logging.getLogger(__name__)
-
-
-# Prometheus metric for alert delivery
-ALERT_DELIVERY_TOTAL = Counter(
-    'alert_delivery_total',
-    'Total number of alerts sent',
-    ['channel', 'severity', 'status']
-)
 
 
 class TelegramAdapter:

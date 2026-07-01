@@ -51,7 +51,7 @@ pip install requests
 
 7. **@BotFather will reply with your bot token**:
    ```
-   Example: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz-1234567890
+   Example: ${TELEGRAM_BOT_TOKEN}
    ```
    
    ⚠️ **COPY THIS TOKEN** - You'll need it in Step 3!
@@ -191,7 +191,7 @@ After setup, your configuration will be saved to:
 # Alert Configuration
 telegram:
   enabled: true
-  bot_token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
   chat_id: "987654321"
 
 email:

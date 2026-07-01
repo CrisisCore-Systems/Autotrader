@@ -39,6 +39,7 @@ htmlcov/
 coverage.xml
 
 # Telegram bot credentials
+configs/alerts.local.yaml
 configs/telegram.yaml
 configs/telegram_*.yaml
 

@@ -23,7 +23,7 @@ Sends **real-time compliance alerts** to your Telegram account when violations a
 2. Send the command: `/newbot`
 3. Choose a name: `Trading Alerts Bot` (or any name you like)
 4. Choose a username: `mycompany_alerts_bot` (must end with `bot`)
-5. **Copy the bot token** - looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
+5. **Copy the bot token** - looks like: `${TELEGRAM_BOT_TOKEN}`
 
 ### Step 2: Get Your Chat ID
 
@@ -191,7 +191,7 @@ success = telegram.send_alert(issue)
 # Telegram Bot Configuration
 telegram:
   enabled: true
-  bot_token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
   chat_id: "987654321"
 
 # Email Configuration (Optional)
@@ -211,7 +211,7 @@ email:
 
 ```bash
 # Set environment variables instead of using config file
-export TELEGRAM_BOT_TOKEN="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
 export TELEGRAM_CHAT_ID="987654321"
 export ALERTS_ENABLED="true"
 ```

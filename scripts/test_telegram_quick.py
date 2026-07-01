@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from datetime import datetime, timezone
+from autotrader.alerts.config import load_alert_config
 from autotrader.alerts.router import TelegramAdapter
 from autotrader.monitoring.compliance.monitor import (
     ComplianceIssue,
@@ -22,12 +23,18 @@ def main():
     print("=" * 80)
     print()
     
-    # Your credentials
-    bot_token = "8447164652:AAHTW_RmFRr4UwmBNwMTE_GlZNG0bGs1hi8"
-    chat_id = "8171766594"
+    config = load_alert_config()
+    if not config.telegram or not config.telegram.enabled:
+        print("Telegram credentials are not configured.")
+        print("Run: python scripts/setup_telegram_alerts.py --configure")
+        print("Or set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.")
+        return False
+
+    bot_token = config.telegram.bot_token
+    chat_id = config.telegram.chat_id
     
-    print(f"Bot Token: {bot_token[:20]}...")
-    print(f"Chat ID: {chat_id}")
+    print("Bot Token: configured")
+    print("Chat ID: configured")
     print()
     
     # Test 1: Create adapter and test connection
@@ -124,7 +131,7 @@ def main():
     print("  2. ⚠️  WARNING: Risk check failed")
     print("  3. 🚨 CRITICAL: Risk override")
     print()
-    print("Configuration saved to: configs/alerts.yaml")
+    print("Configuration loaded from environment or configs/alerts.local.yaml")
     print()
     print("Next steps:")
     print("  1. Generate violations:")

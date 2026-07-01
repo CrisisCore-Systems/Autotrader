@@ -4,8 +4,8 @@
 # Telegram Bot Configuration
 telegram:
   enabled: true
-  bot_token: "8447164652:AAHTW_RmFRr4UwmBNwMTE_GlZNG0bGs1hi8"
-  chat_id: "8171766594"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
+  chat_id: "${TELEGRAM_CHAT_ID}"
 
 # Email Configuration (Optional - configure later if needed)
 email:

@@ -68,7 +68,7 @@ configs/
 1. Open Telegram, search for **@BotFather**
 2. Send: `/newbot`
 3. Follow prompts to name your bot
-4. Copy the token: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
+4. Copy the token: `${TELEGRAM_BOT_TOKEN}`
 
 **Chat ID** (from @userinfobot):
 1. Search for **@userinfobot**
@@ -176,13 +176,13 @@ Simulates 5 trading cycles with real-time alerts.
 # configs/alerts.yaml
 telegram:
   enabled: true
-  bot_token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
   chat_id: "987654321"
 ```
 
 ### Option 2: Environment Variables
 ```bash
-export TELEGRAM_BOT_TOKEN="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
 export TELEGRAM_CHAT_ID="987654321"
 export ALERTS_ENABLED="true"
 ```

@@ -4,13 +4,60 @@ Alert configuration management.
 Loads alert settings from YAML config file.
 """
 
+import os
+import re
 import yaml
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 from dataclasses import dataclass
 import logging
 
 logger = logging.getLogger(__name__)
+
+_ENV_PLACEHOLDER_RE = re.compile(r"^\$\{([A-Z0-9_]+)\}$")
+
+
+def _default_config_path() -> Path:
+    """Return the preferred alert config path."""
+    root = Path(__file__).parent.parent.parent
+    env_path = os.getenv("AUTOTRADER_ALERT_CONFIG")
+    if env_path:
+        return Path(env_path)
+
+    local_config = root / "configs" / "alerts.local.yaml"
+    if local_config.exists():
+        return local_config
+
+    return root / "configs" / "alerts.yaml"
+
+
+def _resolve_config_value(
+    value: Any,
+    *,
+    field_name: str,
+    fallback_env_var: Optional[str] = None,
+) -> Optional[str]:
+    """Resolve config placeholders without committing secret values."""
+    if value is None:
+        return os.getenv(fallback_env_var) if fallback_env_var else None
+
+    if not isinstance(value, str):
+        return str(value)
+
+    stripped = value.strip()
+    placeholder = _ENV_PLACEHOLDER_RE.match(stripped)
+    if placeholder:
+        env_var = placeholder.group(1)
+        env_value = os.getenv(env_var)
+        if env_value:
+            return env_value
+        logger.warning("%s references unset environment variable %s", field_name, env_var)
+        return None
+
+    if stripped in {"", "YOUR_BOT_TOKEN_HERE", "YOUR_CHAT_ID_HERE"}:
+        return os.getenv(fallback_env_var) if fallback_env_var else None
+
+    return value
 
 
 @dataclass
@@ -63,8 +110,7 @@ def load_alert_config(config_path: Optional[Path] = None) -> AlertConfig:
         ValueError: If config is invalid
     """
     if config_path is None:
-        # Default to configs/alerts.yaml
-        config_path = Path(__file__).parent.parent.parent / "configs" / "alerts.yaml"
+        config_path = _default_config_path()
     
     if not config_path.exists():
         logger.warning(f"Alert config not found: {config_path}")
@@ -81,11 +127,24 @@ def load_alert_config(config_path: Optional[Path] = None) -> AlertConfig:
         # Parse Telegram config
         telegram_config = None
         if 'telegram' in data and data['telegram'].get('enabled', True):
-            telegram_config = TelegramConfig(
-                bot_token=data['telegram']['bot_token'],
-                chat_id=data['telegram']['chat_id'],
-                enabled=data['telegram'].get('enabled', True)
+            bot_token = _resolve_config_value(
+                data['telegram'].get('bot_token'),
+                field_name="telegram.bot_token",
+                fallback_env_var="TELEGRAM_BOT_TOKEN"
             )
+            chat_id = _resolve_config_value(
+                data['telegram'].get('chat_id'),
+                field_name="telegram.chat_id",
+                fallback_env_var="TELEGRAM_CHAT_ID"
+            )
+            if bot_token and chat_id:
+                telegram_config = TelegramConfig(
+                    bot_token=bot_token,
+                    chat_id=chat_id,
+                    enabled=data['telegram'].get('enabled', True)
+                )
+            else:
+                logger.warning("Telegram alerts enabled but bot token or chat ID is missing")
         
         # Parse Email config
         email_config = None
@@ -140,7 +199,7 @@ telegram:
   # 2. Send /newbot
   # 3. Follow prompts to create bot
   # 4. Copy the bot token
-  bot_token: "YOUR_BOT_TOKEN_HERE"
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
   
   # Get chat ID:
   # 1. Start a chat with your bot
@@ -148,7 +207,7 @@ telegram:
   # 3. Visit: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
   # 4. Look for "chat":{"id": YOUR_CHAT_ID}
   # OR use @userinfobot to get your user ID
-  chat_id: "YOUR_CHAT_ID_HERE"
+  chat_id: "${TELEGRAM_CHAT_ID}"
 
 # Email Configuration (Optional - for backup/reporting)
 email:

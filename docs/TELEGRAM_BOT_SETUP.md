@@ -27,7 +27,7 @@ Send daily BounceHunter mean-reversion signals directly to your Telegram chat.
 2. **Add your credentials** to `configs/telegram.yaml`:
    ```yaml
    telegram:
-     bot_token: "8447164652:AAHTW_RmFRr4UwmBNwMTE_GlZNG0bGs1hi8"
+     bot_token: "${TELEGRAM_BOT_TOKEN}"
      chat_id: "YOUR_CHAT_ID_HERE"  # Get from @userinfobot
      parse_mode: "Markdown"
      disable_notification: false
@@ -128,7 +128,7 @@ Scanned 22 tickers
 Run daily at 6:30 PM EST (after market close):
 
 ```bash
-30 18 * * 1-5 cd /path/to/AutoTrader/Autotrader && /path/to/.venv/bin/python -m src.bouncehunter.telegram_cli
+30 18 * * 1-5 cd /path/to/Autotrader && /path/to/.venv/bin/python -m src.bouncehunter.telegram_cli
 ```
 
 ### Windows (Task Scheduler)
